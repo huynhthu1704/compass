@@ -3,7 +3,7 @@ import { go, query } from '../App';
 import { ACTIONS, byId, isDone, PHASE_INFO, ROLE_INFO } from '../catalog';
 import { suggest } from '../engine';
 import { useT } from '../i18n';
-import { runAction } from '../run';
+import { retrieveFor, runAction } from '../run';
 import { store, useStore } from '../store';
 import { PHASES, type Answers, type Phase, type Project } from '../types';
 import { ActionCard, Badge, Button, Field, PageHead, PhaseChip, toast } from '../ui';
@@ -36,6 +36,7 @@ export function ActionsPage({ p }: { p: Project }) {
   const selected = sel ? byId(sel) : null;
   const selSug = sug.find((s) => s.action.id === sel);
   const unknown = MORE_QS.filter((q) => !p.answers[q.key]);
+  const preview = selected && selected.kind !== 'navigate' ? retrieveFor(p, selected.id, 6) : [];
 
   const generate = async (ai: boolean) => {
     if (!selected) return;
@@ -99,6 +100,7 @@ export function ActionsPage({ p }: { p: Project }) {
                   <div className="body-sm"><span className="t-tertiary">Owner: </span>{selected.owners.map((o) => ROLE_INFO[o].name).join(', ')} · {selected.effort}</div>
                   <div className="mono-sm t-tertiary">{selected.babok}</div>
                 </div>
+                <div className="body-sm"><span className="t-tertiary">Product knowledge it will use: </span>{preview.length ? [...new Set(preview.map((x) => x.title))].slice(0, 4).join(' · ') : 'nothing related yet — add documents in Knowledge base'}</div>
                 {selSug && selSug.blockedBy.length > 0 && <div className="body-sm t-accent">Tip: best done after {selSug.blockedBy.map((b) => byId(b).title).join(', ')}. You can still go ahead.</div>}
                 <div className="row gap-sm wrap">
                   <Button variant="accent" disabled={busy} onClick={() => generate(false)}>{busy ? 'Generating…' : isDone(p, selected.id) && selected.kind !== 'stories' ? 'Regenerate' : selected.kind === 'navigate' ? 'Open' : selected.kind === 'stories' ? 'Generate user stories' : t('Generate')}</Button>

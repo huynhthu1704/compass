@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { go } from '../App';
 import { byId, PHASE_INFO } from '../catalog';
 import { download, figmaLayoutSpec } from '../generators';
+import { KIND_LABEL } from '../knowledge';
 import { runAction } from '../run';
 import { store, useStore } from '../store';
 import { PHASES, type Project } from '../types';
@@ -80,9 +81,16 @@ export function ArtefactPage({ p, id }: { p: Project; id: string }) {
         ) : <Markdown text={a.content} />}
       </div>
 
-      <div className="panel body-sm t-secondary">
-        <strong>Traceability:</strong> this artefact supports the business need "{p.intent}". {a.actionId === 'requirements' && p.stories.length > 0 && `It is realised by ${p.stories.length} user stories in the backlog.`}
-      </div>
+      <section className="card stack gap-md">
+        <div className="row gap-sm wrap"><h2 className="h4">Product knowledge used</h2><Badge tone="brand">{a.sources?.length || 0} sources</Badge><span className="body-sm t-tertiary">searched across all documents and initiatives of this product</span></div>
+        {a.sources?.length ? a.sources.map((s) => (
+          <button key={s.key} className="option" style={{ padding: 10 }} onClick={() => s.route && go(s.route)}>
+            <span className="mono-sm t-brand" style={{ minWidth: 28 }}>{s.key}</span>
+            <span className="stack"><span className="label-md">{s.title} <span className="t-tertiary body-sm">· {KIND_LABEL[s.kind]}</span></span><span className="body-sm t-secondary">{s.snippet.slice(0, 200)}…</span></span>
+          </button>
+        )) : <div className="body-sm t-tertiary">No related knowledge found when this was generated. Add documents to the product knowledge base, then regenerate.</div>}
+        <div className="body-sm t-tertiary">Supports the business need: “{p.intent}”.</div>
+      </section>
       <div><Button variant="danger" size="sm" onClick={() => { if (confirm('Delete this artefact?')) { store.updateProject(p.id, (x) => ({ ...x, artefacts: x.artefacts.filter((y) => y.id !== a.id) })); go(`/p/${p.id}/artefacts`); } }}>Delete artefact</Button></div>
     </div>
   );

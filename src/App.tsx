@@ -7,10 +7,14 @@ import { ArtefactPage, ArtefactsPage } from './pages/Artefacts';
 import { BacklogPage } from './pages/Backlog';
 import { KnowledgePage } from './pages/Knowledge';
 import { MonitorPage } from './pages/Monitor';
+import { AskPage } from './pages/Ask';
+import { NewProduct } from './pages/NewProduct';
 import { NewProject } from './pages/NewProject';
+import { ProductHome } from './pages/ProductHome';
+import { ProductKnowledge } from './pages/ProductKnowledge';
+import { ProductsPage } from './pages/Products';
 import { Onboarding } from './pages/Onboarding';
 import { OverviewPage } from './pages/Overview';
-import { ProjectsPage } from './pages/Projects';
 import { ReleasePage } from './pages/Release';
 import { SettingsPage } from './pages/Settings';
 import { TracePage } from './pages/Trace';
@@ -48,14 +52,23 @@ export default function App() {
 
   const pid = parts[0] === 'p' ? parts[1] : undefined;
   const project = pid ? state.projects.find((p) => p.id === pid) : undefined;
+  const prodId = parts[0] === 'prod' ? parts[1] : project?.productId;
+  const product = prodId ? state.products.find((p) => p.id === prodId) : undefined;
   const sub = parts[2] || '';
+  const psub = parts[0] === 'prod' ? sub : '';
   const alert = project ? alertState(project) : null;
+  const inits = product ? state.projects.filter((p) => p.productId === product.id) : [];
 
   let page;
-  if (parts[0] === 'new') page = <NewProject />;
+  if (parts[0] === 'new-product') page = <NewProduct />;
   else if (parts[0] === 'knowledge') page = <KnowledgePage />;
   else if (parts[0] === 'settings') page = <SettingsPage />;
-  else if (project) {
+  else if (parts[0] === 'prod' && product) {
+    if (sub === 'new') page = <NewProject prod={product} key={product.id} />;
+    else if (sub === 'knowledge') page = <ProductKnowledge prod={product} />;
+    else if (sub === 'ask') page = <AskPage prod={product} key={window.location.hash} />;
+    else page = <ProductHome prod={product} />;
+  } else if (project) {
     if (sub === 'actions') page = <ActionsPage p={project} />;
     else if (sub === 'artefacts') page = <ArtefactsPage p={project} />;
     else if (sub === 'a') page = <ArtefactPage p={project} id={parts[3]} />;
@@ -64,7 +77,7 @@ export default function App() {
     else if (sub === 'monitor') page = <MonitorPage p={project} />;
     else if (sub === 'trace') page = <TracePage p={project} />;
     else page = <OverviewPage p={project} />;
-  } else page = <ProjectsPage />;
+  } else page = <ProductsPage />;
 
   const nav = (path: string, label: string, current: boolean, extra?: React.ReactNode) => (
     <button aria-current={current ? 'page' : undefined} onClick={() => go(path)}>{label}{extra}</button>
@@ -80,24 +93,39 @@ export default function App() {
         <aside className={`sidebar ${menu ? 'open' : ''}`}>
           <div className="brand"><Logo />Compass</div>
           <nav className="nav">
-            {nav('/', t('Projects'), !pid && parts[0] !== 'knowledge' && parts[0] !== 'settings' && parts[0] !== 'new')}
+            {nav('/', t('Products'), !product && !['knowledge', 'settings'].includes(parts[0]))}
           </nav>
-          {project && (
+          {product && (
             <div className="nav-group">
-              <div className="overline t-tertiary" style={{ padding: '0 12px' }}>{project.name}</div>
+              <div className="overline t-tertiary" style={{ padding: '0 12px' }}>{product.name}</div>
               <nav className="nav">
-                {nav(`/p/${project.id}`, t('Overview'), sub === '')}
-                {nav(`/p/${project.id}/actions`, t('Next actions'), sub === 'actions')}
-                {nav(`/p/${project.id}/artefacts`, t('Artefacts'), sub === 'artefacts' || sub === 'a', <span className="t-tertiary mono-sm" style={{ marginLeft: 'auto' }}>{project.artefacts.length}</span>)}
-                {nav(`/p/${project.id}/backlog`, t('Backlog'), sub === 'backlog', <span className="t-tertiary mono-sm" style={{ marginLeft: 'auto' }}>{project.stories.length}</span>)}
-                {nav(`/p/${project.id}/release`, t('Plan & Release'), sub === 'release')}
-                {nav(`/p/${project.id}/monitor`, t('Monitor'), sub === 'monitor', alert ? <span className="badge tone-danger" style={{ marginLeft: 'auto' }}>!</span> : null)}
-                {nav(`/p/${project.id}/trace`, t('Traceability'), sub === 'trace')}
+                {nav(`/prod/${product.id}`, t('Product home'), parts[0] === 'prod' && psub === '')}
+                {nav(`/prod/${product.id}/knowledge`, t('Knowledge base'), psub === 'knowledge', <span className="t-tertiary mono-sm" style={{ marginLeft: 'auto' }}>{product.docs.length}</span>)}
+                {nav(`/prod/${product.id}/ask`, t('Ask product'), psub === 'ask')}
+                {nav(`/prod/${product.id}/new`, '+ ' + t('New initiative'), psub === 'new')}
+              </nav>
+              {inits.length > 0 && <div className="overline t-tertiary" style={{ padding: '8px 12px 0' }}>{t('Initiatives')}</div>}
+              <nav className="nav">
+                {inits.map((i) => (
+                  <div key={i.id} className="stack">
+                    {nav(`/p/${i.id}`, i.name, project?.id === i.id && sub === '', alertState(i) ? <span className="badge tone-danger" style={{ marginLeft: 'auto' }}>!</span> : null)}
+                    {project?.id === i.id && (
+                      <nav className="nav" style={{ paddingLeft: 12, borderLeft: '1px solid var(--color-border-subtle)', marginLeft: 12 }}>
+                        {nav(`/p/${i.id}/actions`, t('Next actions'), sub === 'actions')}
+                        {nav(`/p/${i.id}/artefacts`, t('Artefacts'), sub === 'artefacts' || sub === 'a', <span className="t-tertiary mono-sm" style={{ marginLeft: 'auto' }}>{i.artefacts.length}</span>)}
+                        {nav(`/p/${i.id}/backlog`, t('Backlog'), sub === 'backlog', <span className="t-tertiary mono-sm" style={{ marginLeft: 'auto' }}>{i.stories.length}</span>)}
+                        {nav(`/p/${i.id}/release`, t('Plan & Release'), sub === 'release')}
+                        {nav(`/p/${i.id}/monitor`, t('Monitor'), sub === 'monitor', alert ? <span className="badge tone-danger" style={{ marginLeft: 'auto' }}>!</span> : null)}
+                        {nav(`/p/${i.id}/trace`, t('Traceability'), sub === 'trace')}
+                      </nav>
+                    )}
+                  </div>
+                ))}
               </nav>
             </div>
           )}
           <nav className="nav" style={{ marginTop: 'auto' }}>
-            {nav('/knowledge', t('Knowledge'), parts[0] === 'knowledge')}
+            {nav('/knowledge', t('BABOK library'), parts[0] === 'knowledge')}
             {nav('/settings', t('Settings'), parts[0] === 'settings')}
           </nav>
           <div className="stack gap-sm">

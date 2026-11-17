@@ -17,11 +17,12 @@ export function OverviewPage({ p }: { p: Project }) {
   const alert = alertState(p);
   const [edit, setEdit] = useState(false);
   const w = p.metrics.length ? weekly(p.metrics) : null;
+  const prod = useStore().products.find((x) => x.id === p.productId);
 
   return (
     <div className="stack gap-2xl">
       <PageHead
-        over={`${p.domain || 'Project'} · ${p.productType} · ${p.stage}`}
+        over={`${prod?.name || 'Product'} · Initiative · ${p.productType} · ${p.stage}`}
         title={p.name}
         sub={p.intent}
         right={<>

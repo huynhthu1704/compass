@@ -2,6 +2,17 @@ import { useStore } from './store';
 
 const VI: Record<string, string> = {
   'Projects': 'Dự án',
+  'Products': 'Sản phẩm',
+  'Your products': 'Sản phẩm của bạn',
+  'New product': 'Sản phẩm mới',
+  'Product home': 'Trang sản phẩm',
+  'Knowledge base': 'Kho tri thức',
+  'Ask product': 'Hỏi sản phẩm',
+  'Ask': 'Hỏi',
+  'New initiative': 'Sáng kiến mới',
+  'Initiatives': 'Các sáng kiến',
+  'Product knowledge': 'Tri thức sản phẩm',
+  'BABOK library': 'Thư viện BABOK',
   'Overview': 'Tổng quan',
   'Next actions': 'Hành động tiếp theo',
   'Artefacts': 'Tài liệu đầu ra',

@@ -2,6 +2,16 @@
 
 **From business intent to measurable outcome.** A guided workspace for Business Analysts, Product Owners and Delivery Managers that goes from business need → analysis → design → user stories → rollout → usage monitoring.
 
+## Product-based workspace
+- **Products are the top level.** You can start a product **from scratch** with an idea and a first business intent. Or you can **import an existing product** by uploading its knowledge: PDF, Word, Markdown, TXT, CSV, JSON or HTML, or pasted text. Compass then auto-builds a **product profile** (summary, personas, modules, KPIs, constraints, glossary), which you can edit or rebuild with Claude.
+- **Initiatives live inside a product.** Each initiative is one business intent that moves through the six phases.
+- **One knowledge base per product.** Compass searches it with BM25, entirely in the browser. It covers:
+  - uploaded documents and the product profile;
+  - every initiative's intents, artefacts, user stories and change logs.
+
+  Suggestions, artefact generation, story writing and **Ask your product** all use the whole product, never just one module. Each artefact lists the sources it used (K1, K2…), with links back to them.
+- The new-initiative wizard shows what Compass found in the product as you type. It also pre-fills answers from personas, KPIs, constraints, research, support data and past releases.
+
 ## What it does
 
 1. **Ask the business intent.** It asks "What outcome does the business want?" and nudges you if you describe a solution instead of an outcome. Then it asks up to five clarifying questions, and you can skip any of them.
@@ -54,13 +64,14 @@ npm run build    # production build in dist/
 Every push to `main` is deployed to **GitHub Pages** by `.github/workflows/deploy.yml`. One-time setup: in the repo, go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
 
 ## Tech
-React 19, TypeScript and Vite. No backend: data lives in `localStorage`. Hash routing, so it works on GitHub Pages.
+React 19, TypeScript and Vite. No backend: data lives in the browser (IndexedDB), so large knowledge bases fit. PDF and Word files are parsed client-side with pdf.js and mammoth. Hash routing, so it works on GitHub Pages.
 
 ```
 src/
+  knowledge.ts    # ingest files, chunk, product-wide BM25 search, profile extraction
   catalog.ts      # 28 actions: phase, BABOK ref, owner, prerequisites
   engine.ts       # next-action rules, phase detection, usage alerts
   generators.ts   # artefact templates, user-story generator, exports
   ai.ts           # optional Claude API generation
-  pages/          # Projects, New project wizard, Overview, Actions, Artefacts, Backlog, Release, Monitor, Traceability, Knowledge, Settings
+  pages/          # Products, New product, Product home, Knowledge base, Ask, New initiative wizard, Overview, Actions, Artefacts, Backlog, Release, Monitor, Traceability, Knowledge, Settings
 ```

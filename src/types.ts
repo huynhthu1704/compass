@@ -13,6 +13,17 @@ export interface Answers {
   tried?: string;         // what has been tried
 }
 
+export interface SourceRef {
+  key: string;            // K1, K2…
+  chunkId: string;
+  kind: ChunkKind;
+  title: string;          // document / artefact title
+  snippet: string;
+  route?: string;         // hash route to open the source
+}
+
+export type ChunkKind = 'doc' | 'artefact' | 'story' | 'change' | 'intent' | 'profile';
+
 export interface Artefact {
   id: string;
   actionId: string;
@@ -24,6 +35,7 @@ export interface Artefact {
   updatedAt: string;
   version: number;
   ai?: boolean;
+  sources?: SourceRef[];
 }
 
 export interface Story {
@@ -59,8 +71,47 @@ export interface MetricRow {
   retained: number;
 }
 
+export type DocCategory = 'Product spec / PRD' | 'User research' | 'Analytics & KPIs' | 'Process / SOP' | 'Support & feedback' | 'Technical / architecture' | 'Glossary' | 'Business strategy' | 'Release notes' | 'Other';
+export const DOC_CATEGORIES: DocCategory[] = ['Product spec / PRD', 'User research', 'Analytics & KPIs', 'Process / SOP', 'Support & feedback', 'Technical / architecture', 'Glossary', 'Business strategy', 'Release notes', 'Other'];
+
+export interface KDoc {
+  id: string;
+  title: string;
+  category: DocCategory;
+  content: string;
+  fileName?: string;
+  addedAt: string;
+}
+
+export interface Profile {
+  summary: string;
+  personas: string[];
+  modules: string[];
+  kpis: string[];
+  constraints: string[];
+  glossary: { term: string; def: string }[];
+  builtAt?: string;
+  ai?: boolean;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  domain: string;
+  productType: 'B2B' | 'B2C' | 'Internal';
+  stage: 'Idea' | 'Existing product' | 'Live feature';
+  origin: 'scratch' | 'imported';
+  docs: KDoc[];
+  profile: Profile;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** An initiative: one business intent inside a product, moving through the six phases. */
 export interface Project {
   id: string;
+  productId: string;
   name: string;
   intent: string;
   domain: string;
@@ -90,5 +141,6 @@ export interface Settings {
 
 export interface State {
   settings: Settings;
+  products: Product[];
   projects: Project[];
 }

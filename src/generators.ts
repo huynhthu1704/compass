@@ -1,6 +1,6 @@
 import { byId } from './catalog';
 import { weekly } from './engine';
-import { uid } from './store';
+import { store, uid } from './store';
 import type { Project, Story } from './types';
 
 const TBC = (s?: string, hint = 'to confirm') => (s && s.trim() ? s.trim() : `_[${hint}]_`);
@@ -12,7 +12,8 @@ export const act = (f: string) => { const l = f.charAt(0).toLowerCase() + f.slic
 const singular = (s: string) => s.replace(/(\w+)s$/i, (m, w) => (/(ss|us)$/i.test(m) ? m : w));
 
 export function ctx(p: Project) {
-  const who = list(p.answers.affected);
+  const prof = store.get().products.find((x) => x.id === p.productId)?.profile;
+  const who = list(p.answers.affected).length ? list(p.answers.affected) : (prof?.personas || []).slice(0, 4);
   const features = p.features.length ? p.features : [`Core flow to ${p.intent.replace(/\.$/, '').toLowerCase()}`];
   return {
     intent: p.intent.trim(),
@@ -20,7 +21,7 @@ export function ctx(p: Project) {
     persona: who[0] ? singular(who[0]).toLowerCase() : 'customer',
     pain: TBC(p.answers.pain, 'current pain & evidence — to confirm'),
     metric: TBC(p.answers.metric, 'success metric — to confirm'),
-    constraints: TBC(p.answers.constraints, 'constraints — to confirm'),
+    constraints: TBC(p.answers.constraints || prof?.constraints.slice(0, 2).join('; '), 'constraints — to confirm'),
     tried: TBC(p.answers.tried, 'previous attempts — to confirm'),
     features,
     domain: p.domain || 'the business',
@@ -336,6 +337,7 @@ ${fr.join('\n')}
 | ${c.persona} | Primary user affected by this change | | PO |
 | Activation | A user who completes the key action of the new feature at least once | "usage" (too vague) | Data |
 | Business need | ${c.intent} | | Sponsor |
+${(store.get().products.find((x) => x.id === p.productId)?.profile.glossary || []).map((g) => `| ${g.term} | ${g.def} | | Product glossary |`).join('\n')}
 | _[term]_ | _[definition]_ | | |
 
 Tip: add every acronym you hear in interviews; confirm definitions with the business owner.
