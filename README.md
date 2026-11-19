@@ -1,77 +1,58 @@
-# Compass
+# Compass — AI dev portal
 
-**From business intent to measurable outcome.** A guided workspace for Business Analysts, Product Owners and Delivery Managers that goes from business need → analysis → design → user stories → rollout → usage monitoring.
+**Idea → Requirements → Test cases → Code → Release**, run by agents you can trust, on your own GitHub repos.
 
-## Product-based workspace
-- **Products are the top level.** You can start a product **from scratch** with an idea and a first business intent. Or you can **import an existing product** by uploading its knowledge: PDF, Word, Markdown, TXT, CSV, JSON or HTML, or pasted text. Compass then auto-builds a **product profile** (summary, personas, modules, KPIs, constraints, glossary), which you can edit or rebuild with Claude.
-- **Initiatives live inside a product.** Each initiative is one business intent that moves through the six phases.
-- **One knowledge base per product.** Compass searches it with BM25, entirely in the browser. It covers:
-  - uploaded documents and the product profile;
-  - every initiative's intents, artefacts, user stories and change logs.
-
-  Suggestions, artefact generation, story writing and **Ask your product** all use the whole product, never just one module. Each artefact lists the sources it used (K1, K2…), with links back to them.
-- The new-initiative wizard shows what Compass found in the product as you type. It also pre-fills answers from personas, KPIs, constraints, research, support data and past releases.
+Live: https://huynhthu1704.github.io/compass/
 
 ## What it does
+- **Manages your GitHub projects.** You can create a new repo from an idea, or import any existing repo.
+- **Runs a five-stage pipeline.** Each stage has its own agent and a human approval gate:
 
-1. **Ask the business intent.** It asks "What outcome does the business want?" and nudges you if you describe a solution instead of an outcome. Then it asks up to five clarifying questions, and you can skip any of them.
-2. **Suggest next actions.** A rule-based engine (BABOK v3 plus real-world BA practice) suggests next actions. It looks at your phase, the artefacts you already have, gaps, your role and the size of the change. **Exactly one** action is marked *Recommended*. Examples of the rules:
-   - stakeholders before elicitation;
-   - success metrics before the backlog;
-   - a tracking plan before release;
-   - no BRD or full business case for small changes;
-   - monitoring actions move to the top when usage drops.
-3. **Generate the result.** You pick an action and Compass produces an editable artefact, with versioning and approval. Outputs include:
-   - problem statement, stakeholder map with RACI, SWOT, root cause, as-is and to-be processes (Mermaid);
-   - KPI tree, scope with MoSCoW, BR/FR/NFR requirements, glossary, BRD;
-   - solution options, a **Figma design brief and screen spec** (plus a JSON layout spec), data model, analytics tracking plan;
-   - **detailed user stories** (Gherkin acceptance criteria, tracking events, INVEST check);
-   - prioritisation and story map, release plan, RAID log, test scenarios;
-   - rollout plan, UAT, comms and training;
-   - KPI review, feedback plan, and a scale / iterate / roll back recommendation.
-4. **Release & monitor.** Release and monitoring tools:
-   - a go/no-go checklist and a staged rollout;
-   - a change log that is drawn on the usage charts;
-   - an adoption funnel (exposed → tried → activated → retained);
-   - week-on-week alerts;
-   - a traceability matrix from the need to stories, releases and metrics.
+  | Stage | Agent | Output | Gate |
+  |---|---|---|---|
+  | Idea | Ideation agent | Outcome-focused brief | PO approves |
+  | Requirements | Requirements agent | REQ-xxx user stories with Given/When/Then AC | PO/BA approve |
+  | Test cases | Test design agent | TC-xxx traced to requirements | QA approves |
+  | Build | Coding agent + reviewer | Change set → branch → pull request | Guardrails pass + human approves the diff |
+  | Release | Release agent | Checks CI, merges PRs, tags vX.Y.Z, deploys to GitHub Pages | DM/PO confirm |
 
-### Roles
-Business Analyst, Product Owner, Delivery Manager, Sponsor, UX, Developer, QA, Ops/Change, Data. Your role changes which actions come first.
+- **Lets anyone continue the work.** Every repo gets the **Compass Framework**, so any role, human or AI, can pick up the project with or without the portal.
 
-### Optional AI
-It works fully offline, using templates filled with your project context. If you add your own Anthropic API key in **Settings**, "✦ Generate with Claude" writes artefacts and user stories specific to your project. The key is stored only in your browser.
+## Agent architecture
+1. **Agent Harness.** Each agent has its own system prompt, tool allow-list and turn budget. Every run is fully traced (plan → retrieve → tool calls → model turns → checks), and a human approval gate sits in front of every spec change and every GitHub write.
+2. **RAG.** Compass indexes the repo files and `compass/spec.json`, then retrieves the most relevant chunks with BM25 in the browser. Agents receive these chunks as `[S1..Sn]` and cite them in their answers.
+3. **Tool calling.** Agents call tools through the Claude `tool_use` loop: `search_knowledge`, `list_files`, `read_file`, `save_idea`, `save_requirements`, `save_tests`, `propose_file_change` and `finish`. The model only *proposes* changes. All GitHub writes (branch, commit, PR, merge, release) are done by the harness after approval.
+4. **Evaluation & Guardrails.**
+   - Before a run: a prompt-injection scan of the retrieved content.
+   - On every change set: secret scanning, forbidden and protected paths, change-size limits, deletions, dependency changes, and requirement traceability.
+   - Quality evals: story format, testable AC, ambiguity, test coverage, negative-path tests, and whether code comes with tests. In live mode, an LLM-as-judge reviewer also scores each change set.
+   - In CI: `compass/check-spec.mjs` plus your tests run on every PR.
 
-### Exports
-Markdown for each artefact or the whole project, CSV of stories (import into Jira or Azure DevOps), a Figma layout spec as JSON, and a JSON backup and restore.
+## Compass Framework (installed into each repo)
+```
+AGENTS.md / CLAUDE.md            handover contract for any human or AI agent
+compass/spec.json                source of truth: idea, REQ-xxx, TC-xxx, ADR-xxx
+compass/*.md                     generated views + handover.md (next step per role)
+compass/guardrails.json          rules agents must obey
+compass/check-spec.mjs           CI traceability check
+.github/workflows/compass-ci.yml     spec check + npm test + build on PRs
+.github/workflows/compass-deploy.yml GitHub Pages deploy on main
+.github/pull_request_template.md, ISSUE_TEMPLATE/
+```
 
-## Design system
-Compass Design System v0.1 in Figma: https://www.figma.com/design/5e1GvRGmOSfiPS8HeoTkrr
-The tokens in `src/index.css` mirror the Figma variables:
-- colours, including the six phase colours, with light and dark modes;
-- spacing on a 4-pt grid, radius and elevation.
+## Connections
+Everything runs in the browser, and keys stay on your device:
+- **GitHub fine-grained token.** Needs these permissions:
+  - Read & write on Contents, Pull requests, Workflows, Actions and Pages.
+  - Read & write on Administration, only if you want Compass to create new repos.
+- **Anthropic API key.** Without a key, every agent runs in **demo mode**: same harness, trace, guardrails and evals, but with template outputs.
 
-Fonts: Be Vietnam Pro (UI) and JetBrains Mono (story IDs and metrics).
-
-## Run locally
+## Develop
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm run build    # production build in dist/
+npm run dev
+npm run build
 ```
+Source map: `src/harness.ts` (agents & tool loop), `src/rag.ts`, `src/guardrails.ts`, `src/framework.ts`, `src/github.ts`, `src/pages/*`.
 
-## Deploy
-Every push to `main` is deployed to **GitHub Pages** by `.github/workflows/deploy.yml`. One-time setup: in the repo, go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
-
-## Tech
-React 19, TypeScript and Vite. No backend: data lives in the browser (IndexedDB), so large knowledge bases fit. PDF and Word files are parsed client-side with pdf.js and mammoth. Hash routing, so it works on GitHub Pages.
-
-```
-src/
-  knowledge.ts    # ingest files, chunk, product-wide BM25 search, profile extraction
-  catalog.ts      # 28 actions: phase, BABOK ref, owner, prerequisites
-  engine.ts       # next-action rules, phase detection, usage alerts
-  generators.ts   # artefact templates, user-story generator, exports
-  ai.ts           # optional Claude API generation
-  pages/          # Products, New product, Product home, Knowledge base, Ask, New initiative wizard, Overview, Actions, Artefacts, Backlog, Release, Monitor, Traceability, Knowledge, Settings
-```
+The previous version (product knowledge base) is kept on branch `archive/v2-product-knowledge`.

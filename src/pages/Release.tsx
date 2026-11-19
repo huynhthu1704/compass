@@ -1,86 +1,73 @@
-import { useState } from 'react';
-import { go } from '../App';
-import { store, today, uid } from '../store';
-import type { ChangeEntry, Project } from '../types';
-import { Badge, Button, Field, PageHead, PhaseChip } from '../ui';
+import { useEffect, useState } from 'react';
+import { github } from '../github';
+import { nextVersion, release } from '../harness';
+import { store, useStore } from '../store';
+import type { Project } from '../types';
+import { ago, Badge, Button, PageHead, useAction } from '../ui';
 
-const CHECKS = [
-  ['stories', 'All Must stories accepted by the PO'],
-  ['uat', 'UAT signed off by business owner'],
-  ['events', 'Tracking events verified in production'],
-  ['support', 'Support trained, FAQ published'],
-  ['rollback', 'Rollback / feature flag tested'],
-  ['comms', 'User & stakeholder comms scheduled'],
-  ['oncall', 'On-call and incident path agreed'],
-];
-
-const TYPE_TONE = { release: 'success', change: 'info', experiment: 'accent', rollback: 'danger' } as const;
+type WF = Awaited<ReturnType<typeof github.workflowRuns>>;
 
 export function ReleasePage({ p }: { p: Project }) {
-  const [form, setForm] = useState<Omit<ChangeEntry, 'id'>>({ date: today(), title: '', type: p.changelog.some((c) => c.type === 'release') ? 'change' : 'release', rollout: 5 });
-  const log = [...p.changelog].sort((a, b) => b.date.localeCompare(a.date));
-  const rollout = log[0]?.rollout ?? 0;
-  const done = CHECKS.filter(([k]) => p.checklist[k]).length;
-  const plans = p.artefacts.filter((a) => ['release-plan', 'rollout-plan', 'raid-log', 'uat-plan', 'comms-training', 'test-scenarios'].includes(a.actionId));
+  const { settings } = useStore();
+  const ready = p.runs.filter((r) => r.agent === 'coder' && r.status === 'approved');
+  const [sel, setSel] = useState<string[]>(ready.map((r) => r.id));
+  const [log, setLog] = useState<string[]>([]);
+  const [wf, setWf] = useState<WF | null>(null);
+  const { busy, run } = useAction();
+  const live = !!settings.githubToken && !!p.repo && !p.demo;
+  const tag = nextVersion(p.releases.map((r) => r.tag));
 
-  const add = () => {
-    if (!form.title.trim()) return;
-    store.updateProject(p.id, (x) => ({ ...x, changelog: [...x.changelog, { ...form, id: uid() }] }));
-    setForm({ ...form, title: '', type: 'change' });
-  };
+  useEffect(() => { if (live) github.workflowRuns(settings.githubToken!, p.repo!).then(setWf).catch(() => setWf([])); }, [live, p.releases.length, settings.githubToken, p.repo]);
+
+  const ship = () => run(async () => {
+    setLog([]);
+    const t = await release(p.id, sel, (s) => setLog((l) => [...l, s]));
+    setLog((l) => [...l, `✓ Released ${t}`]);
+    return `Released ${t}`;
+  });
 
   return (
     <div className="stack gap-xl">
-      <PageHead over="Build → Release" title="Plan & Release" sub="Plan delivery, decide go / no-go, and log every rollout step. The change log annotates your Monitor charts so you can see cause and effect." />
+      <PageHead over="Stage 5 · Release · owner: Delivery Manager / PO" title="Release" sub="One click: verify CI on each agent PR, squash-merge, mark requirements Done, update the spec & handover, tag a GitHub release — the deploy workflow publishes to GitHub Pages."
+        right={<>
+          {p.repo?.pagesUrl && <a className="btn secondary sm" href={p.repo.pagesUrl} target="_blank" rel="noreferrer">Live site ↗</a>}
+          {live && !p.repo?.pagesUrl && <Button size="sm" variant="secondary" disabled={busy} onClick={() => run(async () => { const pg = await github.enablePages(settings.githubToken!, p.repo!); store.update(p.id, (x) => ({ ...x, repo: x.repo && { ...x.repo, pagesUrl: pg.html_url } })); return 'GitHub Pages enabled'; })}>Enable GitHub Pages</Button>}
+        </>} />
+
+      <section className="card pad-xl stack gap-md">
+        <div className="row between wrap gap-sm"><h2 className="h3">Ready to release</h2><Badge tone="brand">next: {tag}</Badge></div>
+        {!ready.length ? <div className="body-sm t-tertiary">No approved agent changes waiting. Build something in the Build stage first.</div> : ready.map((r) => (
+          <label key={r.id} className="option" style={{ padding: 10 }}>
+            <input type="checkbox" checked={sel.includes(r.id)} onChange={(e) => setSel((s) => (e.target.checked ? [...s, r.id] : s.filter((x) => x !== r.id)))} />
+            <span className="mono t-brand">{(r.reqIds || []).join(', ')}</span><span className="grow">{r.goal}</span>
+            {r.prNumber && <Badge tone="brand">PR #{r.prNumber}</Badge>}
+            <Badge tone={r.guardrails.some((g) => g.level === 'block') ? 'danger' : 'success'}>guardrails {r.guardrails.some((g) => g.level === 'block') ? 'blocked' : 'passed'}</Badge>
+          </label>
+        ))}
+        <div className="row gap-sm">
+          <Button variant="accent" disabled={busy || !sel.length} onClick={() => confirm(`Release ${tag} with ${sel.length} change(s)? This merges the PRs into ${p.repo?.defaultBranch || 'main'}.`) && ship()}>{busy ? 'Releasing…' : `Release ${tag}`}</Button>
+          {!live && <span className="body-sm t-tertiary">{p.demo ? 'Demo — merge, tag and deploy are simulated.' : 'Connect GitHub to release for real.'}</span>}
+        </div>
+        {log.length > 0 && <div className="panel mono-sm stack gap-xs">{log.map((l, i) => <span key={i}>› {l}</span>)}</div>}
+      </section>
 
       <div className="grid-2" style={{ alignItems: 'start' }}>
-        <section className="card pad-xl stack gap-md">
-          <div className="row between"><h2 className="h3">Go / no-go</h2><Badge tone={done === CHECKS.length ? 'success' : 'warning'}>{done}/{CHECKS.length}</Badge></div>
-          {CHECKS.map(([k, l]) => (
-            <label key={k} className="row gap-sm" style={{ cursor: 'pointer' }}>
-              <input type="checkbox" checked={!!p.checklist[k]} onChange={(e) => store.updateProject(p.id, (x) => ({ ...x, checklist: { ...x.checklist, [k]: e.target.checked } }))} />
-              <span className="body-sm">{l}</span>
-            </label>
-          ))}
-          <div className={`panel body-sm ${done === CHECKS.length ? 't-success' : 't-secondary'}`}>{done === CHECKS.length ? 'Ready to go — log the release below.' : 'Not ready yet — complete the checklist before increasing rollout.'}</div>
+        <section className="card pad-xl stack gap-sm">
+          <h2 className="h3">Releases</h2>
+          {p.releases.length ? p.releases.map((r) => (
+            <div key={r.tag + r.date} className="row gap-sm"><Badge tone="success">{r.tag}</Badge><span className="body-sm grow">{r.prs.filter(Boolean).map((n) => `#${n}`).join(', ') || '—'}</span><span className="mono-sm t-tertiary">{ago(r.date)}</span>{r.url && <a className="btn ghost sm" href={r.url} target="_blank" rel="noreferrer">↗</a>}</div>
+          )) : <div className="body-sm t-tertiary">No releases yet.</div>}
         </section>
-
-        <section className="card pad-xl stack gap-md">
-          <h2 className="h3">Rollout</h2>
-          <div className="row gap-md"><span className="kpi"><span className="v">{rollout}%</span></span><span className="body-sm t-tertiary">of users have the feature (latest log entry)</span></div>
-          <div className="progress" style={{ height: 10 }}><span style={{ width: `${rollout}%`, background: 'var(--color-phase-release-fg)' }} /></div>
-          <div className="row gap-xs wrap">{[0, 5, 25, 50, 100].map((n) => <Badge key={n} tone={rollout >= n ? 'success' : 'neutral'}>{n}%</Badge>)}</div>
-          <h3 className="h4" style={{ marginTop: 8 }}>Plans</h3>
-          {plans.length ? plans.map((a) => <button key={a.id} className="option" onClick={() => go(`/p/${p.id}/a/${a.id}`)}><PhaseChip phase={a.phase} /><span className="label-md">{a.title}</span></button>)
-            : <div className="body-sm t-tertiary">No delivery plans yet.</div>}
-          <div className="row gap-sm wrap">
-            <Button size="sm" variant="secondary" onClick={() => go(`/p/${p.id}/actions?phase=build`)}>Build actions</Button>
-            <Button size="sm" variant="secondary" onClick={() => go(`/p/${p.id}/actions?phase=release`)}>Release actions</Button>
-          </div>
+        <section className="card pad-xl stack gap-sm">
+          <h2 className="h3">CI / deploy runs</h2>
+          {!live ? <div className="body-sm t-tertiary">Available for connected GitHub projects.</div> : !wf ? <div className="body-sm t-tertiary">Loading…</div> : wf.length ? wf.map((w) => (
+            <a key={w.id} href={w.html_url} target="_blank" rel="noreferrer" className="option" style={{ padding: 8, textDecoration: 'none', color: 'inherit' }}>
+              <Badge tone={w.conclusion === 'success' ? 'success' : w.conclusion ? 'danger' : 'warning'}>{w.conclusion || w.status}</Badge>
+              <span className="body-sm grow">{w.name} · {w.head_branch}</span><span className="mono-sm t-tertiary">{ago(w.created_at)}</span>
+            </a>
+          )) : <div className="body-sm t-tertiary">No workflow runs yet.</div>}
         </section>
       </div>
-
-      <section className="stack gap-md">
-        <h2 className="h3">Change log</h2>
-        <div className="card stack gap-md">
-          <div className="grid-2" style={{ gridTemplateColumns: '150px 1fr 150px 110px auto', alignItems: 'end', gap: 12 }}>
-            <Field label="Date"><input className="input" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
-            <Field label="What changed"><input className="input" value={form.title} placeholder="e.g. Guest checkout to 25%" onChange={(e) => setForm({ ...form, title: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} /></Field>
-            <Field label="Type"><select className="select" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as ChangeEntry['type'] })}><option value="release">Release</option><option value="change">Change</option><option value="experiment">Experiment</option><option value="rollback">Rollback</option></select></Field>
-            <Field label="Rollout %"><input className="input" type="number" min={0} max={100} value={form.rollout} onChange={(e) => setForm({ ...form, rollout: Math.max(0, Math.min(100, +e.target.value)) })} /></Field>
-            <Button onClick={add} disabled={!form.title.trim()}>Log</Button>
-          </div>
-        </div>
-        {log.length ? (
-          <div className="tbl-wrap"><table className="tbl">
-            <thead><tr><th>Date</th><th>Type</th><th>Change</th><th>Rollout</th><th /></tr></thead>
-            <tbody>{log.map((c) => (
-              <tr key={c.id}><td className="mono">{c.date}</td><td><Badge tone={TYPE_TONE[c.type]}>{c.type}</Badge></td><td>{c.title}</td><td className="mono">{c.rollout}%</td>
-                <td><Button size="sm" variant="danger" onClick={() => store.updateProject(p.id, (x) => ({ ...x, changelog: x.changelog.filter((y) => y.id !== c.id) }))}>Remove</Button></td></tr>
-            ))}</tbody>
-          </table></div>
-        ) : <div className="empty">Nothing logged yet. Logging the first release unlocks the Monitor phase.</div>}
-      </section>
     </div>
   );
 }

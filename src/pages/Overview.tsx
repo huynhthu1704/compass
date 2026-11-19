@@ -1,116 +1,85 @@
-import { useState } from 'react';
 import { go } from '../App';
-import { PHASE_INFO, ROLE_INFO } from '../catalog';
-import { alertState, currentPhase, phaseProgress, suggest, weekly } from '../engine';
-import { download, projectToMarkdown } from '../generators';
-import { useT } from '../i18n';
+import { handoverMd } from '../framework';
+import { commitSpec, installFramework, pullSpec } from '../harness';
+import { currentStage, stageStatus } from '../progress';
 import { store, useStore } from '../store';
-import { PHASES, type Project } from '../types';
-import { ActionCard, Badge, Button, Field, PageHead, PhaseChip } from '../ui';
+import { STAGES, type Project } from '../types';
+import { STATUS_TONE } from '../components/RunView';
+import { agent } from '../harness';
+import { ago, Badge, Button, Markdown, PageHead, STAGE_INFO, StageChip, useAction } from '../ui';
+
+const NEXT: Record<string, string> = {
+  idea: 'Shape the idea with the Ideation agent and approve the brief.',
+  requirements: 'Generate requirements, then approve them (PO/BA).',
+  tests: 'Generate test cases so every requirement is covered (QA).',
+  build: 'Pick approved requirements and let the coding agent open a pull request.',
+  release: 'Check CI on agent PRs, then merge, tag and deploy in one click.',
+};
 
 export function OverviewPage({ p }: { p: Project }) {
-  const t = useT();
   const { settings } = useStore();
-  const cur = currentPhase(p);
-  const sug = suggest(p, settings.role);
-  const rec = sug.find((s) => s.recommended);
-  const alert = alertState(p);
-  const [edit, setEdit] = useState(false);
-  const w = p.metrics.length ? weekly(p.metrics) : null;
-  const prod = useStore().products.find((x) => x.id === p.productId);
+  const st = stageStatus(p), cur = currentStage(p);
+  const { busy, run } = useAction();
+  const connected = !!settings.githubToken && !!p.repo && !p.demo;
 
   return (
     <div className="stack gap-2xl">
       <PageHead
-        over={`${prod?.name || 'Product'} · Initiative · ${p.productType} · ${p.stage}`}
+        over={p.repo ? `${p.repo.owner}/${p.repo.name}` : p.demo ? 'Demo project · not on GitHub' : 'Local project · not on GitHub'}
         title={p.name}
-        sub={p.intent}
+        sub={p.spec.idea.intent || p.description}
         right={<>
-          <Button variant="secondary" size="sm" onClick={() => setEdit(!edit)}>{edit ? 'Close' : 'Edit context'}</Button>
-          <Button variant="ghost" size="sm" onClick={() => download(`${p.name}.md`, projectToMarkdown(p))}>{t('Export')} .md</Button>
+          {p.repo && <a className="btn secondary sm" href={p.repo.htmlUrl} target="_blank" rel="noreferrer">Repository ↗</a>}
+          {p.repo?.pagesUrl && <a className="btn secondary sm" href={p.repo.pagesUrl} target="_blank" rel="noreferrer">Live site ↗</a>}
+          <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Remove "${p.name}" from Compass? (The GitHub repo is not touched.)`)) { store.remove(p.id); go('/'); } }}>Remove</Button>
         </>}
       />
 
-      {edit && <EditContext p={p} />}
-
       <section className="stack gap-md">
-        <div className="row between"><h2 className="h3">{t('Life cycle')}</h2><span className="body-sm t-tertiary">Viewing as {ROLE_INFO[settings.role!].name}</span></div>
-        <div className="grid-6">
-          {PHASES.map((ph) => {
-            const pr = phaseProgress(p, ph);
-            return (
-              <button key={ph} className={`action-card ${ph === cur ? 'selected' : ''}`} onClick={() => go(`/p/${p.id}/actions?phase=${ph}`)} style={{ gap: 8 }}>
-                <PhaseChip phase={ph} active={ph === cur} done={pr.done === pr.total} />
-                <div className="progress"><span style={{ width: `${(pr.done / pr.total) * 100}%` }} /></div>
-                <div className="mono-sm t-tertiary">{pr.done}/{pr.total} done</div>
-                <div className="body-sm t-secondary">{PHASE_INFO[ph].roles}</div>
-              </button>
-            );
-          })}
+        <h2 className="h3">Pipeline</h2>
+        <div className="grid-6" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
+          {STAGES.map((s) => (
+            <button key={s} className={`action-card ${s === cur ? 'selected' : ''}`} onClick={() => go(`/p/${p.id}/${s}`)} style={{ gap: 6 }}>
+              <StageChip stage={s} active={s === cur} done={st[s].done} />
+              <div className="body-sm t-secondary">{st[s].note}</div>
+              <div className="mono-sm t-tertiary">{STAGE_INFO[s].agent} · {STAGE_INFO[s].role}</div>
+            </button>
+          ))}
+        </div>
+        <div className="card row gap-md wrap" style={{ background: 'var(--color-bg-accent-subtle)', borderColor: 'var(--color-bg-accent)' }}>
+          <Badge tone="accent">★ Next step</Badge>
+          <span className="grow">{NEXT[cur]}</span>
+          <Button variant="accent" onClick={() => go(`/p/${p.id}/${cur}`)}>Go to {STAGE_INFO[cur].name}</Button>
         </div>
       </section>
 
-      {alert && (
-        <div className="card stack gap-sm" style={{ borderColor: 'var(--color-border-danger)', background: 'var(--color-bg-danger-subtle)' }}>
-          <div className="h4 t-danger">Usage alert: activations down {Math.abs(alert.drop).toFixed(0)}% week-on-week</div>
-          <div className="body-sm t-secondary">Threshold is {p.alertThreshold}%. Compass moved investigation actions to the top of your list.</div>
-          <div><Button size="sm" variant="secondary" onClick={() => go(`/p/${p.id}/monitor`)}>Open Monitor</Button></div>
-        </div>
-      )}
-
       <div className="grid-2" style={{ alignItems: 'start' }}>
-        <section className="stack gap-md">
-          <h2 className="h3">{t('Recommended next action')}</h2>
-          {rec ? <ActionCard action={rec.action} reason={rec.reason} recommended urgent={rec.urgent} onClick={() => go(`/p/${p.id}/actions?select=${rec.action.id}`)} /> : <div className="empty">All actions done. 🎉</div>}
-          <div className="stack gap-sm">
-            {sug.filter((s) => !s.recommended && !s.blockedBy.length && s.score < 80).slice(0, 3).map((s) => (
-              <button key={s.action.id} className="option" onClick={() => go(`/p/${p.id}/actions?select=${s.action.id}`)}>
-                <PhaseChip phase={s.action.phase} />
-                <span className="stack"><span className="label-md">{s.action.title}</span><span className="body-sm t-tertiary">{s.action.effort} · {s.action.owners.join(', ')}</span></span>
-              </button>
-            ))}
-            <div><Button variant="ghost" onClick={() => go(`/p/${p.id}/actions`)}>See all actions →</Button></div>
+        <section className="card pad-xl stack gap-md">
+          <div className="row between"><h2 className="h3">Compass Framework</h2>{p.frameworkInstalled ? <Badge tone="success">installed</Badge> : <Badge tone="warning">not installed</Badge>}</div>
+          <p className="body-sm t-secondary">The framework makes the repo self-explaining for any role or agent: <span className="code-inline">AGENTS.md</span>, <span className="code-inline">compass/spec.json</span>, generated docs, guardrails, a traceability check in CI and a Pages deploy workflow.</p>
+          {p.dirty && <div className="panel body-sm t-accent">Spec has local changes not yet committed to GitHub.</div>}
+          <div className="row gap-sm wrap">
+            {!p.frameworkInstalled && <Button disabled={!connected || busy} onClick={() => run(() => installFramework(p.id, { starter: false, direct: false }))}>Install via pull request</Button>}
+            <Button variant={p.dirty ? 'accent' : 'secondary'} disabled={!connected || busy || !p.frameworkInstalled} onClick={() => run(async () => { const url = await commitSpec(p.id); return `Spec committed: ${url}`; })}>Commit spec to GitHub</Button>
+            <Button variant="ghost" disabled={!connected || busy} onClick={() => run(async () => { if (p.dirty && !confirm('Discard local spec changes and load compass/spec.json from GitHub?')) return; await pullSpec(p.id); return 'Spec loaded from GitHub'; })}>Pull spec from GitHub</Button>
           </div>
+          {!connected && <div className="body-sm t-tertiary">{p.demo ? 'Demo project — GitHub actions are simulated.' : 'Connect GitHub and link a repo to sync.'}</div>}
+          <h3 className="h4" style={{ marginTop: 8 }}>Recent agent runs</h3>
+          {p.runs.length ? p.runs.slice(0, 6).map((r) => (
+            <button key={r.id} className="option" style={{ padding: 10 }} onClick={() => go(`/p/${p.id}/runs/${r.id}`)}>
+              <Badge tone={STATUS_TONE[r.status]}>{r.status.replace('-', ' ')}</Badge>
+              <span className="stack grow"><span className="label-md">{agent(r.agent).name}</span><span className="body-sm t-tertiary">{r.goal.slice(0, 80)}</span></span>
+              <span className="mono-sm t-tertiary">{ago(r.startedAt)}</span>
+            </button>
+          )) : <div className="body-sm t-tertiary">No runs yet.</div>}
         </section>
 
-        <section className="stack gap-md">
-          <h2 className="h3">Project health</h2>
-          <div className="card grid-2" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-            <div className="kpi"><span className="label-sm t-tertiary">Artefacts</span><span className="v">{p.artefacts.length}</span><span className="body-sm t-tertiary">{p.artefacts.filter((a) => a.status === 'approved').length} approved</span></div>
-            <div className="kpi"><span className="label-sm t-tertiary">User stories</span><span className="v">{p.stories.length}</span><span className="body-sm t-tertiary">{p.stories.filter((s) => s.status === 'Done').length} done</span></div>
-            <div className="kpi"><span className="label-sm t-tertiary">Releases logged</span><span className="v">{p.changelog.filter((c) => c.type === 'release').length}</span><span className="body-sm t-tertiary">{p.changelog.length} changes</span></div>
-            <div className="kpi"><span className="label-sm t-tertiary">Activation rate (7d)</span><span className="v">{w ? `${w.activationRate.toFixed(1)}%` : '–'}</span><span className="body-sm t-tertiary">{w ? `${w.wow >= 0 ? '+' : ''}${w.wow.toFixed(1)}% WoW` : 'no usage data'}</span></div>
-          </div>
-          <div className="card stack gap-sm">
-            <div className="h4">Business need</div>
-            {[['Affected', p.answers.affected], ['Pain & evidence', p.answers.pain], ['Success metric', p.answers.metric], ['Constraints', p.answers.constraints]].map(([k, v]) => (
-              <div key={k} className="row gap-md start"><span className="label-sm t-tertiary" style={{ minWidth: 120 }}>{k}</span><span className="body-sm">{v || <Badge tone="warning">Unknown</Badge>}</span></div>
-            ))}
-          </div>
+        <section className="card pad-xl stack gap-sm">
+          <div className="row between"><h2 className="h3">Handover</h2><Badge tone="brand">compass/handover.md</Badge></div>
+          <p className="body-sm t-tertiary">Regenerated on every spec commit, so whoever opens the repo next knows exactly where to start.</p>
+          <Markdown text={handoverMd(p).replace(/^# Handover\n\n_.*_\n/, '')} />
         </section>
       </div>
-    </div>
-  );
-}
-
-function EditContext({ p }: { p: Project }) {
-  const up = (fn: (x: Project) => Project) => store.updateProject(p.id, fn);
-  return (
-    <div className="card pad-xl stack gap-lg">
-      <div className="grid-2">
-        <Field label="Project name"><input className="input" value={p.name} onChange={(e) => up((x) => ({ ...x, name: e.target.value }))} /></Field>
-        <Field label="Domain"><input className="input" value={p.domain} onChange={(e) => up((x) => ({ ...x, domain: e.target.value }))} /></Field>
-      </div>
-      <Field label="Business intent"><textarea className="textarea" value={p.intent} onChange={(e) => up((x) => ({ ...x, intent: e.target.value }))} /></Field>
-      <div className="grid-2">
-        {(['affected', 'pain', 'metric', 'constraints', 'tried'] as const).map((k) => (
-          <Field key={k} label={{ affected: 'Who is affected', pain: 'Pain & evidence', metric: 'Success metric', constraints: 'Constraints', tried: 'Tried before' }[k]}>
-            <input className="input" value={p.answers[k] || ''} onChange={(e) => up((x) => ({ ...x, answers: { ...x.answers, [k]: e.target.value } }))} />
-          </Field>
-        ))}
-        <Field label="Size of change"><select className="select" value={p.size} onChange={(e) => up((x) => ({ ...x, size: e.target.value as Project['size'] }))}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></Field>
-      </div>
-      <Field label="Capabilities (one per line)"><textarea className="textarea" value={p.features.join('\n')} onChange={(e) => up((x) => ({ ...x, features: e.target.value.split('\n') }))} onBlur={() => up((x) => ({ ...x, features: x.features.map((f) => f.trim()).filter(Boolean) }))} /></Field>
     </div>
   );
 }

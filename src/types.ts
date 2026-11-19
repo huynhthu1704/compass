@@ -1,132 +1,117 @@
-export type Phase = 'discover' | 'define' | 'design' | 'build' | 'release' | 'monitor';
-export const PHASES: Phase[] = ['discover', 'define', 'design', 'build', 'release', 'monitor'];
+// ============ Compass AI Dev Portal — domain model ============
 
-export type Role = 'BA' | 'PO' | 'DM' | 'Sponsor' | 'UX' | 'Dev' | 'QA' | 'Ops' | 'Data';
+export type Role = 'PO' | 'BA' | 'DM' | 'UX' | 'Dev' | 'QA' | 'Ops';
 export type Lang = 'en' | 'vi';
-export type Size = 'small' | 'medium' | 'large';
 
-export interface Answers {
-  affected?: string;      // who is affected
-  pain?: string;          // current pain & evidence
-  metric?: string;        // how success is measured
-  constraints?: string;   // budget, deadline, regulation
-  tried?: string;         // what has been tried
+/** Pipeline stages a project moves through. Each stage is owned by an agent in the harness. */
+export type Stage = 'idea' | 'requirements' | 'tests' | 'build' | 'release';
+export const STAGES: Stage[] = ['idea', 'requirements', 'tests', 'build', 'release'];
+
+export interface RepoRef {
+  owner: string;
+  name: string;
+  defaultBranch: string;
+  htmlUrl: string;
+  private?: boolean;
+  pagesUrl?: string;
 }
 
-export interface SourceRef {
-  key: string;            // K1, K2…
-  chunkId: string;
-  kind: ChunkKind;
-  title: string;          // document / artefact title
-  snippet: string;
-  route?: string;         // hash route to open the source
+export interface Idea {
+  intent: string;          // business outcome
+  problem: string;
+  users: string[];
+  outcomeMetric: string;
+  scopeIn: string[];
+  scopeOut: string[];
+  risks: string[];
+  stack: string;           // tech stack for the website
 }
 
-export type ChunkKind = 'doc' | 'artefact' | 'story' | 'change' | 'intent' | 'profile';
-
-export interface Artefact {
-  id: string;
-  actionId: string;
+export interface Requirement {
+  id: string;              // REQ-001
   title: string;
-  phase: Phase;
-  content: string;        // markdown
-  status: 'draft' | 'approved';
-  createdAt: string;
-  updatedAt: string;
+  story: string;           // As a … I want … so that …
+  ac: string[];            // acceptance criteria (Given/When/Then)
+  priority: 'Must' | 'Should' | 'Could';
+  status: 'Draft' | 'Approved' | 'In build' | 'Done';
+}
+
+export interface TestCase {
+  id: string;              // TC-001
+  reqIds: string[];
+  title: string;
+  gherkin: string;
+  type: 'Automated' | 'Manual';
+  status: 'Not run' | 'Pass' | 'Fail';
+}
+
+export interface Spec {
   version: number;
-  ai?: boolean;
-  sources?: SourceRef[];
+  idea: Idea;
+  requirements: Requirement[];
+  tests: TestCase[];
+  decisions: { id: string; title: string; decision: string; date: string }[];
 }
 
-export interface Story {
-  id: string;
-  key: string;            // US-1
-  epic: string;
-  title: string;
-  asA: string;
-  iWant: string;
-  soThat: string;
-  ac: string[];           // Gherkin lines
-  priority: 'Must' | 'Should' | 'Could' | "Won't";
-  points: number;
-  status: 'To do' | 'In progress' | 'Done';
-  events: string[];       // tracking events
-  feature: string;
-}
-
-export interface ChangeEntry {
-  id: string;
-  date: string;           // yyyy-mm-dd
-  title: string;
-  type: 'release' | 'change' | 'experiment' | 'rollback';
-  rollout: number;        // %
-  note?: string;
-}
-
-export interface MetricRow {
-  date: string;
-  exposed: number;
-  tried: number;
-  activated: number;
-  retained: number;
-}
-
-export type DocCategory = 'Product spec / PRD' | 'User research' | 'Analytics & KPIs' | 'Process / SOP' | 'Support & feedback' | 'Technical / architecture' | 'Glossary' | 'Business strategy' | 'Release notes' | 'Other';
-export const DOC_CATEGORIES: DocCategory[] = ['Product spec / PRD', 'User research', 'Analytics & KPIs', 'Process / SOP', 'Support & feedback', 'Technical / architecture', 'Glossary', 'Business strategy', 'Release notes', 'Other'];
-
-export interface KDoc {
-  id: string;
-  title: string;
-  category: DocCategory;
+export interface FileChange {
+  path: string;
+  action: 'create' | 'update' | 'delete';
   content: string;
-  fileName?: string;
-  addedAt: string;
+  before?: string;
+  reason?: string;
 }
 
-export interface Profile {
-  summary: string;
-  personas: string[];
-  modules: string[];
-  kpis: string[];
-  constraints: string[];
-  glossary: { term: string; def: string }[];
-  builtAt?: string;
-  ai?: boolean;
+export type StepKind = 'plan' | 'retrieve' | 'tool_call' | 'tool_result' | 'model' | 'guardrail' | 'eval' | 'approval' | 'github' | 'error';
+
+export interface TraceStep {
+  t: string;               // ISO time
+  kind: StepKind;
+  title: string;
+  detail?: string;
+  ok?: boolean;
+  tokens?: number;
 }
 
-export interface Product {
+export interface GuardrailResult { id: string; name: string; level: 'block' | 'warn' | 'pass'; message: string }
+export interface EvalResult { id: string; name: string; score: number; max: number; note: string }
+
+export type AgentId = 'ideation' | 'requirements' | 'testdesign' | 'coder' | 'reviewer' | 'release';
+
+export interface Run {
+  id: string;
+  agent: AgentId;
+  stage: Stage;
+  goal: string;
+  status: 'running' | 'awaiting-approval' | 'approved' | 'rejected' | 'failed' | 'done';
+  mode: 'live' | 'demo';
+  startedAt: string;
+  finishedAt?: string;
+  steps: TraceStep[];
+  changes: FileChange[];
+  guardrails: GuardrailResult[];
+  evals: EvalResult[];
+  output?: string;          // markdown summary
+  proposal?: { idea?: Partial<Idea>; requirements?: Requirement[]; tests?: TestCase[] };
+  branch?: string;
+  prNumber?: number;
+  prUrl?: string;
+  reqIds?: string[];
+}
+
+export interface ReleaseRec { tag: string; name: string; url: string; date: string; prs: number[] }
+
+export interface Project {
   id: string;
   name: string;
   description: string;
-  domain: string;
-  productType: 'B2B' | 'B2C' | 'Internal';
-  stage: 'Idea' | 'Existing product' | 'Live feature';
-  origin: 'scratch' | 'imported';
-  docs: KDoc[];
-  profile: Profile;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** An initiative: one business intent inside a product, moving through the six phases. */
-export interface Project {
-  id: string;
-  productId: string;
-  name: string;
-  intent: string;
-  domain: string;
-  productType: 'B2B' | 'B2C' | 'Internal';
-  stage: 'Idea' | 'Existing product' | 'Live feature';
-  size: Size;
-  features: string[];
-  answers: Answers;
-  artefacts: Artefact[];
-  stories: Story[];
-  changelog: ChangeEntry[];
-  metrics: MetricRow[];
-  alertThreshold: number; // % WoW drop that triggers an alert
-  skipped: string[];
-  checklist: Record<string, boolean>;
+  repo: RepoRef | null;     // null = local/demo project not yet on GitHub
+  frameworkInstalled: boolean;
+  spec: Spec;
+  specSha?: string;         // sha of compass/spec.json on GitHub
+  dirty: boolean;           // local spec changes not committed
+  runs: Run[];
+  releases: ReleaseRec[];
+  demo?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -135,12 +120,14 @@ export interface Settings {
   role?: Role;
   lang: Lang;
   theme: 'light' | 'dark';
+  githubToken?: string;
+  githubUser?: string;
   apiKey?: string;
   model: string;
+  requireApproval: boolean;   // human-in-the-loop gate before any GitHub write
 }
 
 export interface State {
   settings: Settings;
-  products: Product[];
   projects: Project[];
 }

@@ -1,36 +1,29 @@
 import { useEffect, useState } from 'react';
-import { ROLE_INFO } from './catalog';
-import { alertState } from './engine';
-import { useT } from './i18n';
-import { ActionsPage } from './pages/Actions';
-import { ArtefactPage, ArtefactsPage } from './pages/Artefacts';
-import { BacklogPage } from './pages/Backlog';
+import { ArchitecturePage } from './pages/Architecture';
+import { BuildPage } from './pages/Build';
+import { ConnectPage } from './pages/Connect';
+import { IdeaPage } from './pages/Idea';
+import { ImportPage } from './pages/Import';
 import { KnowledgePage } from './pages/Knowledge';
-import { MonitorPage } from './pages/Monitor';
-import { AskPage } from './pages/Ask';
-import { NewProduct } from './pages/NewProduct';
-import { NewProject } from './pages/NewProject';
-import { ProductHome } from './pages/ProductHome';
-import { ProductKnowledge } from './pages/ProductKnowledge';
-import { ProductsPage } from './pages/Products';
+import { NewProjectPage } from './pages/NewProject';
 import { Onboarding } from './pages/Onboarding';
 import { OverviewPage } from './pages/Overview';
+import { ProjectsPage } from './pages/Projects';
 import { ReleasePage } from './pages/Release';
-import { SettingsPage } from './pages/Settings';
-import { TracePage } from './pages/Trace';
+import { RequirementsPage } from './pages/Requirements';
+import { RunPage, RunsPage } from './pages/Runs';
+import { TestsPage } from './pages/Tests';
+import { stageStatus } from './progress';
 import { store, useStore } from './store';
-import { Toaster } from './ui';
+import { STAGES, type Stage } from './types';
+import { STAGE_INFO, Toaster } from './ui';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
 
 function useRoute() {
   const [hash, setHash] = useState(window.location.hash.slice(1) || '/');
-  useEffect(() => {
-    const on = () => setHash(window.location.hash.slice(1) || '/');
-    window.addEventListener('hashchange', on);
-    return () => window.removeEventListener('hashchange', on);
-  }, []);
+  useEffect(() => { const on = () => setHash(window.location.hash.slice(1) || '/'); window.addEventListener('hashchange', on); return () => window.removeEventListener('hashchange', on); }, []);
   return hash.split('?')[0].split('/').filter(Boolean);
 }
 
@@ -41,109 +34,63 @@ const Logo = () => (
 export default function App() {
   const state = useStore();
   const { settings } = state;
-  const t = useT();
   const parts = useRoute();
   const [menu, setMenu] = useState(false);
-
   useEffect(() => { document.documentElement.dataset.theme = settings.theme; document.documentElement.lang = settings.lang; }, [settings.theme, settings.lang]);
   useEffect(() => setMenu(false), [parts.join('/')]);
 
   if (!settings.role) return <><Onboarding /><Toaster /></>;
 
-  const pid = parts[0] === 'p' ? parts[1] : undefined;
-  const project = pid ? state.projects.find((p) => p.id === pid) : undefined;
-  const prodId = parts[0] === 'prod' ? parts[1] : project?.productId;
-  const product = prodId ? state.products.find((p) => p.id === prodId) : undefined;
+  const p = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1]) : undefined;
   const sub = parts[2] || '';
-  const psub = parts[0] === 'prod' ? sub : '';
-  const alert = project ? alertState(project) : null;
-  const inits = product ? state.projects.filter((p) => p.productId === product.id) : [];
-
   let page;
-  if (parts[0] === 'new-product') page = <NewProduct />;
-  else if (parts[0] === 'knowledge') page = <KnowledgePage />;
-  else if (parts[0] === 'settings') page = <SettingsPage />;
-  else if (parts[0] === 'prod' && product) {
-    if (sub === 'new') page = <NewProject prod={product} key={product.id} />;
-    else if (sub === 'knowledge') page = <ProductKnowledge prod={product} />;
-    else if (sub === 'ask') page = <AskPage prod={product} key={window.location.hash} />;
-    else page = <ProductHome prod={product} />;
-  } else if (project) {
-    if (sub === 'actions') page = <ActionsPage p={project} />;
-    else if (sub === 'artefacts') page = <ArtefactsPage p={project} />;
-    else if (sub === 'a') page = <ArtefactPage p={project} id={parts[3]} />;
-    else if (sub === 'backlog') page = <BacklogPage p={project} />;
-    else if (sub === 'release') page = <ReleasePage p={project} />;
-    else if (sub === 'monitor') page = <MonitorPage p={project} />;
-    else if (sub === 'trace') page = <TracePage p={project} />;
-    else page = <OverviewPage p={project} />;
-  } else page = <ProductsPage />;
+  if (parts[0] === 'connect') page = <ConnectPage />;
+  else if (parts[0] === 'new') page = <NewProjectPage />;
+  else if (parts[0] === 'import') page = <ImportPage />;
+  else if (parts[0] === 'architecture') page = <ArchitecturePage />;
+  else if (p) {
+    page = sub === 'idea' ? <IdeaPage p={p} /> : sub === 'requirements' ? <RequirementsPage p={p} /> : sub === 'tests' ? <TestsPage p={p} />
+      : sub === 'build' ? <BuildPage p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
+      : sub === 'runs' && parts[3] ? <RunPage p={p} rid={parts[3]} /> : sub === 'runs' ? <RunsPage p={p} /> : <OverviewPage p={p} />;
+  } else page = <ProjectsPage />;
 
-  const nav = (path: string, label: string, current: boolean, extra?: React.ReactNode) => (
+  const nav = (path: string, label: React.ReactNode, current: boolean, extra?: React.ReactNode) => (
     <button aria-current={current ? 'page' : undefined} onClick={() => go(path)}>{label}{extra}</button>
   );
+  const st = p ? stageStatus(p) : null;
+  const waiting = p ? p.runs.filter((r) => r.status === 'awaiting-approval').length : 0;
 
   return (
     <>
-      <div className="mobile-top">
-        <div className="brand"><Logo />Compass</div>
-        <button className="btn secondary sm" onClick={() => setMenu(!menu)} aria-expanded={menu}>Menu</button>
-      </div>
+      <div className="mobile-top"><div className="brand"><Logo />Compass</div><button className="btn secondary sm" onClick={() => setMenu(!menu)} aria-expanded={menu}>Menu</button></div>
       <div className="app">
         <aside className={`sidebar ${menu ? 'open' : ''}`}>
-          <div className="brand"><Logo />Compass</div>
+          <div className="brand"><Logo />Compass <span className="badge tone-brand" style={{ fontSize: 10 }}>AI dev portal</span></div>
           <nav className="nav">
-            {nav('/', t('Products'), !product && !['knowledge', 'settings'].includes(parts[0]))}
+            {nav('/', 'Projects', !p && !['connect', 'architecture'].includes(parts[0]))}
+            {nav('/architecture', 'Agent architecture', parts[0] === 'architecture')}
           </nav>
-          {product && (
+          {p && st && (
             <div className="nav-group">
-              <div className="overline t-tertiary" style={{ padding: '0 12px' }}>{product.name}</div>
+              <div className="overline t-tertiary" style={{ padding: '0 12px' }}>{p.name}{p.demo ? ' · demo' : ''}</div>
               <nav className="nav">
-                {nav(`/prod/${product.id}`, t('Product home'), parts[0] === 'prod' && psub === '')}
-                {nav(`/prod/${product.id}/knowledge`, t('Knowledge base'), psub === 'knowledge', <span className="t-tertiary mono-sm" style={{ marginLeft: 'auto' }}>{product.docs.length}</span>)}
-                {nav(`/prod/${product.id}/ask`, t('Ask product'), psub === 'ask')}
-                {nav(`/prod/${product.id}/new`, '+ ' + t('New initiative'), psub === 'new')}
-              </nav>
-              {inits.length > 0 && <div className="overline t-tertiary" style={{ padding: '8px 12px 0' }}>{t('Initiatives')}</div>}
-              <nav className="nav">
-                {inits.map((i) => (
-                  <div key={i.id} className="stack">
-                    {nav(`/p/${i.id}`, i.name, project?.id === i.id && sub === '', alertState(i) ? <span className="badge tone-danger" style={{ marginLeft: 'auto' }}>!</span> : null)}
-                    {project?.id === i.id && (
-                      <nav className="nav" style={{ paddingLeft: 12, borderLeft: '1px solid var(--color-border-subtle)', marginLeft: 12 }}>
-                        {nav(`/p/${i.id}/actions`, t('Next actions'), sub === 'actions')}
-                        {nav(`/p/${i.id}/artefacts`, t('Artefacts'), sub === 'artefacts' || sub === 'a', <span className="t-tertiary mono-sm" style={{ marginLeft: 'auto' }}>{i.artefacts.length}</span>)}
-                        {nav(`/p/${i.id}/backlog`, t('Backlog'), sub === 'backlog', <span className="t-tertiary mono-sm" style={{ marginLeft: 'auto' }}>{i.stories.length}</span>)}
-                        {nav(`/p/${i.id}/release`, t('Plan & Release'), sub === 'release')}
-                        {nav(`/p/${i.id}/monitor`, t('Monitor'), sub === 'monitor', alert ? <span className="badge tone-danger" style={{ marginLeft: 'auto' }}>!</span> : null)}
-                        {nav(`/p/${i.id}/trace`, t('Traceability'), sub === 'trace')}
-                      </nav>
-                    )}
-                  </div>
-                ))}
+                {nav(`/p/${p.id}`, 'Overview & handover', sub === '')}
+                {STAGES.map((s: Stage) => nav(`/p/${p.id}/${s}`, <><span className={`chip ${STAGE_INFO[s].cls}`} style={{ padding: '0 6px', minWidth: 18, justifyContent: 'center' }}>{st[s].done ? '✓' : STAGES.indexOf(s) + 1}</span>{STAGE_INFO[s].name}</>, sub === s))}
+                {nav(`/p/${p.id}/runs`, 'Agent runs', sub === 'runs', waiting ? <span className="badge tone-accent" style={{ marginLeft: 'auto' }}>{waiting}</span> : null)}
+                {nav(`/p/${p.id}/knowledge`, 'Knowledge (RAG)', sub === 'knowledge')}
               </nav>
             </div>
           )}
           <nav className="nav" style={{ marginTop: 'auto' }}>
-            {nav('/knowledge', t('BABOK library'), parts[0] === 'knowledge')}
-            {nav('/settings', t('Settings'), parts[0] === 'settings')}
+            {nav('/connect', <>Connections {settings.githubUser ? <span className="badge tone-success" style={{ marginLeft: 'auto' }}>@{settings.githubUser}</span> : <span className="badge tone-warning" style={{ marginLeft: 'auto' }}>demo</span>}</>, parts[0] === 'connect')}
           </nav>
-          <div className="stack gap-sm">
-            <div className="row gap-sm between">
-              <span className="label-sm t-tertiary">{t('Role')}</span>
-              <select className="select" style={{ width: 'auto', padding: '2px 6px', fontSize: 12 }} value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })}>
-                {Object.entries(ROLE_INFO).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}
-              </select>
-            </div>
-            <div className="row gap-sm between">
-              <div className="seg" role="group" aria-label="Language">
-                <button aria-pressed={settings.lang === 'en'} onClick={() => store.setSettings({ lang: 'en' })}>EN</button>
-                <button aria-pressed={settings.lang === 'vi'} onClick={() => store.setSettings({ lang: 'vi' })}>VI</button>
-              </div>
-              <div className="seg" role="group" aria-label="Theme">
-                <button aria-pressed={settings.theme === 'light'} onClick={() => store.setSettings({ theme: 'light' })}>Light</button>
-                <button aria-pressed={settings.theme === 'dark'} onClick={() => store.setSettings({ theme: 'dark' })}>Dark</button>
-              </div>
+          <div className="row gap-sm between">
+            <select className="select" style={{ width: 'auto', padding: '2px 6px', fontSize: 12 }} value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label="Your role">
+              {[['PO', 'Product Owner'], ['BA', 'Business Analyst'], ['DM', 'Delivery Manager'], ['UX', 'Designer'], ['Dev', 'Developer'], ['QA', 'QA'], ['Ops', 'Ops']].map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <div className="seg" role="group" aria-label="Theme">
+              <button aria-pressed={settings.theme === 'light'} onClick={() => store.setSettings({ theme: 'light' })}>Light</button>
+              <button aria-pressed={settings.theme === 'dark'} onClick={() => store.setSettings({ theme: 'dark' })}>Dark</button>
             </div>
           </div>
         </aside>
