@@ -125,6 +125,7 @@ export interface Settings {
   apiKey?: string;
   model: string;
   requireApproval: boolean;   // human-in-the-loop gate before any GitHub write
+  autoSync: boolean;          // auto-commit spec changes to GitHub
 }
 
 export interface State {

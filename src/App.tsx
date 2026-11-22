@@ -13,6 +13,7 @@ import { ReleasePage } from './pages/Release';
 import { RequirementsPage } from './pages/Requirements';
 import { RunPage, RunsPage } from './pages/Runs';
 import { TestsPage } from './pages/Tests';
+import { syncLabel, useSync } from './autosync';
 import { stageStatus } from './progress';
 import { store, useStore } from './store';
 import { STAGES, type Stage } from './types';
@@ -39,6 +40,8 @@ export default function App() {
   useEffect(() => { document.documentElement.dataset.theme = settings.theme; document.documentElement.lang = settings.lang; }, [settings.theme, settings.lang]);
   useEffect(() => setMenu(false), [parts.join('/')]);
 
+  const routeProject = parts[0] === 'p' ? parts[1] : undefined;
+  const sync = useSync(routeProject); // hooks must run before any early return
   if (!settings.role) return <><Onboarding /><Toaster /></>;
 
   const p = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1]) : undefined;
@@ -59,6 +62,7 @@ export default function App() {
   );
   const st = p ? stageStatus(p) : null;
   const waiting = p ? p.runs.filter((r) => r.status === 'awaiting-approval').length : 0;
+  const sl = p && p.repo && !p.demo && settings.githubToken ? syncLabel(sync, p.dirty) : null;
 
   return (
     <>
@@ -73,6 +77,7 @@ export default function App() {
           {p && st && (
             <div className="nav-group">
               <div className="overline t-tertiary" style={{ padding: '0 12px' }}>{p.name}{p.demo ? ' · demo' : ''}</div>
+              {sl && <div style={{ padding: '0 12px' }}><span className={`badge tone-${sl.tone}`} title={sync?.message} style={{ fontSize: 11 }}>{sl.text}</span></div>}
               <nav className="nav">
                 {nav(`/p/${p.id}`, 'Overview & handover', sub === '')}
                 {STAGES.map((s: Stage) => nav(`/p/${p.id}/${s}`, <><span className={`chip ${STAGE_INFO[s].cls}`} style={{ padding: '0 6px', minWidth: 18, justifyContent: 'center' }}>{st[s].done ? '✓' : STAGES.indexOf(s) + 1}</span>{STAGE_INFO[s].name}</>, sub === s))}

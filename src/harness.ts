@@ -386,8 +386,10 @@ export async function commitSpec(pid: string) {
   const p = getP(pid);
   const token = store.get().settings.githubToken;
   if (!token || !p.repo) throw new Error('Connect GitHub first');
+  const snapshot = JSON.stringify(p.spec);
   const c = await github.commit(token, p.repo, p.repo.defaultBranch, `docs(compass): update spec — ${p.spec.requirements.length} requirements, ${p.spec.tests.length} tests`, specFiles(p));
-  store.update(pid, (x) => ({ ...x, dirty: false, specSha: c.sha }));
+  // only clear "dirty" if nothing changed while the commit was in flight
+  store.update(pid, (x) => ({ ...x, dirty: JSON.stringify(x.spec) !== snapshot, specSha: c.sha }));
   return c.html_url;
 }
 

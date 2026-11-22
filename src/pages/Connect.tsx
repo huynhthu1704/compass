@@ -39,7 +39,8 @@ export function ConnectPage() {
       </section>
 
       <section className="card pad-xl stack gap-md">
-        <h2 className="h3">Human-in-the-loop</h2>
+        <h2 className="h3">Sync & human-in-the-loop</h2>
+        <label className="row gap-sm"><input type="checkbox" checked={settings.autoSync} onChange={(e) => store.setSettings({ autoSync: e.target.checked })} /> <span className="body-sm">Auto-sync: commit idea, requirement and test-case changes to GitHub automatically (a few seconds after you stop editing).</span></label>
         <label className="row gap-sm"><input type="checkbox" checked={settings.requireApproval} disabled /> <span className="body-sm">Every agent output and every GitHub write requires human approval (always on — this is a guardrail, not a preference).</span></label>
       </section>
 

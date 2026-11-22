@@ -1,6 +1,7 @@
 import { go } from '../App';
+import { syncLabel, syncNow, useSync } from '../autosync';
 import { handoverMd } from '../framework';
-import { commitSpec, installFramework, pullSpec } from '../harness';
+import { installFramework, pullSpec } from '../harness';
 import { currentStage, stageStatus } from '../progress';
 import { store, useStore } from '../store';
 import { STAGES, type Project } from '../types';
@@ -21,6 +22,8 @@ export function OverviewPage({ p }: { p: Project }) {
   const st = stageStatus(p), cur = currentStage(p);
   const { busy, run } = useAction();
   const connected = !!settings.githubToken && !!p.repo && !p.demo;
+  const sync = useSync(p.id);
+  const sl = syncLabel(sync, p.dirty);
 
   return (
     <div className="stack gap-2xl">
@@ -57,10 +60,11 @@ export function OverviewPage({ p }: { p: Project }) {
         <section className="card pad-xl stack gap-md">
           <div className="row between"><h2 className="h3">Compass Framework</h2>{p.frameworkInstalled ? <Badge tone="success">installed</Badge> : <Badge tone="warning">not installed</Badge>}</div>
           <p className="body-sm t-secondary">The framework makes the repo self-explaining for any role or agent: <span className="code-inline">AGENTS.md</span>, <span className="code-inline">compass/spec.json</span>, generated docs, guardrails, a traceability check in CI and a Pages deploy workflow.</p>
-          {p.dirty && <div className="panel body-sm t-accent">Spec has local changes not yet committed to GitHub.</div>}
+          {connected && <div className="row gap-sm wrap"><Badge tone={sl.tone}>{sl.text}</Badge>{settings.autoSync ? <span className="body-sm t-tertiary">Every change is committed to {p.repo!.defaultBranch} automatically.</span> : <span className="body-sm t-tertiary">Auto-sync is off (Connections).</span>}</div>}
+          {sync?.message && <div className="panel body-sm t-accent">{sync.message}</div>}
           <div className="row gap-sm wrap">
             {!p.frameworkInstalled && <Button disabled={!connected || busy} onClick={() => run(() => installFramework(p.id, { starter: false, direct: false }))}>Install via pull request</Button>}
-            <Button variant={p.dirty ? 'accent' : 'secondary'} disabled={!connected || busy || !p.frameworkInstalled} onClick={() => run(async () => { const url = await commitSpec(p.id); return `Spec committed: ${url}`; })}>Commit spec to GitHub</Button>
+            <Button variant="secondary" disabled={!connected || busy || !p.dirty} onClick={() => run(async () => { await syncNow(p.id); return 'Synced'; })}>Sync now</Button>
             <Button variant="ghost" disabled={!connected || busy} onClick={() => run(async () => { if (p.dirty && !confirm('Discard local spec changes and load compass/spec.json from GitHub?')) return; await pullSpec(p.id); return 'Spec loaded from GitHub'; })}>Pull spec from GitHub</Button>
           </div>
           {!connected && <div className="body-sm t-tertiary">{p.demo ? 'Demo project — GitHub actions are simulated.' : 'Connect GitHub and link a repo to sync.'}</div>}

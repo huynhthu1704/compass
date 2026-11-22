@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react';
 import type { Project, Settings, Spec, State } from './types';
 
 const KEY = 'compass.v3';
-const DEFAULT: State = { settings: { lang: 'vi', theme: 'light', model: 'claude-sonnet-5-5', requireApproval: true }, projects: [] };
+const DEFAULT: State = { settings: { lang: 'vi', theme: 'light', model: 'claude-sonnet-5-5', requireApproval: true, autoSync: true }, projects: [] };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 export const now = () => new Date().toISOString();
