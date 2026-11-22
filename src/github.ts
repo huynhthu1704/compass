@@ -20,7 +20,10 @@ async function gh<T = unknown>(token: string, path: string, init: RequestInit = 
   if (!res.ok) {
     let msg = res.statusText;
     try { const j = await res.json(); msg = j.message || msg; } catch { /* no body */ }
-    throw new GitHubError(res.status, `GitHub ${res.status}: ${msg}`);
+    const hint = res.status === 403 && /personal access token/i.test(msg)
+      ? ' — your token lacks a permission for this repo. Edit the token on GitHub: include this repo in Repository access and set Contents, Pull requests, Workflows (and Actions, Pages) to Read & write.'
+      : '';
+    throw new GitHubError(res.status, `GitHub ${res.status}: ${msg}${hint}`);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
