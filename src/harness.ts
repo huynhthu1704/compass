@@ -309,8 +309,9 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
     return 'Applied to the spec. Commit the spec to GitHub when ready.';
   }
   if (r.changes.length) {
-    if (!token || !p.repo || p.demo) {
+    if (!token || !p.repo || p.demo || r.mode === 'demo') {
       patchRun(pid, rid, (x) => ({ ...x, status: 'approved' }));
+      if (r.mode === 'demo' && token && p.repo && !p.demo) return 'Approved (demo). Placeholder code is NOT pushed to your repo — add an Anthropic key, or implement this requirement with Claude Code following AGENTS.md.';
       store.spec(pid, (s) => ({ ...s, requirements: s.requirements.map((q) => (r.reqIds?.includes(q.id) ? { ...q, status: 'In build' } : q)) }));
       return 'Approved. Connect a GitHub repo to open a pull request automatically.';
     }
@@ -408,7 +409,9 @@ export function nextVersion(tags: string[]) {
 export async function release(pid: string, runIds: string[], onStep: (s: string) => void) {
   const p = getP(pid);
   const settings = store.get().settings;
-  const runs = p.runs.filter((r) => runIds.includes(r.id));
+  const live = !p.demo && !!settings.githubToken && !!p.repo;
+  const runs = p.runs.filter((r) => runIds.includes(r.id) && (!live || r.prNumber));
+  if (live && !runs.length) throw new Error('No pull requests to release. Demo-mode changes are never pushed to GitHub — build with a live agent or merge your own PRs.');
   const reqIds = [...new Set(runs.flatMap((r) => r.reqIds || []))];
   const tag = nextVersion(p.releases.map((x) => x.tag));
   const notes = `## ${tag}\n\n${reqIds.map((id) => { const r = p.spec.requirements.find((x) => x.id === id); return `- **${id}** ${r?.title || ''}`; }).join('\n')}\n\nReleased with Compass.`;
