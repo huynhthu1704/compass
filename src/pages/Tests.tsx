@@ -37,7 +37,7 @@ export function TestsPage({ p }: { p: Project }) {
                     <div className="row gap-sm wrap"><span className="mono t-brand">{t.id}</span><input className="input" style={{ padding: '2px 8px', fontSize: 13, maxWidth: 360 }} value={t.title} onChange={(e) => set(t.id, { title: e.target.value })} />
                       <select className="select" style={{ width: 'auto', padding: '2px 6px', fontSize: 12 }} value={t.type} onChange={(e) => set(t.id, { type: e.target.value as TestCase['type'] })}><option>Automated</option><option>Manual</option></select>
                       <select className="select" style={{ width: 'auto', padding: '2px 6px', fontSize: 12 }} value={t.status} onChange={(e) => set(t.id, { status: e.target.value as TestCase['status'] })}><option>Not run</option><option>Pass</option><option>Fail</option></select>
-                      <button className="btn danger sm" onClick={() => store.spec(p.id, (x) => ({ ...x, tests: x.tests.filter((y) => y.id !== t.id) }))}>×</button></div>
+                      <button className="btn danger sm" aria-label={`Delete ${t.id}`} onClick={() => confirm(`Delete ${t.id} "${t.title}"?`) && store.spec(p.id, (x) => ({ ...x, tests: x.tests.filter((y) => y.id !== t.id) }))}>Delete</button></div>
                     <textarea className="textarea mono" style={{ minHeight: 64, fontSize: 12 }} value={t.gherkin} onChange={(e) => set(t.id, { gherkin: e.target.value })} />
                   </div>))}</div> : <Badge tone="danger">Not covered</Badge>}</td>
                 <td><Button size="sm" variant="ghost" onClick={() => add(r.id)}>+ Test</Button></td>
