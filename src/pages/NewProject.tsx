@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { go } from '../App';
 import { github, toRef } from '../github';
 import { installFramework, slug, startRun } from '../harness';
-import { newProject, store, useStore } from '../store';
+import { emptyIdea, featureName } from '../spec';
+import { newProject, now, store, useStore } from '../store';
 import { Badge, Button, Field, PageHead, useAction } from '../ui';
 
 export function NewProjectPage() {
@@ -19,7 +20,7 @@ export function NewProjectPage() {
   const create = () => run(async () => {
     const add = (s: string) => setLog((l) => [...l, s]);
     let p = newProject({ name: name.trim() || 'My project', description: idea.trim().slice(0, 160) });
-    p = { ...p, spec: { ...p.spec, idea: { ...p.spec.idea, intent: idea.trim(), stack } } };
+    p = { ...p, spec: { ...p.spec, stack, features: [{ id: 'F-001', name: featureName(idea), idea: { ...emptyIdea(), intent: idea.trim() }, createdAt: now() }] } };
     if (onGitHub && settings.githubToken) {
       add(`Creating repository ${settings.githubUser}/${repoName}…`);
       const r = await github.createRepo(settings.githubToken, repoName, p.description, priv);
@@ -32,8 +33,8 @@ export function NewProjectPage() {
       catch (e) { add(`Pages not enabled automatically (${(e as Error).message}) — enable it in repo Settings → Pages → Source: GitHub Actions.`); }
     } else store.addProject(p);
     add('Ideation agent is shaping the idea…');
-    startRun(p.id, 'ideation', idea.trim());
-    go(`/p/${p.id}/idea`);
+    startRun(p.id, 'ideation', idea.trim(), { featureId: 'F-001' });
+    go(`/p/${p.id}/f/F-001/idea`);
   });
 
   return (
@@ -41,7 +42,7 @@ export function NewProjectPage() {
       <PageHead over="New project" title="What do you want to build?" sub="Start with the idea. Compass creates the repo, installs the framework and hands the idea to the Ideation agent." />
       <div className="card pad-xl stack gap-lg">
         <Field label="Project name"><input className="input" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Travel Journal" /></Field>
-        <Field label="Your idea / business intent" help="Write it as an outcome if you can: who benefits and what changes. The agent will sharpen it.">
+        <Field label="First feature — idea / business outcome" help="Write it as an outcome if you can: who benefits and what changes. You can add more features later, in parallel.">
           <textarea className="textarea" value={idea} onChange={(e) => setIdea(e.target.value)} placeholder="e.g. Help travellers publish a shareable trip page in under 5 minutes, so more of them share within their first week" />
         </Field>
         <Field label="Tech stack" help="The coding agent follows this. The default needs no build step and deploys straight to GitHub Pages."><input className="input" value={stack} onChange={(e) => setStack(e.target.value)} /></Field>

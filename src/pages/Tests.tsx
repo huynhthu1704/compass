@@ -1,11 +1,14 @@
 import { AgentBox } from '../components/AgentBox';
 import { evalTests, pct } from '../guardrails';
+import { featureOf } from '../spec';
 import { nextId, store } from '../store';
 import type { Project, TestCase } from '../types';
 import { Badge, Button, PageHead } from '../ui';
 
-export function TestsPage({ p }: { p: Project }) {
-  const s = p.spec;
+export function TestsPage({ p, fid }: { p: Project; fid: string }) {
+  const f = featureOf(p, fid);
+  const reqIds = new Set(p.spec.requirements.filter((r) => r.featureId === fid).map((r) => r.id));
+  const s = { ...p.spec, requirements: p.spec.requirements.filter((r) => reqIds.has(r.id)), tests: p.spec.tests.filter((t) => t.reqIds.some((x) => reqIds.has(x))) };
   const evals = evalTests(s);
   const uncovered = s.requirements.filter((r) => !s.tests.some((t) => t.reqIds.includes(r.id)));
   const set = (id: string, patch: Partial<TestCase>) => store.spec(p.id, (x) => ({ ...x, tests: x.tests.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
@@ -13,8 +16,8 @@ export function TestsPage({ p }: { p: Project }) {
 
   return (
     <div className="stack gap-xl">
-      <PageHead over="Stage 3 · Test cases · owner: QA" title="Test cases" sub="Every requirement needs at least one test. CI runs compass/check-spec.mjs to enforce this traceability on every pull request." />
-      <AgentBox p={p} agentId="testdesign" cta="Design test cases" defaultGoal={`Design test cases for ${uncovered.map((r) => r.id).join(', ') || 'all requirements'}`} disabled={!s.requirements.length ? 'Create requirements first.' : !uncovered.length ? 'Every requirement already has tests — add more manually, or ask with a specific goal.' : undefined} />
+      <PageHead over={`${f?.id} ${f?.name} · Stage 3 · Test cases · owner: QA`} title="Test cases" sub="Every requirement needs at least one test. CI runs compass/check-spec.mjs to enforce this traceability on every pull request." />
+      <AgentBox p={p} agentId="testdesign" featureId={fid} cta="Design test cases" defaultGoal={`Design test cases for ${uncovered.map((r) => r.id).join(', ') || 'all requirements'}`} disabled={!s.requirements.length ? 'Create requirements first.' : !uncovered.length ? 'Every requirement already has tests — add more manually, or ask with a specific goal.' : undefined} />
 
       {s.requirements.length > 0 && (
         <div className="card row gap-lg wrap">

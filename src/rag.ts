@@ -36,8 +36,9 @@ const score = (p: string) => (/^(AGENTS|CLAUDE|README)\.md$/i.test(p) ? 0 : p.st
 
 export function specDocs(p: Project): Doc[] {
   const s = p.spec;
-  const docs: Doc[] = [{ path: 'spec:idea', content: `# Idea\nIntent: ${s.idea.intent}\nProblem: ${s.idea.problem}\nUsers: ${s.idea.users.join(', ')}\nOutcome metric: ${s.idea.outcomeMetric}\nIn scope: ${s.idea.scopeIn.join('; ')}\nOut of scope: ${s.idea.scopeOut.join('; ')}\nRisks: ${s.idea.risks.join('; ')}\nStack: ${s.idea.stack}` }];
-  for (const r of s.requirements) docs.push({ path: `spec:${r.id}`, content: `# ${r.id} ${r.title}\n${r.story}\nPriority ${r.priority}, status ${r.status}\n${r.ac.join('\n')}` });
+  const docs: Doc[] = s.features.map((f) => ({ path: `spec:${f.id}`, content: `# ${f.id} ${f.name}\nIntent: ${f.idea.intent}\nProblem: ${f.idea.problem}\nUsers: ${f.idea.users.join(', ')}\nOutcome metric: ${f.idea.outcomeMetric}\nIn scope: ${f.idea.scopeIn.join('; ')}\nOut of scope: ${f.idea.scopeOut.join('; ')}\nRisks: ${f.idea.risks.join('; ')}` }));
+  docs.push({ path: 'spec:stack', content: `# Tech stack\n${s.stack}` });
+  for (const r of s.requirements) docs.push({ path: `spec:${r.id}`, content: `# ${r.id} ${r.title} (${r.featureId || ''})\n${r.story}\nPriority ${r.priority}, status ${r.status}\n${r.ac.join('\n')}` });
   for (const t of s.tests) docs.push({ path: `spec:${t.id}`, content: `# ${t.id} ${t.title}\nCovers ${t.reqIds.join(', ')} · ${t.type} · ${t.status}\n${t.gherkin}` });
   return docs;
 }

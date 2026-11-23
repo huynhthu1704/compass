@@ -14,7 +14,8 @@ import { RequirementsPage } from './pages/Requirements';
 import { RunPage, RunsPage } from './pages/Runs';
 import { TestsPage } from './pages/Tests';
 import { syncLabel, useSync } from './autosync';
-import { stageStatus } from './progress';
+import { featureStage, stageStatus } from './progress';
+import { FeaturePage } from './pages/Feature';
 import { store, useStore } from './store';
 import { STAGES, type Stage } from './types';
 import { STAGE_INFO, Toaster } from './ui';
@@ -51,16 +52,20 @@ export default function App() {
   else if (parts[0] === 'new') page = <NewProjectPage />;
   else if (parts[0] === 'import') page = <ImportPage />;
   else if (parts[0] === 'architecture') page = <ArchitecturePage />;
-  else if (p) {
-    page = sub === 'idea' ? <IdeaPage p={p} /> : sub === 'requirements' ? <RequirementsPage p={p} /> : sub === 'tests' ? <TestsPage p={p} />
-      : sub === 'build' ? <BuildPage p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
+  else if (p && sub === 'f' && parts[3]) {
+    const fid = parts[3], fs = parts[4] || '';
+    page = fs === 'idea' ? <IdeaPage p={p} fid={fid} /> : fs === 'requirements' ? <RequirementsPage p={p} fid={fid} /> : fs === 'tests' ? <TestsPage p={p} fid={fid} />
+      : fs === 'build' ? <BuildPage p={p} fid={fid} /> : <FeaturePage p={p} fid={fid} />;
+  } else if (p) {
+    page = sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
       : sub === 'runs' && parts[3] ? <RunPage p={p} rid={parts[3]} /> : sub === 'runs' ? <RunsPage p={p} /> : <OverviewPage p={p} />;
   } else page = <ProjectsPage />;
 
   const nav = (path: string, label: React.ReactNode, current: boolean, extra?: React.ReactNode) => (
     <button aria-current={current ? 'page' : undefined} onClick={() => go(path)}>{label}{extra}</button>
   );
-  const st = p ? stageStatus(p) : null;
+  const fidRoute = sub === 'f' ? parts[3] : undefined;
+  const fsub = parts[4] || '';
   const waiting = p ? p.runs.filter((r) => r.status === 'awaiting-approval').length : 0;
   const sl = p && p.repo && !p.demo && settings.githubToken ? syncLabel(sync, p.dirty) : null;
 
@@ -74,15 +79,32 @@ export default function App() {
             {nav('/', 'Projects', !p && !['connect', 'architecture'].includes(parts[0]))}
             {nav('/architecture', 'Agent architecture', parts[0] === 'architecture')}
           </nav>
-          {p && st && (
+          {p && (
             <div className="nav-group">
               <div className="overline t-tertiary" style={{ padding: '0 12px' }}>{p.name}{p.demo ? ' · demo' : ''}</div>
               {sl && <div style={{ padding: '0 12px' }}><span className={`badge tone-${sl.tone}`} title={sync?.message} style={{ fontSize: 11 }}>{sl.text}</span></div>}
               <nav className="nav">
-                {nav(`/p/${p.id}`, 'Overview & handover', sub === '')}
-                {STAGES.map((s: Stage) => nav(`/p/${p.id}/${s}`, <><span className={`chip ${STAGE_INFO[s].cls}`} style={{ padding: '0 6px', minWidth: 18, justifyContent: 'center' }}>{st[s].done ? '✓' : STAGES.indexOf(s) + 1}</span>{STAGE_INFO[s].name}</>, sub === s))}
+                {nav(`/p/${p.id}`, 'Feature board', sub === '')}
+                {nav(`/p/${p.id}/release`, 'Release', sub === 'release')}
                 {nav(`/p/${p.id}/runs`, 'Agent runs', sub === 'runs', waiting ? <span className="badge tone-accent" style={{ marginLeft: 'auto' }}>{waiting}</span> : null)}
                 {nav(`/p/${p.id}/knowledge`, 'Knowledge (RAG)', sub === 'knowledge')}
+              </nav>
+              {p.spec.features.some((f) => !f.archived) && <div className="overline t-tertiary" style={{ padding: '8px 12px 0' }}>Features</div>}
+              <nav className="nav">
+                {p.spec.features.filter((f) => !f.archived || f.id === fidRoute).map((f) => {
+                  const fst = featureStage(p, f.id);
+                  const st = stageStatus(p, f.id);
+                  return (
+                    <div key={f.id} className="stack">
+                      {nav(`/p/${p.id}/f/${f.id}`, <><span className={`chip ${fst === 'done' ? 'tone-success' : STAGE_INFO[fst].cls}`} style={{ padding: '0 6px', fontSize: 10 }}>{f.id.replace('F-0', 'F')}</span><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span></>, fidRoute === f.id && fsub === '')}
+                      {fidRoute === f.id && (
+                        <nav className="nav" style={{ paddingLeft: 12, borderLeft: '1px solid var(--color-border-subtle)', marginLeft: 14 }}>
+                          {(['idea', 'requirements', 'tests', 'build'] as Stage[]).map((s) => nav(`/p/${p.id}/f/${f.id}/${s}`, <><span className={`chip ${STAGE_INFO[s].cls}`} style={{ padding: '0 6px', minWidth: 18, justifyContent: 'center' }}>{st[s].done ? '✓' : STAGES.indexOf(s) + 1}</span>{STAGE_INFO[s].name}</>, fsub === s))}
+                        </nav>
+                      )}
+                    </div>
+                  );
+                })}
               </nav>
             </div>
           )}

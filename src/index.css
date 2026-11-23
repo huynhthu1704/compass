@@ -218,3 +218,9 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 
 .sidebar .seg button { padding: 4px 8px; }
 .sidebar > .row.between { flex-wrap: wrap; gap: 8px; }
+
+/* ===== feature board ===== */
+.kanban { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: var(--spacing-md); overflow-x: auto; padding-bottom: 4px; }
+.kcol { display: flex; flex-direction: column; gap: var(--spacing-sm); background: var(--color-bg-subtle); border-radius: var(--radius-lg); padding: var(--spacing-md); min-height: 160px; }
+.kcard { padding: var(--spacing-md); gap: 6px; }
+@media (max-width: 1100px) { .kanban { grid-template-columns: repeat(6, 200px); } }

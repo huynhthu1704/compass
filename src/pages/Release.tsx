@@ -28,7 +28,7 @@ export function ReleasePage({ p }: { p: Project }) {
 
   return (
     <div className="stack gap-xl">
-      <PageHead over="Stage 5 · Release · owner: Delivery Manager / PO" title="Release" sub="One click: verify CI on each agent PR, squash-merge, mark requirements Done, update the spec & handover, tag a GitHub release — the deploy workflow publishes to GitHub Pages."
+      <PageHead over="Stage 5 · Release · owner: Delivery Manager / PO" title="Release" sub="Release several features together. One click: verify CI on each agent PR, squash-merge, mark requirements Done, update the spec & handover, tag a GitHub release — the deploy workflow publishes to GitHub Pages."
         right={<>
           {p.repo?.pagesUrl && <a className="btn secondary sm" href={p.repo.pagesUrl} target="_blank" rel="noreferrer">Live site ↗</a>}
           {live && !p.repo?.pagesUrl && <Button size="sm" variant="secondary" disabled={busy} onClick={() => run(async () => { const pg = await github.enablePages(settings.githubToken!, p.repo!); store.update(p.id, (x) => ({ ...x, repo: x.repo && { ...x.repo, pagesUrl: pg.html_url } })); return 'GitHub Pages enabled'; })}>Enable GitHub Pages</Button>}
@@ -39,7 +39,7 @@ export function ReleasePage({ p }: { p: Project }) {
         {!ready.length ? <div className="body-sm t-tertiary">No approved agent changes waiting. Build something in the Build stage first.</div> : ready.map((r) => (
           <label key={r.id} className="option" style={{ padding: 10 }}>
             <input type="checkbox" checked={sel.includes(r.id)} onChange={(e) => setSel((s) => (e.target.checked ? [...s, r.id] : s.filter((x) => x !== r.id)))} />
-            <span className="mono t-brand">{(r.reqIds || []).join(', ')}</span><span className="grow">{r.goal}</span>
+            {r.featureId && <Badge tone="info">{r.featureId} {p.spec.features.find((f) => f.id === r.featureId)?.name}</Badge>}<span className="mono t-brand">{(r.reqIds || []).join(', ')}</span><span className="grow">{r.goal}</span>
             {r.prNumber && <Badge tone="brand">PR #{r.prNumber}</Badge>}
             <Badge tone={r.guardrails.some((g) => g.level === 'block') ? 'danger' : 'success'}>guardrails {r.guardrails.some((g) => g.level === 'block') ? 'blocked' : 'passed'}</Badge>
           </label>
@@ -55,7 +55,7 @@ export function ReleasePage({ p }: { p: Project }) {
         <section className="card pad-xl stack gap-sm">
           <h2 className="h3">Releases</h2>
           {p.releases.length ? p.releases.map((r) => (
-            <div key={r.tag + r.date} className="row gap-sm"><Badge tone="success">{r.tag}</Badge><span className="body-sm grow">{r.prs.filter(Boolean).map((n) => `#${n}`).join(', ') || '—'}</span><span className="mono-sm t-tertiary">{ago(r.date)}</span>{r.url && <a className="btn ghost sm" href={r.url} target="_blank" rel="noreferrer">↗</a>}</div>
+            <div key={r.tag + r.date} className="row gap-sm"><Badge tone="success">{r.tag}</Badge><span className="body-sm grow">{(r.featureIds || []).join(', ')}{r.featureIds?.length ? ' · ' : ''}{r.prs.filter(Boolean).map((n) => `#${n}`).join(', ') || '—'}</span><span className="mono-sm t-tertiary">{ago(r.date)}</span>{r.url && <a className="btn ghost sm" href={r.url} target="_blank" rel="noreferrer">↗</a>}</div>
           )) : <div className="body-sm t-tertiary">No releases yet.</div>}
         </section>
         <section className="card pad-xl stack gap-sm">

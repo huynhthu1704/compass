@@ -6,16 +6,16 @@ import { Badge, Button } from '../ui';
 import { RunView } from './RunView';
 
 /** "Ask the agent" panel used on each pipeline stage, with the latest run of that agent inline. */
-export function AgentBox({ p, agentId, defaultGoal, placeholder, reqIds, cta, disabled, hint }: { p: Project; agentId: AgentId; defaultGoal: string; placeholder?: string; reqIds?: string[]; cta: string; disabled?: string; hint?: string }) {
+export function AgentBox({ p, agentId, featureId, defaultGoal, placeholder, reqIds, cta, disabled, hint }: { p: Project; agentId: AgentId; featureId?: string; defaultGoal: string; placeholder?: string; reqIds?: string[]; cta: string; disabled?: string; hint?: string }) {
   const { settings } = useStore();
   const a = agent(agentId);
   const [goal, setGoal] = useState(defaultGoal);
   const [busy, setBusy] = useState(false);
-  const runs = p.runs.filter((r) => r.agent === agentId);
+  const runs = p.runs.filter((r) => r.agent === agentId && (!featureId || r.featureId === featureId));
   const latest = runs[0];
   const live = !!settings.apiKey && !p.demo;
 
-  const go = async () => { setBusy(true); try { await startRun(p.id, agentId, goal.trim() || defaultGoal, { reqIds }); } finally { setBusy(false); } };
+  const go = async () => { setBusy(true); try { await startRun(p.id, agentId, goal.trim() || defaultGoal, { reqIds, featureId }); } finally { setBusy(false); } };
 
   return (
     <section className="card pad-xl stack gap-md" style={{ background: 'var(--color-bg-brand-subtle)', borderColor: 'transparent' }}>

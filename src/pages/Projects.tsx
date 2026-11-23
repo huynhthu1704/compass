@@ -1,8 +1,7 @@
 import { go } from '../App';
 import { demoProject } from '../demo';
-import { currentStage, stageStatus } from '../progress';
+import { featureStage } from '../progress';
 import { store, useStore } from '../store';
-import { STAGES } from '../types';
 import { ago, Badge, Button, PageHead, StageChip } from '../ui';
 
 export function ProjectsPage() {
@@ -29,14 +28,15 @@ export function ProjectsPage() {
       ) : (
         <div className="grid-3">
           {projects.map((p) => {
-            const st = stageStatus(p), cur = currentStage(p);
+            const feats = p.spec.features.filter((f) => !f.archived);
+            const stages = feats.map((f) => featureStage(p, f.id));
             const waiting = p.runs.filter((r) => r.status === 'awaiting-approval').length;
             return (
               <button key={p.id} className="action-card" onClick={() => go(`/p/${p.id}`)}>
-                <div className="row gap-sm wrap"><StageChip stage={cur} active />{p.demo && <Badge>demo</Badge>}{p.repo && <Badge tone="brand">{p.repo.private ? 'private' : 'public'} repo</Badge>}{waiting > 0 && <Badge tone="accent">{waiting} awaiting approval</Badge>}{p.dirty && <Badge tone="warning">spec not committed</Badge>}</div>
+                <div className="row gap-sm wrap"><Badge tone="brand">{feats.length} feature{feats.length === 1 ? '' : 's'}</Badge>{p.demo && <Badge>demo</Badge>}{p.repo && <Badge tone="brand">{p.repo.private ? 'private' : 'public'} repo</Badge>}{waiting > 0 && <Badge tone="accent">{waiting} awaiting approval</Badge>}{p.dirty && <Badge tone="warning">spec not committed</Badge>}</div>
                 <div className="h3">{p.name}</div>
-                <div className="body-sm t-secondary">{p.spec.idea.intent || p.description || 'No idea yet'}</div>
-                <div className="row gap-xs">{STAGES.map((s) => <span key={s} className="progress grow" style={{ height: 4 }}><span style={{ width: st[s].done ? '100%' : '0%' }} /></span>)}</div>
+                <div className="body-sm t-secondary">{p.description || feats[0]?.idea.intent || 'No features yet'}</div>
+                <div className="row gap-xs wrap">{feats.slice(0, 6).map((f, i) => (stages[i] === 'done' ? <Badge key={f.id} tone="success">{f.id} released</Badge> : <StageChip key={f.id} stage={stages[i] as Exclude<typeof stages[number], 'done'>} />))}</div>
                 <div className="mono-sm t-tertiary">{p.repo ? `${p.repo.owner}/${p.repo.name}` : 'local only'} · {p.spec.requirements.length} REQ · {p.spec.tests.length} TC · {p.releases[0]?.tag || 'no release'} · {ago(p.updatedAt)}</div>
               </button>
             );

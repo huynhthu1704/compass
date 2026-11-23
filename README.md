@@ -4,6 +4,9 @@
 
 Live: https://huynhthu1704.github.io/compass/
 
+## Features in parallel
+A project (one repo) holds many **features** (F-001, F-002…). Each feature has its own idea, requirements, test cases, agent PRs and status, and moves through the pipeline independently. The **Feature board** shows every feature as a card in its current stage. A release can bundle several features. Each feature is documented in `compass/features/F-xxx.md`.
+
 ## What it does
 - **Manages your GitHub projects.** You can create a new repo from an idea, or import any existing repo.
 - **Runs a five-stage pipeline.** Each stage has its own agent and a human approval gate:

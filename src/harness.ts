@@ -12,6 +12,7 @@ import { github } from './github';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
+import { featureName, featureOf, migrateSpec } from './spec';
 import type { AgentId, FileChange, Idea, Project, Requirement, Role, Run, Stage, StepKind, TestCase } from './types';
 
 export interface AgentDef { id: AgentId; name: string; stage: Stage; mirrors: Role; purpose: string; tools: string[]; output: string; gate: string; system: string }
@@ -21,7 +22,7 @@ Rules: use tools to read context before deciding; cite retrieved sources as [S1]
 never output secrets; keep changes small; every change must trace to requirement ids (REQ-xxx). Finish by calling the finish tool with a short summary.`;
 
 export const AGENTS: AgentDef[] = [
-  { id: 'ideation', name: 'Ideation agent', stage: 'idea', mirrors: 'PO', purpose: 'Turns a raw idea into a business-outcome brief: problem, users, outcome metric, scope, risks, stack.', tools: ['search_knowledge', 'list_files', 'read_file', 'save_idea', 'finish'], output: 'Idea brief → compass/spec.json › idea', gate: 'PO approves the brief',
+  { id: 'ideation', name: 'Ideation agent', stage: 'idea', mirrors: 'PO', purpose: 'Turns a raw idea into a business-outcome brief: problem, users, outcome metric, scope, risks, stack.', tools: ['search_knowledge', 'list_files', 'read_file', 'save_idea', 'finish'], output: 'Idea brief → feature F-xxx in compass/spec.json', gate: 'PO approves the brief',
     system: `${COMMON}\nRole: senior Product Owner + Business Analyst (BABOK). Produce an outcome-focused idea brief. If the input describes a solution, restate it as a measurable business outcome. Call save_idea once.` },
   { id: 'requirements', name: 'Requirements agent', stage: 'requirements', mirrors: 'BA', purpose: 'Writes INVEST user stories with Given/When/Then acceptance criteria from the idea and existing code.', tools: ['search_knowledge', 'list_files', 'read_file', 'save_requirements', 'finish'], output: 'REQ-xxx → compass/spec.json › requirements', gate: 'PO/BA approve requirements',
     system: `${COMMON}\nRole: senior Business Analyst. Write 4–8 small, testable requirements (user stories, ≥2 Given/When/Then AC each, MoSCoW priority, Must ≤ 60%). Avoid vague words (fast, easy, user-friendly). Do not repeat existing requirements. Call save_requirements once.` },
@@ -41,7 +42,7 @@ const TOOLS: ToolDef[] = [
   { name: 'list_files', description: 'List repository file paths, optionally under a prefix.', input_schema: { type: 'object', properties: { prefix: { type: 'string' } } } },
   { name: 'read_file', description: 'Read a repository file (full text).', input_schema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
   { name: 'propose_file_change', description: 'Stage a file change for human review. Provide FULL new content for create/update.', input_schema: { type: 'object', properties: { path: { type: 'string' }, action: { type: 'string', enum: ['create', 'update', 'delete'] }, content: { type: 'string' }, reason: { type: 'string', description: 'Why, with REQ/TC ids' } }, required: ['path', 'action', 'reason'] } },
-  { name: 'save_idea', description: 'Save the idea brief.', input_schema: { type: 'object', properties: { intent: { type: 'string' }, problem: { type: 'string' }, users: { type: 'array', items: { type: 'string' } }, outcomeMetric: { type: 'string' }, scopeIn: { type: 'array', items: { type: 'string' } }, scopeOut: { type: 'array', items: { type: 'string' } }, risks: { type: 'array', items: { type: 'string' } }, stack: { type: 'string' } }, required: ['intent', 'problem', 'users', 'outcomeMetric', 'scopeIn'] } },
+  { name: 'save_idea', description: 'Save the idea brief.', input_schema: { type: 'object', properties: { intent: { type: 'string' }, problem: { type: 'string' }, users: { type: 'array', items: { type: 'string' } }, outcomeMetric: { type: 'string' }, scopeIn: { type: 'array', items: { type: 'string' } }, scopeOut: { type: 'array', items: { type: 'string' } }, risks: { type: 'array', items: { type: 'string' } } }, required: ['intent', 'problem', 'users', 'outcomeMetric', 'scopeIn'] } },
   { name: 'save_requirements', description: 'Save proposed requirements.', input_schema: { type: 'object', properties: { requirements: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, story: { type: 'string' }, ac: { type: 'array', items: { type: 'string' } }, priority: { type: 'string', enum: ['Must', 'Should', 'Could'] } }, required: ['title', 'story', 'ac', 'priority'] } } }, required: ['requirements'] } },
   { name: 'save_tests', description: 'Save proposed test cases.', input_schema: { type: 'object', properties: { tests: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, reqIds: { type: 'array', items: { type: 'string' } }, gherkin: { type: 'string' }, type: { type: 'string', enum: ['Automated', 'Manual'] } }, required: ['title', 'reqIds', 'gherkin', 'type'] } } }, required: ['tests'] } },
   { name: 'finish', description: 'End the run with a short summary for the human reviewer.', input_schema: { type: 'object', properties: { summary: { type: 'string' } }, required: ['summary'] } },
@@ -57,12 +58,12 @@ function step(pid: string, rid: string, kind: StepKind, title: string, detail?: 
 export const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 
 // ---------------- entry point ----------------
-export async function startRun(projectId: string, agentId: AgentId, goal: string, opts: { reqIds?: string[] } = {}): Promise<string> {
+export async function startRun(projectId: string, agentId: AgentId, goal: string, opts: { reqIds?: string[]; featureId?: string } = {}): Promise<string> {
   const p = getP(projectId);
   const settings = store.get().settings;
   const a = agent(agentId);
   const live = !!settings.apiKey && !p.demo;
-  const run: Run = { id: uid(), agent: agentId, stage: a.stage, goal, status: 'running', mode: live ? 'live' : 'demo', startedAt: now(), steps: [], changes: [], guardrails: [], evals: [], reqIds: opts.reqIds };
+  const run: Run = { id: uid(), agent: agentId, stage: a.stage, goal, status: 'running', mode: live ? 'live' : 'demo', startedAt: now(), steps: [], changes: [], guardrails: [], evals: [], reqIds: opts.reqIds, featureId: opts.featureId };
   store.update(projectId, (x) => ({ ...x, runs: [run, ...x.runs] }));
   const pid = projectId, rid = run.id;
   try {
@@ -78,8 +79,8 @@ export async function startRun(projectId: string, agentId: AgentId, goal: string
     const g0 = scanInjection(hits.map((h) => h.chunk.text));
     step(pid, rid, 'guardrail', g0.name, g0.message, { ok: g0.level === 'pass' });
 
-    if (live) await liveLoop(pid, rid, a, goal, fmtHits(hits), index, opts.reqIds || []);
-    else await demoRun(pid, rid, a, goal, opts.reqIds || []);
+    if (live) await liveLoop(pid, rid, a, goal, fmtHits(hits), index, opts.reqIds || [], opts.featureId);
+    else await demoRun(pid, rid, a, goal, opts.reqIds || [], opts.featureId);
 
     // ---- evaluation & guardrails ----
     const r = getP(pid).runs.find((x) => x.id === rid)!;
@@ -105,15 +106,17 @@ export async function startRun(projectId: string, agentId: AgentId, goal: string
 }
 
 // ---------------- live: Claude tool-calling loop ----------------
-async function liveLoop(pid: string, rid: string, a: AgentDef, goal: string, context: string, index: Index, reqIds: string[]) {
+async function liveLoop(pid: string, rid: string, a: AgentDef, goal: string, context: string, index: Index, reqIds: string[], fid?: string) {
   const settings = store.get().settings;
   const p = getP(pid);
   const spec = p.spec;
   const reqs = spec.requirements.filter((r) => reqIds.includes(r.id));
   const user = `PROJECT: ${p.name} — ${p.description}
 REPO: ${p.repo ? `${p.repo.owner}/${p.repo.name}` : '(not connected — spec only)'}
-IDEA: ${JSON.stringify(spec.idea)}
-EXISTING REQUIREMENTS: ${spec.requirements.map((r) => `${r.id} ${r.title} [${r.status}]`).join('; ') || 'none'}
+TECH STACK: ${spec.stack}
+FEATURE: ${fid ? `${fid} ${featureOf(p, fid)?.name}\nIDEA: ${JSON.stringify(featureOf(p, fid)?.idea)}` : '(not specified)'}
+OTHER FEATURES: ${spec.features.filter((f) => f.id !== fid).map((f) => `${f.id} ${f.name}`).join('; ') || 'none'}
+EXISTING REQUIREMENTS: ${spec.requirements.map((r) => `${r.id} [${r.featureId || '-'}] ${r.title} [${r.status}]`).join('; ') || 'none'}
 EXISTING TESTS: ${spec.tests.map((t) => `${t.id}→${t.reqIds.join(',')}`).join('; ') || 'none'}
 ${reqs.length ? `REQUIREMENTS TO IMPLEMENT:\n${reqs.map((r) => `${r.id} ${r.title}\n${r.story}\n${r.ac.join('\n')}\nTests: ${spec.tests.filter((t) => t.reqIds.includes(r.id)).map((t) => `${t.id} ${t.title}: ${t.gherkin}`).join(' | ')}`).join('\n\n')}` : ''}
 
@@ -170,7 +173,8 @@ async function execTool(pid: string, rid: string, name: string, input: Record<st
     case 'save_idea': patchRun(pid, rid, (r) => ({ ...r, proposal: { ...r.proposal, idea: input as Partial<Idea> } })); return 'Idea saved as proposal.';
     case 'save_requirements': {
       const ids = p.spec.requirements.map((r) => r.id);
-      const reqs = ((input.requirements as Partial<Requirement>[]) || []).map((r) => { const id = nextId('REQ', ids); ids.push(id); return { id, title: r.title || '', story: r.story || '', ac: r.ac || [], priority: (r.priority as Requirement['priority']) || 'Should', status: 'Draft' as const }; });
+      const fid = getP(pid).runs.find((x) => x.id === rid)?.featureId;
+      const reqs = ((input.requirements as Partial<Requirement>[]) || []).map((r) => { const id = nextId('REQ', ids); ids.push(id); return { id, featureId: fid, title: r.title || '', story: r.story || '', ac: r.ac || [], priority: (r.priority as Requirement['priority']) || 'Should', status: 'Draft' as const }; });
       patchRun(pid, rid, (r) => ({ ...r, proposal: { ...r.proposal, requirements: reqs } }));
       return `Saved ${reqs.length} requirements as proposal: ${reqs.map((r) => r.id).join(', ')}`;
     }
@@ -199,24 +203,24 @@ async function judge(pid: string, rid: string, r: Run) {
 }
 
 // ---------------- demo: deterministic agents ----------------
-async function demoRun(pid: string, rid: string, a: AgentDef, goal: string, reqIds: string[]) {
+async function demoRun(pid: string, rid: string, a: AgentDef, goal: string, reqIds: string[], fid?: string) {
   const p = getP(pid);
-  const s = p.spec;
+  const f = featureOf(p, fid);
   const tick = async (title: string, detail?: string, kind: StepKind = 'tool_call') => { await sleep(220); step(pid, rid, kind, title, detail); };
   if (a.id === 'ideation') {
     await tick('search_knowledge(query: "users problem outcome")');
-    const idea = demoIdea(goal || s.idea.intent, s.idea.stack);
+    const idea = demoIdea(goal || f?.idea.intent || p.name);
     await tick('save_idea(…)', JSON.stringify(idea, null, 2));
     patchRun(pid, rid, (r) => ({ ...r, proposal: { idea }, output: `Idea brief drafted for “${idea.intent}”.` }));
   } else if (a.id === 'requirements') {
     await tick('read_file(path: "compass/spec.json")');
     await tick('search_knowledge(query: "scope users acceptance")');
-    const reqs = demoRequirements(p);
+    const reqs = demoRequirements(p, fid);
     await tick(`save_requirements(requirements: [${reqs.length}])`, reqs.map((r) => `${r.id} ${r.title}`).join('\n'));
     patchRun(pid, rid, (r) => ({ ...r, proposal: { requirements: reqs }, output: `${reqs.length} requirements drafted from the idea scope.` }));
   } else if (a.id === 'testdesign') {
     await tick('read_file(path: "compass/spec.json")');
-    const tests = demoTests(p);
+    const tests = demoTests(p, fid);
     await tick(`save_tests(tests: [${tests.length}])`, tests.map((t) => `${t.id} → ${t.reqIds.join(',')} ${t.title}`).join('\n'));
     patchRun(pid, rid, (r) => ({ ...r, proposal: { tests }, output: `${tests.length} test cases (happy + negative) for ${new Set(tests.flatMap((t) => t.reqIds)).size} requirements.` }));
   } else if (a.id === 'coder') {
@@ -229,7 +233,7 @@ async function demoRun(pid: string, rid: string, a: AgentDef, goal: string, reqI
   await tick('finish(summary: …)', undefined, 'tool_call');
 }
 
-function demoIdea(intent: string, stack: string): Idea {
+function demoIdea(intent: string): Idea {
   const users = (intent.match(/\bfor ([^,.]+)/i)?.[1] || intent.match(/\b(customers?|users?|travell?ers?|students?|teachers?|staff|employees?|shoppers?|patients?|members?)\b/i)?.[1] || 'Customer').split(/,| and /).map((x) => x.trim()).filter(Boolean);
   if (!users.some((u) => /admin|owner/i.test(u))) users.push('Admin');
   const parts = intent.split(/,| and | và /).map((x) => x.trim()).filter((x) => x.length > 3);
@@ -241,33 +245,33 @@ function demoIdea(intent: string, stack: string): Idea {
     scopeIn: parts.length > 1 ? parts : [`Core flow: ${intent}`, 'Sign-in and profile', 'Admin overview', 'Analytics events'],
     scopeOut: ['Native mobile apps', 'Payments (phase 2)'],
     risks: ['Unclear success metric', 'Data privacy', 'Adoption by users'],
-    stack: stack || 'Static web app (HTML/JS, node:test), GitHub Pages',
   };
 }
 
-function demoRequirements(p: Project): Requirement[] {
+function demoRequirements(p: Project, fid?: string): Requirement[] {
   const s = p.spec, ids = s.requirements.map((r) => r.id);
-  const user = (s.idea.users[0] || 'user').toLowerCase().replace(/s$/, '');
+  const idea = featureOf(p, fid)?.idea || { users: [] as string[], scopeIn: [] as string[], intent: p.name };
+  const user = (idea.users[0] || 'user').toLowerCase().replace(/s$/, '');
   const an = /^[aeiou]/i.test(user) ? 'an' : 'a';
-  const scope = s.idea.scopeIn.length ? s.idea.scopeIn : [s.idea.intent || p.name];
+  const scope = idea.scopeIn.length ? idea.scopeIn : [idea.intent || p.name];
   const reqs = scope.slice(0, 6).map((item, i) => {
     const id = nextId('REQ', ids); ids.push(id);
     const act = item.replace(/^core flow:\s*/i, '');
     return {
-      id, title: act.charAt(0).toUpperCase() + act.slice(1), priority: (i < 2 ? 'Must' : i < 4 ? 'Should' : 'Could') as Requirement['priority'], status: 'Draft' as const,
+      id, featureId: fid, title: act.charAt(0).toUpperCase() + act.slice(1), priority: (i < 2 ? 'Must' : i < 4 ? 'Should' : 'Could') as Requirement['priority'], status: 'Draft' as const,
       story: `As ${an} ${user}, I want to ${act.charAt(0).toLowerCase() + act.slice(1)}, so that I can get it done without back-and-forth messages.`,
       ac: [`Given I am ${an} ${user}\nWhen I ${act.charAt(0).toLowerCase() + act.slice(1)} with valid details and confirm\nThen the result is saved and I see a confirmation`, `Given a required field is empty or invalid\nWhen I confirm\nThen I see an error next to that field and nothing is saved`],
     };
   });
   const id = nextId('REQ', ids);
-  reqs.push({ id, title: 'Accessibility and performance baseline', priority: 'Should', status: 'Draft', story: `As ${an} ${user}, I want every page to work with keyboard and screen readers and load quickly, so that everyone can use the product.`, ac: ['Given any page\nWhen I navigate with the keyboard only\nThen every action is reachable and has a visible focus state', 'Given a 4G connection\nWhen I open the home page\nThen it becomes interactive within 2.5 seconds (Lighthouse)'] });
+  reqs.push({ id, featureId: fid, title: 'Accessibility and performance baseline', priority: 'Should', status: 'Draft', story: `As ${an} ${user}, I want every page to work with keyboard and screen readers and load quickly, so that everyone can use the product.`, ac: ['Given any page\nWhen I navigate with the keyboard only\nThen every action is reachable and has a visible focus state', 'Given a 4G connection\nWhen I open the home page\nThen it becomes interactive within 2.5 seconds (Lighthouse)'] });
   return reqs;
 }
 
-function demoTests(p: Project): TestCase[] {
+function demoTests(p: Project, fid?: string): TestCase[] {
   const s = p.spec, ids = s.tests.map((t) => t.id);
   const out: TestCase[] = [];
-  for (const r of s.requirements.filter((r) => !s.tests.some((t) => t.reqIds.includes(r.id)))) {
+  for (const r of s.requirements.filter((r) => (!fid || r.featureId === fid) && !s.tests.some((t) => t.reqIds.includes(r.id)))) {
     const happy = r.ac[0] || `Given …\nWhen …\nThen …`;
     const neg = r.ac.find((a) => /invalid|error|empty|not/i.test(a)) || `Given invalid input for ${r.title}\nWhen I submit\nThen I see an error and nothing is saved`;
     let id = nextId('TC', ids); ids.push(id);
@@ -299,14 +303,15 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   const token = store.get().settings.githubToken;
   step(pid, rid, 'approval', 'Approved by human reviewer', store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
   if (r.proposal) {
+    const pi = r.proposal.idea;
     store.spec(pid, (s) => ({
       ...s,
-      idea: r.proposal!.idea ? { ...s.idea, ...r.proposal!.idea } : s.idea,
+      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi } } : f)) : s.features,
       requirements: [...s.requirements, ...(r.proposal!.requirements || [])],
       tests: [...s.tests, ...(r.proposal!.tests || [])],
     }));
     patchRun(pid, rid, (x) => ({ ...x, status: 'done' }));
-    return 'Applied to the spec. Commit the spec to GitHub when ready.';
+    return 'Applied to the spec.';
   }
   if (r.changes.length) {
     if (!token || !p.repo || p.demo || r.mode === 'demo') {
@@ -315,11 +320,11 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
       store.spec(pid, (s) => ({ ...s, requirements: s.requirements.map((q) => (r.reqIds?.includes(q.id) ? { ...q, status: 'In build' } : q)) }));
       return 'Approved. Connect a GitHub repo to open a pull request automatically.';
     }
-    const branch = `compass/${(r.reqIds || ['change']).join('-').toLowerCase()}-${slug(r.goal).slice(0, 24)}`.replace(/-+$/, '');
+    const branch = `compass/${(r.featureId || 'f').toLowerCase()}-${(r.reqIds || ['change']).join('-').toLowerCase()}-${slug(r.goal).slice(0, 20)}`.replace(/-+$/, '');
     store.spec(pid, (s) => ({ ...s, requirements: s.requirements.map((q) => (r.reqIds?.includes(q.id) ? { ...q, status: 'In build' } : q)) }));
     const proj = getP(pid);
     step(pid, rid, 'github', `Commit ${r.changes.length} files to ${branch}`);
-    await github.commit(token, p.repo, branch, `${(r.reqIds || []).join(', ')}: ${r.goal}`.slice(0, 72) + '\n\nGenerated by Compass coding agent.', [...r.changes, ...specFiles(proj).filter((f) => f.path === 'compass/spec.json' || f.path === 'compass/requirements.md' || f.path === 'compass/handover.md')]);
+    await github.commit(token, p.repo, branch, `${(r.reqIds || []).join(', ')}: ${r.goal}`.slice(0, 72) + '\n\nGenerated by Compass coding agent.', [...r.changes, ...specFiles(proj).filter((f) => f.path === 'compass/spec.json' || f.path === 'compass/requirements.md' || f.path === 'compass/handover.md' || f.path === 'compass/features.md' || f.path === `compass/features/${r.featureId}.md`)]);
     const body = prBody(proj, r);
     const pr = await github.createPR(token, p.repo, `${(r.reqIds || []).join(', ')}: ${r.goal}`.slice(0, 90), branch, body);
     step(pid, rid, 'github', `Opened pull request #${pr.number}`, pr.html_url, { ok: true });
@@ -399,7 +404,7 @@ export async function pullSpec(pid: string) {
   if (!token || !p.repo) throw new Error('Connect GitHub first');
   const f = await github.file(token, p.repo, 'compass/spec.json');
   if (!f) throw new Error('No compass/spec.json in this repo yet');
-  store.update(pid, (x) => ({ ...x, spec: JSON.parse(f.content), specSha: f.sha, dirty: false, frameworkInstalled: true }));
+  store.update(pid, (x) => ({ ...x, spec: migrateSpec(JSON.parse(f.content)), specSha: f.sha, dirty: false, frameworkInstalled: true }));
 }
 
 // ---------------- release ----------------
@@ -416,7 +421,9 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
   if (live && !runs.length) throw new Error('No pull requests to release. Demo-mode changes are never pushed to GitHub — build with a live agent or merge your own PRs.');
   const reqIds = [...new Set(runs.flatMap((r) => r.reqIds || []))];
   const tag = nextVersion(p.releases.map((x) => x.tag));
-  const notes = `## ${tag}\n\n${reqIds.map((id) => { const r = p.spec.requirements.find((x) => x.id === id); return `- **${id}** ${r?.title || ''}`; }).join('\n')}\n\nReleased with Compass.`;
+  const byFeature = new Map<string, string[]>();
+  for (const id of reqIds) { const r = p.spec.requirements.find((x) => x.id === id); const k = r?.featureId || '—'; byFeature.set(k, [...(byFeature.get(k) || []), `- **${id}** ${r?.title || ''}`]); }
+  const notes = `## ${tag}\n\n${[...byFeature].map(([fid, lines]) => `### ${fid} ${featureOf(p, fid)?.name || ''}\n${lines.join('\n')}`).join('\n\n')}\n\nReleased with Compass.`;
 
   if (p.demo || !settings.githubToken || !p.repo) {
     for (const r of runs) { onStep(`Merge ${r.prNumber ? '#' + r.prNumber : r.goal} (simulated)`); await sleep(300); }
@@ -424,7 +431,7 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
     store.update(pid, (x) => ({
       ...x, runs: x.runs.map((r) => (runIds.includes(r.id) ? { ...r, status: 'done' } : r)),
       spec: { ...x.spec, requirements: x.spec.requirements.map((q) => (reqIds.includes(q.id) ? { ...q, status: 'Done' } : q)), tests: x.spec.tests.map((t) => (t.reqIds.some((id) => reqIds.includes(id)) && t.type === 'Automated' ? { ...t, status: 'Pass' } : t)) },
-      releases: [{ tag, name: tag, url: '', date: now(), prs: runs.map((r) => r.prNumber || 0) }, ...x.releases],
+      releases: [{ tag, name: tag, url: '', date: now(), prs: runs.map((r) => r.prNumber || 0), featureIds: [...new Set(runs.map((r) => r.featureId || ''))].filter(Boolean) }, ...x.releases],
     }));
     return tag;
   }
@@ -450,6 +457,6 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
   onStep(`Creating release ${tag}`);
   const rel = await github.createRelease(t, repo, tag, tag, notes);
   onStep('Deploy workflow triggered by the push to ' + repo.defaultBranch);
-  store.update(pid, (x) => ({ ...x, dirty: false, releases: [{ tag, name: rel.name, url: rel.html_url, date: rel.published_at || now(), prs: runs.map((r) => r.prNumber || 0) }, ...x.releases] }));
+  store.update(pid, (x) => ({ ...x, dirty: false, releases: [{ tag, name: rel.name, url: rel.html_url, date: rel.published_at || now(), prs: runs.map((r) => r.prNumber || 0), featureIds: [...new Set(runs.map((r) => r.featureId || ''))].filter(Boolean) }, ...x.releases] }));
   return tag;
 }

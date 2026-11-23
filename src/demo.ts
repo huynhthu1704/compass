@@ -11,22 +11,31 @@ export function demoProject(): Project {
     demo: true,
     frameworkInstalled: true,
     spec: {
-      version: 1,
-      idea: {
-        intent: 'Increase the number of travellers who publish a trip page within their first week from 10% to 35%',
-        problem: 'Travellers keep notes in chat apps and photo galleries; creating a shareable trip page takes too long, so few people publish.',
-        users: ['Traveller', 'Friend who views a shared trip', 'Admin'],
-        outcomeMetric: 'Share of new users who publish a trip page in 7 days: 10% → 35% within 8 weeks',
-        scopeIn: ['Create a trip with places', 'Share a public trip page', 'Map of visited places', 'Sign in with email link'],
-        scopeOut: ['Native mobile app', 'Booking and payments'],
-        risks: ['Location privacy on public pages', 'Map API cost'],
-        stack: 'Static web app (HTML/JS modules), node:test, GitHub Pages',
-      },
+      version: 2,
+      stack: 'Static web app (HTML/JS modules), node:test, GitHub Pages',
+      features: [
+        { id: 'F-001', name: 'Publish & share trips', createdAt: '2026-11-01T00:00:00.000Z', idea: {
+          intent: 'Increase the number of travellers who publish a trip page within their first week from 10% to 35%',
+          problem: 'Travellers keep notes in chat apps and photo galleries; creating a shareable trip page takes too long, so few people publish.',
+          users: ['Traveller', 'Friend who views a shared trip'],
+          outcomeMetric: 'Share of new users who publish a trip page in 7 days: 10% → 35% within 8 weeks',
+          scopeIn: ['Create a trip with places', 'Share a public trip page', 'Map of visited places'],
+          scopeOut: ['Native mobile app', 'Booking and payments'],
+          risks: ['Location privacy on public pages', 'Map API cost'] } },
+        { id: 'F-002', name: 'Passwordless sign-in', createdAt: '2026-11-12T00:00:00.000Z', idea: {
+          intent: 'Cut sign-up drop-off from 45% to 20% by removing passwords',
+          problem: 'Many travellers abandon sign-up at the password step.',
+          users: ['New traveller'], outcomeMetric: 'Sign-up completion 55% → 80%',
+          scopeIn: ['Sign in with an email link'], scopeOut: ['Social login'], risks: ['Email deliverability'] } },
+        { id: 'F-003', name: 'Packing checklist from guides', createdAt: '2026-11-20T00:00:00.000Z', idea: {
+          intent: 'Help travellers prepare faster by adding guide suggestions to their trip checklist',
+          problem: '', users: ['Traveller'], outcomeMetric: '', scopeIn: [], scopeOut: [], risks: [] } },
+      ],
       requirements: [
-        { id: 'REQ-001', title: 'Create a trip with places', priority: 'Must', status: 'Done', story: 'As a traveller, I want to create a trip and add the places I visited, so that my notes are in one place.', ac: ['Given I am signed in\nWhen I enter a trip name and at least one place and save\nThen the trip appears in My trips', 'Given the trip name is empty\nWhen I save\nThen I see "Trip name is required" and nothing is saved'] },
-        { id: 'REQ-002', title: 'Share a public trip page', priority: 'Must', status: 'In build', story: 'As a traveller, I want to share a public link to my trip, so that friends can see where I went.', ac: ['Given a saved trip\nWhen I click Share\nThen I get a public URL that opens without signing in', 'Given a trip marked private\nWhen someone opens its URL\nThen they see "This trip is private"'] },
-        { id: 'REQ-003', title: 'Map of visited places', priority: 'Should', status: 'Approved', story: 'As a traveller, I want to see my places on a map, so that I can relive the trip at a glance.', ac: ['Given a trip with places that have coordinates\nWhen I open the trip\nThen each place is shown as a pin on the map', 'Given a place without coordinates\nWhen I open the trip\nThen it is listed under "Not on map"'] },
-        { id: 'REQ-004', title: 'Sign in with an email link', priority: 'Could', status: 'Draft', story: 'As a traveller, I want to sign in with a link sent to my email, so that I do not need a password.', ac: ['Given I enter a valid email\nWhen I request a link\nThen I receive an email with a one-time link valid for 15 minutes', 'Given the link has expired\nWhen I open it\nThen I am asked to request a new link'] },
+        { id: 'REQ-001', featureId: 'F-001', title: 'Create a trip with places', priority: 'Must', status: 'Done', story: 'As a traveller, I want to create a trip and add the places I visited, so that my notes are in one place.', ac: ['Given I am signed in\nWhen I enter a trip name and at least one place and save\nThen the trip appears in My trips', 'Given the trip name is empty\nWhen I save\nThen I see "Trip name is required" and nothing is saved'] },
+        { id: 'REQ-002', featureId: 'F-001', title: 'Share a public trip page', priority: 'Must', status: 'In build', story: 'As a traveller, I want to share a public link to my trip, so that friends can see where I went.', ac: ['Given a saved trip\nWhen I click Share\nThen I get a public URL that opens without signing in', 'Given a trip marked private\nWhen someone opens its URL\nThen they see "This trip is private"'] },
+        { id: 'REQ-003', featureId: 'F-001', title: 'Map of visited places', priority: 'Should', status: 'Approved', story: 'As a traveller, I want to see my places on a map, so that I can relive the trip at a glance.', ac: ['Given a trip with places that have coordinates\nWhen I open the trip\nThen each place is shown as a pin on the map', 'Given a place without coordinates\nWhen I open the trip\nThen it is listed under "Not on map"'] },
+        { id: 'REQ-004', featureId: 'F-002', title: 'Sign in with an email link', priority: 'Could', status: 'Draft', story: 'As a traveller, I want to sign in with a link sent to my email, so that I do not need a password.', ac: ['Given I enter a valid email\nWhen I request a link\nThen I receive an email with a one-time link valid for 15 minutes', 'Given the link has expired\nWhen I open it\nThen I am asked to request a new link'] },
       ],
       tests: [
         { id: 'TC-001', reqIds: ['REQ-001'], title: 'Create trip — happy path', type: 'Automated', status: 'Pass', gherkin: 'Given I am signed in\nWhen I save a trip "Đà Lạt 2026" with place "Hồ Xuân Hương"\nThen "Đà Lạt 2026" is listed in My trips' },
@@ -38,9 +47,9 @@ export function demoProject(): Project {
     },
   });
   const t = (min: number) => new Date(Date.now() - min * 60000).toISOString();
-  p.releases = [{ tag: 'v0.1.0', name: 'v0.1.0', url: '', date: t(60 * 24 * 3), prs: [1] }];
+  p.releases = [{ tag: 'v0.1.0', name: 'v0.1.0', url: '', date: t(60 * 24 * 3), prs: [1], featureIds: ['F-001'] }];
   p.runs = [{
-    id: uid(), agent: 'coder', stage: 'build', goal: 'Share a public trip page', status: 'approved', mode: 'demo', startedAt: t(90), finishedAt: t(88), reqIds: ['REQ-002'], prNumber: 2, branch: 'compass/req-002-share-a-public-trip-page',
+    id: uid(), agent: 'coder', stage: 'build', featureId: 'F-001', goal: 'Share a public trip page', status: 'approved', mode: 'demo', startedAt: t(90), finishedAt: t(88), reqIds: ['REQ-002'], prNumber: 2, branch: 'compass/req-002-share-a-public-trip-page',
     output: 'Implemented REQ-002 with 2 files, including node:test tests.',
     steps: [
       { t: t(90), kind: 'plan', title: 'Coding agent started (demo mode)', detail: 'Goal: Share a public trip page' },

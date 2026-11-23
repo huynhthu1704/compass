@@ -3,26 +3,28 @@ import { go } from '../App';
 import { AgentBox } from '../components/AgentBox';
 import { RunView, STATUS_TONE } from '../components/RunView';
 import { github } from '../github';
+import { featureOf } from '../spec';
 import { useStore } from '../store';
 import type { Project } from '../types';
 import { ago, Badge, Button, PageHead, useAction } from '../ui';
 
-export function BuildPage({ p }: { p: Project }) {
+export function BuildPage({ p, fid }: { p: Project; fid: string }) {
   const { settings } = useStore();
-  const ready = p.spec.requirements.filter((r) => r.status === 'Approved' || r.status === 'In build');
+  const f = featureOf(p, fid);
+  const ready = p.spec.requirements.filter((r) => r.featureId === fid && (r.status === 'Approved' || r.status === 'In build'));
   const [sel, setSel] = useState<string[]>(ready.filter((r) => r.status === 'Approved').slice(0, 1).map((r) => r.id));
-  const runs = p.runs.filter((r) => r.agent === 'coder');
+  const runs = p.runs.filter((r) => r.agent === 'coder' && r.featureId === fid);
   const latest = runs[0];
   const chosen = p.spec.requirements.filter((r) => sel.includes(r.id));
   const noTests = chosen.filter((r) => !p.spec.tests.some((t) => t.reqIds.includes(r.id)));
 
   return (
     <div className="stack gap-xl">
-      <PageHead over="Stage 4 · Build · owner: Developer" title="Build" sub="The coding agent reads the repo (RAG), proposes a change set with tests, passes guardrails and evals, and — after your approval — opens a pull request." />
+      <PageHead over={`${f?.id} ${f?.name} · Stage 4 · Build · owner: Developer`} title="Build" sub="The coding agent reads the repo (RAG), proposes a change set with tests, passes guardrails and evals, and — after your approval — opens a pull request." />
 
       <section className="card pad-xl stack gap-md">
         <h2 className="h4">1 · Choose requirements to implement</h2>
-        {!ready.length ? <div className="body-sm t-tertiary">No approved requirements. Approve some in <button className="btn ghost sm" onClick={() => go(`/p/${p.id}/requirements`)}>Requirements</button>.</div> : (
+        {!ready.length ? <div className="body-sm t-tertiary">No approved requirements. Approve some in <button className="btn ghost sm" onClick={() => go(`/p/${p.id}/f/${fid}/requirements`)}>Requirements</button>.</div> : (
           <div className="stack gap-xs">
             {ready.map((r) => (
               <label key={r.id} className="option" style={{ padding: 10 }}>
@@ -37,7 +39,7 @@ export function BuildPage({ p }: { p: Project }) {
         {noTests.length > 0 && <div className="body-sm t-accent">{noTests.map((r) => r.id).join(', ')} {noTests.length > 1 ? 'have' : 'has'} no test cases — the agent will write tests from the acceptance criteria, but QA should add test cases first.</div>}
       </section>
 
-      <AgentBox key={sel.join(',')} p={p} agentId="coder" reqIds={sel} cta="Implement with agent" defaultGoal={chosen.map((r) => r.title).join(' + ') || 'Implement the selected requirements'} disabled={!sel.length ? 'Select at least one requirement.' : undefined} hint={p.repo && !p.demo ? `Approval will create branch compass/${sel.join('-').toLowerCase()}-… on ${p.repo.owner}/${p.repo.name} and open a PR. CI (tests + spec check) runs on it.` : 'Demo / local project: the PR step is simulated.'} />
+      <AgentBox key={sel.join(',')} p={p} agentId="coder" featureId={fid} reqIds={sel} cta="Implement with agent" defaultGoal={chosen.map((r) => r.title).join(' + ') || 'Implement the selected requirements'} disabled={!sel.length ? 'Select at least one requirement.' : undefined} hint={p.repo && !p.demo ? `Approval will create branch compass/${fid.toLowerCase()}-${sel.join('-').toLowerCase()}-… on ${p.repo.owner}/${p.repo.name} and open a PR. CI (tests + spec check) runs on it.` : 'Demo / local project: the PR step is simulated.'} />
 
       {latest && !['running', 'awaiting-approval', 'failed'].includes(latest.status) && <section className="card pad-xl"><RunView p={p} r={latest} /></section>}
 

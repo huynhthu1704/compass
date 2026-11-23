@@ -24,11 +24,20 @@ export interface Idea {
   scopeIn: string[];
   scopeOut: string[];
   risks: string[];
-  stack: string;           // tech stack for the website
+  stack?: string;          // (v1) moved to Spec.stack
+}
+
+export interface Feature {
+  id: string;              // F-001 (stable key, also used in file names)
+  name: string;
+  idea: Idea;
+  archived?: boolean;
+  createdAt: string;
 }
 
 export interface Requirement {
   id: string;              // REQ-001
+  featureId?: string;      // F-001
   title: string;
   story: string;           // As a … I want … so that …
   ac: string[];            // acceptance criteria (Given/When/Then)
@@ -47,7 +56,10 @@ export interface TestCase {
 
 export interface Spec {
   version: number;
-  idea: Idea;
+  stack: string;           // repo-level tech stack
+  features: Feature[];
+  /** @deprecated v1 single idea — migrated into features[0] */
+  idea?: Idea;
   requirements: Requirement[];
   tests: TestCase[];
   decisions: { id: string; title: string; decision: string; date: string }[];
@@ -81,6 +93,7 @@ export interface Run {
   id: string;
   agent: AgentId;
   stage: Stage;
+  featureId?: string;
   goal: string;
   status: 'running' | 'awaiting-approval' | 'approved' | 'rejected' | 'failed' | 'done';
   mode: 'live' | 'demo';
@@ -98,7 +111,7 @@ export interface Run {
   reqIds?: string[];
 }
 
-export interface ReleaseRec { tag: string; name: string; url: string; date: string; prs: number[] }
+export interface ReleaseRec { tag: string; name: string; url: string; date: string; prs: number[]; featureIds?: string[] }
 
 export interface Project {
   id: string;

@@ -1,5 +1,6 @@
 import { get as idbGet, set as idbSet } from 'idb-keyval';
 import { useSyncExternalStore } from 'react';
+import { DEFAULT_STACK, migrateProject } from './spec';
 import type { Project, Settings, Spec, State } from './types';
 
 const KEY = 'compass.v3';
@@ -8,11 +9,7 @@ const DEFAULT: State = { settings: { lang: 'vi', theme: 'light', model: 'claude-
 export const uid = () => Math.random().toString(36).slice(2, 10);
 export const now = () => new Date().toISOString();
 
-export const emptySpec = (): Spec => ({
-  version: 1,
-  idea: { intent: '', problem: '', users: [], outcomeMetric: '', scopeIn: [], scopeOut: [], risks: [], stack: 'React + TypeScript + Vite, deployed to GitHub Pages' },
-  requirements: [], tests: [], decisions: [],
-});
+export const emptySpec = (): Spec => ({ version: 2, stack: DEFAULT_STACK, features: [], requirements: [], tests: [], decisions: [] });
 
 let state: State = DEFAULT;
 const listeners = new Set<() => void>();
@@ -28,13 +25,13 @@ export const store = {
   async init() {
     try {
       const raw = (await idbGet(KEY)) as State | undefined;
-      if (raw) state = { ...DEFAULT, ...raw, settings: { ...DEFAULT.settings, ...raw.settings } };
+      if (raw) state = { ...DEFAULT, ...raw, settings: { ...DEFAULT.settings, ...raw.settings }, projects: (raw.projects || []).map(migrateProject) };
     } catch { /* IndexedDB blocked: keep defaults */ }
   },
   get: () => state,
   subscribe: (l: () => void) => { listeners.add(l); return () => listeners.delete(l); },
   setSettings(patch: Partial<Settings>) { state = { ...state, settings: { ...state.settings, ...patch } }; emit(); },
-  addProject(p: Project) { state = { ...state, projects: [p, ...state.projects.filter((x) => x.id !== p.id)] }; emit(); },
+  addProject(p: Project) { const m = migrateProject(p); state = { ...state, projects: [m, ...state.projects.filter((x) => x.id !== m.id)] }; emit(); },
   update(id: string, fn: (p: Project) => Project) {
     state = { ...state, projects: state.projects.map((p) => (p.id === id ? { ...fn(p), updatedAt: now() } : p)) };
     emit();
