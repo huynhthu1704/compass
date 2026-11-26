@@ -23,7 +23,7 @@
 | REQ-012 | F-010 | No page keeps the old teal theme | Must | In build | TC-017, TC-018, TC-022 |
 | REQ-013 | F-011 | Draft and Approved labels look different at a glance | Must | Approved | TC-023, TC-024 |
 | REQ-014 | F-011 | The stage strip of a feature reads well on a phone | Should | Approved | TC-025, TC-026 |
-| REQ-016 | F-012 | Delete a feature from its page after typing its id | Must | Approved | TC-029, TC-030, TC-031 |
+| REQ-016 | F-012 | Delete a feature from its page after typing its id | Must | Approved | TC-029, TC-030, TC-031, TC-038 |
 | REQ-017 | F-012 | Deleting a feature removes everything that belongs to it | Must | Approved | TC-032, TC-033, TC-034 |
 | REQ-018 | F-012 | The deleted feature's open GitHub issues are closed as not planned | Must | Approved | TC-035, TC-036 |
 | REQ-019 | F-012 | A strong warning before deleting a feature that has code | Should | Approved | TC-037 |
@@ -569,7 +569,7 @@ Then the feature is still deleted and the portal lists the issues that are still
 
 _AC4_
 ```gherkin
-Given the Connect page
+Given the Connect page, or the error shown when GitHub refuses for lack of permission
 When I read the token help
 Then it asks for Issues: Read & write as well
 ```

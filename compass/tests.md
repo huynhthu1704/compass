@@ -24,7 +24,7 @@
 | REQ-012 No page keeps the old teal theme | TC-017 (Not run), TC-018 (Not run), TC-022 (Not run) |
 | REQ-013 Draft and Approved labels look different at a glance | TC-023 (Not run), TC-024 (Not run) |
 | REQ-014 The stage strip of a feature reads well on a phone | TC-025 (Not run), TC-026 (Not run) |
-| REQ-016 Delete a feature from its page after typing its id | TC-029 (Not run), TC-030 (Not run), TC-031 (Not run) |
+| REQ-016 Delete a feature from its page after typing its id | TC-029 (Not run), TC-030 (Not run), TC-031 (Not run), TC-038 (Not run) |
 | REQ-017 Deleting a feature removes everything that belongs to it | TC-032 (Not run), TC-033 (Not run), TC-034 (Not run) |
 | REQ-018 The deleted feature's open GitHub issues are closed as not planned | TC-035 (Not run), TC-036 (Not run) |
 | REQ-019 A strong warning before deleting a feature that has code | TC-037 (Not run) |
@@ -340,7 +340,7 @@ Covers: REQ-017 · Type: Automated · Status: Not run
 ```gherkin
 Given a repo where compass/intent/F-002.md and compass/features/F-002.md exist and compass/design/F-002.md does not
 When the file changes for deleting F-002 are built
-Then they update compass/spec.json and its views, delete the two existing files, do not touch the missing one, and the views no longer mention F-002
+Then they update compass/spec.json and its views, delete the two existing files, do not touch the missing one, the views no longer mention F-002, and the rules of node compass/check-spec.mjs pass on the new spec
 ```
 
 ## TC-034 · Demo projects delete locally only
@@ -354,9 +354,9 @@ Then it is removed from the local spec and no GitHub request is made
 ## TC-035 · Issue matching selects only the feature's open issues
 Covers: REQ-018 · Type: Automated · Status: Not run
 ```gherkin
-Given open issues "REQ-016: …", "REQ-016, REQ-017: …", "REQ-016–REQ-019: … (F-012)", "REQ-0160: …", "Fix REQ-016 later", "REQ-020: …" and a pull request "REQ-016: …"
+Given open issues "REQ-016: …", "REQ-016, REQ-017: …", "REQ-016–REQ-019: … (F-012)", "REQ-0160: …", "Fix REQ-016 later", "REQ-020: …", "Follow-up (F-012)", "F-0120 …" and a pull request "REQ-016: …"
 When issues are matched for F-012 with REQ-016 to REQ-019
-Then the first three are selected and the others are not
+Then the first three and "Follow-up (F-012)" are selected and the others are not
 ```
 
 ## TC-036 · Issues are commented and closed as not planned; failures are listed
@@ -364,7 +364,7 @@ Covers: REQ-018 · Type: Automated · Status: Not run
 ```gherkin
 Given two matched issues where GitHub refuses the second with 403
 When the feature is deleted
-Then the first gets the comment and is closed with state_reason not_planned, the feature is still deleted, and the result lists the second issue with its link and the reason; the Connect page asks for Issues: Read & write
+Then the first gets the comment and is closed with state_reason not_planned, the feature is still deleted, and the result lists the second issue with its link and the reason; the Connect page and the 403 error hint ask for Issues: Read & write
 ```
 
 ## TC-037 · Warning only for built features or open pull requests
@@ -373,4 +373,12 @@ Covers: REQ-019 · Type: Automated · Status: Not run
 Given a feature with a requirement In build (or Done), one with an open agent PR, and one with only Draft/Approved requirements and no PR
 When the delete dialog's warning is computed
 Then the first names the built requirements, the second lists the PR with its link, and the third shows no warning; deleting never closes or merges a pull request
+```
+
+## TC-038 · The dialog lists everything that will be removed
+Covers: REQ-016 · Type: Automated · Status: Not run
+```gherkin
+Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues "REQ-002: …" and "REQ-001: …"
+When the delete dialog's list is computed
+Then it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue "REQ-002: …"
 ```

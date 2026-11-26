@@ -893,7 +893,7 @@
         "Given a feature is deleted in a project on GitHub\nWhen its issues are looked up\nThen every open issue (not pull request) whose title starts with one of the feature's REQ ids (e.g. \"REQ-016: …\" or \"REQ-016, REQ-017: …\") or names the feature id (e.g. \"(F-012)\") is selected, and no other issue",
         "Given the selected issues\nWhen the feature is deleted\nThen each gets a comment that the feature was deleted in Compass on that date, and is closed with the reason \"not planned\"",
         "Given GitHub refuses to close an issue (for example the token lacks Issues: Read & write)\nWhen the feature is deleted\nThen the feature is still deleted and the portal lists the issues that are still open, with links and the reason",
-        "Given the Connect page\nWhen I read the token help\nThen it asks for Issues: Read & write as well"
+        "Given the Connect page, or the error shown when GitHub refuses for lack of permission\nWhen I read the token help\nThen it asks for Issues: Read & write as well"
       ]
     },
     {
@@ -1290,7 +1290,7 @@
       "title": "One commit deletes only the feature's files that exist",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a repo where compass/intent/F-002.md and compass/features/F-002.md exist and compass/design/F-002.md does not\nWhen the file changes for deleting F-002 are built\nThen they update compass/spec.json and its views, delete the two existing files, do not touch the missing one, and the views no longer mention F-002"
+      "gherkin": "Given a repo where compass/intent/F-002.md and compass/features/F-002.md exist and compass/design/F-002.md does not\nWhen the file changes for deleting F-002 are built\nThen they update compass/spec.json and its views, delete the two existing files, do not touch the missing one, the views no longer mention F-002, and the rules of node compass/check-spec.mjs pass on the new spec"
     },
     {
       "id": "TC-034",
@@ -1310,7 +1310,7 @@
       "title": "Issue matching selects only the feature's open issues",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given open issues \"REQ-016: …\", \"REQ-016, REQ-017: …\", \"REQ-016–REQ-019: … (F-012)\", \"REQ-0160: …\", \"Fix REQ-016 later\", \"REQ-020: …\" and a pull request \"REQ-016: …\"\nWhen issues are matched for F-012 with REQ-016 to REQ-019\nThen the first three are selected and the others are not"
+      "gherkin": "Given open issues \"REQ-016: …\", \"REQ-016, REQ-017: …\", \"REQ-016–REQ-019: … (F-012)\", \"REQ-0160: …\", \"Fix REQ-016 later\", \"REQ-020: …\", \"Follow-up (F-012)\", \"F-0120 …\" and a pull request \"REQ-016: …\"\nWhen issues are matched for F-012 with REQ-016 to REQ-019\nThen the first three and \"Follow-up (F-012)\" are selected and the others are not"
     },
     {
       "id": "TC-036",
@@ -1320,7 +1320,7 @@
       "title": "Issues are commented and closed as not planned; failures are listed",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given two matched issues where GitHub refuses the second with 403\nWhen the feature is deleted\nThen the first gets the comment and is closed with state_reason not_planned, the feature is still deleted, and the result lists the second issue with its link and the reason; the Connect page asks for Issues: Read & write"
+      "gherkin": "Given two matched issues where GitHub refuses the second with 403\nWhen the feature is deleted\nThen the first gets the comment and is closed with state_reason not_planned, the feature is still deleted, and the result lists the second issue with its link and the reason; the Connect page and the 403 error hint ask for Issues: Read & write"
     },
     {
       "id": "TC-037",
@@ -1331,6 +1331,16 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given a feature with a requirement In build (or Done), one with an open agent PR, and one with only Draft/Approved requirements and no PR\nWhen the delete dialog's warning is computed\nThen the first names the built requirements, the second lists the PR with its link, and the third shows no warning; deleting never closes or merges a pull request"
+    },
+    {
+      "id": "TC-038",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "title": "The dialog lists everything that will be removed",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues \"REQ-002: …\" and \"REQ-001: …\"\nWhen the delete dialog's list is computed\nThen it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue \"REQ-002: …\""
     }
   ],
   "decisions": [
