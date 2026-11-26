@@ -47,7 +47,8 @@ can tell within 5 seconds which agent is working, on which feature, and whether 
 - Sound, custom avatars, or a game-like world beyond the desks and handoffs.
 
 ## Design (Draft, for Product Owner approval)
-Figma file "Compass — Team floor" (page "📐 Feature designs"; building blocks on "🧩 Components"):
+Figma file "Compass — Team floor" (page "📐 Feature designs"; building blocks on "🧩 Components"), in the Bee There honey-yellow brand:
+- Design system (Honey edition v0.2: colours light/dark, type, shape, components) — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=18-344
 - S1 Desktop · Live — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=7-4
 - S2 Desktop · Review sends work back — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=10-124
 - S3 Phone · Live — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=12-237
