@@ -13,10 +13,10 @@
 | REQ-105 | F-005 | Build: coding agent, plan file and pull request | Must | Done | TC-105 |
 | REQ-106 | F-006 | Release: merge, tag and deploy | Must | Done | TC-106 |
 | REQ-107 | F-007 | Framework: install into repos without overwriting their own files | Must | Done | TC-107 |
-| REQ-005 | F-009 | The Team floor shows every agent at its desk with its current state | Must | Approved | TC-005, TC-006 |
+| REQ-005 | F-009 | The Team floor shows every agent at its desk with its current state | Must | Approved | TC-005, TC-006, TC-013 |
 | REQ-006 | F-009 | What each agent is doing appears live in its speech bubble and the activity list | Must | Approved | TC-007 |
 | REQ-007 | F-009 | Handoffs move as cards between desks, and a failed review sends the card back | Should | Approved | TC-008 |
-| REQ-008 | F-009 | Approvals can be given from the Team floor with the same result as from Agent runs | Must | Approved | TC-009 |
+| REQ-008 | F-009 | Approvals can be given from the Team floor with the same result as from Agent runs | Must | Approved | TC-009, TC-012 |
 | REQ-009 | F-009 | The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost | Must | Approved | TC-010, TC-011 |
 
 ## REQ-001 · The Compass repo has the Compass Framework
@@ -205,7 +205,7 @@ _AC1_
 ```gherkin
 Given a project with agent runs
 When I open "Team floor" in the project sidebar
-Then I see the seven agents at desks in pipeline order (Ideation, Requirements, Design, Test design, Coding, Review, Release), each with its name, role and a state badge
+Then I see the seven agents at desks in pipeline order (Ideation, Requirements, Design, Test design, Coding, Review, Release), each with its name, the role it mirrors (Ideation PO, Requirements BA, Design UX, Test design QA, Coding Dev, Review QA, Release DM) and a state badge
 ```
 
 _AC2_

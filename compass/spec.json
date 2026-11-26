@@ -454,7 +454,7 @@
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want one page that shows all seven agents at their desks with their current state, so that I can see at a glance who is working, on which feature, and who waits for me.",
       "ac": [
-        "Given a project with agent runs\nWhen I open \"Team floor\" in the project sidebar\nThen I see the seven agents at desks in pipeline order (Ideation, Requirements, Design, Test design, Coding, Review, Release), each with its name, role and a state badge",
+        "Given a project with agent runs\nWhen I open \"Team floor\" in the project sidebar\nThen I see the seven agents at desks in pipeline order (Ideation, Requirements, Design, Test design, Coding, Review, Release), each with its name, the role it mirrors (Ideation PO, Requirements BA, Design UX, Test design QA, Coding Dev, Review QA, Release DM) and a state badge",
         "Given an agent's latest run\nWhen its status is running, awaiting-approval, approved/done, failed/rejected, or there is no open run\nThen its desk shows Working, Waiting for you, Done, Rework or Idle, and the feature it works on",
         "Given the summary above the floor\nWhen runs change state\nThen the counts of agents working, runs waiting for approval and features in flight update",
         "Given the feature filter\nWhen I choose one feature\nThen only that feature's runs set the desks; desks without a run of that feature show Idle"
@@ -634,7 +634,7 @@
       "title": "Desks show each agent's state from its latest run",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given demo runs in each status (running, awaiting-approval, done, failed) and an agent with no run\nWhen the Team floor state is computed\nThen the desks show Working, Waiting for you, Done, Rework and Idle, in pipeline order, with the feature id"
+      "gherkin": "Given demo runs in each status (running, awaiting-approval, done, failed) and an agent with no run\nWhen the Team floor state is computed\nThen the desks show Working, Waiting for you, Done, Rework and Idle, in pipeline order, with the feature id\nAnd the summary shows 1 agent working and 1 run waiting for approval\nWhen the running run changes to awaiting-approval\nThen the summary shows 0 working and 2 waiting"
     },
     {
       "id": "TC-006",
@@ -654,7 +654,7 @@
       "title": "A new step reaches the bubble within 1 second",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given the Team floor open in demo mode\nWhen I start the Coding agent\nThen its bubble shows each new step title within 1 second and the activity list adds it at the top"
+      "gherkin": "Given the Team floor open in demo mode\nWhen I start the Coding agent\nThen its bubble shows each new step title within 1 second and the activity list adds it at the top\nAnd the activity list is a polite live region (aria-live=\"polite\"), so a screen reader announces each new step without interrupting"
     },
     {
       "id": "TC-008",
@@ -671,10 +671,10 @@
       "reqIds": [
         "REQ-008"
       ],
-      "title": "Approving from the floor equals approving from Agent runs",
+      "title": "Approving or rejecting from the floor equals doing it from Agent runs",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given a run awaiting approval\nWhen I approve it from the Your approval desk\nThen the run, the spec and the next agent are exactly as when approved from Agent runs"
+      "gherkin": "Given two runs awaiting approval\nWhen I approve the first and reject the second from the Team floor\nThen each run, the spec and the next agent are exactly as when approved or rejected from Agent runs"
     },
     {
       "id": "TC-010",
@@ -695,6 +695,26 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the browser network panel\nWhen the Team floor is open while agents run in demo mode\nThen it makes no network requests of its own"
+    },
+    {
+      "id": "TC-012",
+      "reqIds": [
+        "REQ-008"
+      ],
+      "title": "Your approval desk lists waiting runs, or says Nothing waiting",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given two runs awaiting approval (Requirements · F-009, Design · F-008)\nWhen the Team floor state is computed\nThen the Your approval desk lists both runs with agent and feature, each with \"Review & approve\"\nAnd when no run awaits approval, the desk says \"Nothing waiting\""
+    },
+    {
+      "id": "TC-013",
+      "reqIds": [
+        "REQ-005"
+      ],
+      "title": "Who is working and what waits for me, at a glance",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the Team floor in demo mode with one agent working and one run waiting for approval\nWhen the Product Owner looks at it for the first time\nThen within 5 seconds she can say which agent is working, on which feature, and what waits for her approval"
     }
   ],
   "decisions": [
