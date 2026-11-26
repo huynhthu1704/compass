@@ -397,6 +397,34 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-26T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-011",
+      "name": "Readability follow-ups: status labels and phone stage strip",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "need": "turn the \"Draft\" vs \"Approved\" label colours and the cramped phone stage strip into requirements for later — yes please",
+        "intent": "The Product Owner tells Draft from Approved labels without reading them, and no word breaks in a feature's stage strip on a 390 px phone (today: both labels honey; words break mid-word).",
+        "problem": "After the honey rebrand, Draft (warning) and Approved (brand) labels are both honey; on phones the six stage cards of a feature page squeeze into narrow columns and break words.",
+        "users": [
+          "Product Owner",
+          "Everyone reviewing requirements and tests"
+        ],
+        "outcomeMetric": "Draft vs Approved: same colour family → different families (test); broken words in the stage strip at 390 px: several → 0 (screenshot).",
+        "scopeIn": [
+          "Status label colours on requirements, test cases and features",
+          "Stage strip layout below 720 px"
+        ],
+        "scopeOut": [
+          "Other label colours",
+          "A redesign of the feature page"
+        ],
+        "risks": [
+          "Tokens of the honey design system only; no new libraries",
+          "WCAG AA contrast kept",
+          "Desktop stage strip unchanged"
+        ]
+      }
     }
   ],
   "requirements": [
@@ -640,6 +668,33 @@
       "ac": [
         "Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs, Knowledge)\nWhen I open it in light and dark mode\nThen it uses the honey theme",
         "Given the source code in src/\nWhen the unit tests run\nThen a test fails if any old teal colour (#EDFAF7, #D2F2EA, #6ECDB9, #38B09A, #0E7666, #0D5E52, #0C3A34) or a hard-coded colour outside the design tokens is found"
+      ]
+    },
+    {
+      "id": "REQ-013",
+      "featureId": "F-011",
+      "title": "Draft and Approved labels look different at a glance",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-status-labels-and-phone-stages.md",
+      "story": "As the product owner, I want Draft and Approved labels in different colours, so that I see at a glance what still needs my approval.",
+      "ac": [
+        "Given a requirement, test case or feature with status Draft\nWhen its status label is shown\nThen it uses the neutral (grey) tone",
+        "Given a requirement or feature with status Approved\nWhen its status label is shown\nThen it uses the success (mint) tone, like Done, in light and dark mode",
+        "Given the status labels\nWhen contrast is measured\nThen their text keeps at least 4.5:1 on the label background"
+      ]
+    },
+    {
+      "id": "REQ-014",
+      "featureId": "F-011",
+      "title": "The stage strip of a feature reads well on a phone",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-status-labels-and-phone-stages.md",
+      "story": "As the product owner, I want the stage strip of a feature to stay readable on my phone, so that I can follow a feature anywhere.",
+      "ac": [
+        "Given a feature page on a screen narrower than 720 px\nWhen the stage strip (Idea → Release) is shown\nThen each stage takes the full width in one list, in stage order, and no word is broken across lines",
+        "Given a screen 720 px or wider\nWhen the stage strip is shown\nThen it looks as it does today"
       ]
     }
   ],
@@ -933,6 +988,46 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the rebrand pull request\nWhen I compare it with main\nThen package.json has no new dependency, every page keeps its layout and behaviour, and all existing unit tests still pass"
+    },
+    {
+      "id": "TC-023",
+      "reqIds": [
+        "REQ-013"
+      ],
+      "title": "Draft is neutral, Approved is mint",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the status-to-tone mapping used on Requirements, Test cases and Feature pages\nWhen the test reads it\nThen Draft maps to neutral and Approved maps to success on every page"
+    },
+    {
+      "id": "TC-024",
+      "reqIds": [
+        "REQ-013"
+      ],
+      "title": "Status label contrast",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the neutral and success tones in light and dark mode\nWhen contrast of text on background is computed\nThen both are at least 4.5:1"
+    },
+    {
+      "id": "TC-025",
+      "reqIds": [
+        "REQ-014"
+      ],
+      "title": "Stage strip on a 390 px phone",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a feature page at 390 px wide in light and dark mode\nWhen I look at the stage strip\nThen the six stages are listed one per row in stage order and no word is broken"
+    },
+    {
+      "id": "TC-026",
+      "reqIds": [
+        "REQ-014"
+      ],
+      "title": "Desktop stage strip unchanged",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a feature page at 1440 px\nWhen I compare it with the version before the change\nThen the stage strip looks the same"
     }
   ],
   "decisions": [
