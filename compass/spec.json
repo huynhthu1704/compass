@@ -424,6 +424,55 @@
           "WCAG AA contrast kept",
           "Desktop stage strip unchanged"
         ]
+      },
+      "design": {
+        "status": "Draft",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=27-429",
+        "summary": "Two small changes inside the honey design system. Status labels: Draft uses the neutral tone (grey), Approved uses the success tone (mint, like Done), In build stays info (sky), on requirements, test cases and features. Phone stage strip: below 720 px the six stage cards of a feature page become a one-per-row list in stage order (stage chip, stage name, summary, agent · role, chevron); the current stage is highlighted honey. 720 px and wider stays as today.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Status labels — before/after, light and dark",
+            "purpose": "Shows the new label colours and a requirements list using them.",
+            "reqIds": [
+              "REQ-013"
+            ],
+            "elements": [
+              "Draft · neutral",
+              "Approved · success",
+              "In build · info",
+              "Done · success",
+              "Example requirements list"
+            ],
+            "states": [
+              "Light",
+              "Dark"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=27-429"
+          },
+          {
+            "id": "SCR-2",
+            "name": "Phone · Feature stage strip as a list",
+            "purpose": "The stage strip of a feature page at 390 px: one stage per row, whole words.",
+            "reqIds": [
+              "REQ-014"
+            ],
+            "elements": [
+              "Stage chip (✓ or number)",
+              "Stage name in its stage colour",
+              "Summary line",
+              "Agent · role",
+              "Chevron"
+            ],
+            "states": [
+              "Done stages",
+              "Current stage (honey)",
+              "Later stages"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=27-509"
+          }
+        ],
+        "notes": "Draft for Product Owner approval. Desktop stage strip unchanged (TC-026)."
       }
     }
   ],
@@ -675,7 +724,7 @@
       "featureId": "F-011",
       "title": "Draft and Approved labels look different at a glance",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-status-labels-and-phone-stages.md",
       "story": "As the product owner, I want Draft and Approved labels in different colours, so that I see at a glance what still needs my approval.",
       "ac": [
@@ -689,7 +738,7 @@
       "featureId": "F-011",
       "title": "The stage strip of a feature reads well on a phone",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-status-labels-and-phone-stages.md",
       "story": "As the product owner, I want the stage strip of a feature to stay readable on my phone, so that I can follow a feature anywhere.",
       "ac": [
