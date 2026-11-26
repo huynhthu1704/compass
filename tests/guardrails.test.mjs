@@ -14,6 +14,8 @@ const g = {
   requireHumanApprovalFor: ['delete', 'protected-path', 'dependency-change'],
   secretPatterns: ['sk-ant-[A-Za-z0-9_-]{10,}'],
 };
+// A fake key, assembled at runtime so this file itself never contains key-shaped text
+const FAKE_KEY = ['sk', 'ant', 'abcdefghijkl'].join('-');
 const plan = '# Plan\n## Files\n- src/a.ts — x\n## Steps\n1. do\n## Risks\n- none known\n## Proof\n- npm test';
 
 test('TC-003: path rules — folders end with "/", case-insensitive', () => {
@@ -27,7 +29,7 @@ test('TC-003: checkChange — size, forbidden, protected, deletion, secrets, dep
     { path: '.env', status: 'A', addedText: 'x' },
     { path: '.github/workflows/ci.yml', status: 'M', addedText: '' },
     { path: 'src/old.ts', status: 'D' },
-    { path: 'src/a.ts', status: 'M', addedText: 'const k = "sk-ant-abcdefghijkl"', lines: 11 },
+    { path: 'src/a.ts', status: 'M', addedText: `const k = "${FAKE_KEY}"`, lines: 11 },
   ];
   const { errors, warnings } = checkChange(files, g, { depsChanged: true });
   const all = errors.join('\n');
@@ -69,8 +71,8 @@ test('TC-003: edit hook — protected unless approved, forbidden always, secrets
     assert.match(decideEdit(edit('compass/guardrails.json'), g, [], root).reason, /protected path/);
     assert.deepEqual(decideEdit(edit('compass/guardrails.json'), g, ['compass/guardrails.json'], root), { block: false });
     assert.match(decideEdit(edit('.env'), g, ['.env'], root).reason, /forbidden path/);
-    assert.match(decideEdit(edit('src/a.ts', 'sk-ant-abcdefghijkl'), g, [], root).reason, /secret pattern/);
-    assert.match(decideEdit(edit('/elsewhere/notes.md', 'sk-ant-abcdefghijkl'), g, [], root).reason, /secret pattern/, 'secrets are blocked outside the repo too');
+    assert.match(decideEdit(edit('src/a.ts', FAKE_KEY), g, [], root).reason, /secret pattern/);
+    assert.match(decideEdit(edit('/elsewhere/notes.md', FAKE_KEY), g, [], root).reason, /secret pattern/, 'secrets are blocked outside the repo too');
     assert.deepEqual(decideEdit(edit('src/a.ts'), g, [], root), { block: false });
     assert.deepEqual(decideEdit(edit('../outside/.github/workflows/x.yml'), g, [], root), { block: false }, 'paths outside the repo are not protected');
   } finally {
