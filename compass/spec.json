@@ -476,6 +476,108 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-26T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-012",
+      "name": "Delete a feature and close its GitHub issues",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "need": "Allow me to delete a feature directly from compass portal. The corresponding github ticket should also be deleted.",
+        "intent": "A feature added by mistake is gone from the portal, the spec and the repo in under 30 seconds, and its GitHub issues are closed as not planned (today: archive only; removing one means hand-editing spec.json and closing issues one by one).",
+        "problem": "A feature can only be archived. A mistaken or duplicate feature stays on the board and in spec.json for good, and its requirement issues stay open on GitHub.",
+        "users": [
+          "Product Owner"
+        ],
+        "outcomeMetric": "Time to remove a feature: hand-editing spec.json and closing each issue → one dialog under 30 s; open issues of a deleted feature: all → 0 (or a list of the ones GitHub refused).",
+        "scopeIn": [
+          "Delete button and typed-id confirmation on the feature page",
+          "Removing the feature, its requirements, test cases, agent runs and generated files",
+          "Closing its open GitHub issues as not planned, with a comment",
+          "A strong warning when the feature has code"
+        ],
+        "scopeOut": [
+          "Permanently deleting GitHub issues",
+          "Removing code, tests, branches or pull requests of a built feature",
+          "An undo or trash bin (Archive stays the reversible option)"
+        ],
+        "risks": [
+          "Deletion cannot be undone in the portal: typing the feature id is the human approval",
+          "The token needs Issues: Read & write",
+          "No new libraries, no server"
+        ]
+      },
+      "design": {
+        "status": "Approved",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=0-1",
+        "summary": "A \"Delete feature\" button sits next to \"Archive feature\" on the feature page and opens a centred dialog (full-width sheet on phones). The dialog lists what will be removed — requirements with their status, test cases, the three F-xxx.md files and the open GitHub issues that will be closed as not planned — and asks to type the feature id. Delete (red) is enabled only when the text is exactly the id. A built feature gets a red warning box above the list, naming the requirements In build or Done and its open pull requests, which stay open. After deleting, the feature board shows a notice: mint when every issue closed, honey with links when GitHub refused some.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Desktop · Delete dialog, feature without code",
+            "purpose": "Everything that will be removed, and the typed-id confirmation, for a feature whose requirements are Draft or Approved.",
+            "reqIds": [
+              "REQ-016",
+              "REQ-017",
+              "REQ-018"
+            ],
+            "elements": [
+              "Title \"Delete F-xxx · name?\" and the Archive hint",
+              "\"What will be removed\": requirements with status badges, test cases, files, open issues",
+              "Field \"Type F-xxx to confirm\"",
+              "Cancel (secondary) and Delete feature (red)"
+            ],
+            "states": [
+              "Id typed exactly → Delete enabled",
+              "Esc or Cancel → closes, nothing changes"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=41-451"
+          },
+          {
+            "id": "SCR-2",
+            "name": "Desktop · Delete dialog, feature with code",
+            "purpose": "The strong warning for a feature with requirements In build or Done and an open pull request.",
+            "reqIds": [
+              "REQ-016",
+              "REQ-019"
+            ],
+            "elements": [
+              "Red warning box naming the built requirements",
+              "Open pull requests with links, marked \"stays open\"",
+              "Hint \"Delete stays off until the text is exactly F-xxx\"",
+              "Delete feature disabled (grey)"
+            ],
+            "states": [
+              "Text does not match → Delete disabled",
+              "No code and no open PR → no warning box (SCR-1)"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=42-451"
+          },
+          {
+            "id": "SCR-3",
+            "name": "Phone · Dialog and result notice",
+            "purpose": "The dialog at 390 px with stacked buttons, and the notice on the feature board after deleting.",
+            "reqIds": [
+              "REQ-016",
+              "REQ-018"
+            ],
+            "elements": [
+              "Short summary of what will be removed",
+              "Full-width Delete feature and Cancel buttons",
+              "Honey notice listing issues GitHub refused, with link and reason",
+              "Mint notice when every issue was closed"
+            ],
+            "states": [
+              "Some issues still open (403: token needs Issues: Read & write)",
+              "All issues closed",
+              "Demo project: deleted locally"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=42-509"
+          }
+        ],
+        "notes": "Keyboard: focus starts in the id field, Tab cycles inside the dialog, Esc cancels. The dialog scrolls inside itself on short screens. Text colours from the honey tokens only; the red Delete button uses text/danger with white text (contrast checked in build).",
+        "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-26T00:00:00.000Z"
+      }
     }
   ],
   "requirements": [
@@ -746,6 +848,66 @@
       "ac": [
         "Given a feature page on a screen narrower than 720 px\nWhen the stage strip (Idea → Release) is shown\nThen each stage takes the full width in one list, in stage order, and no word is broken across lines",
         "Given a screen 720 px or wider\nWhen the stage strip is shown\nThen it looks as it does today"
+      ]
+    },
+    {
+      "id": "REQ-016",
+      "featureId": "F-012",
+      "title": "Delete a feature from its page after typing its id",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-delete-feature.md",
+      "story": "As the product owner, I want to delete a feature from its page, so that a feature added by mistake does not stay on the board for good.",
+      "ac": [
+        "Given a feature page\nWhen I click \"Delete feature\" (next to \"Archive feature\")\nThen a dialog lists what will be removed: the feature's requirements, test cases, files (compass/intent, features and design F-xxx.md) and its open GitHub issues",
+        "Given the delete dialog\nWhen the text I type is not exactly the feature id (e.g. F-012)\nThen the Delete button stays disabled",
+        "Given the delete dialog\nWhen I press Esc or Cancel\nThen the dialog closes and nothing is changed",
+        "Given I typed the feature id\nWhen I click Delete\nThen the feature is removed and I am back on the feature board, which no longer shows it",
+        "Given the dialog on a phone (390 px) or with the keyboard only\nWhen I use it\nThen it fits the screen, focus stays inside the dialog and every button can be reached with Tab"
+      ]
+    },
+    {
+      "id": "REQ-017",
+      "featureId": "F-012",
+      "title": "Deleting a feature removes everything that belongs to it",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-delete-feature.md",
+      "story": "As the product owner, I want everything of a deleted feature removed from the spec and the repo, so that nothing is left behind and the checks stay green.",
+      "ac": [
+        "Given a feature is deleted\nWhen the spec is updated\nThen the feature, its requirements (featureId = the feature), its test cases and its agent runs are removed; a test case that also covers a requirement of another feature is kept without the deleted ids",
+        "Given a decision (ADR) references a deleted requirement\nWhen the feature is deleted\nThen the decision is kept and only the deleted ids are taken out of its reqIds",
+        "Given a project on GitHub\nWhen the feature is deleted\nThen one commit updates compass/spec.json and its views and deletes compass/intent, compass/features and compass/design F-xxx.md of that feature (only the ones that exist), and node compass/check-spec.mjs passes on the result",
+        "Given a demo project or a project without a repo\nWhen the feature is deleted\nThen it is removed locally and nothing is sent to GitHub"
+      ]
+    },
+    {
+      "id": "REQ-018",
+      "featureId": "F-012",
+      "title": "The deleted feature's open GitHub issues are closed as not planned",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-delete-feature.md",
+      "story": "As the product owner, I want the GitHub tickets of a deleted feature closed, so that the issue list does not show work that will never happen.",
+      "ac": [
+        "Given a feature is deleted in a project on GitHub\nWhen its issues are looked up\nThen every open issue (not pull request) whose title starts with one of the feature's REQ ids (e.g. \"REQ-016: …\" or \"REQ-016, REQ-017: …\") or names the feature id (e.g. \"(F-012)\") is selected, and no other issue",
+        "Given the selected issues\nWhen the feature is deleted\nThen each gets a comment that the feature was deleted in Compass on that date, and is closed with the reason \"not planned\"",
+        "Given GitHub refuses to close an issue (for example the token lacks Issues: Read & write)\nWhen the feature is deleted\nThen the feature is still deleted and the portal lists the issues that are still open, with links and the reason",
+        "Given the Connect page, or the error shown when GitHub refuses for lack of permission\nWhen I read the token help\nThen it asks for Issues: Read & write as well"
+      ]
+    },
+    {
+      "id": "REQ-019",
+      "featureId": "F-012",
+      "title": "A strong warning before deleting a feature that has code",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-delete-feature.md",
+      "story": "As the product owner, I want a clear warning when a feature I am deleting is already built, so that I know its code and tests still need a clean-up.",
+      "ac": [
+        "Given a feature with a requirement In build or Done\nWhen the delete dialog opens\nThen a red warning names those requirements and says that code and tests in the repo still reference them and need a separate change",
+        "Given a feature with open agent pull requests\nWhen the delete dialog opens\nThen the pull requests are listed with links, and deleting the feature does not close or merge them",
+        "Given a feature whose requirements are all Draft or Approved and that has no open pull request\nWhen the delete dialog opens\nThen no warning is shown"
       ]
     }
   ],
@@ -1079,6 +1241,106 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given a feature page at 1440 px\nWhen I compare it with the version before the change\nThen the stage strip looks the same"
+    },
+    {
+      "id": "TC-029",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "title": "Delete is enabled only after typing the exact feature id",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the delete dialog of feature F-012\nWhen the typed text is empty, \"f-012\", \"F-01\" or \"F-012 \" with a trailing space\nThen the Delete button is disabled; when it is exactly \"F-012\" it is enabled"
+    },
+    {
+      "id": "TC-030",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "title": "Cancel and Esc change nothing; Delete returns to the board",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the delete dialog of a feature\nWhen Esc or Cancel is used\nThen the spec is unchanged; and when the id is typed and Delete is clicked, the portal opens the feature board and the feature is not on it"
+    },
+    {
+      "id": "TC-031",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "title": "Delete dialog on a phone and by keyboard",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the delete dialog at 390 px wide and with the keyboard only\nWhen I Tab through it\nThen it fits the screen without sideways scrolling, focus stays inside the dialog, and Cancel, the id field and Delete can all be reached"
+    },
+    {
+      "id": "TC-032",
+      "reqIds": [
+        "REQ-017"
+      ],
+      "title": "Spec clean-up removes the feature, its requirements, tests and runs",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a project with features F-001 and F-002, a test covering a requirement of each, a test of F-002 only, a run of F-002 and an ADR referencing requirements of both\nWhen F-002 is deleted\nThen F-002, its requirements, its own test and its run are gone; the shared test and the ADR are kept with only F-001's requirement ids; F-001 is unchanged"
+    },
+    {
+      "id": "TC-033",
+      "reqIds": [
+        "REQ-017"
+      ],
+      "title": "One commit deletes only the feature's files that exist",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a repo where compass/intent/F-002.md and compass/features/F-002.md exist and compass/design/F-002.md does not\nWhen the file changes for deleting F-002 are built\nThen they update compass/spec.json and its views, delete the two existing files, do not touch the missing one, the views no longer mention F-002, and the rules of node compass/check-spec.mjs pass on the new spec"
+    },
+    {
+      "id": "TC-034",
+      "reqIds": [
+        "REQ-017"
+      ],
+      "title": "Demo projects delete locally only",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a demo project (or one without a repo)\nWhen a feature is deleted\nThen it is removed from the local spec and no GitHub request is made"
+    },
+    {
+      "id": "TC-035",
+      "reqIds": [
+        "REQ-018"
+      ],
+      "title": "Issue matching selects only the feature's open issues",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given open issues \"REQ-016: …\", \"REQ-016, REQ-017: …\", \"REQ-016–REQ-019: … (F-012)\", \"REQ-0160: …\", \"Fix REQ-016 later\", \"REQ-020: …\", \"Follow-up (F-012)\", \"F-0120 …\" and a pull request \"REQ-016: …\"\nWhen issues are matched for F-012 with REQ-016 to REQ-019\nThen the first three and \"Follow-up (F-012)\" are selected and the others are not"
+    },
+    {
+      "id": "TC-036",
+      "reqIds": [
+        "REQ-018"
+      ],
+      "title": "Issues are commented and closed as not planned; failures are listed",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given two matched issues where GitHub refuses the second with 403\nWhen the feature is deleted\nThen the first gets the comment and is closed with state_reason not_planned, the feature is still deleted, and the result lists the second issue with its link and the reason; the Connect page and the 403 error hint ask for Issues: Read & write"
+    },
+    {
+      "id": "TC-037",
+      "reqIds": [
+        "REQ-019"
+      ],
+      "title": "Warning only for built features or open pull requests",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a feature with a requirement In build (or Done), one with an open agent PR, and one with only Draft/Approved requirements and no PR\nWhen the delete dialog's warning is computed\nThen the first names the built requirements, the second lists the PR with its link, and the third shows no warning; deleting never closes or merges a pull request"
+    },
+    {
+      "id": "TC-038",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "title": "The dialog lists everything that will be removed",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues \"REQ-002: …\" and \"REQ-001: …\"\nWhen the delete dialog's list is computed\nThen it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue \"REQ-002: …\""
     }
   ],
   "decisions": [
