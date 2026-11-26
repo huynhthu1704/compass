@@ -1,6 +1,10 @@
 {
   "version": 2,
   "stack": "React 19 + TypeScript + Vite single-page app (runs in the browser, no server); GitHub REST API and the Claude API; node:test for the checking scripts; GitHub Pages deploy",
+  "designTool": {
+    "kind": "figma",
+    "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS"
+  },
   "features": [
     {
       "id": "F-001",
