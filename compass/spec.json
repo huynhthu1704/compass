@@ -747,6 +747,22 @@
         "Given a feature page on a screen narrower than 720 px\nWhen the stage strip (Idea → Release) is shown\nThen each stage takes the full width in one list, in stage order, and no word is broken across lines",
         "Given a screen 720 px or wider\nWhen the stage strip is shown\nThen it looks as it does today"
       ]
+    },
+    {
+      "id": "REQ-015",
+      "featureId": "F-011",
+      "title": "Pages use up to 1600 px on large screens and stay responsive",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-wider-pages.md",
+      "design": "none: width limit and padding only — every page keeps its approved layout",
+      "story": "As the product owner, I want Compass pages to use the width of my large screen, so that wide pages like the Team floor are not squeezed next to an empty band.",
+      "ac": [
+        "Given a screen 1920 px wide\nWhen I open any portal page\nThen the content area is up to 1600 px wide (it was 1240 px)",
+        "Given a screen between 900 px and 1600 px wide\nWhen I open any page\nThen the content fills the available width, side padding shrinks smoothly, and there is no sideways scrolling",
+        "Given a phone or a screen below 900 px\nWhen I open any page\nThen the layout is the same as before",
+        "Given a form page that sets its own reading width (New project, Connections)\nWhen it is shown on a large screen\nThen it keeps that reading width"
+      ]
     }
   ],
   "tests": [
@@ -1079,6 +1095,26 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given a feature page at 1440 px\nWhen I compare it with the version before the change\nThen the stage strip looks the same"
+    },
+    {
+      "id": "TC-027",
+      "reqIds": [
+        "REQ-015"
+      ],
+      "title": "Content width up to 1600 px with fluid padding",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given src/index.css\nWhen the test reads the .main rule\nThen max-width is 1600px, width is 100% and the side padding uses clamp() between the small and large spacing tokens\nAnd the below-900 px rule for .main is unchanged"
+    },
+    {
+      "id": "TC-028",
+      "reqIds": [
+        "REQ-015"
+      ],
+      "title": "No sideways scrolling at 1920, 1280 and 390 px",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the Team floor, Feature board, Requirements and New project pages\nWhen I open them at 1920, 1280 and 390 px wide\nThen the content is 1600 px wide at 1920 px, forms keep their reading width, and no page scrolls sideways"
     }
   ],
   "decisions": [
