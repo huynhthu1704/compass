@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Compass Framework: local approvals for protected paths (never commit)
+.claude/approved-paths.local.json
