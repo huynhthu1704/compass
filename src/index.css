@@ -187,7 +187,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .seg { display: inline-flex; border: 1px solid var(--color-border-default); border-radius: var(--radius-full); overflow: hidden; }
 .seg button { border: 0; background: var(--color-bg-surface); padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--color-text-secondary); }
 .seg button[aria-pressed="true"] { background: var(--color-bg-brand-subtle); color: var(--color-text-brand); font-weight: 600; }
-.option { display: flex; gap: var(--spacing-md); align-items: flex-start; padding: var(--spacing-md); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); cursor: pointer; background: var(--color-bg-surface); text-align: left; }
+.option { display: flex; gap: var(--spacing-md); align-items: flex-start; padding: var(--spacing-md); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); cursor: pointer; background: var(--color-bg-surface); text-align: left;  flex-wrap: wrap;}
 .run-status { flex: none; width: 128px; display: flex; } /* fixed status column so run names line up */
 .option[aria-pressed="true"] { border-color: var(--color-border-brand); background: var(--color-bg-brand-subtle); }
 .kpi { display: flex; flex-direction: column; gap: 2px; }
@@ -223,12 +223,12 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--color-border-default); margin-bottom: var(--spacing-xl); overflow-x: auto; }
 .tabs button { border: 0; background: none; padding: var(--spacing-sm) var(--spacing-md); font-size: 14px; font-weight: 500; color: var(--color-text-secondary); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
 .tabs button[aria-selected="true"] { color: var(--color-text-brand); border-bottom-color: var(--color-bg-brand); }
-.arch { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-md); }
+.arch { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--spacing-md); }
 .arch .layer { border-radius: var(--radius-lg); padding: var(--spacing-lg); display: flex; flex-direction: column; gap: var(--spacing-sm); border: 1px solid var(--color-border-default); background: var(--color-bg-surface); position: relative; }
 .arch .layer + .layer::before { content: '→'; position: absolute; left: -14px; top: 50%; transform: translateY(-50%); color: var(--color-text-tertiary); font-size: 14px; }
 .score { font-family: var(--font-mono); font-weight: 600; }
 .code-inline { font-family: var(--font-mono); font-size: 12px; background: var(--color-bg-subtle); padding: 1px 6px; border-radius: 4px; }
-@media (max-width: 900px) { .arch { grid-template-columns: 1fr 1fr; } .arch .layer + .layer::before { display: none; } }
+@media (max-width: 900px) { .arch { grid-template-columns: repeat(2, minmax(0, 1fr)); } .arch .layer + .layer::before { display: none; } }
 
 .sidebar .seg button { padding: 4px 8px; }
 .sidebar > .row.between { flex-wrap: wrap; gap: 8px; }
