@@ -1,6 +1,6 @@
 # Intent: Auto-sync never overwrites a newer spec on GitHub
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-26, in chat)
 Requested: 2026-11-26 by the Product Owner, in chat
 
 ## Business need
@@ -53,4 +53,9 @@ Unit tests replay the incident: a portal copy from 2026-11-23 against today's `m
 - Restoring other projects (only Bee There was affected; already restored).
 
 ## Requirements
-<filled after approval: REQ-xxx — title (#issue)>
+Feature F-013 · Auto-sync never overwrites a newer spec on GitHub (requirements in Draft, waiting for approval)
+- REQ-020 — The portal checks GitHub's version before every spec commit
+- REQ-021 — When GitHub has a newer spec, the portal stops and asks
+- REQ-022 — Opening a project loads the latest spec from GitHub first
+- REQ-023 — A spec commit never removes items quietly
+- REQ-024 — A design tool stored as a plain link is read correctly (folded in with the Product Owner's OK)

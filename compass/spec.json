@@ -476,6 +476,38 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-26T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-013",
+      "name": "Auto-sync never overwrites a newer spec on GitHub",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "need": "Fix the cause in Compass: before auto-sync commits, it should check that main hasn't changed since the portal last read it. If it has, it should stop and ask instead of overwriting.",
+        "intent": "No spec commit from the portal ever lands on a version of compass/spec.json the portal has not seen, and no save quietly removes requirements, tests or decisions (today: one stale browser copy turned 107 requirements into 1 on Bee There's main).",
+        "problem": "Auto-sync commits the portal's local copy of compass/spec.json without checking GitHub first, and stores the commit id instead of the file's version, so a stale copy overwrote Bee There's spec on 2026-11-26.",
+        "users": [
+          "Product Owner",
+          "Agents and people who edit compass/spec.json"
+        ],
+        "outcomeMetric": "Spec commits on top of an unseen version: possible → 0 (unit test replays the incident); items silently removed by a save: 103 on 2026-11-26 → 0.",
+        "scopeIn": [
+          "Version check before every spec commit (auto-sync, Commit spec, release)",
+          "Stop-and-ask banner with Load GitHub's version / Keep both",
+          "Fresh copy on opening a project",
+          "Refuse saves that remove items not deleted in the portal",
+          "Read a design tool stored as a plain link"
+        ],
+        "scopeOut": [
+          "Real-time collaboration or locking",
+          "Overwriting GitHub with the portal's copy",
+          "Restoring other projects"
+        ],
+        "risks": [
+          "No new libraries, no server",
+          "Demo projects unchanged",
+          "Bee There keeps designTool as a plain link string (its tests require it)"
+        ]
+      }
     }
   ],
   "requirements": [
@@ -746,6 +778,76 @@
       "ac": [
         "Given a feature page on a screen narrower than 720 px\nWhen the stage strip (Idea → Release) is shown\nThen each stage takes the full width in one list, in stage order, and no word is broken across lines",
         "Given a screen 720 px or wider\nWhen the stage strip is shown\nThen it looks as it does today"
+      ]
+    },
+    {
+      "id": "REQ-020",
+      "featureId": "F-013",
+      "title": "The portal checks GitHub's version before every spec commit",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-safe-auto-sync.md",
+      "story": "As the product owner, I want the portal to check that compass/spec.json on GitHub is the version it last read or wrote, so that it never overwrites changes made by agents or people.",
+      "ac": [
+        "Given a project on GitHub\nWhen auto-sync, \"Commit spec\" or a release is about to commit compass/spec.json to the default branch\nThen the portal first reads the file's current version (blob sha) there, and commits only when it equals the version the portal last read or wrote",
+        "Given the version on GitHub differs, or the portal has no recorded version for the project\nWhen the commit would happen\nThen nothing is committed and the project shows the \"newer spec on GitHub\" banner (REQ-021)",
+        "Given a spec commit or a pull from GitHub succeeds\nWhen the portal records the version\nThen it stores the blob sha of compass/spec.json (not the commit sha) and keeps a copy of that spec as the base for merging",
+        "Given a demo project or a project without a repo\nWhen the spec changes\nThen nothing changes compared with today"
+      ]
+    },
+    {
+      "id": "REQ-021",
+      "featureId": "F-013",
+      "title": "When GitHub has a newer spec, the portal stops and asks",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-safe-auto-sync.md",
+      "story": "As the product owner, I want to choose what happens when GitHub has a newer spec than my portal copy, so that I never lose work on either side.",
+      "ac": [
+        "Given GitHub has a newer compass/spec.json than the portal's version\nWhen the project is shown\nThen a banner says so, with the time and author of the latest commit that changed the file; auto-sync is paused for that project until I choose; overwriting GitHub is not offered",
+        "Given the banner\nWhen I choose \"Load GitHub's version\" and confirm\nThen the portal replaces its copy with GitHub's, my unsaved portal edits are dropped, and auto-sync resumes",
+        "Given the banner\nWhen I choose \"Keep both\"\nThen the portal merges by id against the base copy: items on GitHub are kept, items I added or changed in the portal (and GitHub did not change) are applied, items changed on both sides keep GitHub's version and are listed; a summary (added, changed, kept from GitHub) is shown and committed only after I confirm",
+        "Given an item I added in the portal has an id that GitHub now uses for a different item\nWhen I choose \"Keep both\"\nThen my item gets the next free id and the summary says so"
+      ]
+    },
+    {
+      "id": "REQ-022",
+      "featureId": "F-013",
+      "title": "Opening a project loads the latest spec from GitHub first",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-safe-auto-sync.md",
+      "story": "As the product owner, I want the portal to start from GitHub's latest spec when I open a project, so that an old browser copy is never my starting point.",
+      "ac": [
+        "Given a project on GitHub with no unsaved portal edits\nWhen I open it\nThen the portal reads compass/spec.json and, if its version differs from the recorded one, loads it and shows \"Updated from GitHub\" with the time",
+        "Given a project with unsaved portal edits\nWhen I open it and GitHub has a newer version\nThen the banner of REQ-021 is shown instead of loading anything",
+        "Given GitHub cannot be reached\nWhen I open a project\nThen the local copy is shown with a note that it could not be checked, and auto-sync does not commit until the check succeeds"
+      ]
+    },
+    {
+      "id": "REQ-023",
+      "featureId": "F-013",
+      "title": "A spec commit never removes items quietly",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-safe-auto-sync.md",
+      "story": "As the product owner, I want the portal to refuse a save that would remove requirements, test cases or decisions I did not delete, so that a bad copy can never wipe the project's traceability.",
+      "ac": [
+        "Given compass/spec.json on GitHub\nWhen a commit would remove requirement, test case or decision ids that are on GitHub\nThen it is refused and the banner of REQ-021 is shown, unless each removed id was deleted in the portal through \"Delete feature\" (F-012)",
+        "Given the incident of 2026-11-26 (a portal copy from 2026-11-23 against Bee There's main with 107 requirements, 88 test cases and 20 decisions)\nWhen it is replayed in a unit test\nThen no commit is made by either check (REQ-020 and this one), and \"Keep both\" keeps all 107 requirements"
+      ]
+    },
+    {
+      "id": "REQ-024",
+      "featureId": "F-013",
+      "title": "A design tool stored as a plain link is read correctly",
+      "priority": "Could",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-safe-auto-sync.md",
+      "story": "As the product owner, I want projects that store their design tool as a plain Figma link to show that link, so that generated design pages do not say \"undefined\".",
+      "ac": [
+        "Given compass/spec.json has \"designTool\" as a string (e.g. \"https://www.figma.com/design/…\")\nWhen the portal reads the spec and generates compass/design/F-xxx.md and the handover\nThen the design tool shows as a Figma link with that URL, not \"[undefined](undefined)\"",
+        "Given such a project\nWhen the portal commits its spec\nThen \"designTool\" stays a plain string in compass/spec.json (Bee There's own checks require it), while an object stays an object"
       ]
     }
   ],
