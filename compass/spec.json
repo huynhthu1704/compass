@@ -635,7 +635,7 @@
       "story": "As the product owner, I want the rebrand to reach every page, so that no screen still looks like the old Compass.",
       "ac": [
         "Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs, Knowledge)\nWhen I open it in light and dark mode\nThen it uses the honey theme",
-        "Given the source code in src/\nWhen the unit tests run\nThen a test fails if any old teal colour (#0E7666, #0D5E52, #38B09A, #6ECDB9 …) or a hard-coded colour outside the design tokens is found"
+        "Given the source code in src/\nWhen the unit tests run\nThen a test fails if any old teal colour (#EDFAF7, #D2F2EA, #6ECDB9, #38B09A, #0E7666, #0D5E52, #0C3A34) or a hard-coded colour outside the design tokens is found"
       ]
     }
   ],
@@ -865,10 +865,10 @@
       "reqIds": [
         "REQ-011"
       ],
-      "title": "Type, shapes and logo",
-      "type": "Manual",
+      "title": "Typefaces and weights",
+      "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the portal in light and dark mode\nWhen I look at headings, buttons, chips, cards and the logo\nThen headings are Lexend, buttons and chips are pills, cards are rounded with the warm shadow and the logo is the honey square"
+      "gherkin": "Given src/index.css and index.html\nWhen the test reads the font settings\nThen headings (.h1–.h4 and h1–h4) use Lexend at weight 600, body text uses Be Vietnam Pro and the mono style uses JetBrains Mono\nAnd Lexend is loaded from Google Fonts like the other fonts"
     },
     {
       "id": "TC-017",
@@ -878,7 +878,7 @@
       "title": "No old teal left in src/",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the files in src/\nWhen the test scans them\nThen it finds none of the old teal colours and no hard-coded colour outside the token definitions"
+      "gherkin": "Given the files in src/\nWhen the test scans them\nThen it finds none of the old teal colours (#EDFAF7, #D2F2EA, #6ECDB9, #38B09A, #0E7666, #0D5E52, #0C3A34) and no hard-coded colour outside the token definitions"
     },
     {
       "id": "TC-018",
@@ -889,6 +889,46 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given each page of the portal\nWhen I open it in light and dark mode\nThen it uses the honey theme"
+    },
+    {
+      "id": "TC-019",
+      "reqIds": [
+        "REQ-010"
+      ],
+      "title": "One meaning per state colour",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the badge tones and run-status tones in the code\nWhen the test maps each to its token\nThen brand and \"your turn\" (awaiting-approval, primary buttons) use honey, running/info use sky, done/success use mint and failed/rework/danger use coral\nAnd no state uses a colour of another meaning"
+    },
+    {
+      "id": "TC-020",
+      "reqIds": [
+        "REQ-011"
+      ],
+      "title": "Pill buttons, rounded cards, warm shadow, sidebar",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the portal in light and dark mode\nWhen I inspect buttons, chips, cards and the sidebar\nThen buttons and chips have a fully rounded (pill) radius, cards have 20–28 px corners and the warm shadow 0 8 24 rgba(122,84,0,.12), and the selected sidebar item is honey-subtle with honey-dark text"
+    },
+    {
+      "id": "TC-021",
+      "reqIds": [
+        "REQ-011"
+      ],
+      "title": "Honey logo in all three places",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the portal on desktop and on a phone\nWhen I look at the sidebar, the mobile top bar and the browser tab icon\nThen each shows the honey square (#FFC629) with the dark compass needle"
+    },
+    {
+      "id": "TC-022",
+      "reqIds": [
+        "REQ-012"
+      ],
+      "title": "Only the look changes",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the rebrand pull request\nWhen I compare it with main\nThen package.json has no new dependency, every page keeps its layout and behaviour, and all existing unit tests still pass"
     }
   ],
   "decisions": [
