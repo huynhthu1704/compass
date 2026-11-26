@@ -62,8 +62,8 @@ export function ReleasePage({ p }: { p: Project }) {
           <h2 className="h3">CI / deploy runs</h2>
           {!live ? <div className="body-sm t-tertiary">Available for connected GitHub projects.</div> : !wf ? <div className="body-sm t-tertiary">Loading…</div> : wf.length ? wf.map((w) => (
             <a key={w.id} href={w.html_url} target="_blank" rel="noreferrer" className="option" style={{ padding: 8, textDecoration: 'none', color: 'inherit' }}>
-              <Badge tone={w.conclusion === 'success' ? 'success' : w.conclusion ? 'danger' : 'warning'}>{w.conclusion || w.status}</Badge>
-              <span className="body-sm grow">{w.name} · {w.head_branch}</span><span className="mono-sm t-tertiary">{ago(w.created_at)}</span>
+              <span className="run-status"><Badge tone={w.conclusion === 'success' ? 'success' : w.conclusion ? 'danger' : 'warning'}>{w.conclusion || w.status}</Badge></span>
+              <span className="body-sm grow" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{w.name} · {w.head_branch}</span><span className="mono-sm t-tertiary" style={{ whiteSpace: 'nowrap' }}>{ago(w.created_at)}</span>
             </a>
           )) : <div className="body-sm t-tertiary">No workflow runs yet.</div>}
         </section>
