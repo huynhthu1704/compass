@@ -505,6 +505,76 @@
           "The token needs Issues: Read & write",
           "No new libraries, no server"
         ]
+      },
+      "design": {
+        "status": "Draft",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=0-1",
+        "summary": "A \"Delete feature\" button sits next to \"Archive feature\" on the feature page and opens a centred dialog (full-width sheet on phones). The dialog lists what will be removed — requirements with their status, test cases, the three F-xxx.md files and the open GitHub issues that will be closed as not planned — and asks to type the feature id. Delete (red) is enabled only when the text is exactly the id. A built feature gets a red warning box above the list, naming the requirements In build or Done and its open pull requests, which stay open. After deleting, the feature board shows a notice: mint when every issue closed, honey with links when GitHub refused some.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Desktop · Delete dialog, feature without code",
+            "purpose": "Everything that will be removed, and the typed-id confirmation, for a feature whose requirements are Draft or Approved.",
+            "reqIds": [
+              "REQ-016",
+              "REQ-017",
+              "REQ-018"
+            ],
+            "elements": [
+              "Title \"Delete F-xxx · name?\" and the Archive hint",
+              "\"What will be removed\": requirements with status badges, test cases, files, open issues",
+              "Field \"Type F-xxx to confirm\"",
+              "Cancel (secondary) and Delete feature (red)"
+            ],
+            "states": [
+              "Id typed exactly → Delete enabled",
+              "Esc or Cancel → closes, nothing changes"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=41-451"
+          },
+          {
+            "id": "SCR-2",
+            "name": "Desktop · Delete dialog, feature with code",
+            "purpose": "The strong warning for a feature with requirements In build or Done and an open pull request.",
+            "reqIds": [
+              "REQ-016",
+              "REQ-019"
+            ],
+            "elements": [
+              "Red warning box naming the built requirements",
+              "Open pull requests with links, marked \"stays open\"",
+              "Hint \"Delete stays off until the text is exactly F-xxx\"",
+              "Delete feature disabled (grey)"
+            ],
+            "states": [
+              "Text does not match → Delete disabled",
+              "No code and no open PR → no warning box (SCR-1)"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=42-451"
+          },
+          {
+            "id": "SCR-3",
+            "name": "Phone · Dialog and result notice",
+            "purpose": "The dialog at 390 px with stacked buttons, and the notice on the feature board after deleting.",
+            "reqIds": [
+              "REQ-016",
+              "REQ-018"
+            ],
+            "elements": [
+              "Short summary of what will be removed",
+              "Full-width Delete feature and Cancel buttons",
+              "Honey notice listing issues GitHub refused, with link and reason",
+              "Mint notice when every issue was closed"
+            ],
+            "states": [
+              "Some issues still open (403: token needs Issues: Read & write)",
+              "All issues closed",
+              "Demo project: deleted locally"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=42-509"
+          }
+        ],
+        "notes": "Keyboard: focus starts in the id field, Tab cycles inside the dialog, Esc cancels. The dialog scrolls inside itself on short screens. Text colours from the honey tokens only; the red Delete button uses text/danger with white text (contrast checked in build)."
       }
     }
   ],
