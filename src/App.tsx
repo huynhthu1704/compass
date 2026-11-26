@@ -14,6 +14,7 @@ import { DesignPage } from './pages/Design';
 import { RequirementsPage } from './pages/Requirements';
 import { RunPage, RunsPage } from './pages/Runs';
 import { TestsPage } from './pages/Tests';
+import { TeamFloorPage } from './pages/TeamFloor';
 import { syncLabel, useSync } from './autosync';
 import { featureStage, stageStatus } from './progress';
 import { FeaturePage } from './pages/Feature';
@@ -58,7 +59,7 @@ export default function App() {
     page = fs === 'idea' ? <IdeaPage p={p} fid={fid} /> : fs === 'requirements' ? <RequirementsPage p={p} fid={fid} /> : fs === 'design' ? <DesignPage p={p} fid={fid} /> : fs === 'tests' ? <TestsPage p={p} fid={fid} />
       : fs === 'build' ? <BuildPage p={p} fid={fid} /> : <FeaturePage p={p} fid={fid} />;
   } else if (p) {
-    page = sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
+    page = sub === 'floor' ? <TeamFloorPage p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
       : sub === 'runs' && parts[3] ? <RunPage p={p} rid={parts[3]} /> : sub === 'runs' ? <RunsPage p={p} /> : <OverviewPage p={p} />;
   } else page = <ProjectsPage />;
 
@@ -86,6 +87,7 @@ export default function App() {
               {sl && <div style={{ padding: '0 12px' }}><span className={`badge tone-${sl.tone}`} title={sync?.message} style={{ fontSize: 11 }}>{sl.text}</span></div>}
               <nav className="nav">
                 {nav(`/p/${p.id}`, 'Feature board', sub === '')}
+                {nav(`/p/${p.id}/floor`, 'Team floor', sub === 'floor', waiting ? <span className="badge tone-accent" style={{ marginLeft: 'auto' }}>{waiting}</span> : null)}
                 {nav(`/p/${p.id}/release`, 'Release', sub === 'release')}
                 {nav(`/p/${p.id}/runs`, 'Agent runs', sub === 'runs', waiting ? <span className="badge tone-accent" style={{ marginLeft: 'auto' }}>{waiting}</span> : null)}
                 {nav(`/p/${p.id}/knowledge`, 'Knowledge (RAG)', sub === 'knowledge')}
