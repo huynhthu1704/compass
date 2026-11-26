@@ -46,5 +46,14 @@ can tell within 5 seconds which agent is working, on which feature, and whether 
   realtime service).
 - Sound, custom avatars, or a game-like world beyond the desks and handoffs.
 
+## Design (Draft, for Product Owner approval)
+Figma file "Compass — Team floor" (page "📐 Feature designs"; building blocks on "🧩 Components"):
+- S1 Desktop · Live — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=7-4
+- S2 Desktop · Review sends work back — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=10-124
+- S3 Phone · Live — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=12-237
+- Design notes (data source, desk states, motion, reduced motion) — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=13-343
+
+Once the requirements exist, this becomes the feature's design in `compass/spec.json`, with each screen traced to its REQ ids.
+
 ## Requirements
 <filled after approval: REQ-xxx — title (#issue)>
