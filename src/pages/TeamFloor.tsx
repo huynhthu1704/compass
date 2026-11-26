@@ -73,7 +73,9 @@ export function TeamFloorPage({ p }: { p: Project }) {
       {f.approvals.length ? f.approvals.map((a) => (
         <span key={a.runId} className="stack gap-xs center">
           <span className="handoff-static">{a.agentName.replace(' agent', '')}{a.featureId ? ` · ${a.featureId}` : ''}</span>
-          <button className="btn primary sm" onClick={() => open(a.runId)}>Review &amp; approve</button>
+          {a.blocked
+            ? <button className="btn secondary sm" onClick={() => open(a.runId)}>Open run · blocked</button>
+            : <button className="btn primary sm" onClick={() => open(a.runId)}>Review &amp; approve</button>}
         </span>
       )) : <span className="body-sm t-tertiary">Nothing waiting 🎉</span>}
     </div>
@@ -113,10 +115,11 @@ export function TeamFloorPage({ p }: { p: Project }) {
           </div>
         </section>
 
+        <p className="sr-only" aria-live="polite">{f.activity[0] ? `${f.activity[0].agentName}: ${f.activity[0].title}` : ''}</p>
         <details className="card floor-activity" open={!phone} key={phone ? 'phone' : 'desktop'}>
           <summary className="overline t-tertiary">Live activity</summary>
           {f.activity.length ? (
-            <ul aria-live="polite" className="stack gap-sm">
+            <ul className="stack gap-sm">
               {f.activity.map((a) => (
                 <li key={a.id}><button className="activity-row" onClick={() => open(a.runId)}>
                   <span className="mono-sm t-tertiary">{ago(a.t)}</span>

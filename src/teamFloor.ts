@@ -21,7 +21,7 @@ export interface Desk {
 }
 export interface Handoff { id: string; from: AgentId; to: AgentId; kind: 'forward' | 'back'; label: string; at: number }
 export interface Activity { id: string; t: string; agentName: string; title: string; runId: string }
-export interface Approval { runId: string; agent: AgentId; agentName: string; featureId?: string; goal: string }
+export interface Approval { runId: string; agent: AgentId; agentName: string; featureId?: string; goal: string; blocked: boolean }
 export interface Floor {
   desks: Desk[];
   summary: { working: number; waiting: number; featuresInFlight: string[] };
@@ -48,6 +48,9 @@ const nameOf = (a: AgentId) => PIPELINE.find((x) => x.agent === a)?.name ?? a;
 const last = (r: Run): TraceStep | undefined => r.steps[r.steps.length - 1];
 const time = (s: string) => Date.parse(s);
 const blocked = (r: Run) => r.guardrails.some((g) => g.level === 'block');
+/** A guardrail/eval step of the review of a change set ("G2 Traceability: BLOCK", "Evaluation: …"), not the
+ *  prompt-injection scan that starts every run. */
+const reviewStep = (s?: TraceStep) => !!s && (s.kind === 'eval' || (s.kind === 'guardrail' && /^G\d+ .*: (PASS|WARN|BLOCK)$/.test(s.title)));
 
 function stateOf(r: Run | undefined): DeskState {
   if (!r) return 'idle';
@@ -86,8 +89,8 @@ export function computeFloor(p: Pick<Project, 'runs' | 'releases'>, featureFilte
       const c = latest('coder');
       if (!c) return { ...base, state: 'idle' as const };
       const step = last(c);
-      if (c.status === 'running' && (step?.kind === 'guardrail' || step?.kind === 'eval')) return { ...base, state: 'working' as const, featureId: c.featureId, bubble: step.title, runId: c.id };
-      if (c.guardrails.length) return { ...base, state: 'done' as const, featureId: c.featureId, runId: c.id };
+      if (c.status === 'running' && reviewStep(step)) return { ...base, state: 'working' as const, featureId: c.featureId, bubble: step?.title, runId: c.id };
+      if (c.guardrails.some((g) => g.id !== 'G0')) return { ...base, state: 'done' as const, featureId: c.featureId, runId: c.id };
       return { ...base, state: 'idle' as const };
     }
     if (d.agent === 'release') {
@@ -118,7 +121,7 @@ export function computeFloor(p: Pick<Project, 'runs' | 'releases'>, featureFilte
       if (!recent(s)) continue;
       const to = NEXT[r.agent];
       if (s.kind === 'approval' && s.ok === true && to) handoffs.push({ id: `${r.id}:${s.t}:f`, from: r.agent, to, kind: 'forward', label, at: time(s.t) });
-      if (r.agent === 'coder' && s.kind === 'guardrail' && s.ok === false) {
+      if (r.agent === 'coder' && s.kind === 'guardrail' && /: BLOCK$/.test(s.title)) {
         const n = r.guardrails.filter((g) => g.level === 'block').length || 1;
         handoffs.push({ id: `${r.id}:${s.t}:b`, from: 'reviewer', to: 'coder', kind: 'back', label: `${n} finding${n === 1 ? '' : 's'}`, at: time(s.t) });
       }
@@ -128,7 +131,7 @@ export function computeFloor(p: Pick<Project, 'runs' | 'releases'>, featureFilte
   return {
     desks,
     summary: { working: desks.filter((d) => d.state === 'working').length, waiting: waitingRuns.length, featuresInFlight: inFlight },
-    approvals: waitingRuns.map((r) => ({ runId: r.id, agent: r.agent, agentName: nameOf(r.agent), featureId: r.featureId, goal: r.goal })),
+    approvals: waitingRuns.map((r) => ({ runId: r.id, agent: r.agent, agentName: nameOf(r.agent), featureId: r.featureId, goal: r.goal, blocked: blocked(r) })),
     activity,
     handoffs,
   };

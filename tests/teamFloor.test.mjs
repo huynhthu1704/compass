@@ -118,3 +118,30 @@ test('TC-010 / TC-011 (REQ-009): motion respects reduced motion and pause; the f
   }
   assert.equal(PIPELINE.length, 7);
 });
+
+test('TC-008 (REQ-007): a warning is not a failed review; the injection scan is not review work', () => {
+  const warned = run('coder', 'running', {
+    guardrails: [{ id: 'G0', name: 'Prompt-injection scan (retrieved context)', level: 'warn', message: 'suspicious text' }],
+    steps: [{ t: ago(2), kind: 'guardrail', title: 'Prompt-injection scan (retrieved context)', ok: false }],
+  });
+  const f = computeFloor(project([warned]), 'all', NOW);
+  assert.equal(f.handoffs.length, 0, 'no card goes back for a warning');
+  assert.equal(desk(f, 'reviewer').state, 'idle', 'the Review desk does not work on the start-of-run scan');
+  assert.equal(desk(f, 'coder').state, 'working');
+});
+
+test('TC-012 (REQ-008): a run blocked by a guardrail is marked, so the floor offers to open it instead of approving', () => {
+  const blockedRun = run('coder', 'awaiting-approval', { guardrails: [{ id: 'G3', name: 'Protected paths', level: 'block', message: '.github/' }] });
+  const ok = run('requirements', 'awaiting-approval');
+  const f = computeFloor(project([blockedRun, ok]), 'all', NOW);
+  assert.deepEqual(f.approvals.map((a) => [a.agent, a.blocked]), [['coder', true], ['requirements', false]]);
+  const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
+  assert.match(page, /a\.blocked[\s\S]*Open run · blocked[\s\S]*Review &amp; approve/);
+});
+
+test('TC-007 (REQ-006): the newest step is announced politely, even before the list exists or when it is folded', () => {
+  const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
+  const live = page.indexOf('aria-live="polite"');
+  assert.ok(live > 0 && live < page.indexOf('<details'), 'the live region sits outside the collapsible activity list');
+  assert.match(page.slice(live - 40, live + 120), /f\.activity\[0\]/);
+});

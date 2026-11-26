@@ -273,6 +273,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .activity-row .t-secondary { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .activity-row { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 52px 1fr; gap: var(--spacing-sm); width: 100%; border-radius: var(--radius-sm); }
 .activity-row:focus-visible { box-shadow: var(--focus-ring); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (max-width: 1100px) { .floor-layout { grid-template-columns: 1fr; } }
 @media (max-width: 719px) {
   .floor-banner { display: flex; }
