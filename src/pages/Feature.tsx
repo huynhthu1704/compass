@@ -63,7 +63,7 @@ export function FeaturePage({ p, fid }: { p: Project; fid: string }) {
           <h2 className="h3">Agent runs for this feature</h2>
           {runs.length ? runs.map((r) => (
             <button key={r.id} className="option" style={{ padding: 10 }} onClick={() => go(`/p/${p.id}/runs/${r.id}`)}>
-              <Badge tone={STATUS_TONE[r.status]}>{r.status.replace('-', ' ')}</Badge>
+              <span className="run-status"><Badge tone={STATUS_TONE[r.status]}>{r.status.replace('-', ' ')}</Badge></span>
               <span className="stack grow"><span className="label-md">{agent(r.agent).name}</span><span className="body-sm t-tertiary">{r.goal.slice(0, 80)}</span></span>
               <span className="mono-sm t-tertiary">{ago(r.startedAt)}</span>
             </button>
