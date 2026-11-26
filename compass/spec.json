@@ -537,7 +537,7 @@
       "featureId": "F-009",
       "title": "The Team floor shows every agent at its desk with its current state",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want one page that shows all seven agents at their desks with their current state, so that I can see at a glance who is working, on which feature, and who waits for me.",
       "ac": [
@@ -552,7 +552,7 @@
       "featureId": "F-009",
       "title": "What each agent is doing appears live in its speech bubble and the activity list",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want to see what each working agent is doing right now, so that I can follow the team without opening every run.",
       "ac": [
@@ -565,7 +565,7 @@
       "featureId": "F-009",
       "title": "Handoffs move as cards between desks, and a failed review sends the card back",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want to see work moving from one agent to the next, so that I understand the flow and spot rework.",
       "ac": [
@@ -578,7 +578,7 @@
       "featureId": "F-009",
       "title": "Approvals can be given from the Team floor with the same result as from Agent runs",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want to approve or reject waiting work straight from the Team floor, so that nothing waits on me longer than needed.",
       "ac": [
@@ -591,7 +591,7 @@
       "featureId": "F-009",
       "title": "The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want the Team floor to be comfortable for everyone and free to run, so that I can use and demo it anywhere.",
       "ac": [
