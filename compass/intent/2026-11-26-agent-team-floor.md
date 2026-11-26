@@ -1,6 +1,6 @@
 # Intent: Watch the agent team work together, live
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-26, in chat)
 Requested: 2026-11-26 by the Product Owner, in chat
 
 ## Business need
@@ -46,8 +46,8 @@ can tell within 5 seconds which agent is working, on which feature, and whether 
   realtime service).
 - Sound, custom avatars, or a game-like world beyond the desks and handoffs.
 
-## Design (Draft, for Product Owner approval)
-Figma file "Compass — Team floor" (page "📐 Feature designs"; building blocks on "🧩 Components"), in the Bee There honey-yellow brand:
+## Design (Draft, for Product Owner approval — see compass/design/F-009.md)
+Figma file "Compass — Team floor" (page "📐 Feature designs"; building blocks on "🧩 Components"), in the Bee There honey-yellow brand (rollout to all pages: compass/intent/2026-11-26-honey-brand.md, next change):
 - Design system (Honey edition v0.2: colours light/dark, type, shape, components) — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=18-344
 - S1 Desktop · Live — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=7-4
 - S2 Desktop · Review sends work back — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=10-124
@@ -57,4 +57,9 @@ Figma file "Compass — Team floor" (page "📐 Feature designs"; building block
 Once the requirements exist, this becomes the feature's design in `compass/spec.json`, with each screen traced to its REQ ids.
 
 ## Requirements
-<filled after approval: REQ-xxx — title (#issue)>
+Feature F-009 · Team floor
+- REQ-005 — The Team floor shows every agent at its desk with its current state
+- REQ-006 — What each agent is doing appears live in its speech bubble and the activity list
+- REQ-007 — Handoffs move as cards between desks, and a failed review sends the card back
+- REQ-008 — Approvals can be given from the Team floor with the same result as from Agent runs
+- REQ-009 — The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost

@@ -21,3 +21,13 @@ _2026-11-26 · Accepted_
 **Decision:** The Product Owner chose a light baseline: one feature per stage (F-001…F-007) with one Done requirement each (REQ-101…107); detailed requirements are written only for new work.
 
 **Consequences:** Older behaviour is documented at stage level only; new work starts at REQ-001.
+
+## ADR-003 · Team floor is a live view of the existing run trace
+
+_2026-11-26 · Accepted · REQ-005, REQ-006, REQ-007, REQ-008, REQ-009_
+
+**Context:** The Product Owner asked for a realtime "creative team" interface like those other AI users built.
+
+**Decision:** The Product Owner approved the intent for option 1: a Team floor page drawn only from the run trace Compass already records. Agents talking to each other and multi-device viewing are out of scope, each needing its own decision.
+
+**Consequences:** No change to agents, tools, guardrails or approval gates; no extra Claude cost; live only in the browser tab that runs the agents.
