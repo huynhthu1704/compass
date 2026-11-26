@@ -4,8 +4,8 @@
 |---|---|---|---|---|---|
 | REQ-001 | F-008 | The Compass repo has the Compass Framework | Must | In build | TC-001 |
 | REQ-002 | F-008 | Every pull request is checked by CI | Must | In build | TC-002 |
-| REQ-003 | F-008 | The checking scripts have unit tests | Must | Approved | TC-003 |
-| REQ-004 | F-008 | The installed scripts never drift from the portal's copies | Must | Approved | TC-004 |
+| REQ-003 | F-008 | The checking scripts have unit tests | Must | In build | TC-003 |
+| REQ-004 | F-008 | The installed scripts never drift from the portal's copies | Must | In build | TC-004 |
 | REQ-101 | F-001 | Idea: business need revised into a business intent | Must | Done | TC-101 |
 | REQ-102 | F-002 | Requirements: generate and approve | Must | Done | TC-102 |
 | REQ-103 | F-003 | Design: design tool, screens and approval gate | Must | Done | TC-103 |
@@ -59,7 +59,7 @@ Then the website deploy works exactly as before
 ## REQ-003 · The checking scripts have unit tests
 As the product owner, I want the checking scripts that Compass installs into every project to have their own tests, so that a broken check is caught before it reaches other projects.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
@@ -80,7 +80,7 @@ Then at least one test fails
 ## REQ-004 · The installed scripts never drift from the portal's copies
 As the product owner, I want the checking scripts in the repo's compass/ folder to stay identical to the copies the portal installs (src/framework/), so that Compass is checked by exactly the rules it gives other projects.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 

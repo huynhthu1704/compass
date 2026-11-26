@@ -209,7 +209,7 @@
       "featureId": "F-008",
       "title": "The checking scripts have unit tests",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-compass-follows-its-own-process.md",
       "design": "none: process change, no UI",
       "story": "As the product owner, I want the checking scripts that Compass installs into every project to have their own tests, so that a broken check is caught before it reaches other projects.",
@@ -223,7 +223,7 @@
       "featureId": "F-008",
       "title": "The installed scripts never drift from the portal's copies",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-compass-follows-its-own-process.md",
       "design": "none: process change, no UI",
       "story": "As the product owner, I want the checking scripts in the repo's compass/ folder to stay identical to the copies the portal installs (src/framework/), so that Compass is checked by exactly the rules it gives other projects.",
@@ -337,7 +337,7 @@
       ],
       "title": "Unit tests for check-spec, the plan check and the edit hook",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the scripts in src/framework/\nWhen npm test runs\nThen tests for check-spec (traceability, intent, design gate), planProblems and decideEdit pass\nAnd breaking any of these checks makes a test fail"
     },
     {
@@ -347,7 +347,7 @@
       ],
       "title": "compass/*.mjs identical to src/framework/",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the checking scripts in compass/ and src/framework/\nWhen npm test runs\nThen each pair is byte-identical, and a difference fails the test naming the file"
     },
     {

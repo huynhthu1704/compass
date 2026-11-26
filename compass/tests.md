@@ -5,8 +5,8 @@
 |---|---|
 | REQ-001 The Compass repo has the Compass Framework | TC-001 (Not run) |
 | REQ-002 Every pull request is checked by CI | TC-002 (Not run) |
-| REQ-003 The checking scripts have unit tests | TC-003 (Not run) |
-| REQ-004 The installed scripts never drift from the portal's copies | TC-004 (Not run) |
+| REQ-003 The checking scripts have unit tests | TC-003 (Pass) |
+| REQ-004 The installed scripts never drift from the portal's copies | TC-004 (Pass) |
 | REQ-101 Idea: business need revised into a business intent | TC-101 (Pass) |
 | REQ-102 Requirements: generate and approve | TC-102 (Pass) |
 | REQ-103 Design: design tool, screens and approval gate | TC-103 (Pass) |
@@ -33,7 +33,7 @@ Then the steps Spec traceability check, Guardrails check, Test and Build appear 
 ```
 
 ## TC-003 · Unit tests for check-spec, the plan check and the edit hook
-Covers: REQ-003 · Type: Automated · Status: Not run
+Covers: REQ-003 · Type: Automated · Status: Pass
 ```gherkin
 Given the scripts in src/framework/
 When npm test runs
@@ -42,7 +42,7 @@ And breaking any of these checks makes a test fail
 ```
 
 ## TC-004 · compass/*.mjs identical to src/framework/
-Covers: REQ-004 · Type: Automated · Status: Not run
+Covers: REQ-004 · Type: Automated · Status: Pass
 ```gherkin
 Given the checking scripts in compass/ and src/framework/
 When npm test runs
