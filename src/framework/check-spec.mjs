@@ -43,6 +43,15 @@ for (const f of spec.features || []) {
   for (const s of f.design.screens || []) for (const id of s.reqIds || []) if (!reqIds.has(id)) errors.push(`design ${f.id} ${s.id} references unknown ${id}`);
 }
 
+// A requirement may also point to its own design file ("design": "compass/design/<file>.md"), like an intent;
+// "none: <reason>" marks a change without UI. Past Draft it must exist; In build or Done it must be Approved.
+for (const r of spec.requirements) {
+  if (!r.design || /^none:\s*\S/i.test(r.design)) continue;
+  const text = readRepo(r.design);
+  if (text === null) errors.push(`${r.id} points to a missing design ${r.design}`);
+  else if ((r.status === 'In build' || r.status === 'Done') && !approved(text)) errors.push(`${r.id} (${r.status}) points to ${r.design}, which is not Approved yet — no code before the design is approved`);
+}
+
 // Decisions (ADR log): ids are unique and every ADR says what was decided
 const adrIds = new Set();
 for (const d of spec.decisions || []) {

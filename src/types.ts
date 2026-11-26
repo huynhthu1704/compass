@@ -71,6 +71,7 @@ export interface Requirement {
   priority: 'Must' | 'Should' | 'Could';
   status: 'Draft' | 'Approved' | 'In build' | 'Done';
   intent?: string;         // compass/intent/<file>.md — explicit intent (else the feature's compass/intent/F-xxx.md)
+  design?: string;         // compass/design/<file>.md — explicit design file, or "none: <reason>" for a change without UI
 }
 
 export interface TestCase {

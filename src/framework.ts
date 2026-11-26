@@ -30,6 +30,7 @@ import CLAUDE_SETTINGS from './framework/claude-settings.json?raw';
 import REVIEW_MD from './framework/REVIEW.md?raw';
 import INTENT_README from './framework/intent-README.md?raw';
 import PLANS_README from './framework/plans-README.md?raw';
+import DESIGN_README from './framework/design-README.md?raw';
 
 export const FRAMEWORK_VERSION = '1.1';
 
@@ -484,6 +485,7 @@ export function frameworkFiles(p: Project, opts: { starter: boolean }): FileChan
     { path: 'compass/REVIEW.md', action: 'create', content: REVIEW_MD },
     { path: 'compass/intent/README.md', action: 'create', content: INTENT_README },
     { path: 'compass/plans/README.md', action: 'create', content: PLANS_README },
+    { path: 'compass/design/README.md', action: 'create', content: DESIGN_README },
     { path: '.claude/settings.json', action: 'create', content: CLAUDE_SETTINGS },
     { path: '.github/workflows/compass-ci.yml', action: 'create', content: CI },
     { path: '.github/workflows/compass-deploy.yml', action: 'create', content: DEPLOY },
