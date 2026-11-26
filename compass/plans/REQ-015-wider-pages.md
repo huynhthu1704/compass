@@ -6,7 +6,8 @@ Intent: compass/intent/2026-11-26-wider-pages.md · Design: none (width limit an
 ## Files
 - compass/plans/REQ-015-wider-pages.md — this plan (first code commit)
 - src/index.css — `.main`: `max-width` 1240px → 1600px; side padding `clamp(var(--spacing-lg), 3vw, var(--spacing-3xl))`
-  so it shrinks smoothly from 48 px to 16 px; the below-900 px rule stays as it is
+  so it shrinks smoothly from 48 px to 16 px; the below-900 px rule stays as it is; `min-width: 0` so wide content (the feature board) scrolls inside itself instead of
+  widening the page — found while measuring: the board made the page scroll sideways at 1280 px and 390 px (already on main)
 - tests/readability.test.mjs — TC-027 reads the `.main` rule
 - compass/spec.json, the intent and the generated views — REQ-015 and TC-027/028 (previous commit)
 

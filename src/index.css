@@ -93,7 +93,9 @@ h1, h2, h3, h4, .h1, .h2, .h3, .h4, .display-xl, .display-lg { font-family: var(
 .nav button[aria-current="page"] { background: var(--color-bg-brand-subtle); color: var(--color-text-brand); }
 .nav button:disabled { opacity: .4; cursor: not-allowed; }
 .nav-group { display: flex; flex-direction: column; gap: var(--spacing-xs); }
-.main { padding: var(--spacing-2xl) var(--spacing-3xl) var(--spacing-4xl); max-width: 1240px; width: 100%; }
+/* REQ-015: up to 1600 px on large screens; side padding shrinks smoothly from 48 px to 16 px;
+   min-width: 0 lets wide content (the feature board) scroll inside itself instead of widening the page */
+.main { padding: var(--spacing-2xl) clamp(var(--spacing-lg), 3vw, var(--spacing-3xl)) var(--spacing-4xl); max-width: 1600px; width: 100%; min-width: 0; }
 .stack { display: flex; flex-direction: column; } .row { display: flex; align-items: center; } .wrap { flex-wrap: wrap; }
 .gap-xs{gap:var(--spacing-xs)} .gap-sm{gap:var(--spacing-sm)} .gap-md{gap:var(--spacing-md)} .gap-lg{gap:var(--spacing-lg)} .gap-xl{gap:var(--spacing-xl)} .gap-2xl{gap:var(--spacing-2xl)}
 .grow { flex: 1; } .between { justify-content: space-between; } .start { align-items: flex-start; }
