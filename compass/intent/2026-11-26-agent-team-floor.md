@@ -58,8 +58,8 @@ Once the requirements exist, this becomes the feature's design in `compass/spec.
 
 ## Requirements
 Feature F-009 · Team floor
-- REQ-005 — The Team floor shows every agent at its desk with its current state
-- REQ-006 — What each agent is doing appears live in its speech bubble and the activity list
-- REQ-007 — Handoffs move as cards between desks, and a failed review sends the card back
-- REQ-008 — Approvals can be given from the Team floor with the same result as from Agent runs
-- REQ-009 — The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost
+- REQ-005 — The Team floor shows every agent at its desk with its current state (#8)
+- REQ-006 — What each agent is doing appears live in its speech bubble and the activity list (#9)
+- REQ-007 — Handoffs move as cards between desks, and a failed review sends the card back (#10)
+- REQ-008 — Approvals can be given from the Team floor with the same result as from Agent runs (#11)
+- REQ-009 — The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost (#12)
