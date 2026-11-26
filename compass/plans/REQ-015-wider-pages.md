@@ -9,7 +9,9 @@ Intent: compass/intent/2026-11-26-wider-pages.md · Design: none (width limit an
   so it shrinks smoothly from 48 px to 16 px; the below-900 px rule stays as it is; `min-width: 0` so wide content (the feature board) scrolls inside itself instead of
   widening the page — found while measuring: the board made the page scroll sideways at 1280 px and 390 px (already on main)
 - src/index.css (after the first review) — `.arch` columns `minmax(0, 1fr)` (4 columns, and 2 below 900 px) so Agent
-  architecture no longer scrolls sideways at 901–1099 px and 390 px; `.option` rows wrap so the Release "ready" rows fit a phone
+  architecture no longer scrolls sideways at 901–1099 px and 390 px; option rows that have a flexible text part (`.option:has(> .grow)`: Release and Build checkbox rows, the
+  agent's file-change list) wrap and their path/text may break, so they fit a phone; rows without one (the onboarding role
+  picker) keep one line — a global wrap broke the role picker (second review)
   (both overflows were already on main and fall under REQ-015's "no sideways scrolling")
 - tests/readability.test.mjs — TC-027 reads the `.main` rule, the `.arch` and `.option` rules
 - compass/spec.json, the intent and the generated views — REQ-015 and TC-027/028 (previous commit)

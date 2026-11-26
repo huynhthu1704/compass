@@ -63,5 +63,7 @@ test('TC-027 (REQ-015): pages use up to 1600 px with fluid side padding; the pho
   assert.match(phone, /\.main \{ padding: var\(--spacing-xl\) var\(--spacing-lg\) var\(--spacing-3xl\); \}/, 'below-900 px .main rule unchanged');
   assert.match(css, /\.arch \{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/, 'architecture columns can shrink (no sideways scroll above 900 px)');
   assert.match(css, /@media \(max-width: 900px\) \{ \.arch \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/, 'and on phones');
-  assert.match(css, /\.option \{[^}]*flex-wrap: wrap/, 'option rows (Release) wrap on phones');
+  assert.match(css, /^\.option:has\(> \.grow\) \{ flex-wrap: wrap; \}/m, 'rows with a flexible text part (Release, Build, run changes) wrap on phones');
+  assert.match(css, /\.option > \.mono \{ min-width: 0; overflow-wrap: anywhere; \}/, 'long file paths in option rows can break');
+  assert.doesNotMatch(css.match(/^\.option \{[^}]*\}/m)[0], /flex-wrap/, 'other option rows (role picker, run lists) keep one line');
 });
