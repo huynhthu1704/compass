@@ -310,6 +310,87 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-26T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-010",
+      "name": "Honey brand: Compass shares the Bee There look",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "need": "can you make a branding color and theme similar to 'bee there' with signature honey yellow — rebrand for all pages in compass",
+        "intent": "100% of the portal's pages use the Bee There honey theme in light and dark mode, with no old teal colour left in the code (today: 0%, all teal).",
+        "problem": "Compass and Bee There look like unrelated products; the new Team floor design is already drawn in the honey brand.",
+        "users": [
+          "Product Owner",
+          "Everyone using the portal"
+        ],
+        "outcomeMetric": "Pages on the honey theme: 0% → 100%; old teal colours in src/: many → 0 (checked by a test).",
+        "scopeIn": [
+          "Colour tokens (light + dark)",
+          "Type: Lexend headings",
+          "Shapes: pill buttons, rounded cards, warm shadows",
+          "Logo",
+          "Every page"
+        ],
+        "scopeOut": [
+          "New pages or layouts",
+          "Changing Bee There",
+          "A shared token package between the repos"
+        ],
+        "risks": [
+          "Change through the tokens in src/index.css, not page by page; no new libraries",
+          "Normal text keeps WCAG AA contrast (4.5:1) in both modes",
+          "Nothing else changes: same pages, same behaviour"
+        ]
+      },
+      "design": {
+        "status": "Draft",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=18-344",
+        "summary": "Honey edition v0.2 of the Compass design system, taken from the Bee There tokens: honey #FFC629 brand with dark ink text on it, cream canvas, warm ink text, coral/mint/sky/violet accents; Lexend headings, Be Vietnam Pro body, JetBrains Mono for ids; radius 8/14/20/28 and pills; warm honey-tinted shadow. One meaning per colour: honey = brand and \"your turn\", sky = working/info, mint = done/success, coral = rework/error.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Design system · Honey edition",
+            "purpose": "The single reference for colours (light and dark), type, shape, spacing, depth and components.",
+            "reqIds": [
+              "REQ-010",
+              "REQ-011"
+            ],
+            "elements": [
+              "Primitive palette",
+              "Semantic colours in Light and Dark mode",
+              "Text styles",
+              "Radius, spacing, shadow",
+              "Button, Badge, Agent desk, Handoff card",
+              "Agent colours"
+            ],
+            "states": [
+              "Light mode",
+              "Dark mode"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=18-344"
+          },
+          {
+            "id": "SCR-2",
+            "name": "Portal page in the honey theme (Team floor as example)",
+            "purpose": "Shows the theme applied to a full page: sidebar, nav, chips, buttons, cards.",
+            "reqIds": [
+              "REQ-010",
+              "REQ-011",
+              "REQ-012"
+            ],
+            "elements": [
+              "Sidebar with honey logo and selected nav",
+              "Pill buttons and chips",
+              "Cards with warm shadow"
+            ],
+            "states": [
+              "Light"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=7-4"
+          }
+        ],
+        "notes": "Draft for Product Owner approval. Every other page keeps its layout and only takes the new tokens."
+      }
     }
   ],
   "requirements": [
@@ -513,6 +594,47 @@
         "Given demo mode (no API key)\nWhen agents run\nThen the Team floor shows them the same way",
         "Given the Team floor is open\nWhen agents run\nThen no extra Claude calls, tokens, network requests or libraries are used: everything comes from the run trace already recorded"
       ]
+    },
+    {
+      "id": "REQ-010",
+      "featureId": "F-010",
+      "title": "Compass colours follow the honey design system in light and dark mode",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-honey-brand.md",
+      "story": "As the product owner, I want Compass to use the Bee There honey colours, so that both products look like one family.",
+      "ac": [
+        "Given the design tokens in src/index.css\nWhen I compare them with the Figma page \"🎨 Design system\" (Honey edition v0.2)\nThen the primitive and semantic colours match in light and dark mode, with honey #FFC629 as the brand colour and dark ink text on it",
+        "Given any state colour in the portal\nWhen it is shown\nThen honey means brand or \"your turn\", sky means working/info, mint means done/success and coral means rework/error",
+        "Given normal text on its background\nWhen contrast is measured in light and dark mode\nThen it is at least 4.5:1 (WCAG AA)"
+      ]
+    },
+    {
+      "id": "REQ-011",
+      "featureId": "F-010",
+      "title": "Compass type, shapes and logo follow the honey design system",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-honey-brand.md",
+      "story": "As the product owner, I want Compass to have the same friendly type and shapes as Bee There, so that the brand feels the same, not only the colours.",
+      "ac": [
+        "Given any heading\nWhen it is shown\nThen it uses Lexend SemiBold; body text stays Be Vietnam Pro and ids stay JetBrains Mono",
+        "Given buttons, chips, cards and the sidebar\nWhen they are shown\nThen buttons and chips are pills, cards use 20–28 px corners and the warm honey-tinted shadow",
+        "Given the logo in the sidebar, the mobile top bar and the browser tab\nWhen it is shown\nThen it is the honey square with the dark compass needle"
+      ]
+    },
+    {
+      "id": "REQ-012",
+      "featureId": "F-010",
+      "title": "No page keeps the old teal theme",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-honey-brand.md",
+      "story": "As the product owner, I want the rebrand to reach every page, so that no screen still looks like the old Compass.",
+      "ac": [
+        "Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs, Knowledge)\nWhen I open it in light and dark mode\nThen it uses the honey theme",
+        "Given the source code in src/\nWhen the unit tests run\nThen a test fails if any old teal colour (#0E7666, #0D5E52, #38B09A, #6ECDB9 …) or a hard-coded colour outside the design tokens is found"
+      ]
     }
   ],
   "tests": [
@@ -634,7 +756,7 @@
       "title": "Desks show each agent's state from its latest run",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given demo runs in each status (running, awaiting-approval, done, failed) and an agent with no run\nWhen the Team floor state is computed\nThen the desks show Working, Waiting for you, Done, Rework and Idle, in pipeline order, with the feature id\nAnd the summary shows 1 agent working and 1 run waiting for approval\nWhen the running run changes to awaiting-approval\nThen the summary shows 0 working and 2 waiting"
+      "gherkin": "Given demo runs in each status (running, awaiting-approval, done, failed) and an agent with no run\nWhen the Team floor state is computed\nThen the desks show Working, Waiting for you, Done, Rework and Idle, in pipeline order, each with its name and role (Ideation PO … Release DM) and the feature id\nAnd the summary shows 1 agent working and 1 run waiting for approval\nWhen the running run changes to awaiting-approval\nThen the summary shows 0 working and 2 waiting"
     },
     {
       "id": "TC-006",
@@ -674,7 +796,7 @@
       "title": "Approving or rejecting from the floor equals doing it from Agent runs",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given two runs awaiting approval\nWhen I approve the first and reject the second from the Team floor\nThen each run, the spec and the next agent are exactly as when approved or rejected from Agent runs"
+      "gherkin": "Given two runs awaiting approval\nWhen I approve the first from the Your approval desk and reject the second from its agent's desk\nThen each run, the spec and the next agent are exactly as when approved or rejected from Agent runs"
     },
     {
       "id": "TC-010",
@@ -694,7 +816,7 @@
       "title": "No extra requests from the Team floor",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given the browser network panel\nWhen the Team floor is open while agents run in demo mode\nThen it makes no network requests of its own"
+      "gherkin": "Given a live project (API key set) and the browser network panel\nWhen agents run with the Team floor open, and again with it closed\nThen the Claude calls and tokens per run are the same, the Team floor makes no network requests of its own, and package.json gains no new dependency"
     },
     {
       "id": "TC-012",
@@ -715,6 +837,56 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the Team floor in demo mode with one agent working and one run waiting for approval\nWhen the Product Owner looks at it for the first time\nThen within 5 seconds she can say which agent is working, on which feature, and what waits for her approval"
+    },
+    {
+      "id": "TC-014",
+      "reqIds": [
+        "REQ-010"
+      ],
+      "title": "Tokens match the honey design system",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given src/index.css\nWhen the test reads the light and dark tokens\nThen brand is #FFC629, on-brand text is the dark ink, and every semantic token matches the Honey edition values"
+    },
+    {
+      "id": "TC-015",
+      "reqIds": [
+        "REQ-010"
+      ],
+      "title": "Text contrast meets WCAG AA",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given each text token on its background token in light and dark mode\nWhen contrast is computed\nThen every pair for normal text is at least 4.5:1"
+    },
+    {
+      "id": "TC-016",
+      "reqIds": [
+        "REQ-011"
+      ],
+      "title": "Type, shapes and logo",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the portal in light and dark mode\nWhen I look at headings, buttons, chips, cards and the logo\nThen headings are Lexend, buttons and chips are pills, cards are rounded with the warm shadow and the logo is the honey square"
+    },
+    {
+      "id": "TC-017",
+      "reqIds": [
+        "REQ-012"
+      ],
+      "title": "No old teal left in src/",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the files in src/\nWhen the test scans them\nThen it finds none of the old teal colours and no hard-coded colour outside the token definitions"
+    },
+    {
+      "id": "TC-018",
+      "reqIds": [
+        "REQ-012"
+      ],
+      "title": "Every page in the honey theme",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given each page of the portal\nWhen I open it in light and dark mode\nThen it uses the honey theme"
     }
   ],
   "decisions": [
@@ -756,6 +928,20 @@
         "REQ-007",
         "REQ-008",
         "REQ-009"
+      ]
+    },
+    {
+      "id": "ADR-004",
+      "date": "2026-11-26",
+      "title": "Compass shares the Bee There honey brand on every page",
+      "status": "Accepted",
+      "context": "The Team floor design was drawn in a new Figma file; the Product Owner asked for the Bee There look with its signature honey yellow.",
+      "decision": "The Product Owner chose to rebrand all Compass pages (not only the Team floor) to the Honey edition of the design system in the Figma file \"Compass — Team floor\", which becomes the project design tool. Honey means brand and \"your turn\"; working moves from amber/teal to sky so the two never look alike.",
+      "consequences": "The teal theme is retired; the colour tokens in src/index.css follow the Figma variables; a test keeps old teal out of src/.",
+      "reqIds": [
+        "REQ-010",
+        "REQ-011",
+        "REQ-012"
       ]
     }
   ]

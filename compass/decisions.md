@@ -31,3 +31,13 @@ _2026-11-26 · Accepted · REQ-005, REQ-006, REQ-007, REQ-008, REQ-009_
 **Decision:** The Product Owner approved the intent for option 1: a Team floor page drawn only from the run trace Compass already records. Agents talking to each other and multi-device viewing are out of scope, each needing its own decision.
 
 **Consequences:** No change to agents, tools, guardrails or approval gates; no extra Claude cost; live only in the browser tab that runs the agents.
+
+## ADR-004 · Compass shares the Bee There honey brand on every page
+
+_2026-11-26 · Accepted · REQ-010, REQ-011, REQ-012_
+
+**Context:** The Team floor design was drawn in a new Figma file; the Product Owner asked for the Bee There look with its signature honey yellow.
+
+**Decision:** The Product Owner chose to rebrand all Compass pages (not only the Team floor) to the Honey edition of the design system in the Figma file "Compass — Team floor", which becomes the project design tool. Honey means brand and "your turn"; working moves from amber/teal to sky so the two never look alike.
+
+**Consequences:** The teal theme is retired; the colour tokens in src/index.css follow the Figma variables; a test keeps old teal out of src/.

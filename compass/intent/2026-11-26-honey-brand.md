@@ -32,7 +32,7 @@ Every page shows the honey theme in light and dark mode; an automated test finds
 New pages or layouts; changing Bee There itself; a shared design-token package between the two repos.
 
 ## Requirements
-Feature F-010 · Honey brand (added to compass/spec.json in the next change)
+Feature F-010 · Honey brand
 - REQ-010 — Compass colours follow the honey design system in light and dark mode
 - REQ-011 — Compass type, shapes and logo follow the honey design system
 - REQ-012 — No page keeps the old teal theme

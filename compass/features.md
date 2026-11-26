@@ -13,5 +13,6 @@ Each feature is one business intent moving through Idea → Requirements → Tes
 | [F-007 Compass Framework: install into repos safely](features/F-007.md) | Released | [—](design/F-007.md) | 1 | 1 |
 | [F-008 Compass follows its own delivery process](features/F-008.md) | Release | [—](design/F-008.md) | 4 | 4 |
 | [F-009 Team floor: watch the agent team work, live](features/F-009.md) | Build | [Approved](design/F-009.md) | 5 | 9 |
+| [F-010 Honey brand: Compass shares the Bee There look](features/F-010.md) | Requirements | [Draft](design/F-010.md) | 3 | 5 |
 
 **Tech stack:** React 19 + TypeScript + Vite single-page app (runs in the browser, no server); GitHub REST API and the Claude API; node:test for the checking scripts; GitHub Pages deploy
