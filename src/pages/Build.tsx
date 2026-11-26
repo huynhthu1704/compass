@@ -3,6 +3,7 @@ import { go } from '../App';
 import { AgentBox } from '../components/AgentBox';
 import { RunView, STATUS_TONE } from '../components/RunView';
 import { github } from '../github';
+import { designApproved } from '../progress';
 import { featureOf } from '../spec';
 import { useStore } from '../store';
 import type { Project } from '../types';
@@ -16,11 +17,15 @@ export function BuildPage({ p, fid }: { p: Project; fid: string }) {
   const runs = p.runs.filter((r) => r.agent === 'coder' && r.featureId === fid);
   const latest = runs[0];
   const chosen = p.spec.requirements.filter((r) => sel.includes(r.id));
+  const designOk = designApproved(f?.design, p.spec.requirements.filter((r) => r.featureId === fid));
   const noTests = chosen.filter((r) => !p.spec.tests.some((t) => t.reqIds.includes(r.id)));
 
   return (
     <div className="stack gap-xl">
-      <PageHead over={`${f?.id} ${f?.name} · Stage 4 · Build · owner: Developer`} title="Build" sub="The coding agent reads the repo (RAG), proposes a change set with tests, passes guardrails and evals, and — after your approval — opens a pull request." />
+      <PageHead over={`${f?.id} ${f?.name} · Stage 5 · Build · owner: Developer`} title="Build" sub="The coding agent reads the repo (RAG), proposes a change set with tests, passes guardrails and evals, and — after your approval — opens a pull request." />
+
+      {!designOk && <div className="card row gap-sm wrap" style={{ borderColor: 'var(--color-border-warning, currentColor)' }}><Badge tone="warning">Design gate</Badge><span className="body-sm grow">Coding is locked until the design is approved{f?.design ? ` (currently ${f.design.status})` : ' (no design yet)'}.</span><Button size="sm" variant="secondary" onClick={() => go(`/p/${p.id}/f/${fid}/design`)}>Open Design</Button></div>}
+      {designOk && f?.design && <div className="body-sm t-secondary">Following the approved design: {f.design.screens.length} screens{f.design.url ? <> · <a href={f.design.url} target="_blank" rel="noreferrer">open in design tool ↗</a></> : null}</div>}
 
       <section className="card pad-xl stack gap-md">
         <h2 className="h4">1 · Choose requirements to implement</h2>
@@ -39,7 +44,7 @@ export function BuildPage({ p, fid }: { p: Project; fid: string }) {
         {noTests.length > 0 && <div className="body-sm t-accent">{noTests.map((r) => r.id).join(', ')} {noTests.length > 1 ? 'have' : 'has'} no test cases — the agent will write tests from the acceptance criteria, but QA should add test cases first.</div>}
       </section>
 
-      <AgentBox key={sel.join(',')} p={p} agentId="coder" featureId={fid} reqIds={sel} cta="Implement with agent" defaultGoal={chosen.map((r) => r.title).join(' + ') || 'Implement the selected requirements'} disabled={!sel.length ? 'Select at least one requirement.' : undefined} hint={p.repo && !p.demo ? `Approval will create branch compass/${fid.toLowerCase()}-${sel.join('-').toLowerCase()}-… on ${p.repo.owner}/${p.repo.name} and open a PR. CI (tests + spec check) runs on it.` : 'Demo / local project: the PR step is simulated.'} />
+      <AgentBox key={sel.join(',')} p={p} agentId="coder" featureId={fid} reqIds={sel} cta="Implement with agent" defaultGoal={chosen.map((r) => r.title).join(' + ') || 'Implement the selected requirements'} disabled={!designOk ? 'The design of this feature is not approved yet — approve it in the Design stage before coding.' : !sel.length ? 'Select at least one requirement.' : undefined} hint={p.repo && !p.demo ? `Approval will create branch compass/${fid.toLowerCase()}-${sel.join('-').toLowerCase()}-… on ${p.repo.owner}/${p.repo.name} and open a PR. CI (tests + spec check) runs on it.` : 'Demo / local project: the PR step is simulated.'} />
 
       {latest && !['running', 'awaiting-approval', 'failed'].includes(latest.status) && <section className="card pad-xl"><RunView p={p} r={latest} /></section>}
 

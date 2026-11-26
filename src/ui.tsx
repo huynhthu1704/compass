@@ -14,7 +14,8 @@ export const Badge = ({ tone = 'neutral', children, title }: { tone?: Tone; chil
 export const STAGE_INFO: Record<Stage, { name: string; vi: string; cls: string; role: string; agent: string }> = {
   idea: { name: 'Idea', vi: 'Ý tưởng', cls: 'phase-discover', role: 'PO', agent: 'Ideation agent' },
   requirements: { name: 'Requirements', vi: 'Yêu cầu', cls: 'phase-define', role: 'BA', agent: 'Requirements agent' },
-  tests: { name: 'Test cases', vi: 'Test case', cls: 'phase-design', role: 'QA', agent: 'Test design agent' },
+  design: { name: 'Design', vi: 'Thiết kế', cls: 'phase-design', role: 'UX', agent: 'Design agent' },
+  tests: { name: 'Test cases', vi: 'Test case', cls: 'phase-monitor', role: 'QA', agent: 'Test design agent' },
   build: { name: 'Build', vi: 'Lập trình', cls: 'phase-build', role: 'Dev', agent: 'Coding agent' },
   release: { name: 'Release', vi: 'Phát hành', cls: 'phase-release', role: 'DM', agent: 'Release agent' },
 };

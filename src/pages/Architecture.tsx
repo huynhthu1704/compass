@@ -11,13 +11,19 @@ const LAYERS = [
 
 const TREE = `your-repo/
 ├── AGENTS.md                 ← handover contract for any human or AI agent
-├── CLAUDE.md                 ← points agents to AGENTS.md
+├── CLAUDE.md                 ← points agents to AGENTS.md + lessons learned
 ├── compass/
-│   ├── spec.json             ← source of truth: idea, REQ-xxx, TC-xxx, ADR-xxx
-│   ├── idea.md · requirements.md · tests.md · decisions.md   (generated views)
+│   ├── spec.json             ← source of truth: features, REQ-xxx, designs, TC-xxx, ADR-xxx
+│   ├── intent/               ← business intent (what & why), approved before requirements
+│   ├── design/F-xxx.md       ← approved UI design (screens ↔ REQ, Figma links) — gate before code
+│   ├── plans/                ← one plan per change (Files, Steps, Risks, Proof), before code
+│   ├── REVIEW.md             ← independent review of every PR
+│   ├── features/ · requirements.md · tests.md · decisions.md   (generated views)
 │   ├── handover.md           ← where we are + next step per role
 │   ├── guardrails.json       ← rules agents must obey
-│   └── check-spec.mjs        ← CI traceability check
+│   ├── check-spec.mjs        ← CI: traceability, intent, design gate, ADRs
+│   ├── check-guardrails.mjs  ← CI: guardrails + plan before code
+│   └── hooks/guard-edit.mjs  ← Claude Code hook (.claude/settings.json)
 ├── .github/
 │   ├── workflows/compass-ci.yml      ← spec check + npm test + build on every PR
 │   ├── workflows/compass-deploy.yml  ← GitHub Pages deploy on main

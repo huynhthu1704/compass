@@ -9,16 +9,18 @@ A project (one repo) holds many **features** (F-001, F-002…). Each feature has
 
 ## What it does
 - **Manages your GitHub projects.** You can create a new repo from an idea, or import any existing repo.
-- **Runs a five-stage pipeline.** Each stage has its own agent and a human approval gate:
+- **Runs a six-stage pipeline.** Each stage has its own agent and a human approval gate, and the next agent starts automatically once a gate is passed:
 
   | Stage | Agent | Output | Gate |
   |---|---|---|---|
-  | Idea | Ideation agent | Outcome-focused brief | PO approves |
-  | Requirements | Requirements agent | REQ-xxx user stories with Given/When/Then AC | PO/BA approve |
+  | Idea | Ideation agent | The PO's raw **business need**, revised into a measurable **business intent** + brief (`compass/intent/F-xxx.md`) | PO approves → Requirements agent starts |
+  | Requirements | Requirements agent | REQ-xxx user stories with Given/When/Then AC | PO/BA approve every requirement → Design agent starts |
+  | Design | Design agent | Screens traced to REQ ids, linked to the project's design tool (Figma, Penpot…) (`compass/design/F-xxx.md`) | PO/UX approve the design → **coding unlocks** |
   | Test cases | Test design agent | TC-xxx traced to requirements | QA approves |
-  | Build | Coding agent + reviewer | Change set → branch → pull request | Guardrails pass + human approves the diff |
+  | Build | Coding agent + reviewer | Plan (`compass/plans/…md`) + change set → branch → pull request | Guardrails pass + human approves the diff |
   | Release | Release agent | Checks CI, merges PRs, tags vX.Y.Z, deploys to GitHub Pages | DM/PO confirm |
 
+- **Connects one design tool per project.** Paste the Figma (or other tool) project link on the Design page; each feature and screen can link to its own frame, and Figma links are previewed inline.
 - **Lets anyone continue the work.** Every repo gets the **Compass Framework**, so any role, human or AI, can pick up the project with or without the portal.
 
 ## Agent architecture
@@ -31,17 +33,24 @@ A project (one repo) holds many **features** (F-001, F-002…). Each feature has
    - Quality evals: story format, testable AC, ambiguity, test coverage, negative-path tests, and whether code comes with tests. In live mode, an LLM-as-judge reviewer also scores each change set.
    - In CI: `compass/check-spec.mjs` plus your tests run on every PR.
 
-## Compass Framework (installed into each repo)
+## Compass Framework v1.1 (installed into each repo): AI-native SDLC
 ```
-AGENTS.md / CLAUDE.md            handover contract for any human or AI agent
-compass/spec.json                source of truth: idea, REQ-xxx, TC-xxx, ADR-xxx
+AGENTS.md / CLAUDE.md            handover contract + lessons learned for any human or AI agent
+compass/spec.json                source of truth: features, REQ-xxx, designs, TC-xxx, ADR-xxx, design tool
+compass/intent/                  business intent (what & why), approved before requirements; F-xxx.md generated
+compass/design/F-xxx.md          the approved UI design: gate before any code
+compass/plans/                   one plan per change (Files, Steps, Risks, Proof), committed before the code
+compass/REVIEW.md                independent review of every PR by an agent that did not write it
 compass/*.md                     generated views + handover.md (next step per role)
 compass/guardrails.json          rules agents must obey
-compass/check-spec.mjs           CI traceability check
-.github/workflows/compass-ci.yml     spec check + npm test + build on PRs
+compass/check-spec.mjs           CI: traceability, approved intent, design gate, ADR log
+compass/check-guardrails.mjs     CI: protected/forbidden paths, size, secrets, deps, plan before code
+compass/hooks/guard-edit.mjs     Claude Code hook (.claude/settings.json) blocking protected paths and secrets
+.github/workflows/compass-ci.yml     spec + guardrails checks + npm test + build on PRs
 .github/workflows/compass-deploy.yml GitHub Pages deploy on main
 .github/pull_request_template.md, ISSUE_TEMPLATE/
 ```
+The scripts live in `src/framework/` and are installed verbatim.
 
 ## Connections
 Everything runs in the browser, and keys stay on your device:

@@ -21,7 +21,14 @@ export function demoProject(): Project {
           outcomeMetric: 'Share of new users who publish a trip page in 7 days: 10% → 35% within 8 weeks',
           scopeIn: ['Create a trip with places', 'Share a public trip page', 'Map of visited places'],
           scopeOut: ['Native mobile app', 'Booking and payments'],
-          risks: ['Location privacy on public pages', 'Map API cost'] } },
+          risks: ['Location privacy on public pages', 'Map API cost'] },
+          design: { status: 'Approved', approvedBy: 'PO', approvedAt: '2026-11-08T00:00:00.000Z', url: 'https://www.figma.com/design/demo/Travel-Journal?node-id=1-2',
+            summary: 'Three mobile-first screens reusing the site header and card styles; the trip page doubles as the public page.',
+            notes: 'Keyboard order follows visual order; map pins have a text list fallback; contrast ≥ 4.5:1.',
+            screens: [
+              { id: 'SCR-1', name: 'New trip', purpose: 'Create a trip and add places', reqIds: ['REQ-001'], elements: ['Trip name field', 'Place search + add list', 'Save button'], states: ['Empty', 'Name missing error', 'Saved'] },
+              { id: 'SCR-2', name: 'Trip page', purpose: 'View a trip and share its public link', reqIds: ['REQ-002', 'REQ-003'], elements: ['Map with pins', '"Not on map" list', 'Share button + copy link', 'Private/public toggle'], states: ['Public', 'Private ("This trip is private")', 'No coordinates'] },
+            ] } },
         { id: 'F-002', name: 'Passwordless sign-in', createdAt: '2026-11-12T00:00:00.000Z', idea: {
           intent: 'Cut sign-up drop-off from 45% to 20% by removing passwords',
           problem: 'Many travellers abandon sign-up at the password step.',

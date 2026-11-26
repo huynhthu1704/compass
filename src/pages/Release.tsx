@@ -28,7 +28,7 @@ export function ReleasePage({ p }: { p: Project }) {
 
   return (
     <div className="stack gap-xl">
-      <PageHead over="Stage 5 · Release · owner: Delivery Manager / PO" title="Release" sub="Release several features together. One click: verify CI on each agent PR, squash-merge, mark requirements Done, update the spec & handover, tag a GitHub release — the deploy workflow publishes to GitHub Pages."
+      <PageHead over="Stage 6 · Release · owner: Delivery Manager / PO" title="Release" sub="Release several features together. One click: verify CI on each agent PR, squash-merge, mark requirements Done, update the spec & handover, tag a GitHub release — the deploy workflow publishes to GitHub Pages."
         right={<>
           {p.repo?.pagesUrl && <a className="btn secondary sm" href={p.repo.pagesUrl} target="_blank" rel="noreferrer">Live site ↗</a>}
           {live && !p.repo?.pagesUrl && <Button size="sm" variant="secondary" disabled={busy} onClick={() => run(async () => { const pg = await github.enablePages(settings.githubToken!, p.repo!); store.update(p.id, (x) => ({ ...x, repo: x.repo && { ...x.repo, pagesUrl: pg.html_url } })); return 'GitHub Pages enabled'; })}>Enable GitHub Pages</Button>}
