@@ -183,6 +183,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .seg button { border: 0; background: var(--color-bg-surface); padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--color-text-secondary); }
 .seg button[aria-pressed="true"] { background: var(--color-bg-brand-subtle); color: var(--color-text-brand); font-weight: 600; }
 .option { display: flex; gap: var(--spacing-md); align-items: flex-start; padding: var(--spacing-md); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); cursor: pointer; background: var(--color-bg-surface); text-align: left; }
+.run-status { flex: none; width: 128px; display: flex; } /* fixed status column so run names line up */
 .option[aria-pressed="true"] { border-color: var(--color-border-brand); background: var(--color-bg-brand-subtle); }
 .kpi { display: flex; flex-direction: column; gap: 2px; }
 .kpi .v { font-family: var(--font-mono); font-size: 24px; line-height: 32px; font-weight: 500; }

@@ -116,7 +116,7 @@ export function OverviewPage({ p }: { p: Project }) {
           <h3 className="h4" style={{ marginTop: 8 }}>Recent agent runs</h3>
           {p.runs.length ? p.runs.slice(0, 5).map((r) => (
             <button key={r.id} className="option" style={{ padding: 10 }} onClick={() => go(`/p/${p.id}/runs/${r.id}`)}>
-              <Badge tone={STATUS_TONE[r.status]}>{r.status.replace('-', ' ')}</Badge>
+              <span className="run-status"><Badge tone={STATUS_TONE[r.status]}>{r.status.replace('-', ' ')}</Badge></span>
               <span className="stack grow"><span className="label-md">{agent(r.agent).name}{r.featureId ? ` · ${r.featureId}` : ''}</span><span className="body-sm t-tertiary">{r.goal.slice(0, 70)}</span></span>
               <span className="mono-sm t-tertiary">{ago(r.startedAt)}</span>
             </button>
