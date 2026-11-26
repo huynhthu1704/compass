@@ -397,6 +397,85 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-26T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-011",
+      "name": "Readability follow-ups: status labels and phone stage strip",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "need": "turn the \"Draft\" vs \"Approved\" label colours and the cramped phone stage strip into requirements for later — yes please",
+        "intent": "The Product Owner tells Draft from Approved labels without reading them, and no word breaks in a feature's stage strip on a 390 px phone (today: both labels honey; words break mid-word).",
+        "problem": "After the honey rebrand, Draft (warning) and Approved (brand) labels are both honey; on phones the six stage cards of a feature page squeeze into narrow columns and break words.",
+        "users": [
+          "Product Owner",
+          "Everyone reviewing requirements and tests"
+        ],
+        "outcomeMetric": "Draft vs Approved: same colour family → different families (test); broken words in the stage strip at 390 px: several → 0 (screenshot).",
+        "scopeIn": [
+          "Status label colours on requirements, test cases and features",
+          "Stage strip layout below 720 px"
+        ],
+        "scopeOut": [
+          "Other label colours",
+          "A redesign of the feature page"
+        ],
+        "risks": [
+          "Tokens of the honey design system only; no new libraries",
+          "WCAG AA contrast kept",
+          "Desktop stage strip unchanged"
+        ]
+      },
+      "design": {
+        "status": "Approved",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=0-1",
+        "summary": "Two small changes inside the honey design system. Status labels: Draft uses the neutral tone (grey), Approved uses the success tone (mint, like Done), In build stays info (sky), on requirements, test cases and features. Phone stage strip: below 720 px the six stage cards of a feature page become a one-per-row list in stage order (stage chip, stage name, summary, agent · role, chevron); the current stage is highlighted honey. 720 px and wider stays as today.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Status labels — before/after, light and dark",
+            "purpose": "Shows the new label colours and a requirements list using them.",
+            "reqIds": [
+              "REQ-013"
+            ],
+            "elements": [
+              "Draft · neutral",
+              "Approved · success",
+              "In build · info",
+              "Done · success",
+              "Example requirements list"
+            ],
+            "states": [
+              "Light",
+              "Dark"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=27-429"
+          },
+          {
+            "id": "SCR-2",
+            "name": "Phone · Feature stage strip as a list",
+            "purpose": "The stage strip of a feature page at 390 px: one stage per row, whole words.",
+            "reqIds": [
+              "REQ-014"
+            ],
+            "elements": [
+              "Stage chip (✓ or number)",
+              "Stage name in its stage colour",
+              "Summary line",
+              "Agent · role",
+              "Chevron"
+            ],
+            "states": [
+              "Done stages",
+              "Current stage (honey)",
+              "Later stages"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=27-509"
+          }
+        ],
+        "notes": "Desktop stage strip unchanged (TC-026). The desktop stage strip deliberately stays as it is (five columns; the sixth stage wraps), per the intent.",
+        "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-26T00:00:00.000Z"
+      }
     }
   ],
   "requirements": [
@@ -640,6 +719,33 @@
       "ac": [
         "Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs, Knowledge)\nWhen I open it in light and dark mode\nThen it uses the honey theme",
         "Given the source code in src/\nWhen the unit tests run\nThen a test fails if any old teal colour (#EDFAF7, #D2F2EA, #6ECDB9, #38B09A, #0E7666, #0D5E52, #0C3A34) or a hard-coded colour outside the design tokens is found"
+      ]
+    },
+    {
+      "id": "REQ-013",
+      "featureId": "F-011",
+      "title": "Draft and Approved labels look different at a glance",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-status-labels-and-phone-stages.md",
+      "story": "As the product owner, I want Draft and Approved labels of requirements and designs in different colours, so that I see at a glance what still needs my approval.",
+      "ac": [
+        "Given a requirement with status Draft (on the Requirements, Test cases, Feature or Build page) or a feature design with status Draft (Design page)\nWhen its status label is shown\nThen it uses the neutral (grey) tone",
+        "Given a requirement or a feature design with status Approved, on the same pages\nWhen its status label is shown\nThen it uses the success (mint) tone, like Done, in light and dark mode; In build stays info (sky)",
+        "Given the status labels (neutral, info and success tones)\nWhen contrast is measured\nThen their text keeps at least 4.5:1 on the label background in light and dark mode"
+      ]
+    },
+    {
+      "id": "REQ-014",
+      "featureId": "F-011",
+      "title": "The stage strip of a feature reads well on a phone",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-status-labels-and-phone-stages.md",
+      "story": "As the product owner, I want the stage strip of a feature to stay readable on my phone, so that I can follow a feature anywhere.",
+      "ac": [
+        "Given a feature page on a screen narrower than 720 px\nWhen the stage strip (Idea → Release) is shown\nThen each stage takes the full width in one list, in stage order, and no word is broken across lines",
+        "Given a screen 720 px or wider\nWhen the stage strip is shown\nThen it looks as it does today"
       ]
     }
   ],
@@ -933,6 +1039,46 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the rebrand pull request\nWhen I compare it with main\nThen package.json has no new dependency, every page keeps its layout and behaviour, and all existing unit tests still pass"
+    },
+    {
+      "id": "TC-023",
+      "reqIds": [
+        "REQ-013"
+      ],
+      "title": "Draft is neutral, Approved is mint",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the status labels in src/pages/Requirements.tsx, Tests.tsx, Feature.tsx and Build.tsx (requirement status) and Design.tsx (design status)\nWhen the test reads how each page maps a status to a tone\nThen Draft maps to neutral, Approved to success, In build to info and Done to success on all five pages"
+    },
+    {
+      "id": "TC-024",
+      "reqIds": [
+        "REQ-013"
+      ],
+      "title": "Status label contrast",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the neutral, info and success tones in light and dark mode\nWhen contrast of text on background is computed\nThen each is at least 4.5:1"
+    },
+    {
+      "id": "TC-025",
+      "reqIds": [
+        "REQ-014"
+      ],
+      "title": "Stage strip on a 390 px phone",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a feature page at 390 px wide in light and dark mode\nWhen I look at the stage strip\nThen the six stages are listed one per row in stage order and no word is broken"
+    },
+    {
+      "id": "TC-026",
+      "reqIds": [
+        "REQ-014"
+      ],
+      "title": "Desktop stage strip unchanged",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a feature page at 1440 px\nWhen I compare it with the version before the change\nThen the stage strip looks the same"
     }
   ],
   "decisions": [
