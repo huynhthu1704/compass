@@ -33,5 +33,5 @@ Other label colours; a redesign of the feature page.
 
 ## Requirements
 Feature F-011 · Readability follow-ups
-- REQ-013 — Draft and Approved labels look different at a glance
-- REQ-014 — The stage strip of a feature reads well on a phone
+- REQ-013 — Draft and Approved labels look different at a glance (#23)
+- REQ-014 — The stage strip of a feature reads well on a phone (#24)
