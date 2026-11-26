@@ -33,6 +33,6 @@ New pages or layouts; changing Bee There itself; a shared design-token package b
 
 ## Requirements
 Feature F-010 · Honey brand
-- REQ-010 — Compass colours follow the honey design system in light and dark mode
-- REQ-011 — Compass type, shapes and logo follow the honey design system
-- REQ-012 — No page keeps the old teal theme
+- REQ-010 — Compass colours follow the honey design system in light and dark mode (#14)
+- REQ-011 — Compass type, shapes and logo follow the honey design system (#15)
+- REQ-012 — No page keeps the old teal theme (#16)
