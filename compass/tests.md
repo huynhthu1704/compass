@@ -270,17 +270,17 @@ Then package.json has no new dependency, every page keeps its layout and behavio
 ## TC-023 · Draft is neutral, Approved is mint
 Covers: REQ-013 · Type: Automated · Status: Not run
 ```gherkin
-Given the status-to-tone mapping used on Requirements, Test cases and Feature pages
-When the test reads it
-Then Draft maps to neutral and Approved maps to success on every page
+Given the status labels in src/pages/Requirements.tsx, Tests.tsx, Feature.tsx and Build.tsx (requirement status) and Design.tsx (design status)
+When the test reads how each page maps a status to a tone
+Then Draft maps to neutral, Approved to success, In build to info and Done to success on all five pages
 ```
 
 ## TC-024 · Status label contrast
 Covers: REQ-013 · Type: Automated · Status: Not run
 ```gherkin
-Given the neutral and success tones in light and dark mode
+Given the neutral, info and success tones in light and dark mode
 When contrast of text on background is computed
-Then both are at least 4.5:1
+Then each is at least 4.5:1
 ```
 
 ## TC-025 · Stage strip on a 390 px phone

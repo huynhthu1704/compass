@@ -410,7 +410,7 @@ Then a test fails if any old teal colour (#EDFAF7, #D2F2EA, #6ECDB9, #38B09A, #0
 ```
 
 ## REQ-013 · Draft and Approved labels look different at a glance
-As the product owner, I want Draft and Approved labels in different colours, so that I see at a glance what still needs my approval.
+As the product owner, I want Draft and Approved labels of requirements and designs in different colours, so that I see at a glance what still needs my approval.
 
 **Priority:** Must · **Status:** Approved
 
@@ -418,23 +418,23 @@ As the product owner, I want Draft and Approved labels in different colours, so 
 
 _AC1_
 ```gherkin
-Given a requirement, test case or feature with status Draft
+Given a requirement with status Draft (on the Requirements, Test cases, Feature or Build page) or a feature design with status Draft (Design page)
 When its status label is shown
 Then it uses the neutral (grey) tone
 ```
 
 _AC2_
 ```gherkin
-Given a requirement or feature with status Approved
+Given a requirement or a feature design with status Approved, on the same pages
 When its status label is shown
-Then it uses the success (mint) tone, like Done, in light and dark mode
+Then it uses the success (mint) tone, like Done, in light and dark mode; In build stays info (sky)
 ```
 
 _AC3_
 ```gherkin
-Given the status labels
+Given the status labels (neutral, info and success tones)
 When contrast is measured
-Then their text keeps at least 4.5:1 on the label background
+Then their text keeps at least 4.5:1 on the label background in light and dark mode
 ```
 
 ## REQ-014 · The stage strip of a feature reads well on a phone
