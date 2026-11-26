@@ -6,7 +6,7 @@ import type { Project, Run, StepKind } from '../types';
 import { ago, Badge, Button, Diff, Markdown, useAction } from '../ui';
 
 const ICON: Record<StepKind, [string, string]> = { plan: ['◎', ''], retrieve: ['R', 'tool'], tool_call: ['ƒ', 'tool'], tool_result: ['↩', 'tool'], model: ['✦', 'model'], guardrail: ['G', ''], eval: ['E', 'model'], approval: ['✋', 'wait'], github: ['⎇', 'ok'], error: ['!', 'bad'] };
-export const STATUS_TONE = { running: 'info', 'awaiting-approval': 'accent', approved: 'brand', rejected: 'neutral', failed: 'danger', done: 'success' } as const;
+export const STATUS_TONE = { running: 'info', 'awaiting-approval': 'accent', approved: 'success', rejected: 'neutral', failed: 'danger', done: 'success' } as const;
 
 export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boolean }) {
   const a = agent(r.agent);
