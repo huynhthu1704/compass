@@ -13,11 +13,11 @@
 | REQ-105 | F-005 | Build: coding agent, plan file and pull request | Must | Done | TC-105 |
 | REQ-106 | F-006 | Release: merge, tag and deploy | Must | Done | TC-106 |
 | REQ-107 | F-007 | Framework: install into repos without overwriting their own files | Must | Done | TC-107 |
-| REQ-005 | F-009 | The Team floor shows every agent at its desk with its current state | Must | Approved | TC-005, TC-006, TC-013 |
-| REQ-006 | F-009 | What each agent is doing appears live in its speech bubble and the activity list | Must | Approved | TC-007 |
-| REQ-007 | F-009 | Handoffs move as cards between desks, and a failed review sends the card back | Should | Approved | TC-008 |
-| REQ-008 | F-009 | Approvals can be given from the Team floor with the same result as from Agent runs | Must | Approved | TC-009, TC-012 |
-| REQ-009 | F-009 | The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost | Must | Approved | TC-010, TC-011 |
+| REQ-005 | F-009 | The Team floor shows every agent at its desk with its current state | Must | In build | TC-005, TC-006, TC-013 |
+| REQ-006 | F-009 | What each agent is doing appears live in its speech bubble and the activity list | Must | In build | TC-007 |
+| REQ-007 | F-009 | Handoffs move as cards between desks, and a failed review sends the card back | Should | In build | TC-008 |
+| REQ-008 | F-009 | Approvals can be given from the Team floor with the same result as from Agent runs | Must | In build | TC-009, TC-012 |
+| REQ-009 | F-009 | The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost | Must | In build | TC-010, TC-011 |
 | REQ-010 | F-010 | Compass colours follow the honey design system in light and dark mode | Must | In build | TC-014, TC-015, TC-019 |
 | REQ-011 | F-010 | Compass type, shapes and logo follow the honey design system | Must | In build | TC-016, TC-020, TC-021 |
 | REQ-012 | F-010 | No page keeps the old teal theme | Must | In build | TC-017, TC-018, TC-022 |
@@ -200,7 +200,7 @@ Then only missing framework files are added, the generated spec views are refres
 ## REQ-005 · The Team floor shows every agent at its desk with its current state
 As the product owner, I want one page that shows all seven agents at their desks with their current state, so that I can see at a glance who is working, on which feature, and who waits for me.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
@@ -235,7 +235,7 @@ Then only that feature's runs set the desks; desks without a run of that feature
 ## REQ-006 · What each agent is doing appears live in its speech bubble and the activity list
 As the product owner, I want to see what each working agent is doing right now, so that I can follow the team without opening every run.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
@@ -256,7 +256,7 @@ Then the newest step appears at the top with its time, agent and title, and scre
 ## REQ-007 · Handoffs move as cards between desks, and a failed review sends the card back
 As the product owner, I want to see work moving from one agent to the next, so that I understand the flow and spot rework.
 
-**Priority:** Should · **Status:** Approved
+**Priority:** Should · **Status:** In build
 
 **Acceptance criteria**
 
@@ -277,7 +277,7 @@ Then the card moves back along a coral path and the Coding desk shows Rework
 ## REQ-008 · Approvals can be given from the Team floor with the same result as from Agent runs
 As the product owner, I want to approve or reject waiting work straight from the Team floor, so that nothing waits on me longer than needed.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
@@ -298,7 +298,7 @@ Then the result is exactly the same as approving or rejecting it from Agent runs
 ## REQ-009 · The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost
 As the product owner, I want the Team floor to be comfortable for everyone and free to run, so that I can use and demo it anywhere.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
