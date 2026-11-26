@@ -14,6 +14,6 @@ Each feature is one business intent moving through Idea → Requirements → Tes
 | [F-008 Compass follows its own delivery process](features/F-008.md) | Release | [—](design/F-008.md) | 4 | 4 |
 | [F-009 Team floor: watch the agent team work, live](features/F-009.md) | Release | [Approved](design/F-009.md) | 5 | 9 |
 | [F-010 Honey brand: Compass shares the Bee There look](features/F-010.md) | Release | [Approved](design/F-010.md) | 3 | 9 |
-| [F-011 Readability follow-ups: status labels and phone stage strip](features/F-011.md) | Design | [Draft](design/F-011.md) | 2 | 4 |
+| [F-011 Readability follow-ups: status labels and phone stage strip](features/F-011.md) | Build | [Approved](design/F-011.md) | 2 | 4 |
 
 **Tech stack:** React 19 + TypeScript + Vite single-page app (runs in the browser, no server); GitHub REST API and the Claude API; node:test for the checking scripts; GitHub Pages deploy

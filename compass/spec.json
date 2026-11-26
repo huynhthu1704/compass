@@ -426,7 +426,7 @@
         ]
       },
       "design": {
-        "status": "Draft",
+        "status": "Approved",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=27-429",
         "summary": "Two small changes inside the honey design system. Status labels: Draft uses the neutral tone (grey), Approved uses the success tone (mint, like Done), In build stays info (sky), on requirements, test cases and features. Phone stage strip: below 720 px the six stage cards of a feature page become a one-per-row list in stage order (stage chip, stage name, summary, agent · role, chevron); the current stage is highlighted honey. 720 px and wider stays as today.",
         "screens": [
@@ -472,7 +472,9 @@
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=27-509"
           }
         ],
-        "notes": "Draft for Product Owner approval. Desktop stage strip unchanged (TC-026)."
+        "notes": "Desktop stage strip unchanged (TC-026).",
+        "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-26T00:00:00.000Z"
       }
     }
   ],
