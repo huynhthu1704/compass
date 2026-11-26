@@ -1,0 +1,450 @@
+{
+  "version": 2,
+  "stack": "React 19 + TypeScript + Vite single-page app (runs in the browser, no server); GitHub REST API and the Claude API; node:test for the checking scripts; GitHub Pages deploy",
+  "features": [
+    {
+      "id": "F-001",
+      "name": "Idea: business need → business intent",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "need": "Baseline of the portal before 2026-11-26.",
+        "intent": "A Product Owner turns a business need into an approved, measurable business intent in minutes.",
+        "problem": "Requests arrive as solutions or vague needs; without a measurable outcome nobody can tell whether the work succeeded.",
+        "users": [
+          "Product Owner"
+        ],
+        "outcomeMetric": "Every feature has an approved intent before requirements (baseline).",
+        "scopeIn": [
+          "Ideation agent revises the need into an intent",
+          "Idea brief: problem, users, outcome metric, scope, risks",
+          "Approving the intent starts the Requirements agent"
+        ],
+        "scopeOut": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "F-002",
+      "name": "Requirements: generate and approve",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "intent": "Requirements with testable Given/When/Then acceptance criteria are drafted by an agent and approved by the PO/BA.",
+        "problem": "Hand-written requirements are slow and often not testable.",
+        "users": [
+          "Product Owner",
+          "Business Analyst"
+        ],
+        "outcomeMetric": "Every requirement has acceptance criteria and an approval (baseline).",
+        "scopeIn": [
+          "Requirements agent",
+          "Edit, approve, approve all",
+          "Approving the last draft starts the Design agent"
+        ],
+        "scopeOut": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "F-003",
+      "name": "Design: design tool and approval gate",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "intent": "No code is written before the PO/UX approve a design traced to the requirements.",
+        "problem": "Code built before anyone agreed on the screens has to be redone.",
+        "users": [
+          "UX / Designer",
+          "Product Owner"
+        ],
+        "outcomeMetric": "Build is locked until the design is Approved (baseline).",
+        "scopeIn": [
+          "One design tool per project (Figma…)",
+          "Design agent drafts screens ↔ REQ ids",
+          "Approve design unlocks Build"
+        ],
+        "scopeOut": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "F-004",
+      "name": "Test cases: one or more per requirement",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "intent": "Every requirement is covered by at least one test case before it is built.",
+        "problem": "Untested requirements break silently.",
+        "users": [
+          "QA"
+        ],
+        "outcomeMetric": "No requirement without a test case (baseline).",
+        "scopeIn": [
+          "Test design agent",
+          "Traceability matrix"
+        ],
+        "scopeOut": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "F-005",
+      "name": "Build: coding agent, plan and pull request",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "intent": "Approved requirements become a reviewed pull request with a plan file, tests and passing guardrails.",
+        "problem": "AI-written code without guardrails, plan or review is risky to merge.",
+        "users": [
+          "Developer"
+        ],
+        "outcomeMetric": "Every agent PR carries a plan file and guardrail results (baseline).",
+        "scopeIn": [
+          "Coding agent with RAG and tool calling",
+          "Guardrails and evals",
+          "Plan file + PR"
+        ],
+        "scopeOut": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "F-006",
+      "name": "Release: merge, tag and deploy",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "intent": "Several features are released together with one confirmed action.",
+        "problem": "Manual releases forget steps (CI check, tag, statuses).",
+        "users": [
+          "Delivery Manager",
+          "Product Owner"
+        ],
+        "outcomeMetric": "Releases are tagged and requirements marked Done (baseline).",
+        "scopeIn": [
+          "Check CI, squash-merge, mark Done, tag, deploy"
+        ],
+        "scopeOut": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "F-007",
+      "name": "Compass Framework: install into repos safely",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "intent": "Any repo can be continued by any person or agent through the installed Compass Framework, without losing the repo's own files.",
+        "problem": "Without a shared contract, work depends on the portal or on one person.",
+        "users": [
+          "Any role",
+          "AI agents"
+        ],
+        "outcomeMetric": "Install never overwrites a repo's own files (baseline).",
+        "scopeIn": [
+          "AGENTS.md / CLAUDE.md",
+          "compass/ spec, intent, design, plans, REVIEW.md",
+          "CI checks and edit hook",
+          "Non-overwriting install"
+        ],
+        "scopeOut": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "F-008",
+      "name": "Compass follows its own delivery process",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "need": "make the compass repo itself follow the ai-native sdlc",
+        "intent": "From the next pull request on, 100% of Compass's own pull requests go intent → requirements → design → plan → checks and independent review (today: none are checked).",
+        "problem": "Compass enforces this process in other projects but not in its own code: no CI on pull requests, no tests, no plan and no review record.",
+        "users": [
+          "Product Owner",
+          "Developer",
+          "AI agents"
+        ],
+        "outcomeMetric": "Share of Compass PRs checked by CI and independently reviewed: 0% → 100% from the first PR after setup.",
+        "scopeIn": [
+          "Framework in the repo",
+          "CI on every PR",
+          "Tests for the checking scripts",
+          "No drift between compass/ and src/framework/"
+        ],
+        "scopeOut": [
+          "Requirements for every existing behaviour",
+          "Changing the website deploy"
+        ],
+        "risks": [
+          "The setup PR is larger than 12 files (the check starts after it)"
+        ]
+      }
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "featureId": "F-008",
+      "title": "The Compass repo has the Compass Framework",
+      "priority": "Must",
+      "status": "In build",
+      "intent": "compass/intent/2026-11-26-compass-follows-its-own-process.md",
+      "design": "none: process change, no UI",
+      "story": "As the product owner, I want the Compass repo to carry the same Compass Framework it installs into other projects, generated by the portal itself, so that any person or agent changing Compass follows the same process.",
+      "ac": [
+        "Given the Compass repository\nWhen I open it\nThen it has compass/ (spec.json, intent/, design/, plans/, REVIEW.md, guardrails.json and the checking scripts), AGENTS.md, CLAUDE.md, the PR and issue templates and the Claude Code edit hook",
+        "Given the framework files in the repo\nWhen they are compared with what the portal generates for this project\nThen they were produced by the portal's own frameworkFiles(), not written by hand"
+      ]
+    },
+    {
+      "id": "REQ-002",
+      "featureId": "F-008",
+      "title": "Every pull request is checked by CI",
+      "priority": "Must",
+      "status": "In build",
+      "intent": "compass/intent/2026-11-26-compass-follows-its-own-process.md",
+      "design": "none: process change, no UI",
+      "story": "As the product owner, I want every pull request to Compass checked automatically, so that a change without approvals, a plan or tests cannot be merged unnoticed.",
+      "ac": [
+        "Given a pull request to main\nWhen CI runs\nThen it runs the spec check, the guardrails check (main's copy, including the plan check), the unit tests and the build",
+        "Given a push to main\nWhen the existing deploy workflow runs\nThen the website deploy works exactly as before"
+      ]
+    },
+    {
+      "id": "REQ-003",
+      "featureId": "F-008",
+      "title": "The checking scripts have unit tests",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-compass-follows-its-own-process.md",
+      "design": "none: process change, no UI",
+      "story": "As the product owner, I want the checking scripts that Compass installs into every project to have their own tests, so that a broken check is caught before it reaches other projects.",
+      "ac": [
+        "Given the scripts in src/framework/\nWhen npm test runs (Node's built-in runner, no new library)\nThen it covers the spec check (traceability, intent, design gate), the plan check and the edit hook's decisions",
+        "Given a change that breaks one of these checks\nWhen npm test runs\nThen at least one test fails"
+      ]
+    },
+    {
+      "id": "REQ-004",
+      "featureId": "F-008",
+      "title": "The installed scripts never drift from the portal's copies",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-compass-follows-its-own-process.md",
+      "design": "none: process change, no UI",
+      "story": "As the product owner, I want the checking scripts in the repo's compass/ folder to stay identical to the copies the portal installs (src/framework/), so that Compass is checked by exactly the rules it gives other projects.",
+      "ac": [
+        "Given compass/check-spec.mjs, compass/check-guardrails.mjs, compass/guardrails-lib.mjs and compass/hooks/guard-edit.mjs\nWhen one differs from its copy in src/framework/\nThen npm test fails and names the file"
+      ]
+    },
+    {
+      "id": "REQ-101",
+      "featureId": "F-001",
+      "title": "Idea: business need revised into a business intent",
+      "priority": "Must",
+      "status": "Done",
+      "story": "As a product owner, I want to write a business need and get it revised into a measurable business intent, so that the work starts from an outcome.",
+      "ac": [
+        "Given a business need on the Idea page\nWhen the Ideation agent runs and I approve its brief\nThen the feature has the revised intent, my original need and a brief, and the Requirements agent starts"
+      ]
+    },
+    {
+      "id": "REQ-102",
+      "featureId": "F-002",
+      "title": "Requirements: generate and approve",
+      "priority": "Must",
+      "status": "Done",
+      "story": "As a business analyst, I want requirements drafted with Given/When/Then criteria, so that I only review and approve them.",
+      "ac": [
+        "Given an approved intent\nWhen the Requirements agent runs and its proposal is accepted\nThen Draft requirements appear; approving the last one starts the Design agent"
+      ]
+    },
+    {
+      "id": "REQ-103",
+      "featureId": "F-003",
+      "title": "Design: design tool, screens and approval gate",
+      "priority": "Must",
+      "status": "Done",
+      "story": "As a product owner, I want a design traced to the approved requirements and approved before coding, so that code is built to agreed screens.",
+      "ac": [
+        "Given a feature whose design is not Approved\nWhen I open Build\nThen coding is locked; after Approve design it is unlocked"
+      ]
+    },
+    {
+      "id": "REQ-104",
+      "featureId": "F-004",
+      "title": "Test cases: one or more per requirement",
+      "priority": "Must",
+      "status": "Done",
+      "story": "As QA, I want test cases generated for every uncovered requirement, so that nothing is built untested.",
+      "ac": [
+        "Given requirements without test cases\nWhen the Test design agent runs and its proposal is accepted\nThen each of them has a happy-path and a negative test case"
+      ]
+    },
+    {
+      "id": "REQ-105",
+      "featureId": "F-005",
+      "title": "Build: coding agent, plan file and pull request",
+      "priority": "Must",
+      "status": "Done",
+      "story": "As a developer, I want the coding agent to propose a change set that passes guardrails and opens a PR with a plan file, so that I only review the diff.",
+      "ac": [
+        "Given approved requirements and an approved design\nWhen I approve the agent's change set\nThen a branch and PR are opened with compass/plans/<REQ-ids>-<name>.md committed first"
+      ]
+    },
+    {
+      "id": "REQ-106",
+      "featureId": "F-006",
+      "title": "Release: merge, tag and deploy",
+      "priority": "Must",
+      "status": "Done",
+      "story": "As a delivery manager, I want to release several features in one confirmed step, so that releases are consistent.",
+      "ac": [
+        "Given approved agent PRs with green CI\nWhen I confirm the release\nThen they are merged, requirements are marked Done and a vX.Y.Z tag is created"
+      ]
+    },
+    {
+      "id": "REQ-107",
+      "featureId": "F-007",
+      "title": "Framework: install into repos without overwriting their own files",
+      "priority": "Must",
+      "status": "Done",
+      "story": "As a repo owner, I want Install framework to add only missing files, so that my repo's own scripts and docs are kept.",
+      "ac": [
+        "Given an existing repo with its own compass/*.mjs\nWhen Install framework runs\nThen only missing framework files are added, the generated spec views are refreshed and the repo's own files are listed as kept"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "id": "TC-001",
+      "reqIds": [
+        "REQ-001"
+      ],
+      "title": "Framework files present and generated by frameworkFiles()",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the setup PR\nWhen I list its files\nThen compass/, AGENTS.md, CLAUDE.md, the templates and .claude/settings.json are present\nAnd the PR describes the generator run that produced them"
+    },
+    {
+      "id": "TC-002",
+      "reqIds": [
+        "REQ-002"
+      ],
+      "title": "CI runs the spec check, guardrails, tests and build on a PR",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a pull request to main\nWhen Compass CI runs\nThen the steps Spec traceability check, Guardrails check, Test and Build appear in the run"
+    },
+    {
+      "id": "TC-003",
+      "reqIds": [
+        "REQ-003"
+      ],
+      "title": "Unit tests for check-spec, the plan check and the edit hook",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the scripts in src/framework/\nWhen npm test runs\nThen tests for check-spec (traceability, intent, design gate), planProblems and decideEdit pass\nAnd breaking any of these checks makes a test fail"
+    },
+    {
+      "id": "TC-004",
+      "reqIds": [
+        "REQ-004"
+      ],
+      "title": "compass/*.mjs identical to src/framework/",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the checking scripts in compass/ and src/framework/\nWhen npm test runs\nThen each pair is byte-identical, and a difference fails the test naming the file"
+    },
+    {
+      "id": "TC-101",
+      "reqIds": [
+        "REQ-101"
+      ],
+      "title": "Need → intent in the demo",
+      "type": "Manual",
+      "status": "Pass",
+      "gherkin": "Given the demo project, feature F-003\nWhen I enter a business need and approve the Ideation agent's brief\nThen the intent is revised into a measurable outcome and the Requirements agent starts"
+    },
+    {
+      "id": "TC-102",
+      "reqIds": [
+        "REQ-102"
+      ],
+      "title": "Approve all requirements starts the Design agent",
+      "type": "Manual",
+      "status": "Pass",
+      "gherkin": "Given Draft requirements\nWhen I click Approve all drafts\nThen the Design agent starts"
+    },
+    {
+      "id": "TC-103",
+      "reqIds": [
+        "REQ-103"
+      ],
+      "title": "Build locked until the design is approved",
+      "type": "Manual",
+      "status": "Pass",
+      "gherkin": "Given a feature with a Draft design\nWhen I open Build\nThen 'Coding is locked' is shown; after Approve design it is gone"
+    },
+    {
+      "id": "TC-104",
+      "reqIds": [
+        "REQ-104"
+      ],
+      "title": "Test cases generated for uncovered requirements",
+      "type": "Manual",
+      "status": "Pass",
+      "gherkin": "Given requirements without tests\nWhen the Test design agent runs in demo mode\nThen each gets a happy-path and an invalid-input test case"
+    },
+    {
+      "id": "TC-105",
+      "reqIds": [
+        "REQ-105"
+      ],
+      "title": "Agent PR carries a plan file",
+      "type": "Manual",
+      "status": "Pass",
+      "gherkin": "Given an approved change set on a connected repo\nWhen the PR is opened\nThen compass/plans/<REQ-ids>-<name>.md is in the commit and linked from the PR body"
+    },
+    {
+      "id": "TC-106",
+      "reqIds": [
+        "REQ-106"
+      ],
+      "title": "Release marks requirements Done and tags",
+      "type": "Manual",
+      "status": "Pass",
+      "gherkin": "Given approved PRs with green CI\nWhen I release\nThen the requirements are Done and a release tag exists"
+    },
+    {
+      "id": "TC-107",
+      "reqIds": [
+        "REQ-107"
+      ],
+      "title": "Install keeps travel-map's own files",
+      "type": "Manual",
+      "status": "Pass",
+      "gherkin": "Given travel-map's file list\nWhen the install rule runs\nThen 18 of its own files are kept and only the spec views are written"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "ADR-001",
+      "date": "2026-11-26",
+      "title": "Compass follows its own delivery process",
+      "status": "Accepted",
+      "context": "Compass enforced the AI-native SDLC in other repos but not on its own code.",
+      "decision": "The Product Owner approved the intent: Compass's own repo gets the Compass Framework generated by the portal itself, CI on every pull request, tests for the checking scripts and a no-drift check between compass/ and src/framework/.",
+      "consequences": "Every later Compass PR needs an approved intent, approved requirements, a design (or none: <reason>), a plan file and an independent review. The setup PR is larger than 12 files because the check does not exist on main yet.",
+      "reqIds": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-003",
+        "REQ-004"
+      ]
+    },
+    {
+      "id": "ADR-002",
+      "date": "2026-11-26",
+      "title": "Light baseline for the existing portal",
+      "status": "Accepted",
+      "context": "The portal existed before its repo had a spec.",
+      "decision": "The Product Owner chose a light baseline: one feature per stage (F-001…F-007) with one Done requirement each (REQ-101…107); detailed requirements are written only for new work.",
+      "consequences": "Older behaviour is documented at stage level only; new work starts at REQ-001."
+    }
+  ]
+}
