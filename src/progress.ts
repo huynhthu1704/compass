@@ -1,5 +1,5 @@
 import { featureOf, featureReqs, featureRuns, featureTests } from './spec';
-import { STAGES, type Project, type Stage } from './types';
+import { STAGES, type Feature, type Project, type Requirement, type Stage } from './types';
 
 export type FeatureStage = Stage | 'done';
 
@@ -16,10 +16,18 @@ export function stageStatus(p: Project, fid: string): Record<Stage, { done: bool
   return {
     idea: { done: !!f?.idea.intent && !!f?.idea.problem, note: f?.idea.intent ? 'Intent set' : 'No intent yet' },
     requirements: { done: reqs.length > 0 && drafts.length === 0, note: `${reqs.length} REQ · ${drafts.length} draft` },
+    // Features built before the design stage existed (no design, nothing left to start) count as done
+    design: { done: designApproved(f?.design, reqs), note: f?.design ? `${f.design.screens.length} screens · ${f.design.status}` : 'No design yet' },
     tests: { done: reqs.length > 0 && uncovered.length === 0, note: `${tests.length} TC · ${uncovered.length} uncovered` },
     build: { done: reqs.length > 0 && toBuild.length === 0, note: `${toBuild.length} waiting for code · ${pending.length} PR` },
     release: { done: reqs.length > 0 && done.length === reqs.length, note: `${done.length}/${reqs.length} REQ released` },
   };
+}
+
+/** True when coding may start: the design is Approved (or the feature predates the design stage). */
+export function designApproved(d: Feature['design'], reqs: Requirement[]) {
+  if (d) return d.status === 'Approved';
+  return reqs.length > 0 && reqs.every((r) => r.status === 'In build' || r.status === 'Done');
 }
 
 /** The stage a feature is in ('done' when everything is released). */

@@ -10,6 +10,7 @@ import { Onboarding } from './pages/Onboarding';
 import { OverviewPage } from './pages/Overview';
 import { ProjectsPage } from './pages/Projects';
 import { ReleasePage } from './pages/Release';
+import { DesignPage } from './pages/Design';
 import { RequirementsPage } from './pages/Requirements';
 import { RunPage, RunsPage } from './pages/Runs';
 import { TestsPage } from './pages/Tests';
@@ -54,7 +55,7 @@ export default function App() {
   else if (parts[0] === 'architecture') page = <ArchitecturePage />;
   else if (p && sub === 'f' && parts[3]) {
     const fid = parts[3], fs = parts[4] || '';
-    page = fs === 'idea' ? <IdeaPage p={p} fid={fid} /> : fs === 'requirements' ? <RequirementsPage p={p} fid={fid} /> : fs === 'tests' ? <TestsPage p={p} fid={fid} />
+    page = fs === 'idea' ? <IdeaPage p={p} fid={fid} /> : fs === 'requirements' ? <RequirementsPage p={p} fid={fid} /> : fs === 'design' ? <DesignPage p={p} fid={fid} /> : fs === 'tests' ? <TestsPage p={p} fid={fid} />
       : fs === 'build' ? <BuildPage p={p} fid={fid} /> : <FeaturePage p={p} fid={fid} />;
   } else if (p) {
     page = sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
@@ -99,7 +100,7 @@ export default function App() {
                       {nav(`/p/${p.id}/f/${f.id}`, <><span className={`chip ${fst === 'done' ? 'tone-success' : STAGE_INFO[fst].cls}`} style={{ padding: '0 6px', fontSize: 10 }}>{f.id.replace('F-0', 'F')}</span><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span></>, fidRoute === f.id && fsub === '')}
                       {fidRoute === f.id && (
                         <nav className="nav" style={{ paddingLeft: 12, borderLeft: '1px solid var(--color-border-subtle)', marginLeft: 14 }}>
-                          {(['idea', 'requirements', 'tests', 'build'] as Stage[]).map((s) => nav(`/p/${p.id}/f/${f.id}/${s}`, <><span className={`chip ${STAGE_INFO[s].cls}`} style={{ padding: '0 6px', minWidth: 18, justifyContent: 'center' }}>{st[s].done ? '✓' : STAGES.indexOf(s) + 1}</span>{STAGE_INFO[s].name}</>, fsub === s))}
+                          {(['idea', 'requirements', 'design', 'tests', 'build'] as Stage[]).map((s) => nav(`/p/${p.id}/f/${f.id}/${s}`, <><span className={`chip ${STAGE_INFO[s].cls}`} style={{ padding: '0 6px', minWidth: 18, justifyContent: 'center' }}>{st[s].done ? '✓' : STAGES.indexOf(s) + 1}</span>{STAGE_INFO[s].name}</>, fsub === s))}
                         </nav>
                       )}
                     </div>

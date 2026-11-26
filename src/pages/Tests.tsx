@@ -16,7 +16,7 @@ export function TestsPage({ p, fid }: { p: Project; fid: string }) {
 
   return (
     <div className="stack gap-xl">
-      <PageHead over={`${f?.id} ${f?.name} · Stage 3 · Test cases · owner: QA`} title="Test cases" sub="Every requirement needs at least one test. CI runs compass/check-spec.mjs to enforce this traceability on every pull request." />
+      <PageHead over={`${f?.id} ${f?.name} · Stage 4 · Test cases · owner: QA`} title="Test cases" sub="Every requirement needs at least one test. CI runs compass/check-spec.mjs to enforce this traceability on every pull request." />
       <AgentBox p={p} agentId="testdesign" featureId={fid} cta="Design test cases" defaultGoal={`Design test cases for ${uncovered.map((r) => r.id).join(', ') || 'all requirements'}`} disabled={!s.requirements.length ? 'Create requirements first.' : !uncovered.length ? 'Every requirement already has tests — add more manually, or ask with a specific goal.' : undefined} />
 
       {s.requirements.length > 0 && (

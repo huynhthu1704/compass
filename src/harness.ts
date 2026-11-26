@@ -13,7 +13,8 @@ import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
 import { featureName, featureOf, migrateSpec } from './spec';
-import type { AgentId, FileChange, Idea, Project, Requirement, Role, Run, Stage, StepKind, TestCase } from './types';
+import { designApproved } from './progress';
+import type { AgentId, Design, DesignScreen, FileChange, Idea, Project, Requirement, Role, Run, Stage, StepKind, TestCase } from './types';
 
 export interface AgentDef { id: AgentId; name: string; stage: Stage; mirrors: Role; purpose: string; tools: string[]; output: string; gate: string; system: string }
 
@@ -23,13 +24,15 @@ never output secrets; keep changes small; every change must trace to requirement
 
 export const AGENTS: AgentDef[] = [
   { id: 'ideation', name: 'Ideation agent', stage: 'idea', mirrors: 'PO', purpose: 'Turns a raw idea into a business-outcome brief: problem, users, outcome metric, scope, risks, stack.', tools: ['search_knowledge', 'list_files', 'read_file', 'save_idea', 'finish'], output: 'Idea brief → feature F-xxx in compass/spec.json', gate: 'PO approves the brief',
-    system: `${COMMON}\nRole: senior Product Owner + Business Analyst (BABOK). Produce an outcome-focused idea brief. If the input describes a solution, restate it as a measurable business outcome. Call save_idea once.` },
+    system: `${COMMON}\nRole: senior Product Owner + Business Analyst (BABOK). The input is the Product Owner's raw BUSINESS NEED. Revise it into a BUSINESS INTENT: one sentence stating the measurable business outcome (who, what changes, baseline → target, by when). If the need describes a solution, restate it as the outcome that solution should achieve. Then fill problem, users, outcome metric, scope and risks. Call save_idea once.` },
   { id: 'requirements', name: 'Requirements agent', stage: 'requirements', mirrors: 'BA', purpose: 'Writes INVEST user stories with Given/When/Then acceptance criteria from the idea and existing code.', tools: ['search_knowledge', 'list_files', 'read_file', 'save_requirements', 'finish'], output: 'REQ-xxx → compass/spec.json › requirements', gate: 'PO/BA approve requirements',
     system: `${COMMON}\nRole: senior Business Analyst. Write 4–8 small, testable requirements (user stories, ≥2 Given/When/Then AC each, MoSCoW priority, Must ≤ 60%). Avoid vague words (fast, easy, user-friendly). Do not repeat existing requirements. Call save_requirements once.` },
+  { id: 'designer', name: 'Design agent', stage: 'design', mirrors: 'UX', purpose: 'Turns approved requirements into a screen-by-screen UI design traced to REQ ids, ready to draw in the project design tool (Figma…).', tools: ['search_knowledge', 'list_files', 'read_file', 'save_design', 'finish'], output: 'Design → compass/spec.json › features[].design + compass/design/F-xxx.md', gate: 'PO/UX approve the design before coding',
+    system: `${COMMON}\nRole: senior UX/UI designer. From the APPROVED requirements of the feature, design the screens: for each screen give a name, purpose, the REQ ids it delivers, key elements (components and content) and states (empty, loading, error, success). Every approved requirement must be covered by at least one screen. Reuse existing pages, components and styles found in the repo. Add accessibility and responsive (phone) notes. Call save_design once.` },
   { id: 'testdesign', name: 'Test design agent', stage: 'tests', mirrors: 'QA', purpose: 'Derives test cases (happy, negative, edge) for every requirement; traces each to REQ ids.', tools: ['search_knowledge', 'read_file', 'save_tests', 'finish'], output: 'TC-xxx → compass/spec.json › tests', gate: 'QA approves test cases',
     system: `${COMMON}\nRole: senior QA engineer. For each requirement without tests, write at least one happy-path and one negative/edge test in Gherkin. Mark tests that can run in node:test as Automated. Call save_tests once.` },
   { id: 'coder', name: 'Coding agent', stage: 'build', mirrors: 'Dev', purpose: 'Implements selected requirements with tests, as a change set that becomes a branch + pull request.', tools: ['search_knowledge', 'list_files', 'read_file', 'propose_file_change', 'finish'], output: 'Change set → branch compass/REQ-xxx → pull request', gate: 'Guardrails pass + human approves the diff',
-    system: `${COMMON}\nRole: senior full-stack developer. Implement ONLY the given requirements. Read relevant files first. Propose complete file contents (not diffs) with propose_file_change, including automated tests under tests/ using node:test that reference TC ids. Respect the existing stack and style. Max 12 files.` },
+    system: `${COMMON}\nRole: senior full-stack developer. Implement ONLY the given requirements, following the APPROVED DESIGN (screens, elements, states). Read relevant files first. Propose complete file contents (not diffs) with propose_file_change, including automated tests under tests/ using node:test that reference TC ids. Respect the existing stack and style. Max 12 files.` },
   { id: 'reviewer', name: 'Review & eval agent', stage: 'build', mirrors: 'QA', purpose: 'Scores every change set (LLM-as-judge + rule-based evals) before it can be committed.', tools: [], output: 'Eval scorecard on the run', gate: 'Blocks on failing guardrails',
     system: 'You are a strict code reviewer. Score the change set against the requirements. Return ONLY JSON: {"correctness":1-5,"completeness":1-5,"tests":1-5,"risk":1-5,"notes":"..."} where risk 5 = very safe.' },
   { id: 'release', name: 'Release agent', stage: 'release', mirrors: 'DM', purpose: 'Checks CI, merges approved PRs, updates statuses, tags a release and triggers deploy.', tools: [], output: 'GitHub release vX.Y.Z + Pages deploy', gate: 'DM/PO confirm release',
@@ -44,6 +47,7 @@ const TOOLS: ToolDef[] = [
   { name: 'propose_file_change', description: 'Stage a file change for human review. Provide FULL new content for create/update.', input_schema: { type: 'object', properties: { path: { type: 'string' }, action: { type: 'string', enum: ['create', 'update', 'delete'] }, content: { type: 'string' }, reason: { type: 'string', description: 'Why, with REQ/TC ids' } }, required: ['path', 'action', 'reason'] } },
   { name: 'save_idea', description: 'Save the idea brief.', input_schema: { type: 'object', properties: { intent: { type: 'string' }, problem: { type: 'string' }, users: { type: 'array', items: { type: 'string' } }, outcomeMetric: { type: 'string' }, scopeIn: { type: 'array', items: { type: 'string' } }, scopeOut: { type: 'array', items: { type: 'string' } }, risks: { type: 'array', items: { type: 'string' } } }, required: ['intent', 'problem', 'users', 'outcomeMetric', 'scopeIn'] } },
   { name: 'save_requirements', description: 'Save proposed requirements.', input_schema: { type: 'object', properties: { requirements: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, story: { type: 'string' }, ac: { type: 'array', items: { type: 'string' } }, priority: { type: 'string', enum: ['Must', 'Should', 'Could'] } }, required: ['title', 'story', 'ac', 'priority'] } } }, required: ['requirements'] } },
+  { name: 'save_design', description: 'Save the proposed UI design of the feature.', input_schema: { type: 'object', properties: { summary: { type: 'string', description: 'Design approach: layout, navigation, patterns reused' }, notes: { type: 'string', description: 'Accessibility, responsive behaviour, open questions' }, screens: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, purpose: { type: 'string' }, reqIds: { type: 'array', items: { type: 'string' } }, elements: { type: 'array', items: { type: 'string' } }, states: { type: 'array', items: { type: 'string' } } }, required: ['name', 'purpose', 'reqIds', 'elements', 'states'] } } }, required: ['summary', 'screens'] } },
   { name: 'save_tests', description: 'Save proposed test cases.', input_schema: { type: 'object', properties: { tests: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, reqIds: { type: 'array', items: { type: 'string' } }, gherkin: { type: 'string' }, type: { type: 'string', enum: ['Automated', 'Manual'] } }, required: ['title', 'reqIds', 'gherkin', 'type'] } } }, required: ['tests'] } },
   { name: 'finish', description: 'End the run with a short summary for the human reviewer.', input_schema: { type: 'object', properties: { summary: { type: 'string' } }, required: ['summary'] } },
 ];
@@ -62,6 +66,9 @@ export async function startRun(projectId: string, agentId: AgentId, goal: string
   const p = getP(projectId);
   const settings = store.get().settings;
   const a = agent(agentId);
+  // Design gate: no code before the feature's design is approved
+  if (agentId === 'coder' && opts.featureId && !designApproved(featureOf(p, opts.featureId)?.design, p.spec.requirements.filter((r) => r.featureId === opts.featureId)))
+    throw new Error('Approve the design of this feature before coding.');
   const live = !!settings.apiKey && !p.demo;
   const run: Run = { id: uid(), agent: agentId, stage: a.stage, goal, status: 'running', mode: live ? 'live' : 'demo', startedAt: now(), steps: [], changes: [], guardrails: [], evals: [], reqIds: opts.reqIds, featureId: opts.featureId };
   store.update(projectId, (x) => ({ ...x, runs: [run, ...x.runs] }));
@@ -115,6 +122,8 @@ async function liveLoop(pid: string, rid: string, a: AgentDef, goal: string, con
 REPO: ${p.repo ? `${p.repo.owner}/${p.repo.name}` : '(not connected — spec only)'}
 TECH STACK: ${spec.stack}
 FEATURE: ${fid ? `${fid} ${featureOf(p, fid)?.name}\nIDEA: ${JSON.stringify(featureOf(p, fid)?.idea)}` : '(not specified)'}
+DESIGN TOOL: ${p.spec.designTool ? `${p.spec.designTool.kind} ${p.spec.designTool.url}` : '(none connected)'}
+${fid && featureOf(p, fid)?.design ? `DESIGN (${featureOf(p, fid)!.design!.status}):\n${designText(featureOf(p, fid)!.design!)}` : ''}
 OTHER FEATURES: ${spec.features.filter((f) => f.id !== fid).map((f) => `${f.id} ${f.name}`).join('; ') || 'none'}
 EXISTING REQUIREMENTS: ${spec.requirements.map((r) => `${r.id} [${r.featureId || '-'}] ${r.title} [${r.status}]`).join('; ') || 'none'}
 EXISTING TESTS: ${spec.tests.map((t) => `${t.id}→${t.reqIds.join(',')}`).join('; ') || 'none'}
@@ -178,6 +187,11 @@ async function execTool(pid: string, rid: string, name: string, input: Record<st
       patchRun(pid, rid, (r) => ({ ...r, proposal: { ...r.proposal, requirements: reqs } }));
       return `Saved ${reqs.length} requirements as proposal: ${reqs.map((r) => r.id).join(', ')}`;
     }
+    case 'save_design': {
+      const d = toDesign(input);
+      patchRun(pid, rid, (r) => ({ ...r, proposal: { ...r.proposal, design: d } }));
+      return `Saved a design with ${d.screens.length} screens as proposal.`;
+    }
     case 'save_tests': {
       const ids = p.spec.tests.map((t) => t.id);
       const tests = ((input.tests as Partial<TestCase>[]) || []).map((t) => { const id = nextId('TC', ids); ids.push(id); return { id, title: t.title || '', reqIds: t.reqIds || [], gherkin: t.gherkin || '', type: (t.type as TestCase['type']) || 'Manual', status: 'Not run' as const }; });
@@ -187,6 +201,11 @@ async function execTool(pid: string, rid: string, name: string, input: Record<st
     case 'finish': patchRun(pid, rid, (r) => ({ ...r, output: String(input.summary || '') })); return 'Run finished.';
     default: return `ERROR: unknown tool ${name}`;
   }
+}
+
+function toDesign(input: Record<string, unknown>): Design {
+  const screens = ((input.screens as Partial<DesignScreen>[]) || []).map((x, i) => ({ id: `SCR-${i + 1}`, name: x.name || `Screen ${i + 1}`, purpose: x.purpose || '', reqIds: x.reqIds || [], elements: x.elements || [], states: x.states || [] }));
+  return { status: 'Draft', summary: String(input.summary || ''), notes: input.notes ? String(input.notes) : undefined, screens };
 }
 
 async function judge(pid: string, rid: string, r: Run) {
@@ -218,6 +237,12 @@ async function demoRun(pid: string, rid: string, a: AgentDef, goal: string, reqI
     const reqs = demoRequirements(p, fid);
     await tick(`save_requirements(requirements: [${reqs.length}])`, reqs.map((r) => `${r.id} ${r.title}`).join('\n'));
     patchRun(pid, rid, (r) => ({ ...r, proposal: { requirements: reqs }, output: `${reqs.length} requirements drafted from the idea scope.` }));
+  } else if (a.id === 'designer') {
+    await tick('read_file(path: "compass/spec.json")');
+    await tick('list_files(prefix: "src/")', rag.repoDocs(pid).map((d) => d.path).filter((x) => /\.(css|html|jsx?|tsx?)$/.test(x)).slice(0, 12).join('\n') || 'index.html\nstyles.css');
+    const design = demoDesign(p, fid);
+    await tick(`save_design(screens: [${design.screens.length}])`, design.screens.map((s) => `${s.id} ${s.name} → ${s.reqIds.join(', ')}`).join('\n'));
+    patchRun(pid, rid, (r) => ({ ...r, proposal: { design }, output: `${design.screens.length} screens designed for ${new Set(design.screens.flatMap((s) => s.reqIds)).size} approved requirements. Draw them in ${p.spec.designTool ? p.spec.designTool.kind : 'your design tool'} and link each frame.` }));
   } else if (a.id === 'testdesign') {
     await tick('read_file(path: "compass/spec.json")');
     const tests = demoTests(p, fid);
@@ -233,7 +258,20 @@ async function demoRun(pid: string, rid: string, a: AgentDef, goal: string, reqI
   await tick('finish(summary: …)', undefined, 'tool_call');
 }
 
-function demoIdea(intent: string): Idea {
+function demoIdea(need: string): Idea {
+  // Revise the business need into a measurable business intent (who, outcome, baseline → target, timeframe)
+  const n = need.trim().replace(/[.!?]$/, '');
+  const measurable = /\d+\s*%|→|->/.test(n);
+  const core = n.replace(/^(we|i|they)\s+(really\s+)?(need|want|would like)\s+/i, '').replace(/^(cần|muốn)\s+/i, '');
+  const who = core.match(/^([a-zà-ỹ ]+?)\s+to\s+(.+)$/i);
+  const brief = demoBrief(who ? `${who[2]} for ${who[1]}` : core);
+  const users = who ? who[1].trim() : `${brief.users[0].toLowerCase().replace(/s$/, '')}s`;
+  const action = who ? who[2] : core.charAt(0).toLowerCase() + core.slice(1);
+  const intent = measurable ? n : `Increase the share of ${users} who ${action} on their own, from [baseline %] to [target %] within 8 weeks`;
+  return { ...brief, need: need.trim(), intent, problem: `Today ${users} cannot ${action} without manual work, and nobody can measure how often it happens.` };
+}
+
+function demoBrief(intent: string): Idea {
   const users = (intent.match(/\bfor ([^,.]+)/i)?.[1] || intent.match(/\b(customers?|users?|travell?ers?|students?|teachers?|staff|employees?|shoppers?|patients?|members?)\b/i)?.[1] || 'Customer').split(/,| and /).map((x) => x.trim()).filter(Boolean);
   if (!users.some((u) => /admin|owner/i.test(u))) users.push('Admin');
   const parts = intent.split(/,| and | và /).map((x) => x.trim()).filter((x) => x.length > 3);
@@ -246,6 +284,20 @@ function demoIdea(intent: string): Idea {
     scopeOut: ['Native mobile apps', 'Payments (phase 2)'],
     risks: ['Unclear success metric', 'Data privacy', 'Adoption by users'],
   };
+}
+
+export const designText = (d: Design) => `${d.summary}\n${d.screens.map((s) => `${s.id} ${s.name} (${s.reqIds.join(', ')}): ${s.purpose}\n  elements: ${s.elements.join('; ')}\n  states: ${s.states.join('; ')}${s.frameUrl ? `\n  frame: ${s.frameUrl}` : ''}`).join('\n')}${d.notes ? `\nNotes: ${d.notes}` : ''}`;
+
+function demoDesign(p: Project, fid?: string): Design {
+  const reqs = p.spec.requirements.filter((r) => r.featureId === fid && r.status !== 'Draft');
+  const screens: DesignScreen[] = reqs.filter((r) => !/accessib|performance/i.test(r.title)).map((r, i) => ({
+    id: `SCR-${i + 1}`, name: r.title, purpose: r.story.replace(/^As an? [^,]+, /i, ''), reqIds: [r.id],
+    elements: ['Page header with back link', `Form / content for “${r.title}”`, 'Primary action button', 'Inline validation messages'],
+    states: ['Empty', 'Loading', 'Validation error', 'Success confirmation'],
+  }));
+  const cross = reqs.filter((r) => /accessib|performance/i.test(r.title)).map((r) => r.id);
+  if (cross.length && screens.length) screens.forEach((s) => s.reqIds.push(...cross));
+  return { status: 'Draft', summary: `${screens.length} screens reusing the existing layout and components; one screen per approved requirement, mobile-first (360 px) then desktop.`, notes: 'Keyboard order follows the visual order; every action has a visible focus state; colour contrast ≥ 4.5:1; errors are announced to screen readers.', screens };
 }
 
 function demoRequirements(p: Project, fid?: string): Requirement[] {
@@ -306,12 +358,14 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
     const pi = r.proposal.idea;
     store.spec(pid, (s) => ({
       ...s,
-      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi } } : f)) : s.features,
+      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi, need: f.idea.need || (r.agent === 'ideation' ? r.goal : undefined) } } : f)) : s.features,
       requirements: [...s.requirements, ...(r.proposal!.requirements || [])],
       tests: [...s.tests, ...(r.proposal!.tests || [])],
     }));
+    if (r.proposal.design) store.spec(pid, (s) => ({ ...s, features: s.features.map((f) => (f.id === r.featureId ? { ...f, design: { ...r.proposal!.design!, url: f.design?.url } } : f)) }));
     patchRun(pid, rid, (x) => ({ ...x, status: 'done' }));
-    return 'Applied to the spec.';
+    const next = r.featureId ? autoAdvance(pid, r.featureId) : null;
+    return `Applied to the spec.${next ? ` ${next}` : ''}`;
   }
   if (r.changes.length) {
     if (!token || !p.repo || p.demo || r.mode === 'demo') {
@@ -324,8 +378,9 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
     store.spec(pid, (s) => ({ ...s, requirements: s.requirements.map((q) => (r.reqIds?.includes(q.id) ? { ...q, status: 'In build' } : q)) }));
     const proj = getP(pid);
     step(pid, rid, 'github', `Commit ${r.changes.length} files to ${branch}`);
-    await github.commit(token, p.repo, branch, `${(r.reqIds || []).join(', ')}: ${r.goal}`.slice(0, 72) + '\n\nGenerated by Compass coding agent.', [...r.changes, ...specFiles(proj).filter((f) => f.path === 'compass/spec.json' || f.path === 'compass/requirements.md' || f.path === 'compass/handover.md' || f.path === 'compass/features.md' || f.path === `compass/features/${r.featureId}.md`)]);
-    const body = prBody(proj, r);
+    const plan = planFile(proj, r);
+    await github.commit(token, p.repo, branch, `${(r.reqIds || []).join(', ')}: ${r.goal}`.slice(0, 72) + '\n\nGenerated by Compass coding agent.', [plan, ...r.changes, ...specFiles(proj).filter((f) => f.path === 'compass/spec.json' || f.path === 'compass/requirements.md' || f.path === 'compass/handover.md' || f.path === 'compass/features.md' || f.path === `compass/features/${r.featureId}.md`)]);
+    const body = prBody(proj, r, plan.path);
     const pr = await github.createPR(token, p.repo, `${(r.reqIds || []).join(', ')}: ${r.goal}`.slice(0, 90), branch, body);
     step(pid, rid, 'github', `Opened pull request #${pr.number}`, pr.html_url, { ok: true });
     patchRun(pid, rid, (x) => ({ ...x, status: 'approved', branch, prNumber: pr.number, prUrl: pr.html_url }));
@@ -336,18 +391,72 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   return 'Done.';
 }
 
+/**
+ * Moves a feature to the next agent automatically once its gate is passed:
+ * approved business intent → requirements agent; every requirement approved → design agent.
+ * Returns a message when an agent was started.
+ */
+export function autoAdvance(pid: string, fid: string): string | null {
+  const p = getP(pid);
+  const f = featureOf(p, fid);
+  if (!f || f.archived) return null;
+  const reqs = p.spec.requirements.filter((r) => r.featureId === fid);
+  const busy = (id: AgentId) => p.runs.some((r) => r.agent === id && r.featureId === fid && (r.status === 'running' || r.status === 'awaiting-approval'));
+  if (f.idea.intent && f.idea.problem && !reqs.length && !busy('requirements')) {
+    void startRun(pid, 'requirements', `Write requirements for: ${f.idea.scopeIn.join('; ') || f.idea.intent}`, { featureId: fid });
+    return 'The Requirements agent has started — review its draft in Requirements.';
+  }
+  if (reqs.length && reqs.every((r) => r.status !== 'Draft') && !f.design && reqs.some((r) => r.status === 'Approved') && !busy('designer')) {
+    void startRun(pid, 'designer', `Design the screens for ${reqs.filter((r) => r.status === 'Approved').map((r) => r.id).join(', ')}`, { featureId: fid, reqIds: reqs.filter((r) => r.status === 'Approved').map((r) => r.id) });
+    return 'All requirements approved — the Design agent has started. Approve the design before coding.';
+  }
+  return null;
+}
+
 export function rejectRun(pid: string, rid: string, reason: string) {
   step(pid, rid, 'approval', 'Rejected by human reviewer', reason, { ok: false });
   patchRun(pid, rid, (x) => ({ ...x, status: 'rejected' }));
 }
 
-function prBody(p: Project, r: Run) {
+/** compass/plans/<REQ-ids>-<slug>.md — the written plan committed with every agent change (plan before code). */
+function planFile(p: Project, r: Run): FileChange {
+  const tcs = p.spec.tests.filter((t) => t.reqIds.some((id) => r.reqIds?.includes(id)));
+  const f = featureOf(p, r.featureId);
+  const ids = (r.reqIds || []).join('-') || 'change';
+  const warn = r.guardrails.filter((g) => g.level !== 'pass');
+  const content = `# Plan: ${(r.reqIds || []).join(', ')} ${r.goal}
+
+Feature: ${f ? `${f.id} ${f.name}` : '—'} · Requirements: ${(r.reqIds || []).join(', ')} · Test cases: ${tcs.map((t) => t.id).join(', ') || 'none yet'}
+Intent: compass/intent/${f?.id || 'F-xxx'}.md · Design: compass/design/${f?.id || 'F-xxx'}.md (${f?.design?.status || 'none'})
+
+## Files
+${r.changes.map((c) => `- ${c.path} — ${c.action}${c.reason ? `: ${c.reason}` : ''}`).join('\n')}
+
+## Steps
+1. Implement ${(r.reqIds || []).join(', ')} following the approved design screens${f?.design ? ` (${f.design.screens.filter((s) => s.reqIds.some((id) => r.reqIds?.includes(id))).map((s) => s.id).join(', ') || 'all'})` : ''}.
+2. Add automated tests that reference ${tcs.map((t) => t.id).join(', ') || 'the acceptance criteria'}.
+3. Update requirement status to In build in compass/spec.json.
+
+## Risks
+${warn.length ? warn.map((g) => `- ${g.name}: ${g.message}`).join('\n') : '- No guardrail warnings; main risk is behaviour outside the acceptance criteria — the independent review checks this.'}
+
+## Proof
+- \`npm test\` passes, including ${tcs.map((t) => t.id).join(', ') || 'the new tests'}; \`node compass/check-spec.mjs\` passes.
+- Each acceptance criterion of ${(r.reqIds || []).join(', ')} maps to a passing test.
+`;
+  return { path: `compass/plans/${ids}-${slug(r.goal).slice(0, 30)}.md`.replace(/-+\.md$/, '.md'), action: 'create', content, reason: 'Plan before code' };
+}
+
+function prBody(p: Project, r: Run, planPath: string) {
   const tcs = p.spec.tests.filter((t) => t.reqIds.some((id) => r.reqIds?.includes(id)));
   return `## What & why
 Requirements: ${(r.reqIds || []).join(', ')}
 Test cases: ${tcs.map((t) => t.id).join(', ') || '—'}
 
 ${r.output || ''}
+
+## Plan
+See [\`${planPath}\`](${planPath}) — Files, Steps, Risks and Proof, written before the code.
 
 ## Files
 ${r.changes.map((c) => `- \`${c.action}\` ${c.path} — ${c.reason || ''}`).join('\n')}

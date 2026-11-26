@@ -2,7 +2,7 @@
 // CI (pull_request event): node compass/check-guardrails.mjs · Locally: node compass/check-guardrails.mjs [baseRef]
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { loadGuardrails, checkChange, dependenciesChanged, planProblems, APPROVAL_LABEL } from './guardrails-lib.mjs';
+import { loadGuardrails, checkChange, dependenciesChanged, planProblems, isPlanFile, APPROVAL_LABEL } from './guardrails-lib.mjs';
 
 const git = (...args) => execFileSync('git', ['-c', 'core.quotePath=false', ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 const event = process.env.GITHUB_EVENT_PATH && existsSync(process.env.GITHUB_EVENT_PATH) ? JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')) : {};
@@ -31,7 +31,9 @@ const show = (ref) => {
 const depsChanged = files.some((f) => f.path === 'package.json') && dependenciesChanged(show(base), show('HEAD'));
 
 const { errors, warnings } = checkChange(files, g, { labels, depsChanged });
-if (pr) errors.push(...planProblems(pr.body, files));
+// Plan before code: compass/plans/*.md changed in this PR (checked locally too), or the PR body's "## Plan" in CI
+const planTexts = Object.fromEntries(files.filter((f) => f.status !== 'D' && isPlanFile(f.path) && existsSync(f.path)).map((f) => [f.path, readFileSync(f.path, 'utf8')]));
+errors.push(...planProblems(pr?.body || '', files, planTexts));
 for (const w of warnings) console.log(`::warning::${w}`);
 if (errors.length) {
   for (const e of errors) console.log(`::error::${e}`);

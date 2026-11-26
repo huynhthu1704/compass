@@ -4,8 +4,12 @@ export type Role = 'PO' | 'BA' | 'DM' | 'UX' | 'Dev' | 'QA' | 'Ops';
 export type Lang = 'en' | 'vi';
 
 /** Pipeline stages a project moves through. Each stage is owned by an agent in the harness. */
-export type Stage = 'idea' | 'requirements' | 'tests' | 'build' | 'release';
-export const STAGES: Stage[] = ['idea', 'requirements', 'tests', 'build', 'release'];
+export type Stage = 'idea' | 'requirements' | 'design' | 'tests' | 'build' | 'release';
+export const STAGES: Stage[] = ['idea', 'requirements', 'design', 'tests', 'build', 'release'];
+
+/** The one design tool a project is connected to (e.g. its Figma project or file). */
+export type DesignToolKind = 'figma' | 'penpot' | 'sketch' | 'other';
+export interface DesignTool { kind: DesignToolKind; url: string }
 
 export interface RepoRef {
   owner: string;
@@ -17,7 +21,8 @@ export interface RepoRef {
 }
 
 export interface Idea {
-  intent: string;          // business outcome
+  need?: string;           // the Product Owner's raw business need, in their own words
+  intent: string;          // business intent: the need revised into a measurable business outcome
   problem: string;
   users: string[];
   outcomeMetric: string;
@@ -27,10 +32,32 @@ export interface Idea {
   stack?: string;          // (v1) moved to Spec.stack
 }
 
+export interface DesignScreen {
+  id: string;              // SCR-1 (unique within the feature)
+  name: string;
+  purpose: string;
+  reqIds: string[];        // requirements this screen delivers
+  elements: string[];      // key components / content
+  states: string[];        // empty, loading, error, success…
+  frameUrl?: string;       // link to the frame in the design tool
+}
+
+/** Design of one feature. Coding is blocked until it is Approved. */
+export interface Design {
+  status: 'Draft' | 'Approved';
+  summary: string;         // design approach: layout, navigation, patterns
+  screens: DesignScreen[];
+  url?: string;            // the feature's file/page in the design tool (Figma…)
+  notes?: string;          // accessibility, responsive behaviour, open questions
+  approvedBy?: string;
+  approvedAt?: string;
+}
+
 export interface Feature {
   id: string;              // F-001 (stable key, also used in file names)
   name: string;
   idea: Idea;
+  design?: Design;
   archived?: boolean;
   createdAt: string;
 }
@@ -63,6 +90,7 @@ export interface Spec {
   idea?: Idea;
   requirements: Requirement[];
   tests: TestCase[];
+  designTool?: DesignTool; // the project's one design tool (Figma project/file link)
   decisions: { id: string; title: string; decision: string; date: string; status?: string; context?: string; consequences?: string; reqIds?: string[] }[];
 }
 
@@ -88,7 +116,7 @@ export interface TraceStep {
 export interface GuardrailResult { id: string; name: string; level: 'block' | 'warn' | 'pass'; message: string }
 export interface EvalResult { id: string; name: string; score: number; max: number; note: string }
 
-export type AgentId = 'ideation' | 'requirements' | 'testdesign' | 'coder' | 'reviewer' | 'release';
+export type AgentId = 'ideation' | 'requirements' | 'designer' | 'testdesign' | 'coder' | 'reviewer' | 'release';
 
 export interface Run {
   id: string;
@@ -105,7 +133,7 @@ export interface Run {
   guardrails: GuardrailResult[];
   evals: EvalResult[];
   output?: string;          // markdown summary
-  proposal?: { idea?: Partial<Idea>; requirements?: Requirement[]; tests?: TestCase[] };
+  proposal?: { idea?: Partial<Idea>; requirements?: Requirement[]; design?: Design; tests?: TestCase[] };
   branch?: string;
   prNumber?: number;
   prUrl?: string;

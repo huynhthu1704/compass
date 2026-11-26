@@ -98,19 +98,22 @@ export function decideEdit(input, g, approvedPaths, repoRoot) {
   return { block: false };
 }
 
-// Plan before code: a PR that changes code must carry a "## Plan" with Files, Steps, Risks and Proof.
+// Plan before code: a PR that changes code must carry a plan — a file compass/plans/<name>.md added or updated in
+// the PR (preferred), or a "## Plan" section in the PR body — with Files, Steps, Risks and Proof filled in.
 // Everything except docs, images and the compass spec/views counts as code.
 const NOT_CODE = /\.(md|markdown|txt|png|jpe?g|gif|svg|webp|ico)$|^compass\/spec\.json$|^LICENSE$/i;
 export const isCode = (path) => !NOT_CODE.test(path);
+export const isPlanFile = (path) => /^compass\/plans\/(?!README\.md$)[^/]+\.md$/i.test(path);
 const PLAN_FIELDS = ['Files', 'Steps', 'Risks', 'Proof'];
 const PLACEHOLDER = /^(?:[-–—_.…?]+|tbd|tba|todo|n\/?a|xxx|fill ?in|later)\.?$/i;
 
+/** True when the plan has a line "<label>: <real value>" or a "## <label>" heading followed by real text. */
 function hasPlanField(plan, label) {
   const line = new RegExp(`^\\s*[-*]?\\s*\\**${label}\\**\\s*(?:\\([^)]*\\))?\\s*:\\**(.*)$`, 'gmi');
-  return [...plan.matchAll(line)].some((m) => {
-    const value = m[1].replace(/\*/g, '').trim();
-    return value !== '' && !PLACEHOLDER.test(value);
-  });
+  if ([...plan.matchAll(line)].some((m) => { const v = m[1].replace(/\*/g, '').trim(); return v !== '' && !PLACEHOLDER.test(v); })) return true;
+  const head = new RegExp(`^#{2,4}\\s*${label}\\b[^\\n]*\\n([\\s\\S]*?)(?=^#{1,4}\\s|(?![\\s\\S]))`, 'mi');
+  const body = (plan.match(head)?.[1] || '').replace(/<!--[\s\S]*?-->/g, '').split('\n').map((l) => l.replace(/^\s*[-*]\s*/, '').trim()).filter(Boolean);
+  return body.some((l) => !PLACEHOLDER.test(l));
 }
 
 /** The text of the "## Plan" section of a PR body ('' when missing), without HTML comments. */
@@ -120,12 +123,17 @@ export function extractPlan(body) {
   return m ? m[1].trim() : '';
 }
 
-/** Problems with the plan of a PR that changes the given files. */
-export function planProblems(body, files) {
+/**
+ * Problems with the plan of a PR that changes the given files.
+ * planTexts: { [path]: content } of the compass/plans/*.md files added or updated in the PR.
+ */
+export function planProblems(body, files, planTexts = {}) {
   const code = files.filter((f) => isCode(f.path));
   if (!code.length) return [];
-  const plan = extractPlan(body);
-  if (!plan) return [`this PR changes code (${code[0].path}…) but its body has no "## Plan" section — add Files, Steps, Risks and Proof (see the PR template), then re-run the check.`];
-  const missing = PLAN_FIELDS.filter((k) => !hasPlanField(plan, k));
-  return missing.length ? [`the "## Plan" section needs a filled-in line for: ${missing.join(', ')} (placeholders such as "-", "TBD" or "n/a" do not count).`] : [];
+  const sources = [...Object.entries(planTexts).map(([path, text]) => [path, (text || '').replace(/<!--[\s\S]*?-->/g, '')]), ['the PR body "## Plan"', extractPlan(body)]].filter(([, t]) => t.trim());
+  if (!sources.length) return [`this PR changes code (${code[0].path}…) but has no plan — add compass/plans/<REQ-ids>.md from the template in compass/plans/README.md (Files, Steps, Risks, Proof).`];
+  for (const [, text] of sources) if (PLAN_FIELDS.every((k) => hasPlanField(text, k))) return [];
+  const [where, text] = sources[0];
+  const missing = PLAN_FIELDS.filter((k) => !hasPlanField(text, k));
+  return [`the plan in ${where} needs real content for: ${missing.join(', ')} (placeholders such as "-", "TBD" or "n/a" do not count).`];
 }

@@ -34,6 +34,15 @@ for (const r of spec.requirements) {
   if (r.status !== 'Draft' && !approved(text)) errors.push(`${r.id} (${r.status}) points to ${file}, which is not Approved yet`);
 }
 
+// Design before code: a requirement In build or Done needs its feature's design Approved
+// (features without a design object predate the design stage and are not checked).
+for (const f of spec.features || []) {
+  if (!f.design) continue;
+  const started = spec.requirements.filter((r) => r.featureId === f.id && (r.status === 'In build' || r.status === 'Done'));
+  if (f.design.status !== 'Approved' && started.length) errors.push(`${started.map((r) => `${r.id} (${r.status})`).join(', ')} started before the design of ${f.id} was approved (it is ${f.design.status}) — approve compass/design/${f.id}.md first`);
+  for (const s of f.design.screens || []) for (const id of s.reqIds || []) if (!reqIds.has(id)) errors.push(`design ${f.id} ${s.id} references unknown ${id}`);
+}
+
 // Decisions (ADR log): ids are unique and every ADR says what was decided
 const adrIds = new Set();
 for (const d of spec.decisions || []) {

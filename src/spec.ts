@@ -31,6 +31,7 @@ export function migrateSpec(raw: Partial<Spec> & { idea?: Idea }): Spec {
     version: 2, stack, features,
     requirements: requirements.map((r) => (r.featureId || !first ? r : { ...r, featureId: first })),
     tests, decisions: s.decisions || [],
+    ...(s.designTool ? { designTool: s.designTool } : {}),
   };
 }
 

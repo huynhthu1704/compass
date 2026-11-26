@@ -8,8 +8,9 @@ import { STAGES, type Project } from '../types';
 import { ago, Badge, Button, Field, PageHead, STAGE_INFO, StageChip } from '../ui';
 
 const NEXT: Record<string, string> = {
-  idea: 'Shape the idea with the Ideation agent and approve the brief (PO).',
-  requirements: 'Generate requirements for this feature, then approve them (PO/BA).',
+  idea: 'Write the business need; the Ideation agent revises it into a business intent for you to approve (PO).',
+  requirements: 'Review the generated requirements and approve them (PO/BA). Approving the last one starts the Design agent.',
+  design: 'Review the generated design, draw it in the design tool, link the frames and approve it (UX/PO). Coding unlocks after approval.',
   tests: 'Generate test cases so every requirement of this feature is covered (QA).',
   build: 'Pick approved requirements and let the coding agent open a pull request (Dev).',
   release: 'Ship the approved pull requests from the project Release page (DM/PO).',

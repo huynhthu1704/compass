@@ -10,6 +10,8 @@
  *
  * AI-native SDLC layer (v1.1) — rules enforced by machines, not memory:
  *   compass/intent/                → written intent (what & why) before any requirement; F-xxx.md generated per feature
+ *   compass/design/F-xxx.md        → the approved UI design (screens ↔ REQ ids, design-tool links); gate before coding
+ *   compass/plans/                 → a written plan (Files, Steps, Risks, Proof) committed before the code of each change
  *   compass/REVIEW.md              → independent review of every PR by an agent that did not write the code
  *   compass/check-guardrails.mjs   → CI: guardrails.json + "## Plan" before code
  *   compass/hooks/guard-edit.mjs + .claude/settings.json → Claude Code hook blocking protected paths & secrets
@@ -27,6 +29,7 @@ import GUARD_EDIT from './framework/guard-edit.mjs?raw';
 import CLAUDE_SETTINGS from './framework/claude-settings.json?raw';
 import REVIEW_MD from './framework/REVIEW.md?raw';
 import INTENT_README from './framework/intent-README.md?raw';
+import PLANS_README from './framework/plans-README.md?raw';
 
 export const FRAMEWORK_VERSION = '1.1';
 
@@ -50,7 +53,7 @@ export function featureMd(s: Spec, f: Feature) {
   const tests = s.tests.filter((t) => t.reqIds.some((x) => ids.has(x)));
   return `# ${f.id} · ${f.name}${f.archived ? ' (archived)' : ''}
 
-**Business intent:** ${i.intent || '_(not set)_'} · [intent](../intent/${f.id}.md)
+**Business intent:** ${i.intent || '_(not set)_'} · [intent](../intent/${f.id}.md) · [design](../design/${f.id}.md)${f.design ? ` (${f.design.status})` : ''}
 
 ## Problem
 ${i.problem || '_(not set)_'}
@@ -92,7 +95,7 @@ _Generated from \`compass/spec.json → features[${f.id}].idea\`. Edit the idea 
 
 ## What we want
 ${i.intent || '_(not set)_'}
-
+${i.need ? `\n_Business need as the Product Owner wrote it:_ ${i.need}\n` : ''}
 ## Why
 ${i.problem || '_(not set)_'}
 
@@ -110,20 +113,49 @@ ${reqs.length ? reqs.map((r) => `- ${r.id} — ${r.title}`).join('\n') : '- _(no
 `;
 }
 
+/** compass/design/F-xxx.md — the feature's UI design. Coding starts only once its status is Approved. */
+export function designMd(p: Project, f: Feature) {
+  const d = f.design;
+  const tool = p.spec.designTool;
+  const head = `# Design: ${f.id} ${f.name}\n\n_Generated from \`compass/spec.json → features[${f.id}].design\`. Edit the design in the portal (or spec.json), not this file._\n\n`;
+  if (!d) return `${head}Status: Not started\n\nDesign tool: ${tool ? `[${tool.kind}](${tool.url})` : '_(none connected)_'}\n\nThe Design agent drafts the screens once every requirement of this feature is approved.\n`;
+  const reqs = p.spec.requirements.filter((r) => r.featureId === f.id && r.status !== 'Draft');
+  const uncovered = reqs.filter((r) => !d.screens.some((s) => s.reqIds.includes(r.id)));
+  return `${head}Status: ${d.status}${d.approvedBy ? ` (by ${d.approvedBy}${d.approvedAt ? `, ${d.approvedAt.slice(0, 10)}` : ''})` : ''}
+Design tool: ${tool ? `[${tool.kind}](${tool.url})` : '_(none connected)_'}${d.url ? ` · this feature: [${d.url}](${d.url})` : ''}
+
+## Approach
+${d.summary || '_(not set)_'}
+
+## Screens
+| Screen | Delivers | Purpose | Frame |
+|---|---|---|---|
+${d.screens.map((s) => `| ${s.id} ${s.name} | ${s.reqIds.join(', ')} | ${s.purpose} | ${s.frameUrl ? `[open](${s.frameUrl})` : '—'} |`).join('\n')}
+
+${d.screens.map((s) => `### ${s.id} · ${s.name}\n**Elements:** ${s.elements.join('; ') || '—'}\n\n**States:** ${s.states.join('; ') || '—'}`).join('\n\n')}
+
+## Notes
+${d.notes || '_(none)_'}
+
+## Coverage
+${uncovered.length ? `⚠ Not covered by any screen: ${uncovered.map((r) => r.id).join(', ')}` : 'Every approved requirement is covered by at least one screen.'}
+`;
+}
+
 export function featuresIndexMd(p: Project) {
   return `# Features
 
 Each feature is one business intent moving through Idea → Requirements → Test cases → Build → Release.
 
-| Feature | Stage | Requirements | Tests |
-|---|---|---|---|
-${p.spec.features.map((f) => `| [${f.id} ${f.name}](features/${f.id}.md) | ${f.archived ? 'archived' : STAGE_LABEL[featureStage(p, f.id)]} | ${p.spec.requirements.filter((r) => r.featureId === f.id).length} | ${p.spec.tests.filter((t) => t.reqIds.some((x) => p.spec.requirements.some((r) => r.id === x && r.featureId === f.id))).length} |`).join('\n')}
+| Feature | Stage | Design | Requirements | Tests |
+|---|---|---|---|---|
+${p.spec.features.map((f) => `| [${f.id} ${f.name}](features/${f.id}.md) | ${f.archived ? 'archived' : STAGE_LABEL[featureStage(p, f.id)]} | [${f.design?.status || '—'}](design/${f.id}.md) | ${p.spec.requirements.filter((r) => r.featureId === f.id).length} | ${p.spec.tests.filter((t) => t.reqIds.some((x) => p.spec.requirements.some((r) => r.id === x && r.featureId === f.id))).length} |`).join('\n')}
 
 **Tech stack:** ${p.spec.stack}
 `;
 }
 
-export const STAGE_LABEL: Record<string, string> = { idea: 'Idea', requirements: 'Requirements', tests: 'Test design', build: 'Build', release: 'Release', done: 'Released' };
+export const STAGE_LABEL: Record<string, string> = { idea: 'Idea', requirements: 'Requirements', design: 'Design', tests: 'Test design', build: 'Build', release: 'Release', done: 'Released' };
 
 export function requirementsMd(s: Spec) {
   return `# Requirements
@@ -195,6 +227,7 @@ ${feats.map((f) => `| ${f.id} ${f.name} | ${STAGE_LABEL[featureStage(p, f.id)]} 
 | Role | Start here |
 |---|---|
 | Product Owner | Review \`compass/features.md\` and each \`compass/features/F-xxx.md\`; approve Draft requirements; decide release scope. |
+| UX / Designer | Review \`compass/design/F-xxx.md\`, draw the screens in the project design tool, link each frame, then ask the PO to approve the design. |
 | Business Analyst | Refine requirements in \`compass/spec.json\` (or the portal); every requirement needs Given/When/Then AC. |
 | QA | Make sure every requirement has a test case (${uncovered.length} missing); automate tests under \`tests/\`. |
 | Developer | Pick a feature on the board and a requirement with status Approved; write the PR's \`## Plan\` first; branch \`compass/f-xxx-req-xxx-short-name\`; reference REQ/TC ids in commits & PR. |
@@ -222,9 +255,11 @@ Project: **${p.name}** — ${p.description || p.spec.features[0]?.idea.intent ||
 
 ## Workflow (every change) — AI-native SDLC
 0. **Intent:** a new request starts as \`compass/intent/YYYY-MM-DD-topic.md\` (template in [\`compass/intent/README.md\`](compass/intent/README.md)), or as a feature idea in the portal (\`compass/intent/F-xxx.md\`). Get the Product Owner's approval before creating requirements.
+0b. **Business need → business intent:** the Product Owner writes the raw business need; it is revised into a measurable business intent (outcome, baseline → target) and approved.
 1. **Intent → Requirement:** every change belongs to a feature (F-xxx, see \`compass/features.md\`) and starts from a requirement in \`compass/spec.json\` with Given/When/Then acceptance criteria.
+1b. **Requirement → Design:** once every requirement of the feature is approved, the design is drafted in \`compass/spec.json → features[].design\` (view: \`compass/design/F-xxx.md\`): screens traced to REQ ids, drawn in the project's design tool${p.spec.designTool ? ` ([${p.spec.designTool.kind}](${p.spec.designTool.url}))` : ''}. **No code before the design is Approved** — CI fails a requirement In build whose feature design is still a Draft.
 2. **Requirement → Test:** add at least one test case that references the requirement id. For a bug, commit the failing test first.
-3. **Plan:** before changing code, write the PR's \`## Plan\` (Files, Steps, Risks, Proof — see the PR template). CI fails a PR that changes code without it.
+3. **Plan:** before changing code, write \`compass/plans/<REQ-ids>-<short-name>.md\` from the template in [\`compass/plans/README.md\`](compass/plans/README.md) (Files, Steps, Risks, Proof) and commit it first. CI fails a PR that changes code without a plan.
 4. **Code:** branch \`compass/f-xxx-req-xxx-short-name\` (feature + requirement). Commit messages start with the requirement id, e.g. \`REQ-004: add guest checkout\`.
 5. **Pull request:** use the PR template; list REQ and TC ids; write \`Closes #<issue>\`; CI must be green (tests, \`node compass/check-spec.mjs\`, \`node compass/check-guardrails.mjs\`).
 6. **Independent review:** a fresh agent that did not write the code reviews the PR per [\`compass/REVIEW.md\`](compass/REVIEW.md). \`CHANGES NEEDED\` blocks the merge until fixed and re-reviewed.
@@ -240,7 +275,7 @@ node compass/check-guardrails.mjs main   # the CI guardrails check, run locally 
 
 ## Rules for AI agents
 - Read \`compass/spec.json\`, \`compass/handover.md\` and \`CLAUDE.md → Lessons learned\` before changing anything.
-- Only implement requirements whose status is **Approved** or **In build** and whose intent is Approved.
+- Only implement requirements whose status is **Approved** or **In build**, whose intent is Approved and whose feature design is Approved. Follow the design's screens, elements and states.
 - Never touch paths listed in \`compass/guardrails.json → protectedPaths\` without explicit human approval. This is enforced: a Claude Code hook (\`.claude/settings.json\` → \`compass/hooks/guard-edit.mjs\`) blocks such edits, and CI fails a PR that breaks the guardrails unless it has the \`human-approved\` label.
 - Never commit secrets, tokens or \`.env\` files.
 - Keep changes small (≤ ${DEFAULT_GUARDRAILS.maxFilesPerChange} files); add or update tests with every behaviour change.
@@ -277,6 +312,8 @@ Managed by the Compass portal (Compass Framework v${FRAMEWORK_VERSION}, AI-nativ
 
 - \`spec.json\` — source of truth (edit this, or use the portal)
 - \`intent/\` — what we want and why, approved before any requirement (\`F-xxx.md\` generated per feature)
+- \`design/F-xxx.md\` — the feature's UI design (screens ↔ REQ ids, design-tool links); must be Approved before coding
+- \`plans/\` — one plan per change (Files, Steps, Risks, Proof), committed before the code
 - \`features.md\` + \`features/F-xxx.md\`, \`requirements.md\`, \`tests.md\`, \`decisions.md\`, \`handover.md\` — generated views
 - \`REVIEW.md\` — independent review of every pull request
 - \`guardrails.json\` — rules for AI agents, enforced by \`check-guardrails.mjs\` (CI) and \`hooks/guard-edit.mjs\` (Claude Code)
@@ -363,10 +400,12 @@ const PR_TEMPLATE = `## What & why
 Requirements: REQ-
 Test cases: TC-
 Intent: compass/intent/
+Design: compass/design/F-
 Closes #
 
 ## Plan
-<!-- Required when the PR changes code. Write it before coding; update it if the approach changes. -->
+<!-- Required when the PR changes code: link compass/plans/<REQ-ids>-<name>.md (preferred), or fill in the lines below. -->
+Plan file: compass/plans/
 - Files:
 - Steps:
 - Risks:
@@ -423,6 +462,7 @@ export function specFiles(p: Project): FileChange[] {
     { path: 'compass/features.md', action: 'update', content: featuresIndexMd(p) },
     ...s.features.map((f) => ({ path: `compass/features/${f.id}.md`, action: 'update' as const, content: featureMd(s, f) })),
     ...s.features.map((f) => ({ path: `compass/intent/${f.id}.md`, action: 'update' as const, content: intentMd(p, f) })),
+    ...s.features.map((f) => ({ path: `compass/design/${f.id}.md`, action: 'update' as const, content: designMd(p, f) })),
     { path: 'compass/idea.md', action: 'update', content: '# Idea\n\nCompass now tracks several features in parallel — see [features.md](features.md) and `features/F-xxx.md`.\n' },
     { path: 'compass/requirements.md', action: 'update', content: requirementsMd(s) },
     { path: 'compass/tests.md', action: 'update', content: testsMd(s) },
@@ -443,6 +483,7 @@ export function frameworkFiles(p: Project, opts: { starter: boolean }): FileChan
     { path: 'compass/hooks/guard-edit.mjs', action: 'create', content: GUARD_EDIT },
     { path: 'compass/REVIEW.md', action: 'create', content: REVIEW_MD },
     { path: 'compass/intent/README.md', action: 'create', content: INTENT_README },
+    { path: 'compass/plans/README.md', action: 'create', content: PLANS_README },
     { path: '.claude/settings.json', action: 'create', content: CLAUDE_SETTINGS },
     { path: '.github/workflows/compass-ci.yml', action: 'create', content: CI },
     { path: '.github/workflows/compass-deploy.yml', action: 'create', content: DEPLOY },
