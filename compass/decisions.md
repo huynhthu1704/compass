@@ -40,4 +40,4 @@ _2026-11-26 · Accepted · REQ-010, REQ-011, REQ-012_
 
 **Decision:** The Product Owner chose to rebrand all Compass pages (not only the Team floor) to the Honey edition of the design system in the Figma file "Compass — Team floor", which becomes the project design tool. Honey means brand and "your turn"; working moves from amber/teal to sky so the two never look alike.
 
-**Consequences:** The teal theme is retired; the colour tokens in src/index.css follow the Figma variables; a test keeps old teal out of src/.
+**Consequences:** The teal theme is retired; the colour tokens in src/index.css follow the Figma variables; a test keeps old teal out of src/. Where Bee There's text colours fall below WCAG AA 4.5:1 (grey #8A8072, brand text #A87400, and the state texts on pale honey), Compass uses one shade darker; the Product Owner approved this on 2026-11-26.

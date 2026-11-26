@@ -343,7 +343,7 @@
         ]
       },
       "design": {
-        "status": "Draft",
+        "status": "Approved",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=18-344",
         "summary": "Honey edition v0.2 of the Compass design system, taken from the Bee There tokens: honey #FFC629 brand with dark ink text on it, cream canvas, warm ink text, coral/mint/sky/violet accents; Lexend headings, Be Vietnam Pro body, JetBrains Mono for ids; radius 8/14/20/28 and pills; warm honey-tinted shadow. One meaning per colour: honey = brand and \"your turn\", sky = working/info, mint = done/success, coral = rework/error.",
         "screens": [
@@ -389,7 +389,9 @@
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=7-4"
           }
         ],
-        "notes": "Draft for Product Owner approval. Every other page keeps its layout and only takes the new tokens."
+        "notes": "Every other page keeps its layout and only takes the new tokens. Text colours are one shade darker than Bee There where needed (tertiary #6E6559, brand text #8A5F00, success #17704F, info #1B62B5, danger #B0432A; dark-mode tertiary #B3A999) so normal text reaches 4.5:1 on canvas, surface, subtle and honey-subtle backgrounds.",
+        "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-26T00:00:00.000Z"
       }
     }
   ],
@@ -600,7 +602,7 @@
       "featureId": "F-010",
       "title": "Compass colours follow the honey design system in light and dark mode",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-honey-brand.md",
       "story": "As the product owner, I want Compass to use the Bee There honey colours, so that both products look like one family.",
       "ac": [
@@ -614,7 +616,7 @@
       "featureId": "F-010",
       "title": "Compass type, shapes and logo follow the honey design system",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-honey-brand.md",
       "story": "As the product owner, I want Compass to have the same friendly type and shapes as Bee There, so that the brand feels the same, not only the colours.",
       "ac": [
@@ -628,7 +630,7 @@
       "featureId": "F-010",
       "title": "No page keeps the old teal theme",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-honey-brand.md",
       "story": "As the product owner, I want the rebrand to reach every page, so that no screen still looks like the old Compass.",
       "ac": [
@@ -937,7 +939,7 @@
       "status": "Accepted",
       "context": "The Team floor design was drawn in a new Figma file; the Product Owner asked for the Bee There look with its signature honey yellow.",
       "decision": "The Product Owner chose to rebrand all Compass pages (not only the Team floor) to the Honey edition of the design system in the Figma file \"Compass — Team floor\", which becomes the project design tool. Honey means brand and \"your turn\"; working moves from amber/teal to sky so the two never look alike.",
-      "consequences": "The teal theme is retired; the colour tokens in src/index.css follow the Figma variables; a test keeps old teal out of src/.",
+      "consequences": "The teal theme is retired; the colour tokens in src/index.css follow the Figma variables; a test keeps old teal out of src/. Where Bee There's text colours fall below WCAG AA 4.5:1 (grey #8A8072, brand text #A87400, and the state texts on pale honey), Compass uses one shade darker; the Product Owner approved this on 2026-11-26.",
       "reqIds": [
         "REQ-010",
         "REQ-011",
