@@ -476,6 +476,36 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-26T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-012",
+      "name": "Delete a feature and close its GitHub issues",
+      "createdAt": "2026-11-26T00:00:00.000Z",
+      "idea": {
+        "need": "Allow me to delete a feature directly from compass portal. The corresponding github ticket should also be deleted.",
+        "intent": "A feature added by mistake is gone from the portal, the spec and the repo in under 30 seconds, and its GitHub issues are closed as not planned (today: archive only; removing one means hand-editing spec.json and closing issues one by one).",
+        "problem": "A feature can only be archived. A mistaken or duplicate feature stays on the board and in spec.json for good, and its requirement issues stay open on GitHub.",
+        "users": [
+          "Product Owner"
+        ],
+        "outcomeMetric": "Time to remove a feature: hand-editing spec.json and closing each issue → one dialog under 30 s; open issues of a deleted feature: all → 0 (or a list of the ones GitHub refused).",
+        "scopeIn": [
+          "Delete button and typed-id confirmation on the feature page",
+          "Removing the feature, its requirements, test cases, agent runs and generated files",
+          "Closing its open GitHub issues as not planned, with a comment",
+          "A strong warning when the feature has code"
+        ],
+        "scopeOut": [
+          "Permanently deleting GitHub issues",
+          "Removing code, tests, branches or pull requests of a built feature",
+          "An undo or trash bin (Archive stays the reversible option)"
+        ],
+        "risks": [
+          "Deletion cannot be undone in the portal: typing the feature id is the human approval",
+          "The token needs Issues: Read & write",
+          "No new libraries, no server"
+        ]
+      }
     }
   ],
   "requirements": [
@@ -746,6 +776,66 @@
       "ac": [
         "Given a feature page on a screen narrower than 720 px\nWhen the stage strip (Idea → Release) is shown\nThen each stage takes the full width in one list, in stage order, and no word is broken across lines",
         "Given a screen 720 px or wider\nWhen the stage strip is shown\nThen it looks as it does today"
+      ]
+    },
+    {
+      "id": "REQ-016",
+      "featureId": "F-012",
+      "title": "Delete a feature from its page after typing its id",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-delete-feature.md",
+      "story": "As the product owner, I want to delete a feature from its page, so that a feature added by mistake does not stay on the board for good.",
+      "ac": [
+        "Given a feature page\nWhen I click \"Delete feature\" (next to \"Archive feature\")\nThen a dialog lists what will be removed: the feature's requirements, test cases, files (compass/intent, features and design F-xxx.md) and its open GitHub issues",
+        "Given the delete dialog\nWhen the text I type is not exactly the feature id (e.g. F-012)\nThen the Delete button stays disabled",
+        "Given the delete dialog\nWhen I press Esc or Cancel\nThen the dialog closes and nothing is changed",
+        "Given I typed the feature id\nWhen I click Delete\nThen the feature is removed and I am back on the feature board, which no longer shows it",
+        "Given the dialog on a phone (390 px) or with the keyboard only\nWhen I use it\nThen it fits the screen, focus stays inside the dialog and every button can be reached with Tab"
+      ]
+    },
+    {
+      "id": "REQ-017",
+      "featureId": "F-012",
+      "title": "Deleting a feature removes everything that belongs to it",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-delete-feature.md",
+      "story": "As the product owner, I want everything of a deleted feature removed from the spec and the repo, so that nothing is left behind and the checks stay green.",
+      "ac": [
+        "Given a feature is deleted\nWhen the spec is updated\nThen the feature, its requirements (featureId = the feature), its test cases and its agent runs are removed; a test case that also covers a requirement of another feature is kept without the deleted ids",
+        "Given a decision (ADR) references a deleted requirement\nWhen the feature is deleted\nThen the decision is kept and only the deleted ids are taken out of its reqIds",
+        "Given a project on GitHub\nWhen the feature is deleted\nThen one commit updates compass/spec.json and its views and deletes compass/intent, compass/features and compass/design F-xxx.md of that feature (only the ones that exist), and node compass/check-spec.mjs passes on the result",
+        "Given a demo project or a project without a repo\nWhen the feature is deleted\nThen it is removed locally and nothing is sent to GitHub"
+      ]
+    },
+    {
+      "id": "REQ-018",
+      "featureId": "F-012",
+      "title": "The deleted feature's open GitHub issues are closed as not planned",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-delete-feature.md",
+      "story": "As the product owner, I want the GitHub tickets of a deleted feature closed, so that the issue list does not show work that will never happen.",
+      "ac": [
+        "Given a feature is deleted in a project on GitHub\nWhen its issues are looked up\nThen every open issue (not pull request) whose title starts with one of the feature's REQ ids (e.g. \"REQ-016: …\" or \"REQ-016, REQ-017: …\") or names the feature id (e.g. \"(F-012)\") is selected, and no other issue",
+        "Given the selected issues\nWhen the feature is deleted\nThen each gets a comment that the feature was deleted in Compass on that date, and is closed with the reason \"not planned\"",
+        "Given GitHub refuses to close an issue (for example the token lacks Issues: Read & write)\nWhen the feature is deleted\nThen the feature is still deleted and the portal lists the issues that are still open, with links and the reason",
+        "Given the Connect page\nWhen I read the token help\nThen it asks for Issues: Read & write as well"
+      ]
+    },
+    {
+      "id": "REQ-019",
+      "featureId": "F-012",
+      "title": "A strong warning before deleting a feature that has code",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-26-delete-feature.md",
+      "story": "As the product owner, I want a clear warning when a feature I am deleting is already built, so that I know its code and tests still need a clean-up.",
+      "ac": [
+        "Given a feature with a requirement In build or Done\nWhen the delete dialog opens\nThen a red warning names those requirements and says that code and tests in the repo still reference them and need a separate change",
+        "Given a feature with open agent pull requests\nWhen the delete dialog opens\nThen the pull requests are listed with links, and deleting the feature does not close or merge them",
+        "Given a feature whose requirements are all Draft or Approved and that has no open pull request\nWhen the delete dialog opens\nThen no warning is shown"
       ]
     }
   ],
