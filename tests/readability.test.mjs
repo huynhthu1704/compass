@@ -50,3 +50,13 @@ test('TC-025 (REQ-014): below 720 px the stage strip is one stage per row', () =
   assert.match(feature, /className="stage-strip"/);
   assert.doesNotMatch(feature, /gridTemplateColumns: 'repeat\(5/, 'no inline columns that would override the phone rule');
 });
+
+test('TC-027 (REQ-015): pages use up to 1600 px with fluid side padding; the phone rule is unchanged', () => {
+  const css = read('src/index.css');
+  const main = css.match(/^\.main \{([^}]*)\}/m);
+  assert.ok(main, '.main rule exists');
+  assert.match(main[1], /max-width: 1600px/);
+  assert.match(main[1], /width: 100%/);
+  assert.match(main[1], /padding: var\(--spacing-2xl\) clamp\(var\(--spacing-lg\), 3vw, var\(--spacing-3xl\)\) var\(--spacing-4xl\)/);
+  assert.match(css, /@media \(max-width: 900px\) \{[^@]*\.main \{ padding: var\(--spacing-xl\) var\(--spacing-lg\) var\(--spacing-3xl\); \}/);
+});
