@@ -3,7 +3,7 @@ import { evalTests, pct } from '../guardrails';
 import { featureOf } from '../spec';
 import { nextId, store } from '../store';
 import type { Project, TestCase } from '../types';
-import { Badge, Button, PageHead } from '../ui';
+import { Badge, Button, PageHead, REQ_STATUS_TONE } from '../ui';
 
 export function TestsPage({ p, fid }: { p: Project; fid: string }) {
   const f = featureOf(p, fid);
@@ -34,7 +34,7 @@ export function TestsPage({ p, fid }: { p: Project; fid: string }) {
             const tcs = s.tests.filter((t) => t.reqIds.includes(r.id));
             return (
               <tr key={r.id}>
-                <td><span className="mono t-brand">{r.id}</span> {r.title}<div><Badge tone={r.status === 'Done' ? 'success' : r.status === 'Draft' ? 'warning' : 'brand'}>{r.status}</Badge></div></td>
+                <td><span className="mono t-brand">{r.id}</span> {r.title}<div><Badge tone={REQ_STATUS_TONE[r.status]}>{r.status}</Badge></div></td>
                 <td>{tcs.length ? <div className="stack gap-sm">{tcs.map((t) => (
                   <div key={t.id} className="stack gap-xs">
                     <div className="row gap-sm wrap"><span className="mono t-brand">{t.id}</span><input className="input" style={{ padding: '2px 8px', fontSize: 13, maxWidth: 360 }} value={t.title} onChange={(e) => set(t.id, { title: e.target.value })} />

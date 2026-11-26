@@ -5,7 +5,7 @@ import { featureStage, stageStatus } from '../progress';
 import { featureOf, featureReqs, featureRuns } from '../spec';
 import { store } from '../store';
 import { STAGES, type Project } from '../types';
-import { ago, Badge, Button, Field, PageHead, STAGE_INFO, StageChip } from '../ui';
+import { ago, Badge, Button, Field, PageHead, REQ_STATUS_TONE, STAGE_INFO, StageChip } from '../ui';
 
 const NEXT: Record<string, string> = {
   idea: 'Write the business need; the Ideation agent revises it into a business intent for you to approve (PO).',
@@ -34,7 +34,7 @@ export function FeaturePage({ p, fid }: { p: Project; fid: string }) {
         right={<Button size="sm" variant="ghost" onClick={() => setF({ archived: !f.archived })}>{f.archived ? 'Unarchive' : 'Archive feature'}</Button>} />
 
       <section className="stack gap-md">
-        <div className="grid-6" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
+        <div className="stage-strip">
           {STAGES.map((s) => (
             <button key={s} className={`action-card ${s === cur ? 'selected' : ''}`} onClick={() => go(stagePath(p.id, fid, s))} style={{ gap: 6 }}>
               <StageChip stage={s} active={s === cur} done={st[s].done} />
@@ -56,7 +56,7 @@ export function FeaturePage({ p, fid }: { p: Project; fid: string }) {
           <Field label="Name"><input className="input" value={f.name} onChange={(e) => setF({ name: e.target.value })} /></Field>
           <div className="stack gap-xs">
             <span className="label-md">Requirements ({reqs.length})</span>
-            {reqs.length ? reqs.map((r) => <div key={r.id} className="row gap-sm body-sm"><span className="mono t-brand">{r.id}</span><span className="grow">{r.title}</span><Badge tone={r.status === 'Done' ? 'success' : r.status === 'Draft' ? 'warning' : 'brand'}>{r.status}</Badge></div>) : <span className="body-sm t-tertiary">None yet.</span>}
+            {reqs.length ? reqs.map((r) => <div key={r.id} className="row gap-sm body-sm"><span className="mono t-brand">{r.id}</span><span className="grow">{r.title}</span><Badge tone={REQ_STATUS_TONE[r.status]}>{r.status}</Badge></div>) : <span className="body-sm t-tertiary">None yet.</span>}
           </div>
         </section>
         <section className="card pad-xl stack gap-sm">

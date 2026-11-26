@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import type { Stage } from './types';
+import type { Design, Requirement, Stage } from './types';
 
 type BtnStyle = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 export function Button({ variant = 'primary', size, children, ...rest }: { variant?: BtnStyle; size?: 'sm' } & ButtonHTMLAttributes<HTMLButtonElement>) {
@@ -9,6 +9,9 @@ export function Button({ variant = 'primary', size, children, ...rest }: { varia
 }
 
 export type Tone = 'neutral' | 'brand' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
+/** One colour per status meaning (REQ-013): Draft is still to approve (neutral), Approved and Done are settled (mint). */
+export const REQ_STATUS_TONE: Record<Requirement['status'], Tone> = { Draft: 'neutral', Approved: 'success', 'In build': 'info', Done: 'success' };
+export const DESIGN_STATUS_TONE: Record<Design['status'], Tone> = { Draft: 'neutral', Approved: 'success' };
 export const Badge = ({ tone = 'neutral', children, title }: { tone?: Tone; children: ReactNode; title?: string }) => <span className={`badge tone-${tone}`} title={title}>{children}</span>;
 
 export const STAGE_INFO: Record<Stage, { name: string; vi: string; cls: string; role: string; agent: string }> = {

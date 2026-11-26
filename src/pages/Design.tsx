@@ -4,7 +4,7 @@ import { AgentBox } from '../components/AgentBox';
 import { featureOf } from '../spec';
 import { now, store, useStore } from '../store';
 import type { Design, DesignScreen, DesignTool, DesignToolKind, Project } from '../types';
-import { Badge, Button, Field, PageHead } from '../ui';
+import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead } from '../ui';
 
 const TOOLS: Record<DesignToolKind, string> = { figma: 'Figma', penpot: 'Penpot', sketch: 'Sketch', other: 'Other' };
 
@@ -57,7 +57,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
           <section className="card pad-xl stack gap-md">
             <div className="row gap-sm wrap">
               <h2 className="h4 grow">Design</h2>
-              <Badge tone={d.status === 'Approved' ? 'success' : 'warning'}>{d.status}</Badge>
+              <Badge tone={DESIGN_STATUS_TONE[d.status]}>{d.status}</Badge>
               {d.approvedBy && <span className="body-sm t-tertiary">by {d.approvedBy} · {d.approvedAt?.slice(0, 10)}</span>}
             </div>
             {d.status === 'Approved' && <div className="body-sm">Coding is unlocked. <button className="btn ghost sm" onClick={() => go(`/p/${p.id}/f/${fid}/build`)}>Go to Build →</button></div>}

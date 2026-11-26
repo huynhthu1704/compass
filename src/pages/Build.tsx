@@ -7,7 +7,7 @@ import { designApproved } from '../progress';
 import { featureOf } from '../spec';
 import { useStore } from '../store';
 import type { Project } from '../types';
-import { ago, Badge, Button, PageHead, useAction } from '../ui';
+import { ago, Badge, Button, PageHead, REQ_STATUS_TONE, useAction } from '../ui';
 
 export function BuildPage({ p, fid }: { p: Project; fid: string }) {
   const { settings } = useStore();
@@ -35,7 +35,7 @@ export function BuildPage({ p, fid }: { p: Project; fid: string }) {
               <label key={r.id} className="option" style={{ padding: 10 }}>
                 <input type="checkbox" checked={sel.includes(r.id)} onChange={(e) => setSel((s) => (e.target.checked ? [...s, r.id] : s.filter((x) => x !== r.id)))} />
                 <span className="mono t-brand">{r.id}</span><span className="grow">{r.title}</span>
-                <Badge tone={r.status === 'Approved' ? 'brand' : 'info'}>{r.status}</Badge>
+                <Badge tone={REQ_STATUS_TONE[r.status]}>{r.status}</Badge>
                 <Badge tone={p.spec.tests.some((t) => t.reqIds.includes(r.id)) ? 'success' : 'danger'}>{p.spec.tests.filter((t) => t.reqIds.includes(r.id)).length} tests</Badge>
               </label>
             ))}
