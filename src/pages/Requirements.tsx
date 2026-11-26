@@ -5,9 +5,8 @@ import { featureOf } from '../spec';
 import { autoAdvance } from '../harness';
 import { nextId, store } from '../store';
 import type { Project, Requirement } from '../types';
-import { Badge, Button, Field, PageHead, toast } from '../ui';
+import { Badge, Button, Field, PageHead, REQ_STATUS_TONE, toast } from '../ui';
 
-const STATUS_TONE = { Draft: 'warning', Approved: 'brand', 'In build': 'info', Done: 'success' } as const;
 
 export function RequirementsPage({ p, fid }: { p: Project; fid: string }) {
   const f = featureOf(p, fid);
@@ -42,7 +41,7 @@ export function RequirementsPage({ p, fid }: { p: Project; fid: string }) {
                 <div className="row gap-sm wrap">
                   <span className="mono t-brand">{r.id}</span>
                   <button className="btn ghost sm" style={{ padding: 0, fontWeight: 600, color: 'var(--color-text-primary)' }} onClick={() => setOpen(open === r.id ? null : r.id)}>{r.title}</button>
-                  <Badge tone={STATUS_TONE[r.status]}>{r.status}</Badge>
+                  <Badge tone={REQ_STATUS_TONE[r.status]}>{r.status}</Badge>
                   <Badge>{r.priority}</Badge>
                   <Badge tone={tcs.length ? 'info' : 'danger'}>{tcs.length ? tcs.map((t) => t.id).join(', ') : 'no tests'}</Badge>
                   <span className="grow" />

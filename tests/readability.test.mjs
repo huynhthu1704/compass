@@ -9,7 +9,7 @@ const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 function map(name) {
   const m = read('src/ui.tsx').match(new RegExp(`export const ${name}[^=]*=\\s*(\\{[^}]*\\})`));
   assert.ok(m, `src/ui.tsx exports ${name}`);
-  return Object.fromEntries([...m[1].matchAll(/'?([\w ]+?)'?\s*:\s*'(\w+)'/g)].map((x) => [x[1], x[2]]));
+  return Object.fromEntries([...m[1].matchAll(/'?([\w ]+?)'?\s*:\s*'(\w+)'/g)].map((x) => [x[1].trim(), x[2]]));
 }
 
 test('TC-023 (REQ-013): Draft is neutral, Approved is mint, on all five pages', () => {
@@ -18,7 +18,7 @@ test('TC-023 (REQ-013): Draft is neutral, Approved is mint, on all five pages', 
   for (const page of ['Requirements', 'Tests', 'Feature', 'Build']) {
     const src = read(`src/pages/${page}.tsx`);
     assert.match(src, /<Badge tone=\{REQ_STATUS_TONE\[r\.status\]\}>\{r\.status\}<\/Badge>/, `${page} uses REQ_STATUS_TONE`);
-    assert.doesNotMatch(src, /r\.status === '(Draft|Approved|Done)' \?/, `${page} has no inline status colour rule left`);
+    assert.doesNotMatch(src, /tone=\{r\.status ===/, `${page} has no inline status colour rule left`);
     assert.doesNotMatch(src, /const STATUS_TONE = \{ Draft/, `${page} has no own status map`);
   }
   const design = read('src/pages/Design.tsx');
