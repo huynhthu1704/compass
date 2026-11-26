@@ -783,7 +783,7 @@
       "featureId": "F-012",
       "title": "Delete a feature from its page after typing its id",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-delete-feature.md",
       "story": "As the product owner, I want to delete a feature from its page, so that a feature added by mistake does not stay on the board for good.",
       "ac": [
@@ -799,7 +799,7 @@
       "featureId": "F-012",
       "title": "Deleting a feature removes everything that belongs to it",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-delete-feature.md",
       "story": "As the product owner, I want everything of a deleted feature removed from the spec and the repo, so that nothing is left behind and the checks stay green.",
       "ac": [
@@ -814,7 +814,7 @@
       "featureId": "F-012",
       "title": "The deleted feature's open GitHub issues are closed as not planned",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-delete-feature.md",
       "story": "As the product owner, I want the GitHub tickets of a deleted feature closed, so that the issue list does not show work that will never happen.",
       "ac": [
@@ -829,7 +829,7 @@
       "featureId": "F-012",
       "title": "A strong warning before deleting a feature that has code",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-delete-feature.md",
       "story": "As the product owner, I want a clear warning when a feature I am deleting is already built, so that I know its code and tests still need a clean-up.",
       "ac": [
@@ -1169,6 +1169,96 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given a feature page at 1440 px\nWhen I compare it with the version before the change\nThen the stage strip looks the same"
+    },
+    {
+      "id": "TC-029",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "title": "Delete is enabled only after typing the exact feature id",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the delete dialog of feature F-012\nWhen the typed text is empty, \"f-012\", \"F-01\" or \"F-012 \" with a trailing space\nThen the Delete button is disabled; when it is exactly \"F-012\" it is enabled"
+    },
+    {
+      "id": "TC-030",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "title": "Cancel and Esc change nothing; Delete returns to the board",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the delete dialog of a feature\nWhen Esc or Cancel is used\nThen the spec is unchanged; and when the id is typed and Delete is clicked, the portal opens the feature board and the feature is not on it"
+    },
+    {
+      "id": "TC-031",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "title": "Delete dialog on a phone and by keyboard",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the delete dialog at 390 px wide and with the keyboard only\nWhen I Tab through it\nThen it fits the screen without sideways scrolling, focus stays inside the dialog, and Cancel, the id field and Delete can all be reached"
+    },
+    {
+      "id": "TC-032",
+      "reqIds": [
+        "REQ-017"
+      ],
+      "title": "Spec clean-up removes the feature, its requirements, tests and runs",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a project with features F-001 and F-002, a test covering a requirement of each, a test of F-002 only, a run of F-002 and an ADR referencing requirements of both\nWhen F-002 is deleted\nThen F-002, its requirements, its own test and its run are gone; the shared test and the ADR are kept with only F-001's requirement ids; F-001 is unchanged"
+    },
+    {
+      "id": "TC-033",
+      "reqIds": [
+        "REQ-017"
+      ],
+      "title": "One commit deletes only the feature's files that exist",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a repo where compass/intent/F-002.md and compass/features/F-002.md exist and compass/design/F-002.md does not\nWhen the file changes for deleting F-002 are built\nThen they update compass/spec.json and its views, delete the two existing files, do not touch the missing one, and the views no longer mention F-002"
+    },
+    {
+      "id": "TC-034",
+      "reqIds": [
+        "REQ-017"
+      ],
+      "title": "Demo projects delete locally only",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a demo project (or one without a repo)\nWhen a feature is deleted\nThen it is removed from the local spec and no GitHub request is made"
+    },
+    {
+      "id": "TC-035",
+      "reqIds": [
+        "REQ-018"
+      ],
+      "title": "Issue matching selects only the feature's open issues",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given open issues \"REQ-016: …\", \"REQ-016, REQ-017: …\", \"REQ-016–REQ-019: … (F-012)\", \"REQ-0160: …\", \"Fix REQ-016 later\", \"REQ-020: …\" and a pull request \"REQ-016: …\"\nWhen issues are matched for F-012 with REQ-016 to REQ-019\nThen the first three are selected and the others are not"
+    },
+    {
+      "id": "TC-036",
+      "reqIds": [
+        "REQ-018"
+      ],
+      "title": "Issues are commented and closed as not planned; failures are listed",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given two matched issues where GitHub refuses the second with 403\nWhen the feature is deleted\nThen the first gets the comment and is closed with state_reason not_planned, the feature is still deleted, and the result lists the second issue with its link and the reason; the Connect page asks for Issues: Read & write"
+    },
+    {
+      "id": "TC-037",
+      "reqIds": [
+        "REQ-019"
+      ],
+      "title": "Warning only for built features or open pull requests",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a feature with a requirement In build (or Done), one with an open agent PR, and one with only Draft/Approved requirements and no PR\nWhen the delete dialog's warning is computed\nThen the first names the built requirements, the second lists the PR with its link, and the third shows no warning; deleting never closes or merges a pull request"
     }
   ],
   "decisions": [

@@ -57,8 +57,8 @@ closed as *not planned* with a comment. Unit tests cover the spec clean-up and t
 - An undo or trash bin (Archive remains the reversible option).
 
 ## Requirements
-Feature F-012 · Delete a feature and close its GitHub issues (requirements in Draft, waiting for approval)
-- REQ-016 — Delete a feature from its page after typing its id
-- REQ-017 — Deleting a feature removes everything that belongs to it
-- REQ-018 — The deleted feature's open GitHub issues are closed as not planned
-- REQ-019 — A strong warning before deleting a feature that has code
+Feature F-012 · Delete a feature and close its GitHub issues
+- REQ-016 — Delete a feature from its page after typing its id (#32)
+- REQ-017 — Deleting a feature removes everything that belongs to it (#33)
+- REQ-018 — The deleted feature's open GitHub issues are closed as not planned (#34)
+- REQ-019 — A strong warning before deleting a feature that has code (#35)
