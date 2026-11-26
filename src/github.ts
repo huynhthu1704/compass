@@ -1,7 +1,7 @@
 /**
  * Minimal GitHub REST client used by the portal and by the agents' tools.
  * Runs in the browser with the user's own fine-grained token (Contents, Pull requests,
- * Workflows, Administration (for creating repos / enabling Pages) — read & write).
+ * Issues, Workflows, Administration (for creating repos / enabling Pages) — read & write).
  */
 import type { FileChange, RepoRef } from './types';
 
@@ -21,7 +21,7 @@ async function gh<T = unknown>(token: string, path: string, init: RequestInit = 
     let msg = res.statusText;
     try { const j = await res.json(); msg = j.message || msg; } catch { /* no body */ }
     const hint = res.status === 403 && /personal access token/i.test(msg)
-      ? ' — your token lacks a permission for this repo. Edit the token on GitHub: include this repo in Repository access and set Contents, Pull requests, Workflows (and Actions, Pages) to Read & write.'
+      ? ' — your token lacks a permission for this repo. Edit the token on GitHub: include this repo in Repository access and set Contents, Pull requests, Issues, Workflows (and Actions, Pages) to Read & write.'
       : '';
     throw new GitHubError(res.status, `GitHub ${res.status}: ${msg}${hint}`);
   }
@@ -89,6 +89,20 @@ export const github = {
   getPR: (t: string, r: RepoRef, n: number) => gh<{ number: number; state: string; merged: boolean; mergeable: boolean | null; head: { sha: string; ref: string }; html_url: string; title: string }>(t, `${rp(r)}/pulls/${n}`),
   listPRs: (t: string, r: RepoRef, state = 'open') => gh<{ number: number; title: string; html_url: string; head: { ref: string; sha: string }; user: { login: string }; merged_at: string | null }[]>(t, `${rp(r)}/pulls?state=${state}&per_page=30`),
   mergePR: (t: string, r: RepoRef, n: number, title: string) => gh<{ sha: string; merged: boolean }>(t, `${rp(r)}/pulls/${n}/merge`, { method: 'PUT', body: JSON.stringify({ merge_method: 'squash', commit_title: title }) }),
+
+  /** Open issues (pull requests filtered out), newest first, up to 1000 (F-012). */
+  async openIssues(t: string, r: RepoRef) {
+    const out: { number: number; title: string; html_url: string; pull_request?: unknown }[] = [];
+    for (let page = 1; page <= 10; page++) {
+      const batch = await gh<typeof out>(t, `${rp(r)}/issues?state=open&per_page=100&page=${page}`);
+      out.push(...batch.filter((i) => !i.pull_request));
+      if (batch.length < 100) break;
+    }
+    return out;
+  },
+  commentIssue: (t: string, r: RepoRef, n: number, body: string) => gh(t, `${rp(r)}/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body }) }),
+  /** Close an issue as "not planned" (never deletes it). */
+  closeIssue: (t: string, r: RepoRef, n: number) => gh(t, `${rp(r)}/issues/${n}`, { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: 'not_planned' }) }),
 
   async checks(t: string, r: RepoRef, ref: string) {
     const res = await gh<{ check_runs: { name: string; status: string; conclusion: string | null; html_url: string }[] }>(t, `${rp(r)}/commits/${encodeURIComponent(ref)}/check-runs`);

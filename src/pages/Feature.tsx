@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { go } from '../App';
+import { DeleteFeatureDialog } from '../components/DeleteFeatureDialog';
 import { STATUS_TONE } from '../components/RunView';
 import { agent } from '../harness';
 import { featureStage, stageStatus } from '../progress';
@@ -21,6 +23,7 @@ export const stagePath = (pid: string, fid: string, s: string) => (s === 'releas
 
 export function FeaturePage({ p, fid }: { p: Project; fid: string }) {
   const f = featureOf(p, fid);
+  const [deleting, setDeleting] = useState(false);
   if (!f) return <div className="empty">Feature not found.</div>;
   const st = stageStatus(p, fid), cur = featureStage(p, fid);
   const runs = featureRuns(p, fid);
@@ -31,7 +34,11 @@ export function FeaturePage({ p, fid }: { p: Project; fid: string }) {
     <div className="stack gap-2xl">
       <div><Button variant="ghost" size="sm" onClick={() => go(`/p/${p.id}`)}>← Feature board</Button></div>
       <PageHead over={`${p.name} · ${f.id}${f.archived ? ' · archived' : ''}`} title={f.name} sub={f.idea.intent || 'No business intent yet.'}
-        right={<Button size="sm" variant="ghost" onClick={() => setF({ archived: !f.archived })}>{f.archived ? 'Unarchive' : 'Archive feature'}</Button>} />
+        right={<>
+          <Button size="sm" variant="ghost" onClick={() => setF({ archived: !f.archived })}>{f.archived ? 'Unarchive' : 'Archive feature'}</Button>
+          <Button size="sm" variant="danger" onClick={() => setDeleting(true)}>Delete feature</Button>
+        </>} />
+      {deleting && <DeleteFeatureDialog p={p} fid={fid} onClose={() => setDeleting(false)} />}
 
       <section className="stack gap-md">
         <div className="stage-strip">
