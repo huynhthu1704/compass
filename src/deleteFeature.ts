@@ -9,7 +9,7 @@ export interface IssueOutcome { number: number; title: string; url: string; reas
 
 /** The GitHub calls a live delete needs (src/github.ts provides them). */
 export interface DeleteGitHub {
-  tree(token: string, repo: RepoRef): Promise<{ path: string }[]>;
+  fileExists(token: string, repo: RepoRef, path: string): Promise<boolean>;
   commit(token: string, repo: RepoRef, branch: string, message: string, changes: FileChange[]): Promise<{ sha: string; html_url: string }>;
   openIssues(token: string, repo: RepoRef): Promise<IssueRef[]>;
   commentIssue(token: string, repo: RepoRef, n: number, body: string): Promise<unknown>;
@@ -72,16 +72,25 @@ export function titleReqNumbers(title: string): number[] {
     const m = /^REQ-(\d+)(?:\s*(?:–|—|-|to)\s*REQ-(\d+))?$/.exec(part.trim());
     if (!m) continue;
     const a = Number(m[1]), b = m[2] ? Number(m[2]) : a;
-    for (let n = Math.min(a, b); n <= Math.max(a, b) && n - Math.min(a, b) < 1000; n++) out.push(n);
+    for (let n = Math.min(a, b); n <= Math.max(a, b) && n - Math.min(a, b) < 10000; n++) out.push(n);
   }
   return out;
 }
 
-/** REQ-018: open issues (never pull requests) whose title starts with one of the REQ ids, or names the feature id. */
+/**
+ * REQ-018: open issues (never pull requests) of this feature only: every REQ id at the start of the title belongs to the
+ * feature, or the title names the feature id and no REQ id of another feature. An issue that also covers other
+ * requirements (a list or a range reaching outside the feature) is never closed.
+ */
 export function matchIssues(issues: IssueRef[], reqIds: string[], fid: string): IssueRef[] {
   const nums = new Set(reqIds.map(reqNum).filter((n) => !Number.isNaN(n)));
   const fidRe = new RegExp(`(?<![\\w-])${fid.replace(/[^\w-]/g, '')}(?![\\w])`);
-  return issues.filter((i) => !i.pull_request && (titleReqNumbers(i.title).some((n) => nums.has(n)) || fidRe.test(i.title)));
+  return issues.filter((i) => {
+    if (i.pull_request) return false;
+    const ids = titleReqNumbers(i.title);
+    if (ids.some((n) => !nums.has(n))) return false;
+    return ids.length > 0 || fidRe.test(i.title);
+  });
 }
 
 export const deleteComment = (fid: string, name: string, today: string) =>
@@ -100,6 +109,7 @@ export async function deleteFeature(p: Project, fid: string, deps: DeleteDeps): 
   const reqIds = p.spec.requirements.filter((r) => r.featureId === fid).map((r) => r.id);
   const { spec, runs } = removeFeature(p.spec, p.runs, fid);
   const { github: gh, token, specFiles } = deps;
+  if (!p.demo && p.repo && (!token || !gh || !specFiles)) throw new Error('Connect GitHub first, so the feature\'s files and issues are removed too');
   if (p.demo || !p.repo || !token || !gh || !specFiles) {
     deps.apply(spec, runs);
     return { local: true, closed: [], stillOpen: [] };
@@ -108,8 +118,8 @@ export async function deleteFeature(p: Project, fid: string, deps: DeleteDeps): 
   let issues: IssueRef[] = [];
   let issueError: string | undefined;
   try { issues = matchIssues(await gh.openIssues(token, repo), reqIds, fid); } catch (e) { issueError = message(e); }
-  const existing = new Set((await gh.tree(token, repo)).map((x) => x.path));
-  const deletes: FileChange[] = featureFiles(fid).filter((path) => existing.has(path)).map((path) => ({ path, action: 'delete', content: '', reason: `${fid} deleted` }));
+  const exists = await Promise.all(featureFiles(fid).map((path) => gh.fileExists(token, repo, path)));
+  const deletes: FileChange[] = featureFiles(fid).filter((_, k) => exists[k]).map((path) => ({ path, action: 'delete', content: '', reason: `${fid} deleted` }));
   const changes = [...specFiles({ ...p, spec, runs }), ...deletes];
   const c = await gh.commit(token, repo, repo.defaultBranch, `docs(compass): delete feature ${fid} — ${f.name}`, changes);
   deps.apply(spec, runs, c.sha);

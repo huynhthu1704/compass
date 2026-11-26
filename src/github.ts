@@ -90,10 +90,10 @@ export const github = {
   listPRs: (t: string, r: RepoRef, state = 'open') => gh<{ number: number; title: string; html_url: string; head: { ref: string; sha: string }; user: { login: string }; merged_at: string | null }[]>(t, `${rp(r)}/pulls?state=${state}&per_page=30`),
   mergePR: (t: string, r: RepoRef, n: number, title: string) => gh<{ sha: string; merged: boolean }>(t, `${rp(r)}/pulls/${n}/merge`, { method: 'PUT', body: JSON.stringify({ merge_method: 'squash', commit_title: title }) }),
 
-  /** Open issues (pull requests filtered out), newest first, up to 300 (F-012). */
+  /** Open issues (pull requests filtered out), newest first, up to 1000 (F-012). */
   async openIssues(t: string, r: RepoRef) {
     const out: { number: number; title: string; html_url: string; pull_request?: unknown }[] = [];
-    for (let page = 1; page <= 3; page++) {
+    for (let page = 1; page <= 10; page++) {
       const batch = await gh<typeof out>(t, `${rp(r)}/issues?state=open&per_page=100&page=${page}`);
       out.push(...batch.filter((i) => !i.pull_request));
       if (batch.length < 100) break;

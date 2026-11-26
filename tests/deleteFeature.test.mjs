@@ -77,6 +77,10 @@ test('TC-034 (REQ-017): demo projects and projects without a repo delete locally
     assert.equal(res.local, true);
     assert.ok(!applied.features.some((f) => f.id === 'F-002'));
   }
+  // a project on GitHub without a token must not delete locally only (its files and issues would be left behind)
+  let touched = false;
+  await assert.rejects(deleteFeature(project(), 'F-002', { apply: () => { touched = true; } }), /Connect GitHub first/);
+  assert.equal(touched, false);
 });
 
 const issue = (number, title, o = {}) => ({ number, title, html_url: `https://github.com/o/r/issues/${number}`, ...o });
@@ -92,9 +96,12 @@ test('TC-035 (REQ-018): issue matching selects only the feature\'s open issues',
     issue(7, 'REQ-016: a pull request', { pull_request: {} }),
     issue(8, 'Delete feature follow-up (F-012)'),
     issue(9, 'F-0120 look-alike'),
-    issue(10, 'REQ-010–REQ-020: wide range'),
+    issue(10, 'REQ-010–REQ-020: a range reaching other features'),
+    issue(11, 'REQ-001, REQ-016: shared with another feature'),
+    issue(12, 'REQ-001: other feature (F-012)'),
+    issue(13, 'REQ-019–REQ-016: reversed range'),
   ];
-  assert.deepEqual(matchIssues(issues, ['REQ-016', 'REQ-017', 'REQ-018', 'REQ-019'], 'F-012').map((i) => i.number), [1, 2, 3, 8, 10]);
+  assert.deepEqual(matchIssues(issues, ['REQ-016', 'REQ-017', 'REQ-018', 'REQ-019'], 'F-012').map((i) => i.number), [1, 2, 3, 8, 13]);
   assert.deepEqual(matchIssues(issues, [], 'F-099').map((i) => i.number), []);
 });
 
@@ -155,7 +162,7 @@ test('TC-038 (REQ-016): the dialog lists everything that will be removed', () =>
 function fakeGitHub({ tree = [], issues = [], refuse, failCommit, failIssues, commits = [] }) {
   const gh = {
     calls: 0, comments: [], closed: [],
-    async tree() { gh.calls++; return tree.map((path) => ({ path, type: 'blob', sha: 'x' })); },
+    async fileExists(_t, _r, path) { gh.calls++; return tree.includes(path); },
     async commit(_t, _r, branch, message, changes) { gh.calls++; if (failCommit) throw new Error('boom'); commits.push({ branch, message, changes }); return { sha: 'c1', html_url: 'https://x/c1' }; },
     async openIssues() { gh.calls++; if (failIssues) throw new Error('GitHub 403: Resource not accessible'); return issues; },
     async commentIssue(_t, _r, n, body) { gh.calls++; if (n === refuse) throw new Error('GitHub 403: Resource not accessible'); gh.comments.push({ n, body }); },
