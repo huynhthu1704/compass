@@ -1,0 +1,52 @@
+// F-011 readability follow-ups — TC-023, TC-024 (REQ-013). TC-025/026 (REQ-014) are checked with screenshots.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+
+/** Parses `export const NAME ... = { a: 'x', 'b c': 'y' }` from src/ui.tsx. */
+function map(name) {
+  const m = read('src/ui.tsx').match(new RegExp(`export const ${name}[^=]*=\\s*(\\{[^}]*\\})`));
+  assert.ok(m, `src/ui.tsx exports ${name}`);
+  return Object.fromEntries([...m[1].matchAll(/'?([\w ]+?)'?\s*:\s*'(\w+)'/g)].map((x) => [x[1], x[2]]));
+}
+
+test('TC-023 (REQ-013): Draft is neutral, Approved is mint, on all five pages', () => {
+  assert.deepEqual(map('REQ_STATUS_TONE'), { Draft: 'neutral', Approved: 'success', 'In build': 'info', Done: 'success' });
+  assert.deepEqual(map('DESIGN_STATUS_TONE'), { Draft: 'neutral', Approved: 'success' });
+  for (const page of ['Requirements', 'Tests', 'Feature', 'Build']) {
+    const src = read(`src/pages/${page}.tsx`);
+    assert.match(src, /<Badge tone=\{REQ_STATUS_TONE\[r\.status\]\}>\{r\.status\}<\/Badge>/, `${page} uses REQ_STATUS_TONE`);
+    assert.doesNotMatch(src, /r\.status === '(Draft|Approved|Done)' \?/, `${page} has no inline status colour rule left`);
+    assert.doesNotMatch(src, /const STATUS_TONE = \{ Draft/, `${page} has no own status map`);
+  }
+  const design = read('src/pages/Design.tsx');
+  assert.match(design, /<Badge tone=\{DESIGN_STATUS_TONE\[d\.status\]\}>\{d\.status\}<\/Badge>/, 'Design uses DESIGN_STATUS_TONE');
+});
+
+test('TC-024 (REQ-013): neutral, info and success label text reach 4.5:1 in light and dark mode', () => {
+  const css = read('src/index.css');
+  const block = (sel) => { const s = css.indexOf(`${sel} {`); return css.slice(s, css.indexOf('\n}', s)); };
+  const vars = (b) => Object.fromEntries([...b.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  const light = vars(block(':root')); const dark = { ...light, ...vars(block('[data-theme="dark"]')) };
+  const hex = (t, n) => { let v = t[n]; for (let i = 0; i < 10 && v?.startsWith('var('); i++) v = t[v.slice(6, -1)]; return v; };
+  const lum = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4)).reduce((a, x, i) => a + x * [0.2126, 0.7152, 0.0722][i], 0);
+  const cr = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  const TONES = { neutral: ['color-text-secondary', 'color-bg-muted'], info: ['color-text-info', 'color-bg-info-subtle'], success: ['color-text-success', 'color-bg-success-subtle'] };
+  for (const sel of ['.tone-neutral', '.tone-info', '.tone-success']) assert.ok(css.includes(sel), `${sel} exists`);
+  for (const [mode, t] of Object.entries({ light, dark }))
+    for (const [tone, [fg, bg]] of Object.entries(TONES)) {
+      const c = cr(hex(t, fg), hex(t, bg));
+      assert.ok(c >= 4.5, `${mode} ${tone}: ${c.toFixed(2)}:1`);
+    }
+});
+
+test('TC-025 (REQ-014): below 720 px the stage strip is one stage per row', () => {
+  const css = read('src/index.css');
+  assert.match(css, /\.stage-strip \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/, 'desktop keeps five columns');
+  assert.match(css, /@media \(max-width: 719px\) \{[^}]*\.stage-strip \{[^}]*grid-template-columns: 1fr/, 'one column below 720 px');
+  const feature = read('src/pages/Feature.tsx');
+  assert.match(feature, /className="stage-strip"/);
+  assert.doesNotMatch(feature, /gridTemplateColumns: 'repeat\(5/, 'no inline columns that would override the phone rule');
+});
