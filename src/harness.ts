@@ -7,7 +7,7 @@
  * Without an API key every agent runs in DEMO mode: deterministic outputs, same trace/guardrails/evals.
  */
 import { checkChanges, evalChanges, evalRequirements, evalTests, scanInjection } from './guardrails';
-import { frameworkFiles, specFiles } from './framework';
+import { FRAMEWORK_VERSION, frameworkFiles, specFiles } from './framework';
 import { github } from './github';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
@@ -376,12 +376,12 @@ export async function installFramework(pid: string, opts: { starter: boolean; di
   // never overwrite a repo's own files (README, app code) unless we are scaffolding a brand-new repo
   const changes = files.filter((f) => opts.starter || !existing.has(f.path) || f.path.startsWith('compass/')).map((f) => ({ ...f, action: existing.has(f.path) ? 'update' as const : 'create' as const }));
   if (opts.direct) {
-    await github.commit(token, p.repo, p.repo.defaultBranch, 'chore(compass): install Compass Framework v1.0', changes);
+    await github.commit(token, p.repo, p.repo.defaultBranch, `chore(compass): install Compass Framework v${FRAMEWORK_VERSION}`, changes);
     store.update(pid, (x) => ({ ...x, frameworkInstalled: true, dirty: false }));
     return 'Framework committed to ' + p.repo.defaultBranch;
   }
   const branch = 'compass/install-framework';
-  await github.commit(token, p.repo, branch, 'chore(compass): install Compass Framework v1.0', changes);
+  await github.commit(token, p.repo, branch, `chore(compass): install Compass Framework v${FRAMEWORK_VERSION}`, changes);
   const pr = await github.createPR(token, p.repo, 'Install Compass Framework', branch, `Adds the Compass Framework so any role or AI agent can continue this project:\n\n${changes.map((c) => `- ${c.path}`).join('\n')}\n\nStart with AGENTS.md and compass/handover.md.`);
   store.update(pid, (x) => ({ ...x, frameworkInstalled: true }));
   return `Pull request #${pr.number} opened: ${pr.html_url}`;

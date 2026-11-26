@@ -43,6 +43,7 @@ export interface Requirement {
   ac: string[];            // acceptance criteria (Given/When/Then)
   priority: 'Must' | 'Should' | 'Could';
   status: 'Draft' | 'Approved' | 'In build' | 'Done';
+  intent?: string;         // compass/intent/<file>.md — explicit intent (else the feature's compass/intent/F-xxx.md)
 }
 
 export interface TestCase {
@@ -62,7 +63,7 @@ export interface Spec {
   idea?: Idea;
   requirements: Requirement[];
   tests: TestCase[];
-  decisions: { id: string; title: string; decision: string; date: string }[];
+  decisions: { id: string; title: string; decision: string; date: string; status?: string; context?: string; consequences?: string; reqIds?: string[] }[];
 }
 
 export interface FileChange {
