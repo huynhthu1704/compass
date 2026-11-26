@@ -207,7 +207,7 @@
         ]
       },
       "design": {
-        "status": "Draft",
+        "status": "Approved",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=0-1",
         "summary": "A new \"Team floor\" page under the project in the sidebar. A floor shows the seven agents as characters at desks in pipeline order (Ideation → Requirements → Design → Test design on the top row; Coding → Review → Release back along the bottom row), joined by a corridor. A \"Your approval\" desk collects runs that wait for the Product Owner. Summary chips, a feature filter, Pause motion and a live activity list sit around the floor. Drawn in the honey design system (Bee There brand, rolled out to every page in F-010).",
         "screens": [
@@ -306,7 +306,9 @@
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=13-343"
           }
         ],
-        "notes": "Draft for Product Owner approval. Accessibility: desks are buttons with an accessible name (\"Coding agent, working on F-008: Writing …\"); state is never shown by colour alone (badge text); the activity list is an aria-live region (polite). Responsive: phone layout below 720 px."
+        "notes": "Accessibility: desks are buttons with an accessible name (\"Coding agent, working on F-008: Writing …\"); state is never shown by colour alone (badge text); the activity list is an aria-live region (polite). Responsive: phone layout below 720 px.",
+        "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-26T00:00:00.000Z"
       }
     }
   ],
@@ -448,7 +450,7 @@
       "featureId": "F-009",
       "title": "The Team floor shows every agent at its desk with its current state",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want one page that shows all seven agents at their desks with their current state, so that I can see at a glance who is working, on which feature, and who waits for me.",
       "ac": [
@@ -463,7 +465,7 @@
       "featureId": "F-009",
       "title": "What each agent is doing appears live in its speech bubble and the activity list",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want to see what each working agent is doing right now, so that I can follow the team without opening every run.",
       "ac": [
@@ -476,7 +478,7 @@
       "featureId": "F-009",
       "title": "Handoffs move as cards between desks, and a failed review sends the card back",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want to see work moving from one agent to the next, so that I understand the flow and spot rework.",
       "ac": [
@@ -489,7 +491,7 @@
       "featureId": "F-009",
       "title": "Approvals can be given from the Team floor with the same result as from Agent runs",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want to approve or reject waiting work straight from the Team floor, so that nothing waits on me longer than needed.",
       "ac": [
@@ -502,7 +504,7 @@
       "featureId": "F-009",
       "title": "The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want the Team floor to be comfortable for everyone and free to run, so that I can use and demo it anywhere.",
       "ac": [
