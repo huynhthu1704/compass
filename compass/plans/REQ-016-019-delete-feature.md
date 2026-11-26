@@ -1,6 +1,6 @@
 # Plan: REQ-016 … REQ-019 Delete a feature and close its GitHub issues
 
-Feature: F-012 · Requirements: REQ-016, REQ-017, REQ-018, REQ-019 · Test cases: TC-029 … TC-037
+Feature: F-012 · Requirements: REQ-016, REQ-017, REQ-018, REQ-019 · Test cases: TC-029 … TC-038
 Intent: compass/intent/2026-11-26-delete-feature.md · Design: compass/design/F-012.md (Figma SCR-1, SCR-2, SCR-3)
 
 ## Files
@@ -19,7 +19,7 @@ Intent: compass/intent/2026-11-26-delete-feature.md · Design: compass/design/F-
 - src/pages/Overview.tsx — shows `DeleteNotice` after a delete
 - src/pages/Connect.tsx — token help asks for Issues: Read & write
 - src/index.css — dialog, backdrop, solid red button and notice styles from the honey tokens; phone layout below 720 px
-- tests/deleteFeature.test.mjs — TC-029, TC-030 (logic part), TC-032 … TC-037
+- tests/deleteFeature.test.mjs — TC-029, TC-030 (logic part), TC-032 … TC-038 (TC-031 is a manual check)
 - No spec status change in this PR (would regenerate four views and pass the 12-file limit); statuses move with the release,
   as in #28.
 
@@ -47,7 +47,7 @@ Intent: compass/intent/2026-11-26-delete-feature.md · Design: compass/design/F-
 - **Pull requests of a built feature:** never closed or merged; only listed in the warning (TC-037).
 
 ## Proof
-- `npm test`: TC-029, TC-030, TC-032 … TC-037 pass, plus all earlier tests.
+- `npm test`: TC-029, TC-030, TC-032 … TC-038 pass, plus all earlier tests.
 - `node compass/check-spec.mjs`, `node compass/check-guardrails.mjs origin/main`, `npm run build` pass.
 - Screenshots of the dialog (no code, with code, phone) and of the board notice in a demo project; TC-031 checked by hand
   with the keyboard at 390 px.

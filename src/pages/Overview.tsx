@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { go } from '../App';
 import { syncLabel, syncNow, useSync } from '../autosync';
+import { DeleteNotice } from '../components/DeleteFeatureDialog';
 import { STATUS_TONE } from '../components/RunView';
 import { handoverMd } from '../framework';
 import { agent, installFramework, pullSpec, startRun } from '../harness';
@@ -47,6 +48,8 @@ export function OverviewPage({ p }: { p: Project }) {
           <Button variant="accent" onClick={() => setAdding(true)}>+ New feature</Button>
         </>}
       />
+
+      <DeleteNotice pid={p.id} />
 
       {adding && (
         <section className="card pad-xl stack gap-md" style={{ borderColor: 'var(--color-bg-accent)' }}>

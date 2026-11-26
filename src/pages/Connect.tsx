@@ -25,7 +25,7 @@ export function ConnectPage() {
 
       <section className="card pad-xl stack gap-md">
         <div className="row gap-sm"><h2 className="h3">GitHub</h2>{settings.githubUser ? <Badge tone="success">@{settings.githubUser}</Badge> : <Badge tone="warning">not connected</Badge>}</div>
-        <Field label="Fine-grained personal access token" help={<>Create one at <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">github.com/settings/personal-access-tokens</a> → Repository access: <em>All repositories</em> (or selected) → Permissions: <strong>Contents, Pull requests, Workflows, Actions, Pages: Read & write</strong>, <strong>Administration: Read & write</strong> (only to create repos). Set an expiry date.</>}>
+        <Field label="Fine-grained personal access token" help={<>Create one at <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">github.com/settings/personal-access-tokens</a> → Repository access: <em>All repositories</em> (or selected) → Permissions: <strong>Contents, Pull requests, Issues, Workflows, Actions, Pages: Read & write</strong>, <strong>Administration: Read & write</strong> (only to create repos). Set an expiry date.</>}>
           <input className="input mono" type="password" value={gh} placeholder="github_pat_…" onChange={(e) => setGh(e.target.value)} autoComplete="off" />
         </Field>
       </section>
