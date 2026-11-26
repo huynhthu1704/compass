@@ -18,8 +18,9 @@ Intent: compass/intent/2026-11-26-honey-brand.md · Design: compass/design/F-010
 - tests/honeyTheme.test.mjs — TC-014 tokens match the design system, TC-015 contrast ≥ 4.5:1 for every text token on
   canvas, surface, subtle and honey-subtle in both modes, TC-016 typefaces and weights, TC-017 no old teal and no
   hard-coded colour outside the token blocks in src/, TC-019 one meaning per state colour
-- compass/spec.json + generated views (requirements.md, features.md, features/F-010.md, handover.md) — REQ-010…012 In build,
-  TC-014/015/016/017/019 Pass
+- compass/spec.json + generated views (requirements.md, features.md, features/F-010.md, handover.md) — REQ-010…012 In build.
+  Test case statuses stay "Not run" in the spec here (marking them would add compass/tests.md, a 13th file); their results
+  are reported in the PR and recorded with the release.
 
 ## Steps
 1. Commit this plan.
@@ -32,7 +33,7 @@ Intent: compass/intent/2026-11-26-honey-brand.md · Design: compass/design/F-010
 6. Run `npm test`, `node compass/check-spec.mjs`, `npm run build`; take light/dark screenshots of the main pages
    (Projects, Feature board, a feature stage, Agent runs, Release, Knowledge, Connections, Agent architecture) at desktop
    and phone width with Playwright and compare them with the Figma design system.
-7. Set REQ-010…012 to In build and the automated TCs to Pass in spec.json; regenerate views with the portal's specFiles().
+7. Set REQ-010…012 to In build in spec.json; regenerate views with the portal's specFiles(); report the TC results in the PR.
 
 ## Risks
 - **Contrast:** honey is a light colour, so white text on it would be unreadable. `--color-text-on-brand` is dark ink in both
