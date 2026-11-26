@@ -482,18 +482,24 @@ export async function installFramework(pid: string, opts: { starter: boolean; di
   if (!token || !p.repo) throw new Error('Connect GitHub first');
   const files = frameworkFiles(p, opts);
   const existing = new Set((await github.tree(token, p.repo)).map((f) => f.path));
-  // never overwrite a repo's own files (README, app code) unless we are scaffolding a brand-new repo
-  const changes = files.filter((f) => opts.starter || !existing.has(f.path) || f.path.startsWith('compass/')).map((f) => ({ ...f, action: existing.has(f.path) ? 'update' as const : 'create' as const }));
+  // On an existing repo, only ADD missing framework files: a repo may have its own, stronger versions of the
+  // checks, docs, templates and workflows, so they are never overwritten. The views generated from the spec
+  // (spec.json, requirements/tests/handover…, intent/design F-xxx.md) are always refreshed.
+  // A brand-new scaffolded repo (starter) gets every file.
+  const generated = new Set(specFiles(p).map((f) => f.path));
+  const kept = files.filter((f) => !opts.starter && existing.has(f.path) && !generated.has(f.path)).map((f) => f.path);
+  const changes = files.filter((f) => opts.starter || !existing.has(f.path) || generated.has(f.path)).map((f) => ({ ...f, action: existing.has(f.path) ? 'update' as const : 'create' as const }));
+  const keptNote = kept.length ? `\n\nKept the repo's own version of ${kept.length} file(s): ${kept.join(', ')}` : '';
   if (opts.direct) {
     await github.commit(token, p.repo, p.repo.defaultBranch, `chore(compass): install Compass Framework v${FRAMEWORK_VERSION}`, changes);
     store.update(pid, (x) => ({ ...x, frameworkInstalled: true, dirty: false }));
-    return 'Framework committed to ' + p.repo.defaultBranch;
+    return `Framework committed to ${p.repo.defaultBranch}.${keptNote}`;
   }
   const branch = 'compass/install-framework';
   await github.commit(token, p.repo, branch, `chore(compass): install Compass Framework v${FRAMEWORK_VERSION}`, changes);
-  const pr = await github.createPR(token, p.repo, 'Install Compass Framework', branch, `Adds the Compass Framework so any role or AI agent can continue this project:\n\n${changes.map((c) => `- ${c.path}`).join('\n')}\n\nStart with AGENTS.md and compass/handover.md.`);
+  const pr = await github.createPR(token, p.repo, 'Install Compass Framework', branch, `Adds the Compass Framework so any role or AI agent can continue this project:\n\n${changes.map((c) => `- ${c.path}`).join('\n')}${keptNote}\n\nStart with AGENTS.md and compass/handover.md.`);
   store.update(pid, (x) => ({ ...x, frameworkInstalled: true }));
-  return `Pull request #${pr.number} opened: ${pr.html_url}`;
+  return `Pull request #${pr.number} opened: ${pr.html_url}${keptNote}`;
 }
 
 export async function commitSpec(pid: string) {
