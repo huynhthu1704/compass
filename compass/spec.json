@@ -606,7 +606,7 @@
       "featureId": "F-010",
       "title": "Compass colours follow the honey design system in light and dark mode",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-honey-brand.md",
       "story": "As the product owner, I want Compass to use the Bee There honey colours, so that both products look like one family.",
       "ac": [
@@ -620,7 +620,7 @@
       "featureId": "F-010",
       "title": "Compass type, shapes and logo follow the honey design system",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-honey-brand.md",
       "story": "As the product owner, I want Compass to have the same friendly type and shapes as Bee There, so that the brand feels the same, not only the colours.",
       "ac": [
@@ -634,7 +634,7 @@
       "featureId": "F-010",
       "title": "No page keeps the old teal theme",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-26-honey-brand.md",
       "story": "As the product owner, I want the rebrand to reach every page, so that no screen still looks like the old Compass.",
       "ac": [

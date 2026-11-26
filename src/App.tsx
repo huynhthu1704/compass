@@ -31,7 +31,7 @@ function useRoute() {
 }
 
 const Logo = () => (
-  <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden><rect width="32" height="32" rx="8" fill="var(--color-bg-brand)" /><path d="M16 6l4 10-4 10-4-10z" fill="#F5B544" /><circle cx="16" cy="16" r="2" fill="#fff" /></svg>
+  <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden><rect width="32" height="32" rx="10" fill="var(--color-bg-brand)" /><path d="M16 6l4 10-4 10-4-10z" fill="var(--ink-900)" /><circle cx="16" cy="16" r="2" fill="var(--honey-50)" /></svg>
 );
 
 export default function App() {
