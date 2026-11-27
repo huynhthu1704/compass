@@ -1,45 +1,56 @@
-# Intent: only permitted people create projects, and only in our GitHub account
+# Intent: each person works with their own GitHub token; only permitted people create projects
 
 Status: Draft
-Requested: 2026-11-27 by the Product Owner, in chat (after team access went live)
+Requested: 2026-11-27 by the Product Owner, in chat (after team access went live; revised the same day: "should we ask
+the user to connect with their github account to use their own token so the system can have a clear audit trace")
 
 ## What we want
-With sign-in on, a person can bring a new project into Compass only when the super admin allows it:
-- The super admin can always import a repository or create a new project.
-- The super admin can give a person the permission **"Can create projects"** on a new **Users** screen (only the super
-  admin sees it, and only the super admin grants or removes the permission).
-- A person with that permission can create a **new GitHub repository**, but only in the GitHub account or organization
-  the super admin configured, using a **creator token** the super admin set. They become the Admin of the new
-  project's team.
-- Nobody else sees "Import from GitHub", "+ New project" or a personal GitHub token box; they see "Ask the super admin
-  to add a project". Team members always work through the project's token, set by the project Admin.
-- Project Admins keep managing their own project's team and token.
+With sign-in on:
+- **Every GitHub change has a real author.** A team member saves to GitHub, approves agent changes or releases with
+  **their own** fine-grained GitHub token, connected on the Connections page and limited to the project's repository.
+  GitHub then shows the real person on each commit and pull request. Without a token they can still view everything, and
+  Compass says "Connect your GitHub account to make changes".
+- **Who is who:** when a person connects, Compass records their GitHub username next to their email on the project's
+  team, so the super admin and the Admins can match people to GitHub accounts.
+- **The shared project token is retired** (reverses ADR-011): the Team page no longer has a project token, the stored
+  token is deleted, and Compass never uses one person's token for another person's work.
+- **Project creation is controlled:** only the super admin, and people the super admin marks **"Can create projects"** on
+  a new **Users** screen (only the super admin sees it and grants or removes the permission), see "Import from GitHub"
+  and "+ New project". A permitted person creates the repository with their own token, and only in the GitHub account
+  or organization the super admin configured. They become the Admin of the new project's team. Everyone else sees
+  "Ask the super admin to add a project".
+- Compass keeps its own approval records in Firebase, so each approval is traceable twice: in Compass and on GitHub.
 - With sign-in off, or in the demo, nothing changes.
 
 ## Done when
-- A signed-in team member without the permission sees no Import, no New project and no GitHub token box, and Compass
-  never uses a personal GitHub token for a team project.
-- A person with the permission creates a project: the repository appears in the configured account or organization,
-  and its team lists them as Admin.
-- Only the super admin can grant the permission, set the account/organization and the creator token; the Firestore rules
-  refuse anyone else.
+- A commit or pull request made through Compass on a team project shows the person who clicked as its author on GitHub.
+- A team member without a token can view but not change anything on GitHub, and is told how to connect.
+- The Team page shows each member's GitHub username once they have connected; there is no project token any more.
+- A member without "Can create projects" sees no Import and no New project. A permitted person creates a repository
+  only in the configured account or organization, and its team lists them as Admin.
+- Only the super admin can grant "Can create projects" and set the account or organization; the Firestore rules refuse
+  anyone else.
 
 ## Why
-After team access went live, any signed-in member could still paste their own GitHub token, import their own
-repositories or create new ones through Compass. Nothing leaked (only the super admin can create a project's team), but
-the buttons were there and half worked. The Product Owner wants project creation controlled by the super admin.
+Today every GitHub change made through Compass on a team project shows the shared token's owner, whoever clicked, so
+GitHub's history cannot say who did what. The shared token is also readable by every member's browser (ADR-011) and
+must be replaced whenever someone leaves. Separately, any signed-in member could still paste a token and import or create
+repositories. Personal tokens give a clear audit trail, remove the shared secret, and keep each person within their own
+GitHub permissions.
 
 ## Constraints
-- Free Firebase Spark plan; no server code (ADR-010). The rules are the security boundary.
-- The creator token can create repositories in the configured account, and every permitted person's browser can read it
-  (as with project tokens, ADR-011). It must be a fine-grained token limited to that account/organization, with an expiry.
+- Free Firebase Spark plan; no server code (ADR-010). The Firestore rules are the security boundary for Compass data;
+  GitHub's own permissions are the boundary for repositories.
+- Each team member needs a GitHub account and must be added by the repository owner as a collaborator. Compass guides
+  them with a short checklist; it cannot invite people on GitHub for them.
 - `firestore.rules` changes need the Product Owner's review and publishing in the Firebase console.
+- Retiring the project token removes a live feature (REQ-034) and deletes stored tokens: the Product Owner approves it here.
 - Compass cannot stop anyone using GitHub directly; it controls only what Compass offers.
 
 ## Out of scope
-- Creating repositories in a person's own GitHub account.
+- A "Connect with GitHub" button (OAuth) instead of pasting a token: logged on the backlog, #111.
 - Project Admins granting "Can create projects".
-- Moving the Anthropic key to the project (decided separately; see below).
+- Creating repositories outside the configured account or organization.
 
 ## Open question for the Product Owner
 - Anthropic key on Connections: (A) keep it per person (recommended: their own cost; without it agents run in demo
