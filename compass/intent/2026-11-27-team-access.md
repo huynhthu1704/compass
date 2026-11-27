@@ -105,5 +105,5 @@ Feature F-015 · Team access: Google sign-in, project teams and roles (decisions
 - REQ-036 — Every approval records the email and role of the person who gave it (#45)
 - REQ-037 — Each approval is recorded in Firebase, whose rules accept it only from the owning role (#82)
 - REQ-038 — Approvals in the repo that Firebase does not confirm are flagged (#83)
-- REQ-039 — With sign-in on, roles come from the team instead of the role picker
-- REQ-040 — A signed-in person can try the demo with a role of their choice
+- REQ-039 — With sign-in on, roles come from the team instead of the role picker (#88)
+- REQ-040 — A signed-in person can try the demo with a role of their choice (#89)

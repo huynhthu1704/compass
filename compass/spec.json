@@ -1007,7 +1007,7 @@
         ]
       },
       "design": {
-        "status": "Draft",
+        "status": "Approved",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-704",
         "summary": "People sign in on a single centred card (\"Sign in to Compass\" + \"Sign in with Google\"); a Google account on no team lands on \"You have no access yet\" with its email, Reload and Sign out, and no project data. Inside a project, Admins and the super admin get a new \"Team\" item in the sidebar (below Knowledge). The Team page has three cards: Add person (email + role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin; several can be ticked), the team list (email, role chips, Edit roles, Remove; the only Admin cannot be removed) and the project GitHub token (masked, Test, Replace, fine-grained token help, and a reminder to replace it after removing someone). Each gate card on a feature page shows its button enabled for the signed-in person's roles and greyed out with \"Needs the <role> role\" otherwise; approvals show \"Approved by <email> (<role>)\"; an approval that Firebase does not confirm shows a red \"Unconfirmed\" badge. The sidebar account card shows the Google email (its menu has Sign out) and the role picker shows \"My roles: …\". On phones the Team page stacks the cards, role checkboxes wrap, and Edit roles / Remove move into a ⋮ menu per row. With sign-in on, the \"What's your role?\" onboarding screen is not shown: roles come from the team. Someone on no team can \"Try the demo\" from the no-access screen (team members from the sidebar account menu): they pick a role on the existing role screen and see the sample projects with a honey \"Demo\" banner and a demo role picker in the sidebar.",
         "screens": [
@@ -1171,7 +1171,9 @@
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=191-915"
           }
         ],
-        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change."
+        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change. The brand block uses the Logo / Compass component from the Components page.",
+        "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-27T00:00:00.000Z"
       }
     }
   ],
@@ -1945,21 +1947,23 @@
       "featureId": "F-015",
       "title": "With sign-in on, roles come from the team instead of the role picker",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want people's roles to come only from the team list, so that nobody can give themselves a role by picking it.",
       "ac": [
         "Given Firebase is configured and a person signs in\nWhen the portal opens\nThen the \"What's your role?\" screen is not shown and their roles on each project come from that project's team",
         "Given a signed-in person on a real project\nWhen they look at the sidebar\nThen it shows \"My roles: …\" read-only for that project, and nothing in the portal lets them change their own roles",
         "Given Firebase is not configured\nWhen the portal opens\nThen the \"What's your role?\" screen and the sidebar role picker work as today"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
       "id": "REQ-040",
       "featureId": "F-015",
       "title": "A signed-in person can try the demo with a role of their choice",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As someone who has signed in but is not on a team yet, I want to try Compass in a role of my choice, so that I can see how it works before my admin adds me.",
       "ac": [
@@ -1967,7 +1971,9 @@
         "Given a signed-in person clicks \"Try the demo\" (from the no-access screen, or from the sidebar account menu when they are on a team)\nWhen the demo opens\nThen they pick a role on the \"What's your role?\" screen and see only the sample demo projects, with a banner \"Demo — sample data, kept in this browser only\" and \"Leave demo\"",
         "Given the demo is open\nWhen the person changes their demo role in the sidebar, approves gates or edits the sample project\nThen it works like demo mode today: nothing is read from or written to Firebase or GitHub, and no real project, team or token is shown",
         "Given the demo is open\nWhen the person clicks \"Leave demo\"\nThen they return to their projects, or to \"You have no access yet\" if they are on no team"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     }
   ],
   "tests": [
