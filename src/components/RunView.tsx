@@ -3,6 +3,7 @@ import { canApprove, ideaLabel, makeQuote, reqText, screenText, selectionSource,
 import { replyingNow } from '../followUp';
 import { agent, approveRun, rejectRun } from '../harness';
 import { blocked, pct } from '../guardrails';
+import { traceOpen, traceSummary, traceToggleLabel } from '../trace';
 import { store, useStore } from '../store';
 import type { Project, Quote, Run, StepKind } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
@@ -27,6 +28,11 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const replying = replyingNow(r); // a stored flag from an interrupted follow-up does not count
   const gate = canApprove(r);
+  // REQ-045: her own fold/unfold choice, kept per run; null until she uses the toggle
+  const [traceManual, setTraceManual] = useState<{ id: string; open: boolean } | null>(null);
+  const traceIsOpen = traceOpen(r.status, traceManual?.id === r.id ? traceManual.open : null);
+  const trace = traceSummary(r.steps);
+  const traceId = `trace-${r.id}`;
   const isBlocked = blocked(r.guardrails);
   const needsProt = r.guardrails.some((g) => (g.id === 'G3' || g.id === 'G6' || g.id === 'G7') && g.level === 'warn');
   const tokens = r.steps.reduce((x, s) => x + (s.tokens || 0), 0);
@@ -96,8 +102,14 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
       <div className={`grid-2 run-grid${compact ? ' compact' : ''}`}>
         <div className="stack gap-md">
           <section className="card stack gap-sm">
-            <div className="overline t-tertiary">Trace · harness → RAG → tools → guardrails & evals</div>
-            <div className="timeline">
+            <div className="trace-head">
+              <span className="t-tertiary" aria-hidden="true">{traceIsOpen ? '▾' : '▸'}</span>
+              <span className="overline t-tertiary">Trace · harness → RAG → tools → guardrails & evals</span>
+              <span className="mono-sm t-tertiary">{trace.steps} step{trace.steps === 1 ? '' : 's'}</span>
+              {trace.failed > 0 && <Badge tone="danger">{trace.failed} failed</Badge>}
+              <button type="button" className="btn secondary sm" aria-expanded={traceIsOpen} aria-controls={traceId} onClick={() => setTraceManual({ id: r.id, open: !traceIsOpen })}>{traceToggleLabel(traceIsOpen)} {traceIsOpen ? '▴' : '▾'}</button>
+            </div>
+            {traceIsOpen && <div id={traceId} className="timeline">
               {r.steps.map((s, i) => {
                 const [ic, cls] = ICON[s.kind];
                 const c = s.ok === false ? 'bad' : s.ok === true && s.kind !== 'tool_result' ? 'ok' : cls;
@@ -110,7 +122,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
                 );
               })}
               {r.status === 'running' && <div className="ev"><span className="ico model">…</span><span className="body-sm t-tertiary">working…</span></div>}
-            </div>
+            </div>}
           </section>
           <ConversationThread r={r} onCompare={(n) => { setView(null); setCompareN(n); }} />
         </div>
