@@ -10,6 +10,7 @@ import { Onboarding } from './pages/Onboarding';
 import { OverviewPage } from './pages/Overview';
 import { ProjectsPage } from './pages/Projects';
 import { ReleasePage } from './pages/Release';
+import { TeamPage } from './pages/Team';
 import { DesignPage } from './pages/Design';
 import { RequirementsPage } from './pages/Requirements';
 import { RunPage, RunsPage } from './pages/Runs';
@@ -67,7 +68,7 @@ export default function App() {
     page = fs === 'idea' ? <IdeaPage p={p} fid={fid} /> : fs === 'requirements' ? <RequirementsPage p={p} fid={fid} /> : fs === 'design' ? <DesignPage p={p} fid={fid} /> : fs === 'tests' ? <TestsPage p={p} fid={fid} />
       : fs === 'build' ? <BuildPage p={p} fid={fid} /> : <FeaturePage p={p} fid={fid} />;
   } else if (p) {
-    page = sub === 'floor' ? <TeamFloorPage p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
+    page = sub === 'floor' ? <TeamFloorPage p={p} /> : sub === 'team' ? <TeamPage p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
       : sub === 'runs' && parts[3] ? <RunPage p={p} rid={parts[3]} /> : sub === 'runs' ? <RunsPage p={p} /> : <OverviewPage p={p} />;
   } else page = <ProjectsPage />;
 

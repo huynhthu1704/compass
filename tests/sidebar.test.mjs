@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { WORKSPACE_LINKS, accountCard, approvalCount, featureRows, projectLinks, projectState, themeToggle } from '../src/sidebar.ts';
+import { accountCard, approvalCount, featureRows, projectLinks, projectState, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS } from '../src/sidebar.ts';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const runs = (...statuses) => statuses.map((status) => ({ status }));
@@ -97,4 +97,10 @@ test('TC-406 (REQ-074): no "AI dev portal" tagline in the UI', async () => {
   for (const f of files) assert.doesNotMatch(noComments(read(`src/${f}`)), /AI dev portal/i, `src/${f} shows the tagline`);
   assert.match(read('src/components/Sidebar.tsx'), /<div className="brand-text">Compass<\/div>/, 'the brand is "Compass" only');
   assert.match(read('src/pages/Onboarding.tsx'), /<div className="overline t-brand">Compass<\/div>/, 'the overline is "Compass"');
+});
+
+test('F-015 (REQ-030, REQ-032): the Team item and the signed-in account card', () => {
+  assert.deepEqual(teamLink('p1'), { key: 'team', label: 'Team', path: '/p/p1/team', icon: 'team', title: 'People on this project and their roles' });
+  assert.deepEqual(signedInCard('ba@example.com', false), { initial: 'B', name: 'ba@example.com', state: 'Google sign-in', tone: 'success' });
+  assert.equal(signedInCard('po@example.com', true).state, 'Google · super admin');
 });

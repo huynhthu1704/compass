@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, approvedBy, canPass, gateHint, isSuperAdmin, removeMember, setRoles } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -84,4 +84,28 @@ test('TC-071 (REQ-036): approvedBy names the person and the role that owns the g
   assert.equal(approvedBy('ba@example.com', ['BA', 'QA'], 'tests'), 'ba@example.com (QA)');
   assert.equal(approvedBy('po@example.com', ['Admin'], 'design', true), 'po@example.com (super admin)');
   assert.equal(approvedBy('dev@example.com', ['Dev'], 'requirements'), null, 'no role that owns the gate → no audit text');
+});
+
+test('TC-060, TC-062 (REQ-030, REQ-031): a team becomes a Firestore document with Admin only in admins, and back', () => {
+  const team = [{ email: 'PO@example.com', roles: ['PO', 'Admin'] }, { email: 'ba@example.com', roles: ['QA', 'BA'] }];
+  const d = teamDoc('Travel Journal', { owner: 'o', name: 'r', defaultBranch: 'main' }, team);
+  assert.deepEqual(d, {
+    name: 'Travel Journal', repo: { owner: 'o', name: 'r' },
+    members: ['po@example.com', 'ba@example.com'], admins: ['po@example.com'],
+    team: { 'po@example.com': ['PO'], 'ba@example.com': ['BA', 'QA'] },
+  });
+  assert.deepEqual(membersFromDoc(d), [{ email: 'po@example.com', roles: ['PO', 'Admin'] }, { email: 'ba@example.com', roles: ['BA', 'QA'] }]);
+  assert.deepEqual(membersFromDoc({ ...d, team: { ...d.team, 'ba@example.com': ['BA', 'Admin'] } })[1].roles, ['BA'], "'Admin' in a role list is ignored");
+});
+
+test('TC-073 (REQ-038 AC1): the baseline lists the approvals already in the spec', () => {
+  const spec = {
+    features: [{ id: 'F-001', design: { status: 'Approved', approvedBy: 'PO' } }, { id: 'F-002', design: { status: 'Draft' } }, { id: 'F-003' }],
+    requirements: [{ id: 'REQ-001', status: 'Approved', approvedBy: 'the Product Owner (in chat)' }, { id: 'REQ-002', status: 'Draft' }, { id: 'REQ-003', status: 'Done' }],
+  };
+  assert.deepEqual(baselineFrom(spec), [
+    { item: 'F-001', gate: 'design', approvedBy: 'PO' },
+    { item: 'REQ-001', gate: 'requirements', approvedBy: 'the Product Owner (in chat)' },
+    { item: 'REQ-003', gate: 'requirements', approvedBy: '' },
+  ]);
 });

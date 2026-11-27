@@ -2,7 +2,7 @@
 // Off unless the build has VITE_FIREBASE_CONFIG (the deploy workflow passes the FIREBASE_CONFIG repository variable).
 // Without it the portal works exactly as before (REQ-032 AC5). The firebase library is only loaded when it is on.
 import { useSyncExternalStore } from 'react';
-import { accessFor, normalizeEmail, type Member, type TeamRole } from './team';
+import { accessFor, membersFromDoc, normalizeEmail, type BaselineApproval, type Member, type TeamDoc, type TeamRole } from './team';
 import type { RepoRef } from './types';
 
 export interface FirebaseWebConfig { apiKey: string; authDomain: string; projectId: string; appId: string; [k: string]: string }
@@ -44,7 +44,17 @@ function load(): Promise<Fb> {
   fb ||= (async () => {
     const [app, auth, fs] = await Promise.all([import('firebase/app'), import('firebase/auth'), import('firebase/firestore')]);
     const a = app.initializeApp(CONFIG);
-    return { auth, fs, authApp: auth.getAuth(a), db: fs.getFirestore(a) };
+    const authApp = auth.getAuth(a), db = fs.getFirestore(a);
+    // Local testing only (npm run dev with VITE_FIREBASE_EMULATORS=1): use the Auth and Firestore emulators.
+    if (import.meta.env?.DEV && import.meta.env?.VITE_FIREBASE_EMULATORS) {
+      auth.connectAuthEmulator(authApp, 'http://127.0.0.1:9099', { disableWarnings: true });
+      fs.connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      // Test hook: the emulator accepts an unsigned Google credential, so UI tests can sign in without Google's popup
+      // script (apis.google.com). Only exists in local dev builds with the emulators; never in the live build.
+      (window as unknown as Record<string, unknown>).__compassTestSignIn = (email: string) =>
+        auth.signInWithCredential(authApp, auth.GoogleAuthProvider.credential(JSON.stringify({ sub: email, email, email_verified: true })));
+    }
+    return { auth, fs, authApp, db };
   })();
   return fb;
 }
@@ -72,7 +82,8 @@ export async function startSession() {
 async function loadAccess(rawEmail: string, verified: boolean) {
   const email = normalizeEmail(rawEmail);
   if (!verified) { set({ status: 'signed-in', email, superAdmin: false, access: [] }); return; }
-  set({ status: 'loading', email });
+  // A refresh (after a team save or Reload) keeps the current screen; only the first load shows "Loading…".
+  if (session.status !== 'signed-in' || session.email !== email) set({ status: 'loading', email });
   try {
     const { fs, db } = await load();
     const accessRef = fs.doc(db, 'config', 'access');
@@ -89,9 +100,7 @@ async function loadAccess(rawEmail: string, verified: boolean) {
     const q = superAdmin ? fs.collection(db, 'projects') : fs.query(fs.collection(db, 'projects'), fs.where('members', 'array-contains', email));
     const docs = (await fs.getDocs(q)).docs.map((d) => {
       // Admin comes only from `admins` (one source of truth, as in firestore.rules); 'Admin' in a role list is ignored.
-      const team = (d.data().team || {}) as Record<string, TeamRole[]>;
-      const admins = ((d.data().admins || []) as string[]).map(normalizeEmail);
-      return { id: d.id, team: Object.entries(team).map(([e, roles]): Member => ({ email: e, roles: [...roles.filter((r) => r !== 'Admin'), ...(admins.includes(normalizeEmail(e)) ? ['Admin' as const] : [])] })) };
+      return { id: d.id, team: membersFromDoc(d.data() as Partial<TeamDoc>) };
     });
     if (!stillSignedIn(email)) return; // signed out (or switched account) while loading
     set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins), error: undefined });
@@ -121,4 +130,32 @@ export async function reloadAccess() {
   const { authApp } = await load();
   const u = authApp.currentUser;
   if (u) await loadAccess(u.email || '', u.emailVerified);
+}
+
+// ---- Team page (SCR-3) ------------------------------------------------------------------------------------------------
+
+/** The project's team, or null when it has no team yet. */
+export async function loadTeam(key: string): Promise<{ name: string; members: Member[] } | null> {
+  const { fs, db } = await load();
+  const snap = await fs.getDoc(fs.doc(db, 'projects', key));
+  if (!snap.exists()) return null;
+  const d = snap.data() as TeamDoc;
+  return { name: d.name, members: membersFromDoc(d) };
+}
+
+/** Saves the whole team document (Admins of the project or the super admin; the rules check the rest). */
+export async function saveTeam(key: string, doc: TeamDoc) {
+  const { fs, db } = await load();
+  await fs.setDoc(fs.doc(db, 'projects', key), doc);
+  await reloadAccess();
+}
+
+/** The super admin creates a project's first team together with its approval baseline, in one write (REQ-038 AC1). */
+export async function createFirstTeam(key: string, doc: TeamDoc, approvals: BaselineApproval[]) {
+  const { fs, db } = await load();
+  const batch = fs.writeBatch(db);
+  batch.set(fs.doc(db, 'projects', key), doc);
+  batch.set(fs.doc(db, 'projects', key, 'baseline', 'initial'), { approvals });
+  await batch.commit();
+  await reloadAccess();
 }

@@ -2,7 +2,7 @@
 // Types-only imports, so Node runs this file directly in tests/sidebar.test.mjs.
 import type { Feature, Run, Stage } from './types.ts';
 
-export type IconName = 'projects' | 'architecture' | 'board' | 'floor' | 'runs' | 'release' | 'knowledge';
+export type IconName = 'projects' | 'architecture' | 'board' | 'floor' | 'runs' | 'release' | 'knowledge' | 'team';
 export type NavLink = { key: string; label: string; path: string; icon: IconName; title?: string; count?: ApprovalCount };
 export type ApprovalCount = { n: number; label: string; title: string };
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
@@ -60,4 +60,12 @@ export function accountCard(githubUser?: string): { initial: string; name: strin
 export function themeToggle(theme: 'light' | 'dark'): { next: 'light' | 'dark'; label: string; icon: 'sun' | 'moon' } {
   const next = theme === 'dark' ? 'light' : 'dark';
   return { next, label: `Switch to ${next} theme`, icon: next === 'dark' ? 'moon' : 'sun' };
+}
+
+/** F-015 SCR-3: the Team item, shown after the project links to Admins of the project and the super admin. */
+export const teamLink = (projectId: string): NavLink => ({ key: 'team', label: 'Team', path: `/p/${projectId}/team`, icon: 'team', title: 'People on this project and their roles' });
+
+/** F-015 REQ-032 AC2: the account card when signed in with Google. */
+export function signedInCard(email: string, superAdmin: boolean): { initial: string; name: string; state: string; tone: Tone } {
+  return { initial: (email.slice(0, 1) || '?').toUpperCase(), name: email, state: superAdmin ? 'Google · super admin' : 'Google sign-in', tone: 'success' };
 }
