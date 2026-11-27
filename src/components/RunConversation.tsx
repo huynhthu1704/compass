@@ -1,9 +1,9 @@
 /**
  * F-020 — quote an agent answer and ask for details or a revision (REQ-050 … REQ-054).
- * Quote blocks, the reply box (Revise → vN / Ask), the conversation thread, the version picker and the compare view.
+ * Quote blocks, one reply card per quote (Revise → vN / Ask / Cancel), the Ask box, the conversation thread, the version picker and the compare view.
  * Design: compass/design/F-020.md (Figma SCR-1 … SCR-4).
  */
-import { useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { useState } from 'react';
 import { canAsk, canRevise, canSend, revisableQuotes, versionItems } from '../conversation';
 import { replyingNow, replyToRun } from '../followUp';
 import type { Project, Quote, Run, RunVersion } from '../types';
@@ -26,42 +26,63 @@ export const QuotePill = ({ label, onQuote }: { label: string; onQuote: () => vo
   <button type="button" className="quote-pill" onClick={onQuote} aria-label={`Quote ${label}`}>❝ Quote</button>
 );
 
-/** Reply to the agent (SCR-1, SCR-3, SCR-4 B/D/E). */
-export function ReplyBox({ p, r, quotes, setQuotes, inputRef }: { p: Project; r: Run; quotes: Quote[]; setQuotes: Dispatch<SetStateAction<Quote[]>>; inputRef: RefObject<HTMLTextAreaElement | null> }) {
+/** An open reply card: one quote, its own message, Revise / Ask / Cancel (REQ-050, REQ-051; SCR-1, SCR-3). */
+export interface Card { id: string; quote: Quote }
+
+/** Status line shared by the cards and the Ask box while the agent works (SCR-4 E). */
+const workingHint = (replying: Run['replying']) => `${replying === 'revise' ? 'The agent is revising' : 'The agent is answering'} — wait until it finishes.`;
+
+/**
+ * One reply per quote: its own message, Revise → vN, Ask and Cancel. Esc in the card closes it like Cancel. A sent card
+ * closes; a failed one stays open with its message, so nothing typed is lost.
+ */
+export function ReplyCard({ p, r, card, onClose }: { p: Project; r: Run; card: Card; onClose: () => void }) {
   const [message, setMessage] = useState('');
   const { busy, run } = useAction();
-  const reply = { quotes, message };
   const replying = replyingNow(r);
   const working = busy || !!replying;
   const rev = canRevise({ ...r, replying });
   const nextV = (r.versions?.length || 1) + 1;
-  const send = (kind: 'ask' | 'revise') => run(async () => {
-    const sent = quotes;
-    const msg = await replyToRun(p.id, r.id, kind, sent, message);
-    setQuotes((now) => now.filter((q) => !sent.includes(q))); // keep quotes added while the agent worked
-    setMessage('');
-    return msg;
-  });
+  const quotes = [card.quote];
+  const send = (kind: 'ask' | 'revise') => run(async () => { const msg = await replyToRun(p.id, r.id, kind, quotes, message); onClose(); return msg; });
   const reviseOff = working || !rev.ok || !revisableQuotes(quotes);
-  const askOff = working || !canAsk({ ...r, replying }) || !canSend(reply);
-  const hint = working ? `${replying === 'revise' ? 'The agent is revising' : 'The agent is answering'} — Ask and Revise are disabled until it finishes.`
-    : !rev.ok ? rev.why
-    : !canSend(reply) ? 'Quote something or type a message.'
-    : !quotes.length ? 'Ask: the agent answers, the proposal stays. Quote what should change to Revise.'
-    : !revisableQuotes(quotes) ? 'These quotes span several items or the summary — Ask about them, or quote inside one item to Revise it.'
-    : 'Ask: the agent answers, the proposal stays. Revise: a new version changes only what you quoted.';
+  const askOff = working || !canAsk({ ...r, replying });
+  const hint = working ? workingHint(replying)
+    : !rev.ok ? `Ask still works. ${rev.why}.`
+    : !revisableQuotes(quotes) ? 'This quote spans several items or the summary — Ask about it, or quote inside one item to Revise it.'
+    : null;
   return (
-    <section className={`card stack gap-sm reply-box${quotes.length ? ' has-quotes' : ''}`} aria-label="Reply to the agent">
-      <div className="row between"><span className="overline t-tertiary">Reply to the agent</span>{quotes.length > 0 && <span className="body-sm t-tertiary">{quotes.length} quote{quotes.length > 1 ? 's' : ''}</span>}</div>
-      {quotes.map((q, i) => <QuoteBlock key={`${q.source}-${i}`} q={q} onRemove={() => setQuotes((qs) => qs.filter((_, k) => k !== i))} />)}
-      <textarea ref={inputRef} className="textarea" rows={2} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Select text in the answer and press Quote, or type a question…" aria-label="Message to the agent"
+    <section className="card stack gap-sm reply-card" aria-label={`Reply to the quote ${card.quote.source}`}
+      onKeyDown={(e) => { if (e.key === 'Escape' && !busy) { e.preventDefault(); onClose(); } }}>
+      <span className="overline t-tertiary">Reply to this quote</span>
+      <QuoteBlock q={card.quote} />
+      <textarea autoFocus className="textarea" rows={2} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Ask or ask for a change about this quote… (Esc cancels)" aria-label={`Message about ${card.quote.source}`}
         onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !askOff) { e.preventDefault(); send('ask'); } }} />
       <div className="row gap-sm wrap reply-actions">
-        <Button variant="primary" disabled={reviseOff} onClick={() => send('revise')} title={!rev.ok ? rev.why : undefined}>{replying === 'revise' ? 'Revising…' : `Revise → v${nextV}`}</Button>
-        <Button variant="secondary" disabled={askOff} onClick={() => send('ask')}>{replying === 'ask' ? 'Asking…' : 'Ask'}</Button>
-        <span className="body-sm t-tertiary grow">{hint}</span>
+        <Button variant="primary" disabled={reviseOff} onClick={() => send('revise')} title={!rev.ok ? rev.why : undefined}>{busy && replying === 'revise' ? 'Revising…' : `Revise → v${nextV}`}</Button>
+        <Button variant="secondary" disabled={askOff} onClick={() => send('ask')}>{busy && replying === 'ask' ? 'Asking…' : 'Ask'}</Button>
+        <Button variant="ghost" disabled={busy} onClick={onClose}>Cancel</Button>
+        {hint && <span className="body-sm t-tertiary grow">{hint}</span>}
       </div>
-      {r.mode === 'demo' && <div className="body-sm t-tertiary">Demo mode: the agent answers at once with a fixed text that repeats the quoted sources.</div>}
+    </section>
+  );
+}
+
+/** A question without a quote (REQ-051 AC 1, AC 5). Esc clears it. */
+export function AskBox({ p, r }: { p: Project; r: Run }) {
+  const [message, setMessage] = useState('');
+  const { busy, run } = useAction();
+  const replying = replyingNow(r);
+  const askOff = busy || !!replying || !canAsk({ ...r, replying }) || !canSend({ quotes: [], message });
+  const send = () => run(async () => { const msg = await replyToRun(p.id, r.id, 'ask', [], message); setMessage(''); return msg; });
+  return (
+    <section className="card stack gap-sm ask-box" aria-label="Ask the agent">
+      <div className="row gap-sm">
+        <textarea className="textarea grow" rows={1} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Ask without a quote…" aria-label="Question to the agent"
+          onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setMessage(''); } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !askOff) { e.preventDefault(); send(); } }} />
+        <Button variant="secondary" disabled={askOff} onClick={send}>{busy ? 'Asking…' : 'Ask'}</Button>
+      </div>
+      <div className="body-sm t-tertiary">{replying ? workingHint(replying) : 'Select text in the answer or press an item\'s Quote button to open a reply card for it. Each card is sent on its own; Cancel or Esc closes only that card.'}{r.mode === 'demo' ? ' Demo mode: the agent answers at once with a fixed text.' : ''}</div>
     </section>
   );
 }

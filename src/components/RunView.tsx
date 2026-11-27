@@ -4,10 +4,10 @@ import { replyingNow } from '../followUp';
 import { agent, approveRun, rejectRun } from '../harness';
 import { blocked, pct } from '../guardrails';
 import { traceOpen, traceSummary, traceToggleLabel } from '../trace';
-import { store, useStore } from '../store';
-import type { Project, Quote, Run, StepKind } from '../types';
+import { store, uid, useStore } from '../store';
+import type { Project, Run, StepKind } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
-import { CompareView, ConversationThread, QuotePill, ReplyBox, VersionPicker } from './RunConversation';
+import { AskBox, CompareView, ConversationThread, QuotePill, ReplyCard, VersionPicker, type Card } from './RunConversation';
 
 const ICON: Record<StepKind, [string, string]> = { plan: ['◎', ''], retrieve: ['R', 'tool'], tool_call: ['ƒ', 'tool'], tool_result: ['↩', 'tool'], model: ['✦', 'model'], guardrail: ['G', ''], eval: ['E', 'model'], approval: ['✋', 'wait'], github: ['⎇', 'ok'], error: ['!', 'bad'] };
 export const STATUS_TONE = { running: 'info', 'awaiting-approval': 'accent', approved: 'success', rejected: 'neutral', failed: 'danger', done: 'success' } as const;
@@ -19,13 +19,12 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const { settings } = useStore();
   const [open, setOpen] = useState<string | null>(r.changes[0]?.path || null);
   const [protOk, setProtOk] = useState(false);
-  // F-020: quotes waiting in the reply box, the version being read (null = latest) and the compare view
-  const [quotes, setQuotes] = useState<Quote[]>([]);
+  // F-020: one open reply card per quote, the version being read (null = latest) and the compare view
+  const [cards, setCards] = useState<Card[]>([]);
   const [view, setView] = useState<number | null>(null);
   const [compareN, setCompareN] = useState<number | null>(null);
   const [pop, setPop] = useState<{ x: number; y: number; source: string; text: string } | null>(null);
   const answerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   const replying = replyingNow(r); // a stored flag from an interrupted follow-up does not count
   const gate = canApprove(r);
   // REQ-045: her own fold/unfold choice, kept per run; null until she uses the toggle
@@ -48,8 +47,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const addQuote = (source: string, text: string) => {
     const q = makeQuote(source, text);
     if (!q) return;
-    setQuotes((qs) => [...qs, q]);
-    if (inputRef.current) inputRef.current.focus(); else setTimeout(() => inputRef.current?.focus(), 0);
+    setCards((cs) => [...cs, { id: uid(), quote: q }]); // the new card focuses its message field and scrolls into view
   };
 
   // A selection fully inside the answer of a finished run shows the floating Quote button (REQ-050)
@@ -197,7 +195,8 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
             )}
           </div>
 
-          {canReply && <ReplyBox p={p} r={r} quotes={quotes} setQuotes={setQuotes} inputRef={inputRef} />}
+          {canReply && cards.map((c) => <ReplyCard key={c.id} p={p} r={r} card={c} onClose={() => setCards((cs) => cs.filter((x) => x.id !== c.id))} />)}
+          {canReply && <AskBox p={p} r={r} />}
 
           {r.status === 'awaiting-approval' && (
             <section className="card stack gap-md" style={{ borderColor: 'var(--color-bg-accent)', background: 'var(--color-bg-accent-subtle)' }}>
