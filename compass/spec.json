@@ -1962,7 +1962,7 @@
       "featureId": "F-015",
       "title": "With sign-in on, roles come from the team instead of the role picker",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want people's roles to come only from the team list, so that nobody can give themselves a role by picking it.",
       "ac": [
@@ -1978,7 +1978,7 @@
       "featureId": "F-015",
       "title": "A signed-in person can try the demo with a role of their choice",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As someone who has signed in but is not on a team yet, I want to try Compass in a role of my choice, so that I can see how it works before my admin adds me.",
       "ac": [
@@ -3146,7 +3146,7 @@
       ],
       "title": "The role picker is shown only without Firebase or inside the demo",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the start-up decision\nWhen Firebase is configured and a person is signed in; when Firebase is configured and the person is in the demo without a demo role; when Firebase is not configured and no role is set\nThen the first case goes to the projects with team roles and no role screen; the second and third show \"What's your role?\""
     },
     {
@@ -3156,7 +3156,7 @@
       ],
       "title": "The demo never touches Firebase, GitHub or real projects",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a signed-in person in the demo with role QA\nWhen the portal lists projects and saves an approval\nThen only demo projects are listed, the approval is saved locally with approvedBy \"QA\", and no Firestore or GitHub call is made"
     },
     {

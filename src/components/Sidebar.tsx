@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react';
 import { go } from '../App';
 import { featureStage, stageStatus } from '../progress';
-import { projectKey, signOut, useSession } from '../firebase';
+import { enterDemo, leaveDemo, projectKey, signOut, useSession } from '../firebase';
 import { accountCard, featureRows, projectLinks, projectState, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
 import { STAGES, type Project, type Stage } from '../types';
@@ -40,6 +40,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   const signedIn = session.status === 'signed-in' && !!session.email;
   const account = signedIn ? signedInCard(session.email!, session.superAdmin) : accountCard(settings.githubUser);
   // F-015: the Team item for the super admin and Admins of this project (only when sign-in is on).
+  const myRoles = p?.repo ? session.access.find((a) => a.id === projectKey(p.repo!))?.roles || [] : [];
   const canManageTeam = !!p?.repo && signedIn && (session.superAdmin || !!session.access.find((a) => a.id === projectKey(p.repo!))?.roles.includes('Admin'));
   const theme = themeToggle(settings.theme);
 
@@ -70,11 +71,21 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
           </span>
           <Icon name="chevron" size={16} />
         </button>
-        {signedIn && <button className="btn secondary sm" onClick={() => void signOut()}>Sign out</button>}
+        {signedIn && (
+          <div className="row gap-sm wrap">
+            {session.demo
+              ? <button className="btn secondary sm" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</button>
+              : <button className="btn secondary sm" onClick={() => enterDemo()}>Try the demo</button>}
+            <button className="btn secondary sm" onClick={() => void signOut()}>Sign out</button>
+          </div>
+        )}
+        {/* REQ-039: with sign-in on, roles come from the team (read-only); the role picker is only for the demo */}
+        {signedIn && !session.demo && p?.repo && <div className="body-sm t-secondary" data-testid="my-roles">My roles: {myRoles.length ? myRoles.join(' · ') : session.superAdmin ? 'super admin' : '—'}</div>}
         <div className="row gap-sm">
-          <select className="select role-select" value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label="Your role">
+          {signedIn && session.demo && <span className="body-sm t-secondary">Demo role</span>}
+          {(!signedIn || session.demo) && <select className="select role-select" value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label={session.demo ? 'Demo role' : 'Your role'}>
             {ROLES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
+          </select>}
           <button className="icon-btn" onClick={() => store.setSettings({ theme: theme.next })} aria-label={theme.label} title={theme.label}><Icon name={theme.icon} /></button>
         </div>
       </div>
