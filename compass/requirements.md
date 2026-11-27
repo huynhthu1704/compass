@@ -30,6 +30,7 @@
 | REQ-015 | F-011 | Pages use up to 1600 px on large screens and stay responsive | Should | Approved | TC-027, TC-028 |
 | REQ-020 | F-001 | The Ideation agent writes "Done when" and never invents a baseline or target | Must | Approved | TC-039, TC-040, TC-041 |
 | REQ-021 | F-001 | The Idea page and briefs say "Done when" instead of "Outcome metric" | Should | Approved | TC-042 |
+| REQ-025 | F-003 | Figma components on the Components page, one section per feature | Should | Done | TC-045 |
 | REQ-060 | F-009 | Each waiting item says what it is and how long it has waited | Must | In build | TC-300, TC-301, TC-306 |
 | REQ-061 | F-009 | The approval desk stays compact, with a link to all waiting runs | Must | In build | TC-302, TC-303, TC-307 |
 | REQ-062 | F-009 | Details of a waiting item open in a side panel | Should | In build | TC-304, TC-305, TC-308, TC-309 |
@@ -38,12 +39,13 @@
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
-| REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216 |
-| REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214 |
+| REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216, TC-217 |
+| REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214, TC-217 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
 | REQ-053 | F-020 | Proposal versions and compare | Should | Approved | TC-209, TC-210, TC-211, TC-216 |
 | REQ-054 | F-020 | The conversation is kept with the run, safely | Should | Approved | TC-212, TC-213 |
-| REQ-063 | F-009 | Handoffs are shown on phones too | Should | Approved | TC-311, TC-312, TC-313, TC-314, TC-315 |
+| REQ-063 | F-009 | Handoffs are shown on phones too | Should | In build | TC-311, TC-312, TC-313, TC-314, TC-315 |
+| REQ-045 | F-017 | The agent trace can be folded and unfolded | Should | Approved | TC-090, TC-091 |
 | REQ-080 | F-003 | The admin links the project's Figma file and Miro board on a Project settings page | Must | Approved | TC-500, TC-501, TC-502 |
 | REQ-081 | F-003 | Every Design page keeps the preview in focus and shows the design files behind a button | Must | Approved | TC-502, TC-503, TC-505 |
 | REQ-082 | F-003 | Projects with the old single design link keep working, and agents name both files | Must | Approved | TC-501, TC-504 |
@@ -706,6 +708,34 @@ When they show the brief
 Then the heading reads "Done when" instead of "Outcome metric" or "Success measure"
 ```
 
+## REQ-025 · Figma components on the Components page, one section per feature
+As the product owner, I want every Figma component on the "Components" page and each feature's screens grouped in one Figma section, so that I review a feature at a glance and find reusable pieces in one place.
+
+**Priority:** Should · **Status:** Done
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given the project Figma file
+When an agent creates or finds a component (component or component set)
+Then it lives on the "Components" page, never on a feature, prototype or brand page, and an instance stays where it was shown
+```
+
+_AC2_
+```gherkin
+Given a new feature with UI
+When an agent draws its screens
+Then all of them sit inside one Figma section named "<F-xxx / REQ ids> · <topic>", and the design links that section
+```
+
+_AC3_
+```gherkin
+Given the framework text Compass installs (compass/design/README.md) and AGENTS.md
+When an agent reads it
+Then it states both rules, the same as travel-map REQ-061
+```
+
 ## REQ-060 · Each waiting item says what it is and how long it has waited
 As the product owner, I want each waiting item on the Team floor to say what it is about and how long it has waited, so that I can tell them apart without opening them.
 
@@ -941,21 +971,21 @@ _AC2_
 ```gherkin
 Given a selection
 When I click "Quote"
-Then a quote block with the selected text and its source (e.g. "REQ-051 · acceptance criteria", "SCR-2 · states", "src/app.ts") is added to the reply box under the run, and the reply box gets the focus
+Then a new reply card opens under the run with the selected text and its source (e.g. "REQ-051 · AC 2", "SCR-2 · states", "src/app.ts"), and its message field gets the focus; each quote gets its own card
 ```
 
 _AC3_
 ```gherkin
 Given a requirement, screen, test case or file in the answer
 When I click its "Quote" icon
-Then the whole item is added as one quote block, without selecting text
+Then a reply card opens with the whole item as its quote, without selecting text
 ```
 
 _AC4_
 ```gherkin
-Given a reply with several quote blocks
-When I click the × of one quote
-Then only that quote is removed
+Given several open reply cards
+When I click "Cancel" on one card, or press Esc while the focus is in it
+Then only that card closes, nothing is sent to the agent, and the other cards stay as they were
 ```
 
 _AC5_
@@ -969,7 +999,7 @@ _AC6_
 ```gherkin
 Given a phone (390 px) or the keyboard only
 When I long-press to select text, or Tab to an item's "Quote" icon and press Enter
-Then the quote is added the same way
+Then a reply card opens the same way, in the page under the answer, and scrolls into view
 ```
 
 ## REQ-051 · Ask the agent about the quoted text
@@ -981,9 +1011,9 @@ As the product owner, I want to ask the agent for more details about what I quot
 
 _AC1_
 ```gherkin
-Given a reply with at least one quote or a message
-When I click "Ask"
-Then my message with its quotes appears in the run's conversation and the agent's answer appears under it
+Given a reply card (its quote and an optional message), or a question typed in the "Ask the agent" box
+When I click "Ask" on it
+Then my message with its quote appears in the run's conversation, the agent's answer appears under it, and that card closes while other cards stay
 ```
 
 _AC2_
@@ -1009,9 +1039,9 @@ Then a predictable demo answer that repeats the quoted sources appears
 
 _AC5_
 ```gherkin
-Given an empty reply (no quote and no message)
-When I look at the reply box
-Then "Ask" and "Revise" are disabled
+Given an empty "Ask the agent" box (no quote and no message)
+When I look at it
+Then its "Ask" button is disabled; a reply card can always be sent, because it has a quote
 ```
 
 ## REQ-052 · Revise the proposal from the quoted text
@@ -1129,7 +1159,7 @@ Then its conversation and versions are removed with it
 ## REQ-063 · Handoffs are shown on phones too
 As the product owner, I want to see work move between agents on my phone, so that I can follow the team away from my desk.
 
-**Priority:** Should · **Status:** Approved
+**Priority:** Should · **Status:** In build
 
 **Acceptance criteria**
 
@@ -1166,6 +1196,41 @@ _AC5_
 Given no handoff in the last 4 seconds, or a screen 720 px or wider
 When the Team floor is shown
 Then there is no strip (desktop keeps the corridor as today)
+```
+
+## REQ-045 · The agent trace can be folded and unfolded
+As the product owner, I want to fold the step-by-step trace of an agent run, so that I reach the proposal and the approval buttons without scrolling past every tool call.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given an agent run that is awaiting approval, approved, rejected, failed or done
+When its run view opens
+Then the trace is folded to its header, which shows the number of steps (and how many failed, if any) and a "Show steps" toggle
+```
+
+_AC2_
+```gherkin
+Given an agent run that is still running
+When its run view opens
+Then the trace is open, as today
+```
+
+_AC3_
+```gherkin
+Given a run view
+When the Product Owner clicks the trace toggle (or presses Enter/Space on it)
+Then the trace opens or folds, the toggle reads "Show steps" or "Hide steps" and reports aria-expanded, and each step's own details still expand as before
+```
+
+_AC4_
+```gherkin
+Given a run that moves from running to awaiting approval while it is shown
+When the status changes and the Product Owner has not used the toggle
+Then the trace folds; once the toggle was used, her choice is kept
 ```
 
 ## REQ-080 · The admin links the project's Figma file and Miro board on a Project settings page

@@ -16,6 +16,10 @@ that agents and reviewers can read it without opening the tool.
 1. Every requirement of the change is **Approved** → draft the design (`Status: Draft`): one section per screen,
    each listing the REQ ids it delivers, its elements and its states (empty, loading, error, success).
 2. Draw it in the design tool and paste each frame link. Show it to the Product Owner.
+   **Figma file layout:** every component (component or component set) lives on the file's "Components" page —
+   never on a feature, prototype or brand page; move one there when you create or find it, and leave an instance
+   where it was shown. All screens of one feature go in **one Figma section** on the feature-designs page, named
+   `<F-xxx / REQ ids> · <topic>`, and the design links that section.
 3. The Product Owner approves → `Status: Approved (by <name>, <date>)`. **Only then may code start**:
    `node compass/check-spec.mjs` fails when a requirement is In build or Done while its design is not Approved.
 4. If the design must change during the build, set it back to Draft, update it and get it approved again.
@@ -26,7 +30,7 @@ that agents and reviewers can read it without opening the tool.
 
 Status: Draft
 Requirements: REQ-xxx, REQ-yyy
-Design tool: <link to the file or page in Figma…>
+Design tool: <link to the feature's section in Figma…>
 
 ## Approach
 <layout, navigation, components and styles reused>

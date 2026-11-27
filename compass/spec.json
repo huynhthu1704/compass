@@ -822,14 +822,15 @@
             "elements": [
               "\"❝ Quote\" button next to a selection inside the answer",
               "\"❝ Quote\" pill on each requirement / screen / test case / file",
-              "Reply box: quote blocks with source and ×, message field, Revise → vN (primary), Ask (secondary) with a one-line hint",
+              "Reply cards, one per quote: the quote with its source, a message field, Revise → vN (primary), Ask (secondary), Cancel (ghost; Esc does the same)",
               "Trace column without quoting",
-              "Approval card below"
+              "Approval card below",
+              "\"Ask the agent\" box for a question without a quote"
             ],
             "states": [
               "no selection",
               "text selected",
-              "2 quotes + message",
+              "two reply cards open, each with its own message",
               "empty reply: buttons disabled (SCR-4 D)"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=87-574"
@@ -871,12 +872,12 @@
             "elements": [
               "Long-press selection menu with Copy · ❝ Quote · Select all",
               "44 px Quote icon per item",
-              "Bottom reply sheet with grabber, quote count, quote blocks, message, Ask and Revise full width"
+              "Reply cards in the page under the answer (not a fixed sheet): quote, message, Ask and Revise full width, Cancel under them"
             ],
             "states": [
               "selection menu open",
-              "sheet with 2 quotes",
-              "sheet above the keyboard"
+              "two reply cards",
+              "the card being typed in scrolls into view above the keyboard"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=89-596"
           },
@@ -909,6 +910,65 @@
           }
         ],
         "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-27T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "F-017",
+      "name": "Collapsible agent trace",
+      "createdAt": "2026-11-27T00:00:00.000Z",
+      "idea": {
+        "need": "allow user to collapse the detailed steps inside (the trace box of an agent run)",
+        "intent": "The Product Owner reaches an agent's proposal and the approval buttons without scrolling past its step-by-step trace (today: the full trace of ~15–40 lines always sits above the proposal).",
+        "problem": "Every agent run shows its whole trace (model turns, tool calls, results) above the proposal, so reviewing a run means scrolling through technical steps first.",
+        "users": [
+          "Product Owner",
+          "Everyone approving agent runs"
+        ],
+        "outcomeMetric": "Lines of trace shown above the proposal of an awaiting-approval run: all steps → one summary line (test + screenshot).",
+        "scopeIn": [
+          "The trace card of an agent run on the stage pages, Build and Agent runs"
+        ],
+        "scopeOut": [
+          "Remembering the choice between visits",
+          "Folding other cards (guardrails, change set)"
+        ],
+        "risks": [
+          "Nothing hidden for good: one click shows the full trace",
+          "Keyboard and screen-reader friendly",
+          "Honey tokens only; no new libraries"
+        ]
+      },
+      "design": {
+        "status": "Approved",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-609",
+        "summary": "The trace card of an agent run gets a header row: a ▸/▾ chevron, the overline, the step count, a red \"N failed\" chip when steps failed, and a \"Show steps\" / \"Hide steps\" button. The card starts folded (header only) when the run is awaiting approval, approved, rejected, failed or done, so the proposal and approval buttons sit right below it; it starts open while the agent is running. The Product Owner's own toggle is kept when the status changes. Each step still expands its own details.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Agent run · trace folded and open",
+            "purpose": "The trace card folded by default once the run stops working, and open while running or after Show steps.",
+            "reqIds": [
+              "REQ-045"
+            ],
+            "elements": [
+              "Chevron ▸/▾",
+              "Overline \"Trace · harness → RAG → tools → guardrails & evals\" (unchanged text; truncates on narrow screens)",
+              "Step count (mono)",
+              "\"N failed\" chip (danger, only when steps failed)",
+              "Show steps / Hide steps button (aria-expanded, aria-controls)",
+              "Timeline of steps (unchanged)"
+            ],
+            "states": [
+              "Folded: awaiting approval, approved, rejected, failed, done",
+              "Open: running (with \"working…\")",
+              "Open after Show steps; folded after Hide steps; choice kept on status change"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-609"
+          }
+        ],
+        "notes": "Honey tokens only (bg/surface, border/subtle, bg/danger-subtle + text/danger). No new library. Not remembered between visits (out of scope).",
+        "approvedBy": "Product Owner",
         "approvedAt": "2026-11-27T00:00:00.000Z"
       }
     }
@@ -1289,6 +1349,21 @@
       ]
     },
     {
+      "id": "REQ-025",
+      "featureId": "F-003",
+      "title": "Figma components on the Components page, one section per feature",
+      "priority": "Should",
+      "status": "Done",
+      "intent": "compass/intent/2026-11-27-figma-components-and-sections.md",
+      "design": "none: rule for the Figma file and framework text, no UI",
+      "story": "As the product owner, I want every Figma component on the \"Components\" page and each feature's screens grouped in one Figma section, so that I review a feature at a glance and find reusable pieces in one place.",
+      "ac": [
+        "Given the project Figma file\nWhen an agent creates or finds a component (component or component set)\nThen it lives on the \"Components\" page, never on a feature, prototype or brand page, and an instance stays where it was shown",
+        "Given a new feature with UI\nWhen an agent draws its screens\nThen all of them sit inside one Figma section named \"<F-xxx / REQ ids> · <topic>\", and the design links that section",
+        "Given the framework text Compass installs (compass/design/README.md) and AGENTS.md\nWhen an agent reads it\nThen it states both rules, the same as travel-map REQ-061"
+      ]
+    },
+    {
       "id": "REQ-060",
       "featureId": "F-009",
       "title": "Each waiting item says what it is and how long it has waited",
@@ -1409,11 +1484,11 @@
       "story": "As the product owner, I want to quote part of an agent's answer, so that I can point at exactly what I want explained or changed.",
       "ac": [
         "Given an agent run with an answer (idea brief, requirements, design, test cases, summary or a file of the change set)\nWhen I select text inside the answer\nThen a \"Quote\" button appears next to the selection",
-        "Given a selection\nWhen I click \"Quote\"\nThen a quote block with the selected text and its source (e.g. \"REQ-051 · acceptance criteria\", \"SCR-2 · states\", \"src/app.ts\") is added to the reply box under the run, and the reply box gets the focus",
-        "Given a requirement, screen, test case or file in the answer\nWhen I click its \"Quote\" icon\nThen the whole item is added as one quote block, without selecting text",
-        "Given a reply with several quote blocks\nWhen I click the × of one quote\nThen only that quote is removed",
+        "Given a selection\nWhen I click \"Quote\"\nThen a new reply card opens under the run with the selected text and its source (e.g. \"REQ-051 · AC 2\", \"SCR-2 · states\", \"src/app.ts\"), and its message field gets the focus; each quote gets its own card",
+        "Given a requirement, screen, test case or file in the answer\nWhen I click its \"Quote\" icon\nThen a reply card opens with the whole item as its quote, without selecting text",
+        "Given several open reply cards\nWhen I click \"Cancel\" on one card, or press Esc while the focus is in it\nThen only that card closes, nothing is sent to the agent, and the other cards stay as they were",
         "Given the trace, text outside the answer, or a run that is still working\nWhen I select text there\nThen no \"Quote\" button appears",
-        "Given a phone (390 px) or the keyboard only\nWhen I long-press to select text, or Tab to an item's \"Quote\" icon and press Enter\nThen the quote is added the same way"
+        "Given a phone (390 px) or the keyboard only\nWhen I long-press to select text, or Tab to an item's \"Quote\" icon and press Enter\nThen a reply card opens the same way, in the page under the answer, and scrolls into view"
       ]
     },
     {
@@ -1425,11 +1500,11 @@
       "intent": "compass/intent/2026-11-27-quote-and-ask-agent.md",
       "story": "As the product owner, I want to ask the agent for more details about what I quoted, so that I understand its answer before I approve it.",
       "ac": [
-        "Given a reply with at least one quote or a message\nWhen I click \"Ask\"\nThen my message with its quotes appears in the run's conversation and the agent's answer appears under it",
+        "Given a reply card (its quote and an optional message), or a question typed in the \"Ask the agent\" box\nWhen I click \"Ask\" on it\nThen my message with its quote appears in the run's conversation, the agent's answer appears under it, and that card closes while other cards stay",
         "Given the agent answered a question\nWhen I look at the proposal\nThen it is unchanged and the run keeps its status (e.g. awaiting approval)",
         "Given a live run\nWhen the agent answers\nThen the follow-up sends the run's goal, its proposal, the conversation so far, the quotes and my message — not a new repository index — and the answer shows its token count",
         "Given a project in demo mode (no API key)\nWhen I click \"Ask\"\nThen a predictable demo answer that repeats the quoted sources appears",
-        "Given an empty reply (no quote and no message)\nWhen I look at the reply box\nThen \"Ask\" and \"Revise\" are disabled"
+        "Given an empty \"Ask the agent\" box (no quote and no message)\nWhen I look at it\nThen its \"Ask\" button is disabled; a reply card can always be sent, because it has a quote"
       ]
     },
     {
@@ -1483,7 +1558,7 @@
       "featureId": "F-009",
       "title": "Handoffs are shown on phones too",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-phone-handoffs.md",
       "story": "As the product owner, I want to see work move between agents on my phone, so that I can follow the team away from my desk.",
       "ac": [
@@ -1492,6 +1567,21 @@
         "Given reduced motion or Pause motion\nWhen a handoff is shown on a phone\nThen nothing slides: the strip simply appears and disappears after 4 seconds",
         "Given several handoffs within the same 4 seconds\nWhen the strip is shown on a phone\nThen it lists each of them, newest first, one line per handoff (at most 3)",
         "Given no handoff in the last 4 seconds, or a screen 720 px or wider\nWhen the Team floor is shown\nThen there is no strip (desktop keeps the corridor as today)"
+      ]
+    },
+    {
+      "id": "REQ-045",
+      "featureId": "F-017",
+      "title": "The agent trace can be folded and unfolded",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-collapsible-agent-trace.md",
+      "story": "As the product owner, I want to fold the step-by-step trace of an agent run, so that I reach the proposal and the approval buttons without scrolling past every tool call.",
+      "ac": [
+        "Given an agent run that is awaiting approval, approved, rejected, failed or done\nWhen its run view opens\nThen the trace is folded to its header, which shows the number of steps (and how many failed, if any) and a \"Show steps\" toggle",
+        "Given an agent run that is still running\nWhen its run view opens\nThen the trace is open, as today",
+        "Given a run view\nWhen the Product Owner clicks the trace toggle (or presses Enter/Space on it)\nThen the trace opens or folds, the toggle reads \"Show steps\" or \"Hide steps\" and reports aria-expanded, and each step's own details still expand as before",
+        "Given a run that moves from running to awaiting approval while it is shown\nWhen the status changes and the Product Owner has not used the toggle\nThen the trace folds; once the toggle was used, her choice is kept"
       ]
     },
     {
@@ -2033,6 +2123,16 @@
       "gherkin": "Given the Idea page, the run brief and the generated feature and intent files\nWhen their labels and headings are read\nThen they say \"Done when\" and none says \"Outcome metric\" or \"baseline → target\""
     },
     {
+      "id": "TC-045",
+      "reqIds": [
+        "REQ-025"
+      ],
+      "title": "The design template, its installed copy and AGENTS.md state the Figma file layout",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given compass/design/README.md, src/framework/design-README.md and AGENTS.md\nWhen they are read\nThen they ask for components only on the \"Components\" page and one Figma section per feature"
+    },
+    {
       "id": "TC-300",
       "reqIds": [
         "REQ-060"
@@ -2229,10 +2329,10 @@
       "reqIds": [
         "REQ-050"
       ],
-      "title": "Quoting on a phone and by keyboard; removing a quote",
+      "title": "Quoting on a phone and by keyboard opens a reply card",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given a run at 390 px wide and with the keyboard only\nWhen I long-press text and tap Quote, Tab to an item's Quote icon and press Enter, then press × on the first quote\nThen both quotes were added, the reply box got the focus, and only the first quote is removed"
+      "gherkin": "Given a run at 390 px wide and with the keyboard only\nWhen I long-press text in the answer and tap Quote, and Tab to an item's Quote icon and press Enter\nThen each opens its own reply card in the page under the answer, its message field has the focus and is scrolled into view, and Cancel (or Esc) closes it with the focus moving to the next card or the Ask box"
     },
     {
       "id": "TC-203",
@@ -2433,7 +2533,38 @@
       "title": "Quotes and the version being read stay with their run",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a quote in the reply box of a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run's reply box is empty and it shows its own latest version"
+      "gherkin": "Given an open reply card in a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run shows no reply card and it shows its own latest version"
+    },
+    {
+      "id": "TC-090",
+      "reqIds": [
+        "REQ-045"
+      ],
+      "title": "Trace folded by default once the run stops working; toggle switches it",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given runs with status running, awaiting-approval, approved, rejected, done and failed (one with 2 failed steps of 15)\nWhen the trace's default state and header are computed\nThen running is open and the others are folded, the header reads \"15 steps · 2 failed\", and toggling flips open/folded with the label \"Show steps\"/\"Hide steps\"; after a manual toggle a status change no longer changes it"
+    },
+    {
+      "id": "TC-091",
+      "reqIds": [
+        "REQ-045"
+      ],
+      "title": "The trace toggle is an accessible button; step details still expand",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the run view of an awaiting-approval run\nWhen the trace header is rendered\nThen the toggle is a native <button> (Enter/Space work) whose aria-expanded matches the open state and whose aria-controls points at the timeline's id, the timeline is rendered only when open, and each step with details still renders its own <details> element"
+    },
+    {
+      "id": "TC-217",
+      "reqIds": [
+        "REQ-050",
+        "REQ-051"
+      ],
+      "title": "One reply card per quote; Cancel closes only its card",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a run awaiting approval\nWhen I quote REQ-050 · AC 2 and the whole REQ-051, type a different message in each card, click Cancel on the first card, press Esc in a new card for REQ-052, and click Ask on the REQ-051 card\nThen two cards were open at once, Cancel and Esc closed only their own card without a new conversation message or trace step, Ask sent only the REQ-051 quote with its message, and no card is left; at 390 px the cards sit in the page under the answer"
     },
     {
       "id": "TC-500",
@@ -2583,7 +2714,19 @@
       "consequences": "Runs keep a conversation and their versions. A revised version waits for its guardrails before it can be approved. The Ask and Revise of live runs cost Claude tokens, shown per answer."
     },
     {
-      "id": "ADR-012",
+      "id": "ADR-007",
+      "date": "2026-11-27",
+      "title": "Figma file layout: one Components page, one section per feature",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-025"
+      ],
+      "context": "Components were spread over the prototype, design-system and feature pages of the \"Compass — Team floor\" Figma file, and feature screens lay loose on the canvas, which made reviews hard to follow.",
+      "decision": "The Product Owner decided in chat on 2026-11-27: every Figma component lives on the \"Components\" page, and each feature gets one Figma section holding all its screens, for this and every future feature. Same rule as travel-map REQ-061 / ADR-022.",
+      "consequences": "Existing components were moved (instances left where they were shown) and existing feature screens grouped; node ids are unchanged, so frame links still work. The design template Compass installs states the rule; CI cannot read Figma, so it is not checked automatically."
+    },
+    {
+      "id": "ADR-015",
       "date": "2026-11-27",
       "title": "Project design files live on a new Project settings page",
       "status": "Accepted",

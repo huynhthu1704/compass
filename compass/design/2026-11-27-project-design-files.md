@@ -6,7 +6,7 @@ Design tool: Figma — section "REQ-080–REQ-082 · Project design files (F-003
 https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=170-978
 
 ## Approach
-A new **Project settings** page, opened from a gear link after Knowledge in the sidebar's project group (ADR-012),
+A new **Project settings** page, opened from a gear link after Knowledge in the sidebar's project group (ADR-015),
 holds a **Design files** card with two optional links, a Figma file and a Miro board. Only the admin (the PO role until Team access, F-015, is merged) sees edit fields.
 Everyone else sees each link as a row with the tool's mark, the link and **Open ↗**. Each feature's Design page
 drops today's editable "Project design tool" box so the page focuses on the **preview**: the Figma embed (the

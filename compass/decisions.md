@@ -62,7 +62,17 @@ _2026-11-27 · Accepted · REQ-050, REQ-051, REQ-052, REQ-053, REQ-054_
 
 **Consequences:** Runs keep a conversation and their versions. A revised version waits for its guardrails before it can be approved. The Ask and Revise of live runs cost Claude tokens, shown per answer.
 
-## ADR-012 · Project design files live on a new Project settings page
+## ADR-007 · Figma file layout: one Components page, one section per feature
+
+_2026-11-27 · Accepted · REQ-025_
+
+**Context:** Components were spread over the prototype, design-system and feature pages of the "Compass — Team floor" Figma file, and feature screens lay loose on the canvas, which made reviews hard to follow.
+
+**Decision:** The Product Owner decided in chat on 2026-11-27: every Figma component lives on the "Components" page, and each feature gets one Figma section holding all its screens, for this and every future feature. Same rule as travel-map REQ-061 / ADR-022.
+
+**Consequences:** Existing components were moved (instances left where they were shown) and existing feature screens grouped; node ids are unchanged, so frame links still work. The design template Compass installs states the rule; CI cannot read Figma, so it is not checked automatically.
+
+## ADR-015 · Project design files live on a new Project settings page
 
 _2026-11-27 · Accepted · REQ-080, REQ-081, REQ-082_
 

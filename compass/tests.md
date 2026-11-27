@@ -31,6 +31,7 @@
 | REQ-015 Pages use up to 1600 px on large screens and stay responsive | TC-027 (Not run), TC-028 (Not run) |
 | REQ-020 The Ideation agent writes "Done when" and never invents a baseline or target | TC-039 (Not run), TC-040 (Not run), TC-041 (Not run) |
 | REQ-021 The Idea page and briefs say "Done when" instead of "Outcome metric" | TC-042 (Not run) |
+| REQ-025 Figma components on the Components page, one section per feature | TC-045 (Pass) |
 | REQ-060 Each waiting item says what it is and how long it has waited | TC-300 (Not run), TC-301 (Not run), TC-306 (Not run) |
 | REQ-061 The approval desk stays compact, with a link to all waiting runs | TC-302 (Not run), TC-303 (Not run), TC-307 (Not run) |
 | REQ-062 Details of a waiting item open in a side panel | TC-304 (Not run), TC-305 (Not run), TC-308 (Not run), TC-309 (Not run) |
@@ -39,12 +40,13 @@
 | REQ-072 The feature list is readable | TC-403 (Not run), TC-405 (Not run) |
 | REQ-073 The account footer shows the connection, the role and one theme button | TC-404 (Not run), TC-405 (Not run) |
 | REQ-074 The portal shows no "AI dev portal" tagline | TC-406 (Not run) |
-| REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run), TC-216 (Not run) |
-| REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run), TC-214 (Not run) |
+| REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run), TC-216 (Not run), TC-217 (Not run) |
+| REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run), TC-214 (Not run), TC-217 (Not run) |
 | REQ-052 Revise the proposal from the quoted text | TC-206 (Not run), TC-207 (Not run), TC-208 (Not run), TC-215 (Not run) |
 | REQ-053 Proposal versions and compare | TC-209 (Not run), TC-210 (Not run), TC-211 (Not run), TC-216 (Not run) |
 | REQ-054 The conversation is kept with the run, safely | TC-212 (Not run), TC-213 (Not run) |
 | REQ-063 Handoffs are shown on phones too | TC-311 (Not run), TC-312 (Not run), TC-313 (Not run), TC-314 (Not run), TC-315 (Not run) |
+| REQ-045 The agent trace can be folded and unfolded | TC-090 (Not run), TC-091 (Not run) |
 | REQ-080 The admin links the project's Figma file and Miro board on a Project settings page | TC-500 (Not run), TC-501 (Not run), TC-502 (Not run) |
 | REQ-081 Every Design page keeps the preview in focus and shows the design files behind a button | TC-502 (Not run), TC-503 (Not run), TC-505 (Not run) |
 | REQ-082 Projects with the old single design link keep working, and agents name both files | TC-501 (Not run), TC-504 (Not run) |
@@ -452,6 +454,14 @@ When their labels and headings are read
 Then they say "Done when" and none says "Outcome metric" or "baseline → target"
 ```
 
+## TC-045 · The design template, its installed copy and AGENTS.md state the Figma file layout
+Covers: REQ-025 · Type: Automated · Status: Pass
+```gherkin
+Given compass/design/README.md, src/framework/design-README.md and AGENTS.md
+When they are read
+Then they ask for components only on the "Components" page and one Figma section per feature
+```
+
 ## TC-300 · Waiting items carry goal and waiting time
 Covers: REQ-060 · Type: Automated · Status: Not run
 ```gherkin
@@ -607,12 +617,12 @@ When the quote target is computed
 Then only the selection fully inside the answer of a finished run gets a Quote button
 ```
 
-## TC-202 · Quoting on a phone and by keyboard; removing a quote
+## TC-202 · Quoting on a phone and by keyboard opens a reply card
 Covers: REQ-050 · Type: Manual · Status: Not run
 ```gherkin
 Given a run at 390 px wide and with the keyboard only
-When I long-press text and tap Quote, Tab to an item's Quote icon and press Enter, then press × on the first quote
-Then both quotes were added, the reply box got the focus, and only the first quote is removed
+When I long-press text in the answer and tap Quote, and Tab to an item's Quote icon and press Enter
+Then each opens its own reply card in the page under the answer, its message field has the focus and is scrolled into view, and Cancel (or Esc) closes it with the focus moving to the next card or the Ask box
 ```
 
 ## TC-203 · Ask adds an answer and leaves the proposal unchanged
@@ -773,9 +783,33 @@ Then the trace shows the guardrails and evaluation of v2, the approval card show
 ## TC-216 · Quotes and the version being read stay with their run
 Covers: REQ-050, REQ-053 · Type: Automated · Status: Not run
 ```gherkin
-Given a quote in the reply box of a run shown in the agent box
+Given an open reply card in a run shown in the agent box
 When a new run is started from the same box (or another run is opened)
-Then the new run's reply box is empty and it shows its own latest version
+Then the new run shows no reply card and it shows its own latest version
+```
+
+## TC-090 · Trace folded by default once the run stops working; toggle switches it
+Covers: REQ-045 · Type: Automated · Status: Not run
+```gherkin
+Given runs with status running, awaiting-approval, approved, rejected, done and failed (one with 2 failed steps of 15)
+When the trace's default state and header are computed
+Then running is open and the others are folded, the header reads "15 steps · 2 failed", and toggling flips open/folded with the label "Show steps"/"Hide steps"; after a manual toggle a status change no longer changes it
+```
+
+## TC-091 · The trace toggle is an accessible button; step details still expand
+Covers: REQ-045 · Type: Automated · Status: Not run
+```gherkin
+Given the run view of an awaiting-approval run
+When the trace header is rendered
+Then the toggle is a native <button> (Enter/Space work) whose aria-expanded matches the open state and whose aria-controls points at the timeline's id, the timeline is rendered only when open, and each step with details still renders its own <details> element
+```
+
+## TC-217 · One reply card per quote; Cancel closes only its card
+Covers: REQ-050, REQ-051 · Type: Manual · Status: Not run
+```gherkin
+Given a run awaiting approval
+When I quote REQ-050 · AC 2 and the whole REQ-051, type a different message in each card, click Cancel on the first card, press Esc in a new card for REQ-052, and click Ask on the REQ-051 card
+Then two cards were open at once, Cancel and Esc closed only their own card without a new conversation message or trace step, Ask sent only the REQ-051 quote with its message, and no card is left; at 390 px the cards sit in the page under the answer
 ```
 
 ## TC-500 · Design links are checked before they are saved

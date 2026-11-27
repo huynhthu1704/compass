@@ -10,7 +10,7 @@ Answers given in chat (2026-11-27):
 - A project holds **both** links, each optional: one Figma file and one Miro board.
 - **Admin = the PO role for now.** It becomes the project Admin / super admin once Team access (F-015) is merged.
 - The links are set on a new **Project settings** page (a sidebar link under Knowledge), not on the Feature board
-  (the Product Owner's choice on 2026-11-27, ADR-012). Each feature's Design page shows them read-only.
+  (the Product Owner's choice on 2026-11-27, ADR-015). Each feature's Design page shows them read-only.
 
 ## What we want
 A project admin can set, on the project's Project settings page in the portal, which Figma file and/or Miro board a project's design work lives in. Everyone

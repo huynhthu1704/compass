@@ -3,10 +3,11 @@ import { canApprove, ideaLabel, makeQuote, reqText, screenText, selectionSource,
 import { replyingNow } from '../followUp';
 import { agent, approveRun, rejectRun } from '../harness';
 import { blocked, pct } from '../guardrails';
-import { store, useStore } from '../store';
-import type { Project, Quote, Run, StepKind } from '../types';
+import { traceOpen, traceSummary, traceToggleLabel } from '../trace';
+import { store, uid, useStore } from '../store';
+import type { Project, Run, StepKind } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
-import { CompareView, ConversationThread, QuotePill, ReplyBox, VersionPicker } from './RunConversation';
+import { AskBox, CompareView, ConversationThread, QuotePill, ReplyCard, VersionPicker, type Card } from './RunConversation';
 
 const ICON: Record<StepKind, [string, string]> = { plan: ['◎', ''], retrieve: ['R', 'tool'], tool_call: ['ƒ', 'tool'], tool_result: ['↩', 'tool'], model: ['✦', 'model'], guardrail: ['G', ''], eval: ['E', 'model'], approval: ['✋', 'wait'], github: ['⎇', 'ok'], error: ['!', 'bad'] };
 export const STATUS_TONE = { running: 'info', 'awaiting-approval': 'accent', approved: 'success', rejected: 'neutral', failed: 'danger', done: 'success' } as const;
@@ -18,15 +19,20 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const { settings } = useStore();
   const [open, setOpen] = useState<string | null>(r.changes[0]?.path || null);
   const [protOk, setProtOk] = useState(false);
-  // F-020: quotes waiting in the reply box, the version being read (null = latest) and the compare view
-  const [quotes, setQuotes] = useState<Quote[]>([]);
+  // F-020: one open reply card per quote, the version being read (null = latest) and the compare view
+  const [cards, setCards] = useState<Card[]>([]);
   const [view, setView] = useState<number | null>(null);
   const [compareN, setCompareN] = useState<number | null>(null);
   const [pop, setPop] = useState<{ x: number; y: number; source: string; text: string } | null>(null);
   const answerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const repliesRef = useRef<HTMLDivElement>(null);
   const replying = replyingNow(r); // a stored flag from an interrupted follow-up does not count
   const gate = canApprove(r);
+  // REQ-045: her own fold/unfold choice, kept per run; null until she uses the toggle
+  const [traceManual, setTraceManual] = useState<{ id: string; open: boolean } | null>(null);
+  const traceIsOpen = traceOpen(r.status, traceManual?.id === r.id ? traceManual.open : null);
+  const trace = traceSummary(r.steps);
+  const traceId = `trace-${r.id}`;
   const isBlocked = blocked(r.guardrails);
   const needsProt = r.guardrails.some((g) => (g.id === 'G3' || g.id === 'G6' || g.id === 'G7') && g.level === 'warn');
   const tokens = r.steps.reduce((x, s) => x + (s.tokens || 0), 0);
@@ -42,8 +48,21 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const addQuote = (source: string, text: string) => {
     const q = makeQuote(source, text);
     if (!q) return;
-    setQuotes((qs) => [...qs, q]);
-    if (inputRef.current) inputRef.current.focus(); else setTimeout(() => inputRef.current?.focus(), 0);
+    setCards((cs) => [...cs, { id: uid(), quote: q }]); // the new card focuses its message field and scrolls into view
+  };
+
+  /**
+   * Closes one card. Only when the focus was inside that card (its Cancel, Esc, or Ask / Revise just finished there) does
+   * it move to the next open card or the Ask box; if she is already typing elsewhere, the focus stays where it is.
+   */
+  const closeCard = (id: string) => {
+    const root = repliesRef.current;
+    const el = root?.querySelector(`[data-card-id="${id}"]`);
+    const had = !!el && el.contains(document.activeElement);
+    const i = el && root ? [...root.querySelectorAll('[data-card-id]')].indexOf(el) : 0;
+    setCards((cs) => cs.filter((x) => x.id !== id));
+    if (!had) return;
+    setTimeout(() => { const fields = root?.querySelectorAll<HTMLTextAreaElement>('textarea'); fields?.[Math.min(Math.max(i, 0), fields.length - 1)]?.focus(); }, 0);
   };
 
   // A selection fully inside the answer of a finished run shows the floating Quote button (REQ-050)
@@ -96,8 +115,14 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
       <div className={`grid-2 run-grid${compact ? ' compact' : ''}`}>
         <div className="stack gap-md">
           <section className="card stack gap-sm">
-            <div className="overline t-tertiary">Trace · harness → RAG → tools → guardrails & evals</div>
-            <div className="timeline">
+            <div className="trace-head">
+              <span className="t-tertiary" aria-hidden="true">{traceIsOpen ? '▾' : '▸'}</span>
+              <span className="overline t-tertiary">Trace · harness → RAG → tools → guardrails & evals</span>
+              <span className="mono-sm t-tertiary">{trace.text.split(' · ')[0]}</span>
+              {trace.failed > 0 && <Badge tone="danger">{trace.failed} failed</Badge>}
+              <button type="button" className="btn secondary sm" aria-expanded={traceIsOpen} aria-controls={traceId} onClick={() => setTraceManual({ id: r.id, open: !traceIsOpen })}>{traceToggleLabel(traceIsOpen)} <span aria-hidden="true">{traceIsOpen ? '▴' : '▾'}</span></button>
+            </div>
+            {traceIsOpen && <div id={traceId} className="timeline">
               {r.steps.map((s, i) => {
                 const [ic, cls] = ICON[s.kind];
                 const c = s.ok === false ? 'bad' : s.ok === true && s.kind !== 'tool_result' ? 'ok' : cls;
@@ -110,7 +135,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
                 );
               })}
               {r.status === 'running' && <div className="ev"><span className="ico model">…</span><span className="body-sm t-tertiary">working…</span></div>}
-            </div>
+            </div>}
           </section>
           <ConversationThread r={r} onCompare={(n) => { setView(null); setCompareN(n); }} />
         </div>
@@ -185,7 +210,10 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
             )}
           </div>
 
-          {canReply && <ReplyBox p={p} r={r} quotes={quotes} setQuotes={setQuotes} inputRef={inputRef} />}
+          {canReply && <div ref={repliesRef} className="stack gap-md">
+            {cards.map((c) => <ReplyCard key={c.id} p={p} r={r} card={c} onClose={() => closeCard(c.id)} />)}
+            <AskBox p={p} r={r} />
+          </div>}
 
           {r.status === 'awaiting-approval' && (
             <section className="card stack gap-md" style={{ borderColor: 'var(--color-bg-accent)', background: 'var(--color-bg-accent-subtle)' }}>
