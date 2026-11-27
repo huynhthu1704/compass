@@ -1,6 +1,6 @@
 # Plan: REQ-050 … REQ-054 Quote an agent answer and ask for details or a revision
 
-Feature: F-020 · Requirements: REQ-050, REQ-051, REQ-052, REQ-053, REQ-054 · Test cases: TC-200 … TC-103
+Feature: F-020 · Requirements: REQ-050, REQ-051, REQ-052, REQ-053, REQ-054 · Test cases: TC-200 … TC-213
 Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/design/F-020.md (Figma SCR-1 … SCR-4)
 
 ## Files
@@ -25,7 +25,7 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
   item, the floating Quote button for a selection; shows the version being read; the approval card names the version
 - src/index.css — quote blocks, pill, floating button, thread, version picker, compare; reply box sticks to the bottom on
   phones (< 720 px)
-- tests/conversation.test.mjs — TC-200, TC-201, TC-203 … TC-209, TC-210, TC-102 (TC-202, TC-101, TC-103 are manual)
+- tests/conversation.test.mjs — TC-200, TC-201, TC-203 … TC-209, TC-210, TC-212 (TC-202, TC-211, TC-213 are manual)
 - No spec status change in this PR (as in #37, it would regenerate the views and pass the 12-file limit).
 
 ## Steps
@@ -42,7 +42,7 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
   supported by Revise (out of scope); the agent says so in its answer.
 - **Prompt injection through quotes or the message:** both are wrapped as data (`<quoted_text>`, `<message>`, closing tags
   in the text are neutralised), scanned with the same rule as retrieved context, and a warning is shown in the trace
-  (TC-102). Tools stay limited to the agent's save tools; nothing is written before a human approves.
+  (TC-212). Tools stay limited to the agent's save tools; nothing is written before a human approves.
 - **Approving an old version:** the run's `proposal` / `changes` always hold the latest version; earlier versions are
   read-only snapshots (TC-210).
 - **Token cost:** a follow-up sends the run's goal, proposal, change set (quoted files in full, others by path) and the
@@ -52,7 +52,7 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
   selection; every item also has a 44 px Quote pill.
 
 ## Proof
-- `npm test`: TC-200, TC-201, TC-203 … TC-210, TC-102 pass, plus all earlier tests.
+- `npm test`: TC-200, TC-201, TC-203 … TC-210, TC-212 pass, plus all earlier tests.
 - `node compass/check-spec.mjs`, `node compass/check-guardrails.mjs origin/main`, `npm run build` pass.
-- Screenshots of SCR-1 … SCR-4 states in a demo project; TC-202, TC-101, TC-103 checked by hand (keyboard, 390 px,
+- Screenshots of SCR-1 … SCR-4 states in a demo project; TC-202, TC-211, TC-213 checked by hand (keyboard, 390 px,
   reload, Runs page, deleting the run).
