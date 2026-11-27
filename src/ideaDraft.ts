@@ -14,7 +14,8 @@ export function demoIdea(need: string): Idea {
   const action = who ? who[2] : core.charAt(0).toLowerCase() + core.slice(1);
   const intent = hasNumbers ? n : `${users.charAt(0).toUpperCase() + users.slice(1)} can ${action} on their own, without manual work`;
   const done = `${users.charAt(0).toUpperCase() + users.slice(1)} can ${action} in the product without manual work, and every acceptance criterion of the feature passes.`;
-  return { ...brief, need: need.trim(), intent, outcomeMetric: hasNumbers ? `${done}\nSignal to watch (from the need): ${n}` : done, problem: `Today ${users} cannot ${action} without manual work.` };
+  const doneOwn = 'The change described in the need is live, and every acceptance criterion of the feature passes.';
+  return { ...brief, need: need.trim(), intent, outcomeMetric: hasNumbers ? `${doneOwn}\nSignal to watch (from the need): ${n}` : done, problem: `Today ${users} cannot ${action} without manual work.` };
 }
 
 export function demoBrief(intent: string): Idea {
