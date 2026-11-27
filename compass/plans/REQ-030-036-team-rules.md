@@ -1,6 +1,6 @@
 # Plan: REQ-030, REQ-031, REQ-032, REQ-033, REQ-035, REQ-036 Team and gate rules
 
-Feature: F-015 · Requirements: REQ-030, REQ-031, REQ-032, REQ-033, REQ-035, REQ-036 · Test cases: TC-060, TC-061, TC-062, TC-063, TC-064, TC-066, TC-071
+Feature: F-015 · Requirements: REQ-030, REQ-031, REQ-032, REQ-033, REQ-035, REQ-036 · Test cases: TC-060, TC-061, TC-062, TC-063, TC-064, TC-066, TC-071 (approvedBy text only)
 Intent: compass/intent/2026-11-27-team-access.md · Design: compass/design/F-015.md
 
 First build step of F-015: the rules of team access as plain functions, with no UI, no Firebase and no new
@@ -13,7 +13,7 @@ truth.
   validation, add / change roles / remove a member (with the last-Admin rule and the replace-token reminder), which
   projects and roles a signed-in viewer gets, `canPass`, the "Needs the … role" hint and the `approvedBy` text
 - `tests/team.test.mjs` — node:test, one test per TC id
-- `compass/spec.json` — REQ-030, 031, 033, 035, 036 → In build; TC-060 … 064, 066, 071 → Passed
+- `compass/spec.json` — REQ-030, 031, 033, 035, 036 → In build; TC-060 … 064, 066 → Pass (TC-071 stays Not run: its build-run label and demo parts come with the gate buttons)
 
 ## Steps
 1. Write this plan (first commit).
@@ -39,5 +39,5 @@ truth.
 - Nothing calls the module yet, so there is no user-visible change and nothing to roll back.
 
 ## Proof
-- `npm test`: TC-060, TC-061, TC-062, TC-063, TC-064, TC-066, TC-071 pass.
+- `npm test`: TC-060, TC-061, TC-062, TC-063, TC-064, TC-066 and the approvedBy part of TC-071 pass.
 - `node compass/check-spec.mjs` and `node compass/check-guardrails.mjs origin/main` pass.
