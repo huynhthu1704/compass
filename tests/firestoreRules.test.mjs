@@ -54,6 +54,33 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     const out = as('x@example.com'), ba = as('ba@example.com'), admin = as('admin@example.com'), sa = as(SA);
     await assertFails(getDoc(doc(out, 'projects/p1')));                                   // on no team
     await assertFails(getDoc(doc(out, 'projects/p1/secrets/token')));
+    await assertFails(getDocs(collection(out, 'projects')));                                              // list every project (REQ-032: no project data)
+    await assertFails(getDocs(query(collection(out, 'projects'), where('members', 'array-contains', 'ba@example.com')))); // someone else's projects
+    await assertFails(getDocs(collection(out, 'projects/p1/approvals')));                                 // records hold members' emails
+    await assertFails(getDoc(doc(out, 'projects/p1/approvals/old')));
+    await assertFails(getDoc(doc(out, 'projects/p1/baseline/initial')));
+    await assertFails(updateDoc(doc(admin, 'projects/p1'), { admins: ['ghost@example.com'] }));             // an Admin who is not a member
+    await assertFails(updateDoc(doc(admin, 'projects/p1'), { repo: { owner: 'o', name: 'other' } }));       // the repo never changes
+    await assertFails(updateDoc(doc(admin, 'projects/p1'), { extra: 1 }));                                 // unknown fields
+    await assertFails(updateDoc(doc(admin, 'projects/p1'), { members: [...p1.members, 'z@example.com'] })); // a member without roles
+    await assertFails(updateDoc(doc(admin, 'projects/p1'), { team: { ...team, 'z@example.com': ['QA'] } })); // roles for a non-member
+    await assertFails(setDoc(doc(admin, 'projects/p1/secrets/other'), { token: 'y' }));                    // only secrets/token
+    await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), { ...record('ba@example.com', 'requirements', 'BA'), extra: 1 }));
+    await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), { ...record('ba@example.com', 'requirements', 'BA'), items: 'REQ-001' }));
+    await assertFails(setDoc(doc(sa, 'projects/p6/baseline/initial'), { approvals: [] }));                // a baseline without its first team
+    await assertFails(setDoc(doc(admin, 'projects/p6/baseline/initial'), { approvals: [] }));
+    const onlyByAdmin = writeBatch(admin);                                                                 // first team by an Admin of another project
+    onlyByAdmin.set(doc(admin, 'projects/p7'), { name: 'P7', repo: { owner: 'o', name: 'r7' }, members: ['admin@example.com'], admins: ['admin@example.com'], team: { 'admin@example.com': ['PO'] } });
+    onlyByAdmin.set(doc(admin, 'projects/p7/baseline/initial'), { approvals: [] });
+    await assertFails(onlyByAdmin.commit());
+    const otherDoc = writeBatch(sa);                                                                       // the baseline must be baseline/initial
+    otherDoc.set(doc(sa, 'projects/p8'), { name: 'P8', repo: { owner: 'o', name: 'r8' }, members: ['admin@example.com'], admins: ['admin@example.com'], team: { 'admin@example.com': ['PO'] } });
+    otherDoc.set(doc(sa, 'projects/p8/baseline/other'), { approvals: [] });
+    await assertFails(otherDoc.commit());
+    const badBaseline = writeBatch(sa);                                                                    // the baseline must be a list of approvals
+    badBaseline.set(doc(sa, 'projects/p9'), { name: 'P9', repo: { owner: 'o', name: 'r9' }, members: ['admin@example.com'], admins: ['admin@example.com'], team: { 'admin@example.com': ['PO'] } });
+    badBaseline.set(doc(sa, 'projects/p9/baseline/initial'), { approvals: 'none' });
+    await assertFails(badBaseline.commit());
     await assertFails(updateDoc(doc(ba, 'projects/p1'), { members: [...p1.members, 'z@example.com'], team: { ...team, 'z@example.com': ['QA'] } })); // not an Admin
     await assertFails(setDoc(doc(ba, 'projects/p1/secrets/token'), { token: 'y' }));
     await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'design', 'BA')));   // role does not own the gate
