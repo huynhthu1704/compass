@@ -16,6 +16,15 @@ any requirement. It keeps the reason behind a requirement next to the code inste
    `compass/intent/F-xxx.md`) or carries `"intent": "compass/intent/<file>.md"` in `compass/spec.json`.
    List the requirements at the bottom of the intent.
 
+## Done when, and targets only for bets
+Every intent says under `## Done when` what will be true when the change is done. Never invent a baseline or target:
+
+| Kind of change | What the intent carries |
+|---|---|
+| Small feature or convenience | `## Done when` + at most one optional signal to watch, with no target |
+| Process or internal change | `## Done when` only |
+| A bet the Product Owner names as such | `## Done when` + one metric with its current value; the target is set after a few weeks of real data |
+
 `node compass/check-spec.mjs` fails when a requirement points to a missing intent, or when a requirement past Draft
 points to an intent that is not Approved.
 
@@ -27,7 +36,10 @@ Status: Draft
 Requested: <YYYY-MM-DD> by <who>, in <where>
 
 ## What we want
-<the outcome in plain words — not the solution>
+<the outcome in plain words: who, what changes — not the solution>
+
+## Done when
+<what will be true when the change is done, in plain words>
 
 ## Why
 <the problem or opportunity, with any evidence>
@@ -35,8 +47,9 @@ Requested: <YYYY-MM-DD> by <who>, in <where>
 ## Constraints
 <budget, deadline, privacy, things that must not change>
 
-## Success measure
-<how we will know it worked>
+## Signal to watch
+<optional, no target. For a bet the Product Owner names: one metric and its current value; the target is set after
+a few weeks of real data. Delete this section for a process change>
 
 ## Out of scope
 <what we are deliberately not doing>
