@@ -1506,7 +1506,8 @@
         "Given I am the project admin (the PO role until Team access, F-015, is merged) and a project is open\nWhen I open the project page (Feature board)\nThen a \"Design files\" card shows a Figma file field and a Miro board field, both optional, and I can save, change or clear each one; the saved links are written to compass/spec.json → designTool",
         "Given I enter a Figma link that is not an https://www.figma.com/ design, file, proto or board link, or a Miro link that is not an https://miro.com/app/board/ link\nWhen I save\nThen the field shows an error naming the link expected and nothing is saved",
         "Given my role is not the admin role\nWhen I open the project page\nThen the \"Design files\" card shows the linked files with an \"Open ↗\" button each, no edit fields, and the hint \"Only the project admin can change the design files\""
-      ]
+      ],
+      "design": "compass/design/2026-11-27-project-design-files.md"
     },
     {
       "id": "REQ-081",
@@ -1520,7 +1521,8 @@
         "Given a project with a Figma link, a Miro link or both\nWhen I open any feature's Design page\nThen the \"Project design files\" card shows a badge and an \"Open ↗\" button for each linked tool, no edit fields, and for the admin a \"Change on the project page\" link",
         "Given a Miro board is linked\nWhen I open the Design page\nThen the board is previewed with Miro's live embed; a Figma file or the feature's Figma frame link is previewed with the Figma embed as today; on a phone each preview fits the screen width",
         "Given no design file is linked\nWhen I open the Design page\nThen the card says \"No design files linked yet\", and the admin also sees a link to the project page"
-      ]
+      ],
+      "design": "compass/design/2026-11-27-project-design-files.md"
     },
     {
       "id": "REQ-082",
@@ -1533,7 +1535,8 @@
       "ac": [
         "Given a compass/spec.json whose designTool has only kind and url (Figma, Penpot, Sketch or Other)\nWhen the portal opens the project\nThen that link is shown under its tool on the project page and the Design page, and saving the Miro link keeps designTool.kind and designTool.url unchanged",
         "Given a project with a Figma file and a Miro board linked\nWhen the design agent runs or the portal generates AGENTS.md\nThen both tools and their links are named in the agent's prompt and in AGENTS.md"
-      ]
+      ],
+      "design": "compass/design/2026-11-27-project-design-files.md"
     }
   ],
   "tests": [
