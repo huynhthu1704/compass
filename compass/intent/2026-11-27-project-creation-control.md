@@ -1,6 +1,6 @@
 # Intent: each person works with their own GitHub token; only permitted people create projects
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-27, in chat: asked to reply "approve, A" or "approve, B", they replied "B")
 Requested: 2026-11-27 by the Product Owner, in chat (after team access went live; revised the same day: "should we ask
 the user to connect with their github account to use their own token so the system can have a clear audit trace")
 
@@ -19,6 +19,8 @@ With sign-in on:
   and "+ New project". A permitted person creates the repository with their own token, and only in the GitHub account
   or organization the super admin configured. They become the Admin of the new project's team. Everyone else sees
   "Ask the super admin to add a project".
+- **The Anthropic key is for the super admin only** (option B): only the super admin sees and uses it on Connections; for
+  everyone else agents run in demo mode.
 - Compass keeps its own approval records in Firebase, so each approval is traceable twice: in Compass and on GitHub.
 - With sign-in off, or in the demo, nothing changes.
 
@@ -52,9 +54,8 @@ GitHub permissions.
 - Project Admins granting "Can create projects".
 - Creating repositories outside the configured account or organization.
 
-## Open question for the Product Owner
-- Anthropic key on Connections: (A) keep it per person (recommended: their own cost; without it agents run in demo
-  mode), or (B) super admin only.
-
 ## Requirements
-<filled after approval>
+- REQ-041 — GitHub work on a team project uses the person's own GitHub token; the Anthropic key is the super admin's only
+- REQ-042 — The team shows each member's GitHub username
+- REQ-043 — The shared project token is retired
+- REQ-044 — Only the super admin and people they permit create projects, only in the configured GitHub account
