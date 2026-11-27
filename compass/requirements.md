@@ -8,7 +8,7 @@
 | REQ-004 | F-008 | The installed scripts never drift from the portal's copies | Must | In build | TC-004 |
 | REQ-101 | F-001 | Idea: business need revised into a business intent | Must | Done | TC-101 |
 | REQ-102 | F-002 | Requirements: generate and approve | Must | Done | TC-102 |
-| REQ-103 | F-003 | Design: design tool, screens and approval gate | Must | Done | TC-103 |
+| REQ-103 | F-003 | Design: design tool, screens and approval gate | Must | Done | TC-103, TC-310 |
 | REQ-104 | F-004 | Test cases: one or more per requirement | Must | Done | TC-104 |
 | REQ-105 | F-005 | Build: coding agent, plan file and pull request | Must | Done | TC-105 |
 | REQ-106 | F-006 | Release: merge, tag and deploy | Must | Done | TC-106 |

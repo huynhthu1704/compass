@@ -2219,6 +2219,16 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given a run with a question, an answer and a v2\nWhen I reload the portal and open the run from the Runs page and the Team floor, and then delete the run\nThen the conversation and versions were shown in both places, and after deleting nothing of the run is left in the project"
+    },
+    {
+      "id": "TC-310",
+      "reqIds": [
+        "REQ-103"
+      ],
+      "title": "Design coverage does not list requirements that need no screen (bug #31)",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given a feature design whose screens deliver REQ-A, and approved requirements REQ-A, REQ-B (no design field) and REQ-C with design \"none: width only\"\nWhen the coverage is computed for compass/design/F-xxx.md\nThen REQ-B is listed as not covered by any screen\nAnd REQ-C is listed as needing no screen, with its reason, and not as not covered"
     }
   ],
   "decisions": [
