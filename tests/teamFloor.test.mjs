@@ -9,9 +9,10 @@ const NOW = Date.parse('2026-11-26T12:00:00.000Z');
 const ago = (s) => new Date(NOW - s * 1000).toISOString();
 let n = 0;
 const run = (agent, status, o = {}) => ({
-  id: `r${++n}`, agent, stage: 'build', goal: `${agent} goal`, status, mode: 'demo', startedAt: ago(o.startedAgo ?? 60),
+  id: `r${++n}`, agent, stage: 'build', goal: o.goal ?? `${agent} goal`, status, mode: 'demo', startedAt: ago(o.startedAgo ?? 60),
+  finishedAt: o.waitingAgo != null ? ago(o.waitingAgo) : undefined, proposal: o.proposal,
   steps: o.steps ?? [{ t: ago(o.startedAgo ?? 60), kind: 'plan', title: `${agent} started` }],
-  changes: [], guardrails: o.guardrails ?? [], evals: o.evals ?? [], featureId: o.featureId ?? 'F-009', reqIds: o.reqIds,
+  changes: o.changes ?? [], guardrails: o.guardrails ?? [], evals: o.evals ?? [], featureId: o.featureId ?? 'F-009', reqIds: o.reqIds,
 });
 const project = (runs, releases = []) => ({ id: 'p1', spec: { features: [{ id: 'F-008', name: 'Own process' }, { id: 'F-009', name: 'Team floor' }] }, runs, releases });
 const desk = (floor, agent) => floor.desks.find((d) => d.agent === agent);
@@ -136,7 +137,7 @@ test('TC-012 (REQ-008): a run blocked by a guardrail is marked, so the floor off
   const f = computeFloor(project([blockedRun, ok]), 'all', NOW);
   assert.deepEqual(f.approvals.map((a) => [a.agent, a.blocked]), [['coder', true], ['requirements', false]]);
   const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
-  assert.match(page, /a\.blocked[\s\S]*Open run · blocked[\s\S]*Review &amp; approve/);
+  assert.match(page, /sel\.blocked \? 'Open run · blocked' : 'Open run to approve'/, 'the details panel offers "Open run to approve" or, for a blocked run, "Open run · blocked" (REQ-060, REQ-062)');
 });
 
 test('TC-007 (REQ-006): the newest step is announced politely, even before the list exists or when it is folded', () => {
@@ -144,4 +145,77 @@ test('TC-007 (REQ-006): the newest step is announced politely, even before the l
   const live = page.indexOf('aria-live="polite"');
   assert.ok(live > 0 && live < page.indexOf('<details'), 'the live region sits outside the collapsible activity list');
   assert.match(page.slice(live - 40, live + 120), /f\.activity\[0\]/);
+});
+
+// ---- F-009 approval details (REQ-060 … REQ-062, issue #38) ----
+const H = 3600;
+test('TC-300 (REQ-060): items carry goal and waiting time measured from when the run began waiting', () => {
+  const runs = [
+    run('requirements', 'awaiting-approval', { startedAgo: 24 * H, waitingAgo: 30, goal: 'goal now' }),
+    run('designer', 'awaiting-approval', { startedAgo: 24 * H, waitingAgo: 6 * 60, goal: 'goal 6m' }),
+    run('testdesign', 'awaiting-approval', { startedAgo: 24 * H, waitingAgo: 2 * H, goal: 'goal 2h' }),
+    run('coder', 'awaiting-approval', { startedAgo: 72 * H, waitingAgo: 48 * H, goal: 'goal 2d' }),
+  ];
+  const f = computeFloor(project(runs), 'all', NOW);
+  const byGoal = Object.fromEntries(f.approvals.map((a) => [a.goal, a]));
+  assert.deepEqual(['goal now', 'goal 6m', 'goal 2h', 'goal 2d'].map((g) => byGoal[g].wait), ['now', '6m', '2h', '2d']);
+  assert.equal(byGoal['goal 6m'].agentName, 'Design agent');
+  assert.equal(byGoal['goal 6m'].featureId, 'F-009');
+  const ninety = computeFloor(project([run('coder', 'awaiting-approval', { waitingAgo: 90 * 60 })]), 'all', NOW);
+  assert.equal(ninety.approvals[0].wait, '1h', 'rounded down');
+});
+
+test('TC-302 (REQ-061): the 3 that have waited longest, then "+N more"', () => {
+  const mk = (goal, startedH, waitingS) => run('ideation', 'awaiting-approval', { goal, startedAgo: startedH * H, waitingAgo: waitingS });
+  const six = [mk('A', 5, 60), mk('B', 4, 3 * H), mk('C', 3, 2 * H), mk('D', 2, 90 * 60), mk('E', 1, 4 * H), mk('F', 0.5, 10 * 60)];
+  const f = computeFloor(project(six), 'all', NOW);
+  assert.deepEqual(f.approvalsShown.map((a) => a.goal), ['E', 'B', 'C']);
+  assert.equal(f.approvalsMore, 3);
+  assert.equal(f.approvals.length, 6);
+  const three = computeFloor(project(six.slice(0, 3)), 'all', NOW);
+  assert.equal(three.approvalsShown.length, 3);
+  assert.equal(three.approvalsMore, 0);
+  const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
+  assert.match(page, /const moreLink = `\/p\/\$\{p\.id\}\/runs\?status=awaiting-approval\$\{filter !== 'all' \? `&feature=\$\{filter\}` : ''\}`/, '"+N more" links to the filtered Agent runs, keeping the feature filter');
+  assert.match(page, /go\(moreLink\)/);
+  assert.match(page, /f\.approvalsMore > 0/);
+});
+
+test('TC-303 (REQ-061): Agent runs can show only the runs waiting for approval', () => {
+  const runs = readFileSync(new URL('../src/pages/Runs.tsx', import.meta.url), 'utf8');
+  assert.match(runs, /query\(\)\.get\('status'\) === 'awaiting-approval'/);
+  assert.match(runs, /query\(\)\.get\('feature'\)/, 'and the Team floor feature filter carries over');
+  assert.match(runs, /r\.status === 'awaiting-approval'/);
+  assert.match(runs, /Show all runs/);
+});
+
+test('TC-306 (REQ-060): goals tell runs of one agent and feature apart; blocked runs are marked', () => {
+  const a = run('ideation', 'awaiting-approval', { featureId: 'F-003', goal: 'Invite friends by link', waitingAgo: 120 });
+  const b = run('ideation', 'awaiting-approval', { featureId: 'F-003', goal: 'Share a trip map', waitingAgo: 60 });
+  const c = run('coder', 'awaiting-approval', { waitingAgo: 30, guardrails: [{ id: 'G3', name: 'Protected paths', level: 'block', message: '.github/' }] });
+  const f = computeFloor(project([a, b, c]), 'all', NOW);
+  assert.deepEqual(f.approvals.map((x) => [x.goal, x.blocked]), [['Invite friends by link', false], ['Share a trip map', false], ['coder goal', true]]);
+});
+
+test('TC-304 (REQ-062): the panel summary comes from the proposal and change set', () => {
+  const reqs = run('requirements', 'awaiting-approval', { proposal: { requirements: [{}, {}, {}, {}, {}] } });
+  const code = run('coder', 'awaiting-approval', { changes: [{ path: 'src/share.js' }, { path: 'tests/share.test.js' }],
+    guardrails: [{ id: 'G1', name: 'Scope', level: 'pass', message: 'ok' }], evals: [{ id: 'E1', name: 'Tests accompany code', score: 1, max: 1, note: '' }] });
+  const idea = run('ideation', 'awaiting-approval', { proposal: { idea: { intent: 'x' } } });
+  const f = computeFloor(project([reqs, code, idea]), 'all', NOW);
+  const by = Object.fromEntries(f.approvals.map((a) => [a.agent, a]));
+  assert.equal(by.requirements.proposal, '5 requirements');
+  assert.equal(by.coder.proposal, '2 files changed: src/share.js, tests/share.test.js');
+  assert.equal(by.ideation.proposal, 'Idea brief');
+  assert.deepEqual(by.coder.checks, ['G1 Scope: pass', 'Tests accompany code 1/1']);
+});
+
+test('TC-309 (REQ-062): the panel only opens the run page; it never approves or rejects', () => {
+  const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
+  assert.match(page, /role="dialog"/);
+  assert.match(page, /e\.key === 'Escape'/, 'Escape closes the panel');
+  assert.match(page, /e\.key !== 'Tab'/, 'Tab stays inside the panel');
+  assert.match(page, /Open run to approve/);
+  assert.match(page, /onClick=\{\(\) => open\(sel\.runId\)\}/, 'the panel button goes to /p/<id>/runs/<run id>');
+  assert.doesNotMatch(page, /approveRun|rejectRun/);
 });

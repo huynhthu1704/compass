@@ -19,7 +19,7 @@ export function Onboarding() {
   return (
     <div style={{ maxWidth: 1040, margin: '0 auto', padding: '64px 24px' }} className="stack gap-2xl">
       <div className="stack gap-md">
-        <div className="overline t-brand">Compass · AI dev portal</div>
+        <div className="overline t-brand">Compass</div>
         <h1 className="display-xl">From idea to released website — with agents you can trust.</h1>
         <p className="body-lg t-secondary" style={{ maxWidth: 760 }}>
           Compass manages your GitHub projects end to end: shape the idea, write requirements and test cases, let a coding agent open pull requests, and release in one click.

@@ -50,3 +50,21 @@ test('TC-025 (REQ-014): below 720 px the stage strip is one stage per row', () =
   assert.match(feature, /className="stage-strip"/);
   assert.doesNotMatch(feature, /gridTemplateColumns: 'repeat\(5/, 'no inline columns that would override the phone rule');
 });
+
+test('TC-027 (REQ-015): pages use up to 1600 px with fluid side padding; the phone rule is unchanged', () => {
+  const css = read('src/index.css');
+  const main = css.match(/^\.main \{([^}]*)\}/m);
+  assert.ok(main, '.main rule exists');
+  assert.match(main[1], /max-width: 1600px/);
+  assert.match(main[1], /width: 100%/);
+  assert.match(main[1], /min-width: 0/, 'wide boards scroll inside themselves, not the page');
+  assert.match(main[1], /padding: var\(--spacing-2xl\) clamp\(var\(--spacing-lg\), 3vw, var\(--spacing-3xl\)\) var\(--spacing-4xl\)/);
+  const phone = css.slice(css.indexOf('@media (max-width: 900px) {'), css.indexOf('\n}', css.indexOf('@media (max-width: 900px) {')));
+  assert.match(phone, /\.main \{ padding: var\(--spacing-xl\) var\(--spacing-lg\) var\(--spacing-3xl\); \}/, 'below-900 px .main rule unchanged');
+  assert.match(css, /\.arch \{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/, 'architecture columns can shrink (no sideways scroll above 900 px)');
+  assert.match(css, /@media \(max-width: 900px\) \{ \.arch \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/, 'and on phones');
+  assert.match(css, /^\.option:has\(> \.grow\) \{ flex-wrap: wrap; \}/m, 'rows with a flexible text part (Release, Build, run changes) wrap on phones');
+  assert.match(css, /\.option:has\(> \.grow\) > \.grow \{ flex-basis: 8rem; \}/, 'their text keeps at least 8rem and moves to its own line instead of being squeezed');
+  assert.match(css, /\.option > \.mono \{ min-width: 0; overflow-wrap: anywhere; \}/, 'long file paths in option rows can break');
+  assert.doesNotMatch(css.match(/^\.option \{[^}]*\}/m)[0], /flex-wrap/, 'other option rows (role picker, run lists) keep one line');
+});

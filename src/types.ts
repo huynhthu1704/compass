@@ -22,7 +22,7 @@ export interface RepoRef {
 
 export interface Idea {
   need?: string;           // the Product Owner's raw business need, in their own words
-  intent: string;          // business intent: the need revised into a measurable business outcome
+  intent: string;          // business intent: the need revised into the outcome (who, what changes); outcomeMetric holds "Done when" (REQ-020)
   problem: string;
   users: string[];
   outcomeMetric: string;
@@ -119,6 +119,23 @@ export interface EvalResult { id: string; name: string; score: number; max: numb
 
 export type AgentId = 'ideation' | 'requirements' | 'designer' | 'testdesign' | 'coder' | 'reviewer' | 'release';
 
+/** A quoted part of an agent's answer (REQ-050): where it came from, e.g. "REQ-051 · AC 2" or "src/app.ts", and the text. */
+export interface Quote { source: string; text: string }
+/** One message in a run's conversation (REQ-051 … REQ-054). */
+export interface ConvTurn {
+  id: string;
+  at: string;
+  who: 'you' | 'agent';
+  kind?: 'ask' | 'revise';   // your message: what you asked for
+  quotes?: Quote[];
+  text: string;
+  tokens?: number;           // agent answer: tokens used
+  version?: number;          // agent answer to a revision: the version it produced
+  summary?: string;          // "Proposal v2 — changed: …"
+}
+/** One version of a run's proposal / change set (REQ-053). The latest one is also in Run.proposal / Run.changes. */
+export interface RunVersion { n: number; at: string; proposal?: Run['proposal']; changes: FileChange[]; output?: string; summary?: string }
+
 export interface Run {
   id: string;
   agent: AgentId;
@@ -139,6 +156,9 @@ export interface Run {
   prNumber?: number;
   prUrl?: string;
   reqIds?: string[];
+  conversation?: ConvTurn[];  // F-020: questions and revisions after the run
+  versions?: RunVersion[];    // F-020: v1 … vN once the proposal was revised
+  replying?: 'ask' | 'revise'; // F-020: the agent is answering a follow-up
 }
 
 export interface ReleaseRec { tag: string; name: string; url: string; date: string; prs: number[]; featureIds?: string[] }
