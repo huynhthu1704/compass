@@ -71,3 +71,63 @@ _2026-11-27 · Accepted · REQ-025_
 **Decision:** The Product Owner decided in chat on 2026-11-27: every Figma component lives on the "Components" page, and each feature gets one Figma section holding all its screens, for this and every future feature. Same rule as travel-map REQ-061 / ADR-022.
 
 **Consequences:** Existing components were moved (instances left where they were shown) and existing feature screens grouped; node ids are unchanged, so frame links still work. The design template Compass installs states the rule; CI cannot read Figma, so it is not checked automatically.
+
+## ADR-010 · Team access uses Firebase on the free Spark plan
+
+_2026-11-27 · Accepted · REQ-030, REQ-032, REQ-033, REQ-035_
+
+**Context:** Compass is a browser-only app without a server. Team lists and role checks must be shared between people and cannot be trusted if they live only in each browser.
+
+**Decision:** The Product Owner chose Firebase Auth (Google sign-in) and Firestore on the free Spark plan, with Firestore security rules as the real gate, over a team.json file in each repo or browser-only storage.
+
+**Consequences:** New dependency firebase and a firestore rules file (both need the human-approved label); the Product Owner creates the Firebase project and publishes the rules once; ideas, runs and other data stay where they are.
+
+## ADR-011 · Members use a shared GitHub token per project
+
+_2026-11-27 · Accepted · REQ-034, REQ-031_
+
+**Context:** GitHub writes need a token. Team members who sign in with Google may have no GitHub account or token.
+
+**Decision:** The Product Owner chose one GitHub token per project, stored by its Admins and readable by its members, over each member connecting their own token.
+
+**Consequences:** Every member's browser can read the token (the Team page only hides it from non-Admins), so a member could copy it and could also commit to the repo without the portal's role checks (see ADR-012); removing them does not revoke that copy. Mitigation: the portal asks for a fine-grained token for that repo only (Contents, Pull requests, Issues) with an expiry date, and reminds Admins to replace it after removing someone.
+
+## ADR-012 · Approvals are recorded in Firebase and unconfirmed ones are flagged
+
+_2026-11-27 · Accepted · REQ-033, REQ-036, REQ-037, REQ-038_
+
+**Context:** The independent review of PR #74 found that approvals are commits of spec.json made with the shared project token, so Firestore rules never see them: any member could commit an approval for a gate their role does not own, or forge approvedBy.
+
+**Decision:** The Product Owner chose to write every approval to Firestore first (the rules accept it only from the signed-in person's own verified email and a role they hold that owns the gate, or "super admin" for the account in config/access, and records cannot be changed or deleted), commit to GitHub only after that, and flag approvals in spec.json that have neither a matching record nor a place in the baseline stored by the super admin together with the project's first team (only the super admin can create a first team) (dates in the repo are not trusted) — over accepting screen-only checks or going back to personal tokens.
+
+**Consequences:** Two more requirements (REQ-037, REQ-038). A member with the token can still edit spec.json directly, but such approvals show as Unconfirmed. Known limit: a record names the item and gate, not its content, so editing the text of an already approved item keeps it confirmed; a content fingerprint could be added later. The updated design (Unconfirmed badge) was approved on 2026-11-27. Residual risk: an approval forged into spec.json before the team is first created goes into the baseline and is never flagged.
+
+## ADR-013 · The super admin is recorded automatically at first sign-in
+
+_2026-11-27 · Accepted · REQ-035_
+
+**Context:** The Product Owner asked not to add herself to Firestore by hand. Writing her email into the rules would publish a personal email in the repo.
+
+**Decision:** The Firestore rules hold a SHA-256 hash of the super admin's lower-case Google email. When that account signs in for the first time, the portal creates config/access with it; the rules allow that create only for a matching hash and refuse any later change from a browser.
+
+**Consequences:** No manual Firestore step. Adding or changing a super admin later means a rules change (new hash) or an edit in the Firebase console. A hash of an email can be guessed by trying likely emails, so it hides the address from casual readers only.
+
+## ADR-014 · With sign-in, roles come from the team; the role picker lives on only in the demo
+
+_2026-11-27 · Accepted · REQ-039, REQ-040_
+
+**Context:** The onboarding screen "What's your role?" lets anyone pick a role. With Google sign-in the admin sets roles, so picking one would contradict the team; but the live site would then lose its demo.
+
+**Decision:** The Product Owner chose: with sign-in on, roles come only from the team and the role screen is not shown; a signed-in person can open a demo (sample projects in the browser only), where they pick a role as today — offered on the no-access screen and in the sidebar account menu.
+
+**Consequences:** No new screen for the role picker (the existing onboarding screen is reused inside the demo). The demo must never read or write Firebase, GitHub or real projects (TC-076).
+
+## ADR-015 · Project design files live on a new Project settings page
+
+_2026-11-27 · Accepted · REQ-080, REQ-081, REQ-082_
+
+**Context:** The first design put the project's Figma and Miro links on the Feature board; the Product Owner found that page unsuitable for them.
+
+**Decision:** The Product Owner chose in chat on 2026-11-27: a "Project settings" link with a gear icon is added to the sidebar's project group, for every role. Its page holds the "Design files" card; only the project admin edits it, others see the links with Open ↗. Follow-up decisions in chat, after Team access (F-015) and REQ-075 reached main: (1) the admin is the project's Admin or the super admin when sign-in is on, and the PO role from the role picker when sign-in is off (demo, local use); (2) Project settings is the last link: after Release, and after Team access's Admin-only Team link, which stays a separate item.
+
+**Consequences:** REQ-070, REQ-075 and their tests list Project settings as the last project link. The Admin check is a portal check only: compass/spec.json → designTool lives in the repository, so anyone with GitHub write access can still change it there (Firestore rules never see GitHub commits).
