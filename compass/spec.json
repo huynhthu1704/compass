@@ -3134,7 +3134,7 @@
       "title": "The approval record is written before the commit; a refusal commits nothing",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a stubbed Firestore and GitHub\nWhen a BA approves requirements, then a BA approves a design (Firestore refuses), then the GitHub commit fails after an accepted record\nThen the first writes the record and then commits; the second commits nothing and shows \"Not allowed for your roles\"; the third reports not saved and a retry reuses the record id"
+      "gherkin": "Given a stubbed Firestore and GitHub\nWhen a BA approves requirements, then a BA approves a design (Firestore refuses), then the GitHub commit fails after an accepted record\nThen the first writes the record and then commits; the second commits nothing and shows \"Not allowed for your roles\"; the third reports not saved and a retry by the same signed-in person for the same, unrevised version reuses the record id, while a retry by another person or after a revision writes a new, role-checked record"
     },
     {
       "id": "TC-073",
@@ -3143,8 +3143,8 @@
       ],
       "title": "Approvals in neither the baseline nor a Firebase record are unconfirmed, whatever their date",
       "type": "Automated",
-      "status": "Not run",
-      "gherkin": "Given a baseline with the intent approval by po@example.com, an approval record for the requirements approval by ba@example.com, and in spec.json those two plus a design approval by ux@example.com dated 2026-11-20 (before the team existed) with no record and not in the baseline\nWhen unconfirmed approvals are computed\nThen only the design approval by ux@example.com is unconfirmed; in demo mode nothing is; a requirements approval in spec.json claiming \"ba@example.com (PO)\" while the record says BA is unconfirmed; and for a project with a team but no baseline, every approval without a matching record (including the intent approval) is unconfirmed"
+      "status": "Pass",
+      "gherkin": "Given a baseline with the intent approval by po@example.com, an approval record for the requirements approval by ba@example.com, and in spec.json those two plus a design approval by ux@example.com dated 2026-11-20 (before the team existed) with no record and not in the baseline\nWhen unconfirmed approvals are computed\nThen only the design approval by ux@example.com is unconfirmed; an approved test case with no tests record naming that test case is unconfirmed (a record for only its requirement or feature does not confirm it); an intent approvedBy that differs from the baseline is unconfirmed; in demo mode, on local projects and on projects without a team nothing is checked; a requirements approval in spec.json claiming \"ba@example.com (PO)\" while the record says BA is unconfirmed; and for a project with a team but no baseline, every approval without a matching record (including the intent approval) is unconfirmed"
     },
     {
       "id": "TC-074",
