@@ -2056,14 +2056,14 @@
     {
       "id": "REQ-041",
       "featureId": "F-015",
-      "title": "The super admin's GitHub token and Anthropic key are used for everyone; only the super admin sets them",
+      "title": "The super admins' GitHub token and Anthropic key are used for everyone; only super admins set them",
       "priority": "Must",
       "status": "Draft",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the super admin, I want everyone to work through my GitHub and Anthropic accounts in phase 1, and nobody else to configure them, so that I control all access and cost.",
       "ac": [
         "Given sign-in is on and the super admin saved a GitHub token and an Anthropic key on Connections\nWhen any team member saves to GitHub, approves, releases or runs an agent on a team project\nThen Compass uses the super admin's token and key; a token or key saved on the member's own device is never used for a team project",
-        "Given sign-in is on\nWhen a person who is not the super admin uses Compass\nThen the Connections page is hidden: no sidebar card or link leads to it, and opening its address goes to Projects; the Firestore rules let only the super admin write or replace the GitHub token and Anthropic key, and let only signed-in team members and the super admin read them",
+        "Given sign-in is on\nWhen a person who is not a super admin uses Compass\nThen the Connections page is hidden: no sidebar card or link leads to it, and opening its address goes to Projects; the Firestore rules let only super admins write or replace the GitHub token and Anthropic key, and let only signed-in team members and super admins read them",
         "Given the super admin has not set a GitHub token (or an Anthropic key)\nWhen a member tries a GitHub action (or a live agent run)\nThen nothing is written, the GitHub action says \"No GitHub token yet — ask the super admin\", and agents run in demo mode",
         "Given the super admin replaces or removes the token or key\nWhen members next act\nThen the new value is used, or the actions above are disabled",
         "Given sign-in is off, or the demo is open\nWhen anyone uses Compass\nThen tokens and keys work as today, per device"
@@ -2108,6 +2108,20 @@
         "Given the super admin is signed in\nWhen they open the new Users screen (in the sidebar, shown only to the super admin)\nThen they see every person on any team with their projects, a \"Can create projects\" switch per person, and the \"GitHub account or organization for new projects\" field; the Firestore rules accept changes to these only from the super admin",
         "Given a person marked \"Can create projects\"\nWhen they create a new project or import a repository\nThen only the configured account or organization is offered, any other owner is refused before any GitHub call, the repository is created or read with the super admin's token, and the project's first team is saved with them as Admin together with the approval baseline; the Firestore rules accept a first team only from the super admin or from a permitted person who lists themselves as Admin",
         "Given the super admin removes a person's \"Can create projects\"\nWhen that person opens Projects\nThen Import and New project are gone; projects they created stay, with their teams"
+      ]
+    },
+    {
+      "id": "REQ-046",
+      "featureId": "F-015",
+      "title": "The owner can make other people super admins",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-27-project-creation-control.md",
+      "story": "As the owner of Compass, I want to give trusted people super admin rights, so that they can also manage the GitHub token, the Anthropic key, users and projects.",
+      "ac": [
+        "Given the owner (the account whose hashed email is in the Firestore rules, ADR-013) opens the Users screen\nWhen they switch \"Super admin\" on or off for a person\nThen that person gains or loses super admin rights at their next page load; the Firestore rules accept this change only from the owner, and the owner can never be removed",
+        "Given a person who is a super admin but not the owner\nWhen they use Compass\nThen they can do everything the super admin does (see every project, open Connections, set or replace the GitHub token and Anthropic key, grant \"Can create projects\", manage teams), except granting or removing super admin",
+        "Given the Users screen\nWhen any super admin opens it\nThen each person shows a \"Super admin\" badge when they are one, and the owner is marked \"Owner\""
       ]
     }
   ],
@@ -3427,6 +3441,27 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the live site, the super admin's token and key set, and a member with no token of their own\nWhen the super admin marks the member \"Can create projects\", the member creates a project and approves a requirement\nThen the repository is in the configured account, the member is its Admin, and the commit on GitHub names the member (\"Made in Compass by …\")"
+    },
+    {
+      "id": "TC-087",
+      "reqIds": [
+        "REQ-046"
+      ],
+      "title": "Only the owner grants or removes super admin, and the owner stays",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the Firestore emulator, the owner and a member\nWhen the member makes themselves super admin, the owner makes the member super admin, the new super admin then makes a third person super admin, and the owner tries to remove themselves\nThen the first is refused, the second accepted, the third refused and the fourth refused; the new super admin can then write the GitHub token"
+    },
+    {
+      "id": "TC-088",
+      "reqIds": [
+        "REQ-046",
+        "REQ-041"
+      ],
+      "title": "A second super admin sets the token and key",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the live site, the owner and a person made super admin on the Users screen\nWhen that person reloads, opens Connections and replaces the GitHub token\nThen Connections is visible to them, the new token is used for every member, and the Users screen shows them with a \"Super admin\" badge but without the owner's switch"
     }
   ],
   "decisions": [
@@ -3632,6 +3667,19 @@
       "context": "Live agent runs cost money on the key owner's Anthropic account.",
       "decision": "The Product Owner decided in chat on 2026-11-27 (same message as ADR-016): with sign-in on, only the super admin sets the Anthropic key, and Compass uses it for every team member's live agent runs on team projects; a key saved on a member's device is not used.",
       "consequences": "All agent cost is on the super admin's account; every member's browser can read the key, so it gets its own spending limit and is replaced when someone leaves."
+    },
+    {
+      "id": "ADR-018",
+      "date": "2026-11-27",
+      "title": "The owner can make other people super admins",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-046",
+        "REQ-041"
+      ],
+      "context": "ADR-013 recorded a single super admin at first sign-in and allowed no change from a browser. In phase 1 the token and key must be manageable by more than one trusted person.",
+      "decision": "The Product Owner decided in chat on 2026-11-27: \"Me and users given super admin permission can update the token\". The owner (the hashed email in firestore.rules, ADR-013) can add or remove super admins on the Users screen; the owner can never be removed. Super admins can do everything except grant or remove super admin. Extends ADR-013.",
+      "consequences": "The Firestore rules let the owner update config/access; more people can see every project and read and replace the token and key."
     }
   ]
 }

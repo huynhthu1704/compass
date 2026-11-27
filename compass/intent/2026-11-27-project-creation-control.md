@@ -7,8 +7,11 @@ configured by me"
 
 ## What we want
 With sign-in on, in phase 1:
-- **One GitHub token and one Anthropic key, set only by the super admin**, on Connections. Compass uses them for every
-  person's GitHub work and live agent runs on team projects. The Connections page is hidden from everyone else, and a
+- **More than one super admin:** the owner (the Product Owner's account, ADR-013) can make other people super admins
+  on the Users screen, and remove them again; only the owner can do this, and the owner always stays. Super admins can
+  do everything else the owner can.
+- **One GitHub token and one Anthropic key, set only by super admins**, on Connections. Compass uses them for every
+  person's GitHub work and live agent runs on team projects. The Connections page is hidden from everyone but super admins, and a
   token or key that someone saved on their own device is never used for a team project.
 - **Project Admins no longer set a project token.** The per-project token card on the Team page is removed and stored
   project tokens are deleted (the super admin's token replaces them).
@@ -55,3 +58,4 @@ control away.
 - REQ-042 — Every commit and pull request says who did it in Compass
 - REQ-043 — Project tokens set by project Admins are retired
 - REQ-044 — Only the super admin and people they permit create projects, only in the configured GitHub account
+- REQ-046 — The owner can make other people super admins
