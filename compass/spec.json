@@ -1829,7 +1829,7 @@
       "featureId": "F-015",
       "title": "People sign in with Google and see only the projects whose team lists their email",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As a team member, I want to sign in with my Google account, so that Compass knows which projects and roles are mine.",
       "ac": [

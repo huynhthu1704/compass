@@ -32,7 +32,7 @@ export type TeamResult = { ok: true; team: Member[]; replaceToken?: boolean } | 
 
 const cleanRoles = (roles: TeamRole[]) => TEAM_ROLES.filter((r) => roles.includes(r));
 const adminCount = (team: Member[]) => team.filter((m) => m.roles.includes('Admin')).length;
-const find = (team: Member[], email: string) => team.findIndex((m) => m.email === normalizeEmail(email));
+const find = (team: Member[], email: string) => team.findIndex((m) => normalizeEmail(m.email) === normalizeEmail(email));
 
 /** Add a person by email with one or more roles (REQ-030). Never changes `team`. */
 export function addMember(team: Member[], email: string, roles: TeamRole[]): TeamResult {
@@ -86,8 +86,9 @@ export const canPass = (gate: Gate, roles: TeamRole[], superAdmin = false) => su
 /** The hint on a disabled gate button, e.g. "Needs the UX or PO role". */
 export const gateHint = (gate: Gate) => `Needs the ${GATE_ROLES[gate].join(' or ')} role`;
 
-/** approvedBy text for an approval (REQ-036): "<email> (<role>)", naming the person's role that owns the gate. */
-export function approvedBy(email: string, roles: TeamRole[], gate: Gate, superAdmin = false) {
-  const role = GATE_ROLES[gate].find((r) => roles.includes(r));
-  return `${normalizeEmail(email)} (${role || (superAdmin ? 'super admin' : roles[0] || 'no role')})`;
+/** approvedBy text for an approval (REQ-036): "<email> (<role>)", naming the person's role that owns the gate.
+ *  Returns null when the person may not pass the gate, so no misleading audit entry can be written. */
+export function approvedBy(email: string, roles: TeamRole[], gate: Gate, superAdmin = false): string | null {
+  const role = GATE_ROLES[gate].find((r) => roles.includes(r)) || (superAdmin ? 'super admin' : null);
+  return role ? `${normalizeEmail(email)} (${role})` : null;
 }

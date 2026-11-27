@@ -13,7 +13,7 @@ truth.
   validation, add / change roles / remove a member (with the last-Admin rule and the replace-token reminder), which
   projects and roles a signed-in viewer gets, `canPass`, the "Needs the … role" hint and the `approvedBy` text
 - `tests/team.test.mjs` — node:test, one test per TC id
-- `compass/spec.json` — REQ-030, 031, 033, 035, 036 → In build; TC-060 … 064, 066 → Pass (TC-071 stays Not run: its build-run label and demo parts come with the gate buttons)
+- `compass/spec.json` — REQ-030, 031, 032, 033, 035, 036 → In build; TC-060 … 064, 066 → Pass (TC-071 stays Not run: its build-run label and demo parts come with the gate buttons)
 
 ## Steps
 1. Write this plan (first commit).
@@ -27,7 +27,7 @@ truth.
    - `accessFor(projects, viewer, superAdmins)`: verified email only; matched case-insensitively; super admin sees
      every project (REQ-032, REQ-035).
    - `canPass(gate, roles, isSuperAdmin)`, `gateHint(gate)` → "Needs the UX or PO role", `approvedBy(email, roles, gate)`
-     → "ba@example.com (BA)" — the first of the person's roles that owns the gate (REQ-036).
+     → "ba@example.com (BA)" — the first of the person's roles that owns the gate (REQ-036); `null` when none does.
 3. Add `tests/team.test.mjs` for TC-060 … 064, 066, 071.
 4. Update statuses in `compass/spec.json`; run the checks.
 

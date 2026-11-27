@@ -8,6 +8,8 @@ test('TC-060 (REQ-030): adding a person normalises the email and keeps several r
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
   assert.equal(r.ok, true);
   assert.deepEqual(r.team, [{ email: 'ba@example.com', roles: ['BA', 'QA'] }]);
+  assert.deepEqual(addMember([], 'qa@example.com', ['QA', 'QA', 'Foo']).team[0].roles, ['QA'], 'duplicate and unknown roles dropped');
+  assert.equal(addMember([], 'x@example.com', ['Foo']).ok, false, 'only unknown roles → refused');
 });
 
 test('TC-061 (REQ-030): adding is refused for a bad email, no role or a duplicate', () => {
@@ -19,6 +21,9 @@ test('TC-061 (REQ-030): adding is refused for a bad email, no role or a duplicat
     assert.equal(r.team, team, 'team unchanged');
   }
   assert.deepEqual(team, [{ email: 'ba@example.com', roles: ['BA'] }], 'input not mutated');
+  const legacy = [{ email: 'BA@EXAMPLE.COM', roles: ['BA'] }];
+  assert.equal(addMember(legacy, 'ba@example.com', ['QA']).ok, false, 'stored email matched case-insensitively');
+  assert.equal(removeMember([...legacy, { email: 'po@example.com', roles: ['Admin'] }], 'ba@example.com').ok, true);
 });
 
 test('TC-062 (REQ-031): the last Admin cannot be removed or lose the Admin role', () => {
@@ -55,6 +60,8 @@ test('TC-064 (REQ-032, REQ-035): email matching picks the projects of a signed-i
   const sa = { email: 'PO@example.com', emailVerified: true };
   assert.equal(isSuperAdmin(sa, ['po@example.com']), true);
   assert.deepEqual(accessFor(projects, sa, ['po@example.com']).map((p) => p.id), ['A', 'B', 'C'], 'super admin sees every project');
+  const withEntry = [{ id: 'A', team: [{ email: 'po@example.com', roles: ['PO', 'Admin'] }] }, { id: 'B', team: [] }];
+  assert.deepEqual(accessFor(withEntry, sa, ['po@example.com']), [{ id: 'A', roles: ['PO', 'Admin'] }, { id: 'B', roles: [] }], 'super admin keeps team roles');
 });
 
 test('TC-066 (REQ-033): role → gate rules, including several roles and the super admin', () => {
@@ -76,4 +83,5 @@ test('TC-071 (REQ-036): approvedBy names the person and the role that owns the g
   assert.equal(approvedBy('Ba@Example.com', ['BA', 'QA'], 'requirements'), 'ba@example.com (BA)');
   assert.equal(approvedBy('ba@example.com', ['BA', 'QA'], 'tests'), 'ba@example.com (QA)');
   assert.equal(approvedBy('po@example.com', ['Admin'], 'design', true), 'po@example.com (super admin)');
+  assert.equal(approvedBy('dev@example.com', ['Dev'], 'requirements'), null, 'no role that owns the gate → no audit text');
 });
