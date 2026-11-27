@@ -909,6 +909,35 @@
         "Given a feature with open agent pull requests\nWhen the delete dialog opens\nThen the pull requests are listed with links, and deleting the feature does not close or merge them",
         "Given a feature whose requirements are all Draft or Approved and that has no open pull request\nWhen the delete dialog opens\nThen no warning is shown"
       ]
+    },
+    {
+      "id": "REQ-020",
+      "featureId": "F-001",
+      "title": "The Ideation agent writes \"Done when\" and never invents a baseline or target",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-done-when-before-targets.md",
+      "design": "none: agent instructions and framework text, no UI",
+      "story": "As the product owner, I want the Ideation agent to say what will be true when the change is done instead of inventing numbers, so that I can judge and approve a brief without making up a baseline or target.",
+      "ac": [
+        "Given a business need\nWhen the Ideation agent drafts a brief\nThen the intent says who and what changes, \"Done when\" says what will be true afterwards, and there is no baseline or target unless the need itself gives numbers or names the change a bet",
+        "Given no AI key (the offline draft)\nWhen a brief is drafted\nThen it has no \"[baseline %]\", \"[target %]\" or \"baseline → target\" placeholders",
+        "Given the framework text Compass installs (AGENTS.md and compass/intent/README.md)\nWhen an agent reads it\nThen it asks every intent for \"## Done when\" and a metric with a baseline only for a bet the Product Owner names, the same rule as travel-map REQ-059"
+      ]
+    },
+    {
+      "id": "REQ-021",
+      "featureId": "F-001",
+      "title": "The Idea page and briefs say \"Done when\" instead of \"Outcome metric\"",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-done-when-before-targets.md",
+      "design": "compass/design/2026-11-27-done-when-labels.md",
+      "story": "As the product owner, I want the Idea page and briefs to ask what will be true when it is done, so that the form no longer asks me for a baseline → target.",
+      "ac": [
+        "Given the Idea page\nWhen I look at the brief fields\nThen \"Outcome metric (baseline → target)\" is called \"Done when (and optional signal to watch)\" and no label or help text asks for a baseline → target",
+        "Given an Ideation agent run brief and the generated compass/features/F-xxx.md and compass/intent/F-xxx.md\nWhen they show the brief\nThen the heading reads \"Done when\" instead of \"Outcome metric\" or \"Success measure\""
+      ]
     }
   ],
   "tests": [
@@ -1341,6 +1370,46 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues \"REQ-002: …\" and \"REQ-001: …\"\nWhen the delete dialog's list is computed\nThen it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue \"REQ-002: …\""
+    },
+    {
+      "id": "TC-039",
+      "reqIds": [
+        "REQ-020"
+      ],
+      "title": "The Ideation agent instructions ask for \"Done when\" and forbid invented numbers",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the Ideation agent definition in src/harness.ts\nWhen its system prompt is read\nThen it asks for \"Done when\", says not to invent a baseline or target, and no longer asks for \"baseline → target, by when\""
+    },
+    {
+      "id": "TC-040",
+      "reqIds": [
+        "REQ-020"
+      ],
+      "title": "The offline draft has no baseline or target placeholders",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given no AI key\nWhen the offline Ideation draft revises the need \"travellers to add guide tips to their checklist\"\nThen the intent and the Done when field contain no \"[baseline\", \"[target\" or \"baseline → target\""
+    },
+    {
+      "id": "TC-041",
+      "reqIds": [
+        "REQ-020"
+      ],
+      "title": "The installed AGENTS.md and intent template describe the Done-when rule",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the framework files Compass installs\nWhen AGENTS.md and compass/intent/README.md are generated\nThen both ask for \"## Done when\", name a metric with a baseline only for a bet, and no longer ask every intent for \"baseline → target\""
+    },
+    {
+      "id": "TC-042",
+      "reqIds": [
+        "REQ-021"
+      ],
+      "title": "The Idea page, run brief and generated files say \"Done when\"",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the Idea page, the run brief and the generated feature and intent files\nWhen their labels and headings are read\nThen they say \"Done when\" and none says \"Outcome metric\" or \"baseline → target\""
     }
   ],
   "decisions": [
@@ -1396,6 +1465,19 @@
         "REQ-010",
         "REQ-011",
         "REQ-012"
+      ]
+    },
+    {
+      "id": "ADR-005",
+      "date": "2026-11-27",
+      "title": "Intents say \"Done when\"; a baseline and target only for bets",
+      "status": "Accepted",
+      "context": "The Ideation agent asked every business intent for \"baseline → target, by when\" and invented numbers with no data behind them (e.g. \"0% → 20% within 90 days\" for a Bee There feature). The Product Owner found them hard to judge.",
+      "decision": "The Product Owner decided on 2026-11-27 (same rule as travel-map ADR-021): every intent has a \"Done when\" in plain words. A small feature may add one optional signal to watch without a target; a process change has \"Done when\" only; only a change she names a bet gets a metric with its current value, and its target is set after a few weeks of real data. The Ideation agent never invents a baseline or target.",
+      "consequences": "The Ideation agent prompt, its offline draft, the installed framework text and the Idea page change; the stored field outcomeMetric keeps its name so existing briefs need no migration. Existing briefs keep their text until the agent is re-run.",
+      "reqIds": [
+        "REQ-020",
+        "REQ-021"
       ]
     }
   ]
