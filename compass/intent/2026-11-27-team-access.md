@@ -50,7 +50,8 @@ sign-in, and the rules allow that only for her email, stored as a one-way hash (
    from a person with the owning role; only then is it committed to GitHub. A record must carry the signed-in person's own
    verified email and a role they hold. When the team is created, the approvals already in `spec.json` are stored in
    Firebase as a baseline; any approval in neither the baseline nor a record is shown with an "Unconfirmed" badge,
-   whatever date it claims.
+   whatever date it claims. Only an Admin or the super admin can store the baseline, once. Residual risk: an approval
+   forged into `spec.json` before the team is first created ends up in the baseline and is never flagged.
    Target: every approval made after team access is switched on is either confirmed by Firebase or visibly flagged.
 
 ## Why
