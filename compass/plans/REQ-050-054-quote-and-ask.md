@@ -22,7 +22,9 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
 - src/components/RunConversation.tsx — new: quote blocks, reply box (Revise → vN, Ask, hint, disabled states), the
   conversation thread with version markers, the version picker and the compare view
 - src/components/RunView.tsx — the answer is quotable: `data-quote-source` on every item and AC line, a "❝ Quote" pill per
-  item, the floating Quote button for a selection; shows the version being read; the approval card names the version
+  item, the floating Quote button for a selection; shows the version being read; the approval card names the version.
+  Item header and eval rows wrap, and the two run columns become one below 900 px (the inline grid style kept two
+  columns on phones, which the conversation made unreadable)
 - src/index.css — quote blocks, pill, floating button, thread, version picker, compare; reply box sticks to the bottom on
   phones (< 720 px)
 - tests/conversation.test.mjs — TC-200, TC-201, TC-203 … TC-209, TC-210, TC-212 (TC-202, TC-211, TC-213 are manual)
