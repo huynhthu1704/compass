@@ -1,6 +1,6 @@
 # Intent: Quote an agent's answer and ask for more details or a revision
 
-Status: Approved (by the Product Owner, 2026-11-27, in chat)
+Status: Approved (by the Product Owner, 2026-11-27, in chat; "Done when" reworded without targets on 2026-11-27, ADR-005/ADR-006)
 Requested: 2026-11-27 by the Product Owner, in chat
 
 ## Business need
@@ -12,12 +12,10 @@ ask for more details or revision. Could you please make the same experience insi
    the change set), selecting text shows a small "Quote" button. The quote lands in a reply box under the run, as a
    quote block that names where it came from (e.g. `REQ-051 · acceptance criteria`). Several quotes can go in one reply;
    each can be removed. A whole item (one requirement, one screen, one test case) can also be quoted with one click.
-   Target: from reading an answer to sending a quoted question in under 15 seconds, without copy-paste.
 2. **Ask for details, or ask for a revision.** The reply has two actions:
    - **Ask** — the agent answers in the run's conversation; the proposal does not change.
    - **Revise** — the agent produces a new version of the proposal (v2, v3…) that changes only what the quotes and
      the message ask for; everything else is kept, including REQ/TC ids.
-   Target: a revision keeps every item that was not quoted unchanged (checked by a unit test).
 3. **One conversation per run.** The run shows the conversation like a chat: your messages with their quotes, the
    agent's answers, and "Proposal v2 — changed: REQ-051 AC 2" markers. You can compare a version with the previous one,
    and Approve always applies the latest version. The conversation is kept with the run (and on the Team floor).
@@ -35,7 +33,9 @@ the line and ask — Compass should feel the same.
 - Token cost stays visible per turn; a follow-up sends the run's proposal + quotes, not the whole repository again.
 - Honey design system; works on a phone (long-press selection → Quote) and with the keyboard.
 
-## Success measure
+## Done when
+In a run, I can quote part of an agent's answer and Ask or Revise without starting a new run; a revision changes only
+what I quoted, and Approve applies the latest version. Checked like this:
 In a demo project: quote one acceptance criterion of a proposed requirement, press Revise with "make it measurable" →
 the run shows Proposal v2 where only that requirement changed; Approve writes v2 to the spec. Asking a question with a
 quote gets an answer in the conversation and leaves the proposal as it was.

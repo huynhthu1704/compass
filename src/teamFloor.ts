@@ -20,6 +20,8 @@ export interface Desk {
   runId?: string;
 }
 export interface Handoff { id: string; from: AgentId; to: AgentId; kind: 'forward' | 'back'; label: string; at: number }
+/** One line of the phone handoff strip (REQ-063). */
+export interface StripItem extends Handoff { fromName: string; toName: string; sentence: string; toDesk: AgentId }
 export interface Activity { id: string; t: string; agentName: string; title: string; runId: string }
 export interface Approval {
   runId: string; agent: AgentId; agentName: string; featureId?: string; goal: string; blocked: boolean;
@@ -42,6 +44,8 @@ export interface Floor {
   approvalsMore: number;
   activity: Activity[];
   handoffs: Handoff[];
+  /** the phone handoff strip: recent handoffs, newest first, at most 3 (REQ-063) */
+  strip: StripItem[];
 }
 
 /** Pipeline order: top row left → right, then the bottom row back from Coding to Release. */
@@ -59,6 +63,8 @@ const NEXT: Partial<Record<AgentId, AgentId>> = { ideation: 'requirements', requ
 export const HANDOFF_MS = 4000;
 
 const nameOf = (a: AgentId) => PIPELINE.find((x) => x.agent === a)?.name ?? a;
+/** "Coding agent" → "Coding" (REQ-063 strip). */
+const shortName = (a: AgentId) => nameOf(a).replace(/ agent$/, '');
 const last = (r: Run): TraceStep | undefined => r.steps[r.steps.length - 1];
 const time = (s: string) => Date.parse(s);
 const blocked = (r: Run) => r.guardrails.some((g) => g.level === 'block');
@@ -180,5 +186,9 @@ export function computeFloor(p: Pick<Project, 'runs' | 'releases'>, featureFilte
     approvalsMore: Math.max(0, approvals.length - APPROVALS_SHOWN),
     activity,
     handoffs,
+    strip: [...handoffs].sort((x, y) => y.at - x.at).slice(0, 3).map((h) => ({
+      ...h, fromName: shortName(h.from), toName: shortName(h.to), toDesk: h.to,
+      sentence: h.kind === 'back' ? 'The review sent the work back to the Coding agent' : `Handed to the ${nameOf(h.to)} — it starts now`,
+    })),
   };
 }

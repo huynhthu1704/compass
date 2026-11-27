@@ -219,3 +219,53 @@ test('TC-309 (REQ-062): the panel only opens the run page; it never approves or 
   assert.match(page, /onClick=\{\(\) => open\(sel\.runId\)\}/, 'the panel button goes to /p/<id>/runs/<run id>');
   assert.doesNotMatch(page, /approveRun|rejectRun/);
 });
+
+// ---- F-009 handoffs on phones (REQ-063, issue #26) ----
+test('TC-311 (REQ-063): phone strip items — newest first, at most 3, exact names and sentences', () => {
+  const reqs = run('requirements', 'approved', { reqIds: ['REQ-005', 'REQ-006'], steps: [{ t: ago(3), kind: 'approval', title: 'Approved by human reviewer', ok: true }] });
+  const code = run('coder', 'awaiting-approval', {
+    guardrails: [{ id: 'G2', name: 'Traceability', level: 'block', message: 'no REQ id' }],
+    steps: [{ t: ago(2), kind: 'guardrail', title: 'G2 Traceability: BLOCK', ok: false }],
+  });
+  const f = computeFloor(project([reqs, code]), 'all', NOW);
+  assert.deepEqual(f.strip.map(({ kind, fromName, toName, label, sentence, toDesk }) => ({ kind, fromName, toName, label, sentence, toDesk })), [
+    { kind: 'back', fromName: 'Review', toName: 'Coding', label: '1 finding', sentence: 'The review sent the work back to the Coding agent', toDesk: 'coder' },
+    { kind: 'forward', fromName: 'Requirements', toName: 'Design', label: 'REQ-005, REQ-006', sentence: 'Handed to the Design agent — it starts now', toDesk: 'designer' },
+  ]);
+  const many = [1, 2, 3, 4].map((k) => run('ideation', 'approved', { featureId: `F-00${k}`, steps: [{ t: ago(k * 0.5), kind: 'approval', title: 'Approved by human reviewer', ok: true }] }));
+  const m = computeFloor(project(many), 'all', NOW);
+  assert.equal(m.strip.length, 3);
+  assert.deepEqual(m.strip.map((s) => s.label), ['F-001', 'F-002', 'F-003'], 'newest first');
+  assert.equal(computeFloor(project([reqs]), 'all', NOW + 10_000).strip.length, 0, 'gone after 4 s');
+});
+
+test('TC-313 (REQ-063): the strip is inside the floor and only slides without reduced motion and when not paused', () => {
+  const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
+  const floor = page.indexOf('<section className={`floor');
+  const strip = page.indexOf('className="handoff-strip"');
+  const grid = page.indexOf('<div className="floor-grid">');
+  assert.ok(floor > 0 && strip > floor && strip < grid, 'the strip sits in section.floor, above the desk grid');
+  const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
+  const motion = [...css.matchAll(/@media \(prefers-reduced-motion: no-preference\) \{([\s\S]*?)\n\}/g)].map((m) => m[1]).join('\n');
+  assert.match(motion, /\.floor:not\(\.paused\) \.strip-item[^{]*\{[^}]*animation:/, 'the slide is inside the motion query and not paused');
+  const outside = css.replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/g, '');
+  assert.doesNotMatch(outside, /\.strip-item[^{]*\{[^}]*animation:/, 'no strip animation outside the motion query');
+});
+
+test('TC-314 (REQ-063): no strip without a handoff, and none from 720 px', () => {
+  const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
+  assert.match(page, /\{f\.strip\.length > 0 && \(/, 'rendered only when there is a recent handoff');
+  const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
+  assert.match(css, /^\.handoff-strip \{ display: none; \}/m, 'hidden by default (720 px and wider)');
+  assert.match(css, /@media \(max-width: 719px\) \{[^@]*\.handoff-strip \{ display: flex;/, 'shown only below 720 px');
+  assert.match(css, /@media \(max-width: 719px\) \{[^@]*\.desk\.ring-forward/, 'the desk ring only below 720 px');
+});
+
+test('TC-315 (REQ-063): back handoffs use coral, forward handoffs use honey', () => {
+  const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
+  const rule = (sel) => (css.match(new RegExp(`${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`)) || [])[1] || '';
+  assert.match(rule('.strip-item.forward'), /var\(--color-border-brand\)/);
+  assert.match(rule('.strip-item.back'), /var\(--color-border-danger\)/);
+  assert.match(rule('.floor .desk.ring-forward .desk-card'), /outline: 3px solid var\(--color-border-brand\)/);
+  assert.match(rule('.floor .desk.ring-back .desk-card'), /outline: 3px solid var\(--color-border-danger\)/);
+});

@@ -27,11 +27,11 @@ function useMedia(query: string) {
   return match;
 }
 
-function DeskCard({ p, d }: { p: Project; d: Desk }) {
+function DeskCard({ p, d, ring }: { p: Project; d: Desk; ring?: 'forward' | 'back' }) {
   const s = STATE[d.state];
   const label = `${d.name} (${d.role}), ${s.label.replace('✓ ', '')}${d.featureId ? `, on ${d.featureId}` : ''}${d.bubble ? `: ${d.bubble}` : ''}${d.runId ? '. Open run' : ''}`;
   return (
-    <button className={`desk desk-${d.agent} is-${d.state}`} aria-label={label} aria-disabled={!d.runId} onClick={() => d.runId && go(`/p/${p.id}/runs/${d.runId}`)}>
+    <button className={`desk desk-${d.agent} is-${d.state}${ring ? ` ring-${ring}` : ''}`} aria-label={label} aria-disabled={!d.runId} onClick={() => d.runId && go(`/p/${p.id}/runs/${d.runId}`)}>
       <span className="desk-bubble" aria-hidden title={d.bubble}>{d.bubble ? <span>{d.bubble}</span> : null}</span>
       <span className="desk-card" aria-hidden>
         <span className={`agent-fig ${d.phase}`}><span className={`agent-head ${d.phase}`}>{d.role}</span><span className="agent-body" /></span>
@@ -189,8 +189,22 @@ export function TeamFloorPage({ p }: { p: Project }) {
 
       <div className="floor-layout">
         <section className={`floor${paused ? ' paused' : ''}`} aria-label="Agent desks">
+          {f.strip.length > 0 && (
+            <div className="handoff-strip" role="status">
+              {f.strip.map((s) => (
+                <div key={s.id} className={`strip-item ${s.kind}`}>
+                  <span className="strip-lane">
+                    {s.kind === 'back'
+                      ? <><span className="label-sm">{s.toName}</span><span aria-hidden className="t-danger">←</span><span className="handoff-static strip-card">↩ {s.label}</span><span className="label-sm">{s.fromName}</span></>
+                      : <><span className="label-sm">{s.fromName}</span><span className="handoff-static strip-card">📄 {s.label}</span><span aria-hidden className="t-brand">→</span><span className="label-sm">{s.toName}</span></>}
+                  </span>
+                  <span className="body-sm t-secondary">{s.sentence}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="floor-grid">
-            {(['ideation', 'requirements', 'designer', 'testdesign', 'coder', 'reviewer', 'release'] as AgentId[]).map((a) => <DeskCard key={a} p={p} d={desk(a)} />)}
+            {(['ideation', 'requirements', 'designer', 'testdesign', 'coder', 'reviewer', 'release'] as AgentId[]).map((a) => <DeskCard key={a} p={p} d={desk(a)} ring={f.strip.find((s) => s.toDesk === a)?.kind} />)}
             <div className="floor-corridor" aria-hidden={!f.handoffs.length}>{f.handoffs.map((h) => <HandoffCard key={h.id} h={h} />)}</div>
             {approvalDesk}
           </div>

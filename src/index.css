@@ -209,6 +209,9 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .diff > div { padding: 0 var(--spacing-md); white-space: pre; }
 .diff .add { background: var(--color-bg-success-subtle); color: var(--color-text-success); }
 .diff .del { background: var(--color-bg-danger-subtle); color: var(--color-text-danger); text-decoration: line-through; text-decoration-color: var(--color-strike-danger); }
+/* REQ-045: header row of the collapsible agent trace; wraps on narrow screens */
+.trace-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--spacing-sm); }
+.trace-head .overline { flex: 1 1 14rem; min-width: 0; }
 .timeline { display: flex; flex-direction: column; }
 .timeline .ev { display: grid; grid-template-columns: 22px 1fr; gap: var(--spacing-sm); padding: 6px 0; position: relative; }
 .timeline .ev::before { content: ''; position: absolute; left: 10px; top: 24px; bottom: -6px; width: 1px; background: var(--color-border-default); }
@@ -290,6 +293,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
   .floor:not(.paused) .handoff { animation: floor-handoff .8s ease-in-out both; }
   .floor:not(.paused) .desk.is-working .agent-fig { animation: floor-bob 1.6s ease-in-out infinite; }
   .floor:not(.paused) .desk-bubble { transition: opacity .2s; }
+  .floor:not(.paused) .strip-item .strip-card { animation: strip-slide .8s ease-out both; }
 }
 @keyframes floor-handoff { from { left: var(--from-x); } to { left: var(--to-x); } }
 @keyframes floor-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
@@ -403,3 +407,18 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .run-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: start; }
 .run-grid.compact { grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 900px) { .run-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ===== Team floor handoffs on phones (REQ-063, #26) — strip and desk ring only below 720 px ===== */
+.handoff-strip { display: none; }
+.strip-item { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: var(--radius-lg); border: 1.5px dashed; }
+.strip-item.forward { background: var(--color-bg-brand-subtle); border-color: var(--color-border-brand); }
+.strip-item.back { background: var(--color-bg-danger-subtle); border-color: var(--color-border-danger); }
+.strip-item.back .strip-card { border-color: var(--color-border-danger); color: var(--color-text-danger); }
+.strip-lane { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.strip-lane .strip-card { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 719px) {
+  .handoff-strip { display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-md); }
+  .floor .desk.ring-forward .desk-card { outline: 3px solid var(--color-border-brand); outline-offset: 3px; }
+  .floor .desk.ring-back .desk-card { outline: 3px solid var(--color-border-danger); outline-offset: 3px; }
+}
+@keyframes strip-slide { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
