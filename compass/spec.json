@@ -578,6 +578,65 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-26T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-017",
+      "name": "Collapsible agent trace",
+      "createdAt": "2026-11-27T00:00:00.000Z",
+      "idea": {
+        "need": "allow user to collapse the detailed steps inside (the trace box of an agent run)",
+        "intent": "The Product Owner reaches an agent's proposal and the approval buttons without scrolling past its step-by-step trace (today: the full trace of ~15–40 lines always sits above the proposal).",
+        "problem": "Every agent run shows its whole trace (model turns, tool calls, results) above the proposal, so reviewing a run means scrolling through technical steps first.",
+        "users": [
+          "Product Owner",
+          "Everyone approving agent runs"
+        ],
+        "outcomeMetric": "Lines of trace shown above the proposal of an awaiting-approval run: all steps → one summary line (test + screenshot).",
+        "scopeIn": [
+          "The trace card of an agent run on the stage pages, Build and Agent runs"
+        ],
+        "scopeOut": [
+          "Remembering the choice between visits",
+          "Folding other cards (guardrails, change set)"
+        ],
+        "risks": [
+          "Nothing hidden for good: one click shows the full trace",
+          "Keyboard and screen-reader friendly",
+          "Honey tokens only; no new libraries"
+        ]
+      },
+      "design": {
+        "status": "Approved",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-609",
+        "summary": "The trace card of an agent run gets a header row: a ▸/▾ chevron, the overline, the step count, a red \"N failed\" chip when steps failed, and a \"Show steps\" / \"Hide steps\" button. The card starts folded (header only) when the run is awaiting approval, approved, rejected, failed or done, so the proposal and approval buttons sit right below it; it starts open while the agent is running. The Product Owner's own toggle is kept when the status changes. Each step still expands its own details.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Agent run · trace folded and open",
+            "purpose": "The trace card folded by default once the run stops working, and open while running or after Show steps.",
+            "reqIds": [
+              "REQ-045"
+            ],
+            "elements": [
+              "Chevron ▸/▾",
+              "Overline \"Trace · harness → RAG → tools → guardrails\"",
+              "Step count (mono)",
+              "\"N failed\" chip (danger, only when steps failed)",
+              "Show steps / Hide steps button (aria-expanded, aria-controls)",
+              "Timeline of steps (unchanged)"
+            ],
+            "states": [
+              "Folded: awaiting approval, approved, rejected, failed, done",
+              "Open: running (with \"working…\")",
+              "Open after Show steps; folded after Hide steps; choice kept on status change"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-609"
+          }
+        ],
+        "notes": "Honey tokens only (bg/surface, border/subtle, bg/danger-subtle + text/danger). No new library. Not remembered between visits (out of scope).",
+        "approvedBy": "Product Owner",
+        "approvedAt": "2026-11-27T00:00:00.000Z"
+      }
     }
   ],
   "requirements": [
@@ -908,6 +967,21 @@
         "Given a feature with a requirement In build or Done\nWhen the delete dialog opens\nThen a red warning names those requirements and says that code and tests in the repo still reference them and need a separate change",
         "Given a feature with open agent pull requests\nWhen the delete dialog opens\nThen the pull requests are listed with links, and deleting the feature does not close or merge them",
         "Given a feature whose requirements are all Draft or Approved and that has no open pull request\nWhen the delete dialog opens\nThen no warning is shown"
+      ]
+    },
+    {
+      "id": "REQ-045",
+      "featureId": "F-017",
+      "title": "The agent trace can be folded and unfolded",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-collapsible-agent-trace.md",
+      "story": "As the product owner, I want to fold the step-by-step trace of an agent run, so that I reach the proposal and the approval buttons without scrolling past every tool call.",
+      "ac": [
+        "Given an agent run that is awaiting approval, approved, rejected, failed or done\nWhen its run view opens\nThen the trace is folded to its header, which shows the number of steps (and how many failed, if any) and a \"Show steps\" toggle",
+        "Given an agent run that is still running\nWhen its run view opens\nThen the trace is open, as today",
+        "Given a run view\nWhen the Product Owner clicks the trace toggle (or presses Enter/Space on it)\nThen the trace opens or folds, the toggle reads \"Show steps\" or \"Hide steps\" and reports aria-expanded, and each step's own details still expand as before",
+        "Given a run that moves from running to awaiting approval while it is shown\nWhen the status changes and the Product Owner has not used the toggle\nThen the trace folds; once the toggle was used, her choice is kept"
       ]
     }
   ],
@@ -1341,6 +1415,16 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues \"REQ-002: …\" and \"REQ-001: …\"\nWhen the delete dialog's list is computed\nThen it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue \"REQ-002: …\""
+    },
+    {
+      "id": "TC-090",
+      "reqIds": [
+        "REQ-045"
+      ],
+      "title": "Trace folded by default once the run stops working; toggle switches it",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given runs with status running, awaiting-approval, done and failed (one with 2 failed steps of 15)\nWhen the trace's default state and header are computed\nThen running is open and the others are folded, the header reads \"15 steps · 2 failed\", and toggling flips open/folded with the label \"Show steps\"/\"Hide steps\"; after a manual toggle a status change no longer changes it"
     }
   ],
   "decisions": [
