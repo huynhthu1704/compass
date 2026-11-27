@@ -21,6 +21,12 @@ ask for more details or revision. Could you please make the same experience insi
    and Approve always applies the latest version. The conversation is kept with the run (and on the Team floor).
 4. **Works in demo mode too**, with a predictable answer, so the flow can be tried without an API key.
 
+5. **One reply per quote, and Cancel** (asked 2026-11-27 after using the feature: "how can users close this window if
+   they want to cancel the quote", then "allow users to create multiple quotes instead of grouping separate quotes into a
+   single window box"; chosen: one reply per quote; requirements and design approved in chat the same day). Each quote opens its own reply card with its own message, Ask,
+   Revise and Cancel, so different parts can get different questions and be sent separately. Cancel (or Esc) closes a
+   card without sending anything; the other cards stay. A question without a quote still goes in an "Ask the agent" box.
+
 ## Why
 Today an agent's proposal can only be approved, or rejected with a reason that ends the run. To change one line you
 must reject it and start a new run from scratch, losing the parts that were good. In chat with Claude you simply quote

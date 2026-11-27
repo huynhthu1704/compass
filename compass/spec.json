@@ -822,14 +822,15 @@
             "elements": [
               "\"❝ Quote\" button next to a selection inside the answer",
               "\"❝ Quote\" pill on each requirement / screen / test case / file",
-              "Reply box: quote blocks with source and ×, message field, Revise → vN (primary), Ask (secondary) with a one-line hint",
+              "Reply cards, one per quote: the quote with its source, a message field, Revise → vN (primary), Ask (secondary), Cancel (ghost; Esc does the same)",
               "Trace column without quoting",
-              "Approval card below"
+              "Approval card below",
+              "\"Ask the agent\" box for a question without a quote"
             ],
             "states": [
               "no selection",
               "text selected",
-              "2 quotes + message",
+              "two reply cards open, each with its own message",
               "empty reply: buttons disabled (SCR-4 D)"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=87-574"
@@ -871,12 +872,12 @@
             "elements": [
               "Long-press selection menu with Copy · ❝ Quote · Select all",
               "44 px Quote icon per item",
-              "Bottom reply sheet with grabber, quote count, quote blocks, message, Ask and Revise full width"
+              "Reply cards in the page under the answer (not a fixed sheet): quote, message, Ask and Revise full width, Cancel under them"
             ],
             "states": [
               "selection menu open",
-              "sheet with 2 quotes",
-              "sheet above the keyboard"
+              "two reply cards",
+              "the card being typed in scrolls into view above the keyboard"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=89-596"
           },
@@ -1483,11 +1484,11 @@
       "story": "As the product owner, I want to quote part of an agent's answer, so that I can point at exactly what I want explained or changed.",
       "ac": [
         "Given an agent run with an answer (idea brief, requirements, design, test cases, summary or a file of the change set)\nWhen I select text inside the answer\nThen a \"Quote\" button appears next to the selection",
-        "Given a selection\nWhen I click \"Quote\"\nThen a quote block with the selected text and its source (e.g. \"REQ-051 · acceptance criteria\", \"SCR-2 · states\", \"src/app.ts\") is added to the reply box under the run, and the reply box gets the focus",
-        "Given a requirement, screen, test case or file in the answer\nWhen I click its \"Quote\" icon\nThen the whole item is added as one quote block, without selecting text",
-        "Given a reply with several quote blocks\nWhen I click the × of one quote\nThen only that quote is removed",
+        "Given a selection\nWhen I click \"Quote\"\nThen a new reply card opens under the run with the selected text and its source (e.g. \"REQ-051 · AC 2\", \"SCR-2 · states\", \"src/app.ts\"), and its message field gets the focus; each quote gets its own card",
+        "Given a requirement, screen, test case or file in the answer\nWhen I click its \"Quote\" icon\nThen a reply card opens with the whole item as its quote, without selecting text",
+        "Given several open reply cards\nWhen I click \"Cancel\" on one card, or press Esc while the focus is in it\nThen only that card closes, nothing is sent to the agent, and the other cards stay as they were",
         "Given the trace, text outside the answer, or a run that is still working\nWhen I select text there\nThen no \"Quote\" button appears",
-        "Given a phone (390 px) or the keyboard only\nWhen I long-press to select text, or Tab to an item's \"Quote\" icon and press Enter\nThen the quote is added the same way"
+        "Given a phone (390 px) or the keyboard only\nWhen I long-press to select text, or Tab to an item's \"Quote\" icon and press Enter\nThen a reply card opens the same way, in the page under the answer, and scrolls into view"
       ]
     },
     {
@@ -1499,11 +1500,11 @@
       "intent": "compass/intent/2026-11-27-quote-and-ask-agent.md",
       "story": "As the product owner, I want to ask the agent for more details about what I quoted, so that I understand its answer before I approve it.",
       "ac": [
-        "Given a reply with at least one quote or a message\nWhen I click \"Ask\"\nThen my message with its quotes appears in the run's conversation and the agent's answer appears under it",
+        "Given a reply card (its quote and an optional message), or a question typed in the \"Ask the agent\" box\nWhen I click \"Ask\" on it\nThen my message with its quote appears in the run's conversation, the agent's answer appears under it, and that card closes while other cards stay",
         "Given the agent answered a question\nWhen I look at the proposal\nThen it is unchanged and the run keeps its status (e.g. awaiting approval)",
         "Given a live run\nWhen the agent answers\nThen the follow-up sends the run's goal, its proposal, the conversation so far, the quotes and my message — not a new repository index — and the answer shows its token count",
         "Given a project in demo mode (no API key)\nWhen I click \"Ask\"\nThen a predictable demo answer that repeats the quoted sources appears",
-        "Given an empty reply (no quote and no message)\nWhen I look at the reply box\nThen \"Ask\" and \"Revise\" are disabled"
+        "Given an empty \"Ask the agent\" box (no quote and no message)\nWhen I look at it\nThen its \"Ask\" button is disabled; a reply card can always be sent, because it has a quote"
       ]
     },
     {
@@ -2282,10 +2283,10 @@
       "reqIds": [
         "REQ-050"
       ],
-      "title": "Quoting on a phone and by keyboard; removing a quote",
+      "title": "Quoting on a phone and by keyboard opens a reply card",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given a run at 390 px wide and with the keyboard only\nWhen I long-press text and tap Quote, Tab to an item's Quote icon and press Enter, then press × on the first quote\nThen both quotes were added, the reply box got the focus, and only the first quote is removed"
+      "gherkin": "Given a run at 390 px wide and with the keyboard only\nWhen I long-press text in the answer and tap Quote, and Tab to an item's Quote icon and press Enter\nThen each opens its own reply card in the page under the answer, its message field has the focus and is scrolled into view, and Cancel (or Esc) closes it with the focus moving to the next card or the Ask box"
     },
     {
       "id": "TC-203",
@@ -2486,7 +2487,7 @@
       "title": "Quotes and the version being read stay with their run",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a quote in the reply box of a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run's reply box is empty and it shows its own latest version"
+      "gherkin": "Given an open reply card in a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run shows no reply card and it shows its own latest version"
     },
     {
       "id": "TC-090",
@@ -2507,6 +2508,17 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given the run view of an awaiting-approval run\nWhen the trace header is rendered\nThen the toggle is a native <button> (Enter/Space work) whose aria-expanded matches the open state and whose aria-controls points at the timeline's id, the timeline is rendered only when open, and each step with details still renders its own <details> element"
+    },
+    {
+      "id": "TC-217",
+      "reqIds": [
+        "REQ-050",
+        "REQ-051"
+      ],
+      "title": "One reply card per quote; Cancel closes only its card",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a run awaiting approval\nWhen I quote REQ-050 · AC 2 and the whole REQ-051, type a different message in each card, click Cancel on the first card, press Esc in a new card for REQ-052, and click Ask on the REQ-051 card\nThen two cards were open at once, Cancel and Esc closed only their own card without a new conversation message or trace step, Ask sent only the REQ-051 quote with its message, and no card is left; at 390 px the cards sit in the page under the answer"
     }
   ],
   "decisions": [
