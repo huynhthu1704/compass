@@ -167,7 +167,7 @@ function TokenCard({ projectKey: key }: { projectKey: string }) {
       <p className="body t-secondary">Members use this token for this project's GitHub work, so they do not need their own. Only Admins see this card.</p>
       {token && !replacing && (
         <div className="row gap-sm wrap" style={{ alignItems: 'center' }}>
-          <span className="mono" style={{ padding: '10px 12px', background: 'var(--color-bg-subtle)', borderRadius: 8 }}>{`••••••••••••${token.slice(-4)}`}</span>
+          <span className="mono" aria-label={`Token ending in ${token.slice(-4)}`} style={{ padding: '10px 12px', background: 'var(--color-bg-subtle)', borderRadius: 8 }}>{`••••••••••••${token.slice(-4)}`}</span>
           <Button variant="secondary" disabled={busy} onClick={check}>Test</Button>
           <Button variant="accent" disabled={busy} onClick={() => setReplacing(true)}>Replace token</Button>
         </div>

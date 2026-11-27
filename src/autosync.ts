@@ -8,6 +8,7 @@ import { github } from './github';
 import { commitSpec } from './harness';
 import { store } from './store';
 import { tokenFor } from './token';
+import { onProjectTokenChange } from './firebase';
 
 export type SyncState = { status: 'idle' | 'pending' | 'saving' | 'saved' | 'waiting-framework' | 'error'; at?: string; message?: string };
 
@@ -53,13 +54,15 @@ export function startAutoSync() {
     const next = new Map<string, string>();
     for (const p of store.get().projects) {
       const sig = JSON.stringify(p.spec);
+      if (!tokenFor(p)) continue; // not recorded: when the project token arrives, a dirty project is scheduled then
       next.set(p.id, sig);
-      if (!autoSync || !tokenFor(p) || !p.repo || p.demo || !p.dirty) continue;
+      if (!autoSync || !p.repo || p.demo || !p.dirty) continue;
       if (last.get(p.id) !== sig) schedule(p.id);
     }
     last = next;
   };
   store.subscribe(check);
+  onProjectTokenChange(check);
   check();
   // retry pending/waiting projects every minute (e.g. after the framework PR is merged)
   setInterval(() => {
