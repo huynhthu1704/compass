@@ -390,9 +390,9 @@ Then it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as remove
 ## TC-039 · Sidebar groups, icons, project card and link order
 Covers: REQ-020 · Type: Automated · Status: Not run
 ```gherkin
-Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed and no open project
+Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed, a project not on GitHub, and no open project
 When the sidebar sections are computed
-Then the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs, Release and Knowledge, each with an icon, Knowledge has the RAG tooltip, and the project card state is "Demo project", "Synced with GitHub", "Sync failed" or absent
+Then the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs, Release and Knowledge (only when a project is open), each with its own icon, Knowledge has the RAG tooltip, the project card state is "Demo project", "Synced with GitHub", "Sync failed" or "Local project", and clicking the project card opens the project list
 ```
 
 ## TC-040 · Keyboard focus is visible in the sidebar
@@ -406,25 +406,25 @@ Then every link, the project card, the account card, the role picker and the the
 ## TC-041 · The approval count appears once
 Covers: REQ-021 · Type: Automated · Status: Not run
 ```gherkin
-Given a project with 3 runs awaiting approval and one with none
+Given a project with 3 runs awaiting approval, one with 1 and one with none
 When the sidebar model is computed
-Then only Team floor has the count 3 with the label "3 waiting for approval", Agent runs has none, and the project with none has no count
+Then only Team floor has the count 3, announced as "3 waiting for approval", with the tooltip "3 agent runs waiting for your approval" ("1 agent run …" for one), Agent runs has none, and the project with none has no count
 ```
 
 ## TC-042 · Feature rows: count, dot, two-line name, id and tooltip
 Covers: REQ-022 · Type: Automated · Status: Not run
 ```gherkin
-Given a project with three features, one archived, and a long feature name
-When the sidebar model is computed
-Then the heading count is 2 (the open archived feature included), each row has its stage, short id (F01) and the tooltip "F-001 · <full name> — <stage>", and the CSS clamps the name to two lines
+Given a project with three features F-001, F-002 and F-003, where F-003 is archived, and a long feature name
+When the sidebar model is computed with no feature open
+Then the heading count is 2 and F-003 is not listed; with F-003 open the count is 3 and F-003 is listed; each row has its stage, short id (F01) and the tooltip "F-001 · <full name> — <stage>"; the CSS clamps the name to two lines; and the open feature lists Idea, Requirements, Design, Test cases and Build indented, each with its step number or ✓ when done
 ```
 
 ## TC-043 · Account footer and single theme button
 Covers: REQ-023 · Type: Automated · Status: Not run
 ```gherkin
-Given GitHub connected as @alice, and no connection
-When the account card is computed
-Then it shows "A", "@alice", "GitHub connected" (or "?", "Not connected", "Demo mode · connect"), and the theme button label is "Switch to dark theme" in light mode and "Switch to light theme" in dark mode
+Given GitHub connected as @alice, and no connection, in light and in dark mode
+When the account card and the theme button are computed
+Then the card shows "A", "@alice", "GitHub connected" (or "?", "Not connected", "Demo mode · connect") and opens Connections; there is exactly one theme button, labelled "Switch to dark theme" in light mode and "Switch to light theme" in dark mode, and clicking it sets the theme to the other one
 ```
 
 ## TC-044 · Sidebar on desktop and phone, light and dark
@@ -432,5 +432,5 @@ Covers: REQ-020, REQ-022, REQ-023 · Type: Manual · Status: Not run
 ```gherkin
 Given the demo project with a feature open, at 1280 px and at 390 px (after pressing Menu), in light and dark mode
 When I compare the sidebar with the approved design
-Then the groups, the project card, the feature list with long names on two lines and the footer match, with no hard-coded colours
+Then the groups, the project card, the feature list with long names on two lines and the footer match, the role picker fills the row next to the theme button, with no hard-coded colours
 ```

@@ -12,7 +12,7 @@ open project and switch settings at a glance:
 1. **Scannable groups.** Three clear groups — workspace (Projects, Agent architecture), the open project, and the
    account — separated by a line, with an icon before every page link and no large empty gap in the middle.
 2. **The open project as a card.** Its name and its GitHub sync state ("Synced with GitHub", "Sync failed", "Demo
-   project", …) in one card that also leads back to the project list.
+   project", "Local project", …) in one card that also leads back to the project list.
 3. **One approval count, not two.** Today the same "6 waiting for approval" number shows on both Team floor and Agent
    runs; it should show once, on Team floor, with a tooltip saying what it counts.
 4. **Plain labels.** "Knowledge (RAG)" becomes "Knowledge" (the technical term moves to the tooltip); Agent runs sits

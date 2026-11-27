@@ -1015,7 +1015,7 @@
       "story": "As any portal user, I want the sidebar grouped with an icon on every link and the open project shown as a card, so that I find a page and see the project's state at a glance.",
       "ac": [
         "Given any page of the portal on a desktop screen\nWhen I look at the sidebar\nThen it shows three groups separated by a line — workspace (Projects, Agent architecture), the open project (only when one is open) and an account footer at the bottom — and every page link starts with an icon",
-        "Given a project is open\nWhen I look at the project group\nThen a card shows the project's first letter, its name and its state (\"Demo project\", the GitHub sync state such as \"Synced with GitHub\" or \"Sync failed\", or \"Local only\"), and clicking it opens the project list",
+        "Given a project is open\nWhen I look at the project group\nThen a card shows the project's first letter, its name and its state (\"Demo project\", the GitHub sync state such as \"Synced with GitHub\" or \"Sync failed\", or \"Local project\" when it is not on GitHub), and clicking it opens the project list",
         "Given a project is open\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs, Release and Knowledge, and Knowledge has the tooltip \"Project knowledge the agents search (RAG)\"",
         "Given I use the keyboard\nWhen I press Tab through the sidebar in light or dark mode\nThen every link, card and button shows a visible focus ring"
       ]
@@ -1501,7 +1501,7 @@
       "title": "Sidebar groups, icons, project card and link order",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed and no open project\nWhen the sidebar sections are computed\nThen the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs, Release and Knowledge, each with an icon, Knowledge has the RAG tooltip, and the project card state is \"Demo project\", \"Synced with GitHub\", \"Sync failed\" or absent"
+      "gherkin": "Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed, a project not on GitHub, and no open project\nWhen the sidebar sections are computed\nThen the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs, Release and Knowledge (only when a project is open), each with its own icon, Knowledge has the RAG tooltip, the project card state is \"Demo project\", \"Synced with GitHub\", \"Sync failed\" or \"Local project\", and clicking the project card opens the project list"
     },
     {
       "id": "TC-040",
@@ -1521,7 +1521,7 @@
       "title": "The approval count appears once",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a project with 3 runs awaiting approval and one with none\nWhen the sidebar model is computed\nThen only Team floor has the count 3 with the label \"3 waiting for approval\", Agent runs has none, and the project with none has no count"
+      "gherkin": "Given a project with 3 runs awaiting approval, one with 1 and one with none\nWhen the sidebar model is computed\nThen only Team floor has the count 3, announced as \"3 waiting for approval\", with the tooltip \"3 agent runs waiting for your approval\" (\"1 agent run …\" for one), Agent runs has none, and the project with none has no count"
     },
     {
       "id": "TC-042",
@@ -1531,7 +1531,7 @@
       "title": "Feature rows: count, dot, two-line name, id and tooltip",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a project with three features, one archived, and a long feature name\nWhen the sidebar model is computed\nThen the heading count is 2 (the open archived feature included), each row has its stage, short id (F01) and the tooltip \"F-001 · <full name> — <stage>\", and the CSS clamps the name to two lines"
+      "gherkin": "Given a project with three features F-001, F-002 and F-003, where F-003 is archived, and a long feature name\nWhen the sidebar model is computed with no feature open\nThen the heading count is 2 and F-003 is not listed; with F-003 open the count is 3 and F-003 is listed; each row has its stage, short id (F01) and the tooltip \"F-001 · <full name> — <stage>\"; the CSS clamps the name to two lines; and the open feature lists Idea, Requirements, Design, Test cases and Build indented, each with its step number or ✓ when done"
     },
     {
       "id": "TC-043",
@@ -1541,7 +1541,7 @@
       "title": "Account footer and single theme button",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given GitHub connected as @alice, and no connection\nWhen the account card is computed\nThen it shows \"A\", \"@alice\", \"GitHub connected\" (or \"?\", \"Not connected\", \"Demo mode · connect\"), and the theme button label is \"Switch to dark theme\" in light mode and \"Switch to light theme\" in dark mode"
+      "gherkin": "Given GitHub connected as @alice, and no connection, in light and in dark mode\nWhen the account card and the theme button are computed\nThen the card shows \"A\", \"@alice\", \"GitHub connected\" (or \"?\", \"Not connected\", \"Demo mode · connect\") and opens Connections; there is exactly one theme button, labelled \"Switch to dark theme\" in light mode and \"Switch to light theme\" in dark mode, and clicking it sets the theme to the other one"
     },
     {
       "id": "TC-044",
@@ -1553,7 +1553,7 @@
       "title": "Sidebar on desktop and phone, light and dark",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given the demo project with a feature open, at 1280 px and at 390 px (after pressing Menu), in light and dark mode\nWhen I compare the sidebar with the approved design\nThen the groups, the project card, the feature list with long names on two lines and the footer match, with no hard-coded colours"
+      "gherkin": "Given the demo project with a feature open, at 1280 px and at 390 px (after pressing Menu), in light and dark mode\nWhen I compare the sidebar with the approved design\nThen the groups, the project card, the feature list with long names on two lines and the footer match, the role picker fills the row next to the theme button, with no hard-coded colours"
     }
   ],
   "decisions": [

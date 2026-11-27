@@ -624,7 +624,7 @@ _AC2_
 ```gherkin
 Given a project is open
 When I look at the project group
-Then a card shows the project's first letter, its name and its state ("Demo project", the GitHub sync state such as "Synced with GitHub" or "Sync failed", or "Local only"), and clicking it opens the project list
+Then a card shows the project's first letter, its name and its state ("Demo project", the GitHub sync state such as "Synced with GitHub" or "Sync failed", or "Local project" when it is not on GitHub), and clicking it opens the project list
 ```
 
 _AC3_
