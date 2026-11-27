@@ -8,6 +8,7 @@
  */
 import { checkChanges, evalChanges, evalRequirements, evalTests, scanInjection } from './guardrails';
 import { FRAMEWORK_VERSION, frameworkFiles, specFiles } from './framework';
+import { demoIdea } from './ideaDraft';
 import { github } from './github';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
@@ -23,8 +24,8 @@ Rules: use tools to read context before deciding; cite retrieved sources as [S1]
 never output secrets; keep changes small; every change must trace to requirement ids (REQ-xxx). Finish by calling the finish tool with a short summary.`;
 
 export const AGENTS: AgentDef[] = [
-  { id: 'ideation', name: 'Ideation agent', stage: 'idea', mirrors: 'PO', purpose: 'Turns a raw idea into a business-outcome brief: problem, users, outcome metric, scope, risks, stack.', tools: ['search_knowledge', 'list_files', 'read_file', 'save_idea', 'finish'], output: 'Idea brief → feature F-xxx in compass/spec.json', gate: 'PO approves the brief',
-    system: `${COMMON}\nRole: senior Product Owner + Business Analyst (BABOK). The input is the Product Owner's raw BUSINESS NEED. Revise it into a BUSINESS INTENT: one sentence stating the measurable business outcome (who, what changes, baseline → target, by when). If the need describes a solution, restate it as the outcome that solution should achieve. Then fill problem, users, outcome metric, scope and risks. Call save_idea once.` },
+  { id: 'ideation', name: 'Ideation agent', stage: 'idea', mirrors: 'PO', purpose: 'Turns a raw idea into a business-outcome brief: problem, users, Done when, scope, risks, stack.', tools: ['search_knowledge', 'list_files', 'read_file', 'save_idea', 'finish'], output: 'Idea brief → feature F-xxx in compass/spec.json', gate: 'PO approves the brief',
+    system: `${COMMON}\nRole: senior Product Owner + Business Analyst (BABOK). The input is the Product Owner's raw BUSINESS NEED. Revise it into a BUSINESS INTENT: one sentence stating the business outcome (who, what changes) — not the solution. If the need describes a solution, restate it as the outcome that solution should achieve. In outcomeMetric write "Done when": what will be true when the change is done, in plain words. Never invent a baseline, target, percentage or deadline: add numbers only when the need itself gives them or the Product Owner calls the change a bet — then name one metric and its current value if known, and say the target is set after a few weeks of real data. For a small feature you may add one optional "Signal to watch" without a target; a process change has Done when only. Then fill problem, users, scope and risks. Call save_idea once.` },
   { id: 'requirements', name: 'Requirements agent', stage: 'requirements', mirrors: 'BA', purpose: 'Writes INVEST user stories with Given/When/Then acceptance criteria from the idea and existing code.', tools: ['search_knowledge', 'list_files', 'read_file', 'save_requirements', 'finish'], output: 'REQ-xxx → compass/spec.json › requirements', gate: 'PO/BA approve requirements',
     system: `${COMMON}\nRole: senior Business Analyst. Write 4–8 small, testable requirements (user stories, ≥2 Given/When/Then AC each, MoSCoW priority, Must ≤ 60%). Avoid vague words (fast, easy, user-friendly). Do not repeat existing requirements. Call save_requirements once.` },
   { id: 'designer', name: 'Design agent', stage: 'design', mirrors: 'UX', purpose: 'Turns approved requirements into a screen-by-screen UI design traced to REQ ids, ready to draw in the project design tool (Figma…).', tools: ['search_knowledge', 'list_files', 'read_file', 'save_design', 'finish'], output: 'Design → compass/spec.json › features[].design + compass/design/F-xxx.md', gate: 'PO/UX approve the design before coding',
@@ -45,7 +46,7 @@ const TOOLS: ToolDef[] = [
   { name: 'list_files', description: 'List repository file paths, optionally under a prefix.', input_schema: { type: 'object', properties: { prefix: { type: 'string' } } } },
   { name: 'read_file', description: 'Read a repository file (full text).', input_schema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
   { name: 'propose_file_change', description: 'Stage a file change for human review. Provide FULL new content for create/update.', input_schema: { type: 'object', properties: { path: { type: 'string' }, action: { type: 'string', enum: ['create', 'update', 'delete'] }, content: { type: 'string' }, reason: { type: 'string', description: 'Why, with REQ/TC ids' } }, required: ['path', 'action', 'reason'] } },
-  { name: 'save_idea', description: 'Save the idea brief.', input_schema: { type: 'object', properties: { intent: { type: 'string' }, problem: { type: 'string' }, users: { type: 'array', items: { type: 'string' } }, outcomeMetric: { type: 'string' }, scopeIn: { type: 'array', items: { type: 'string' } }, scopeOut: { type: 'array', items: { type: 'string' } }, risks: { type: 'array', items: { type: 'string' } } }, required: ['intent', 'problem', 'users', 'outcomeMetric', 'scopeIn'] } },
+  { name: 'save_idea', description: 'Save the idea brief.', input_schema: { type: 'object', properties: { intent: { type: 'string' }, problem: { type: 'string' }, users: { type: 'array', items: { type: 'string' } }, outcomeMetric: { type: 'string', description: 'Done when — what will be true when the change is done (no "Done when:" prefix; the UI adds the label). No invented baseline or target.' }, scopeIn: { type: 'array', items: { type: 'string' } }, scopeOut: { type: 'array', items: { type: 'string' } }, risks: { type: 'array', items: { type: 'string' } } }, required: ['intent', 'problem', 'users', 'outcomeMetric', 'scopeIn'] } },
   { name: 'save_requirements', description: 'Save proposed requirements.', input_schema: { type: 'object', properties: { requirements: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, story: { type: 'string' }, ac: { type: 'array', items: { type: 'string' } }, priority: { type: 'string', enum: ['Must', 'Should', 'Could'] } }, required: ['title', 'story', 'ac', 'priority'] } } }, required: ['requirements'] } },
   { name: 'save_design', description: 'Save the proposed UI design of the feature.', input_schema: { type: 'object', properties: { summary: { type: 'string', description: 'Design approach: layout, navigation, patterns reused' }, notes: { type: 'string', description: 'Accessibility, responsive behaviour, open questions' }, screens: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, purpose: { type: 'string' }, reqIds: { type: 'array', items: { type: 'string' } }, elements: { type: 'array', items: { type: 'string' } }, states: { type: 'array', items: { type: 'string' } } }, required: ['name', 'purpose', 'reqIds', 'elements', 'states'] } } }, required: ['summary', 'screens'] } },
   { name: 'save_tests', description: 'Save proposed test cases.', input_schema: { type: 'object', properties: { tests: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, reqIds: { type: 'array', items: { type: 'string' } }, gherkin: { type: 'string' }, type: { type: 'string', enum: ['Automated', 'Manual'] } }, required: ['title', 'reqIds', 'gherkin', 'type'] } } }, required: ['tests'] } },
@@ -256,34 +257,6 @@ async function demoRun(pid: string, rid: string, a: AgentDef, goal: string, reqI
     patchRun(pid, rid, (r) => ({ ...r, changes, output: `Implemented ${reqIds.join(', ')} with ${changes.length} files, including node:test tests.` }));
   }
   await tick('finish(summary: …)', undefined, 'tool_call');
-}
-
-function demoIdea(need: string): Idea {
-  // Revise the business need into a measurable business intent (who, outcome, baseline → target, timeframe)
-  const n = need.trim().replace(/[.!?]$/, '');
-  const measurable = /\d+\s*%|→|->/.test(n);
-  const core = n.replace(/^(we|i|they)\s+(really\s+)?(need|want|would like)\s+/i, '').replace(/^(cần|muốn)\s+/i, '');
-  const who = core.match(/^([a-zà-ỹ ]+?)\s+to\s+(.+)$/i);
-  const brief = demoBrief(who ? `${who[2]} for ${who[1]}` : core);
-  const users = who ? who[1].trim() : `${brief.users[0].toLowerCase().replace(/s$/, '')}s`;
-  const action = who ? who[2] : core.charAt(0).toLowerCase() + core.slice(1);
-  const intent = measurable ? n : `Increase the share of ${users} who ${action} on their own, from [baseline %] to [target %] within 8 weeks`;
-  return { ...brief, need: need.trim(), intent, problem: `Today ${users} cannot ${action} without manual work, and nobody can measure how often it happens.` };
-}
-
-function demoBrief(intent: string): Idea {
-  const users = (intent.match(/\bfor ([^,.]+)/i)?.[1] || intent.match(/\b(customers?|users?|travell?ers?|students?|teachers?|staff|employees?|shoppers?|patients?|members?)\b/i)?.[1] || 'Customer').split(/,| and /).map((x) => x.trim()).filter(Boolean);
-  if (!users.some((u) => /admin|owner/i.test(u))) users.push('Admin');
-  const parts = intent.split(/,| and | và /).map((x) => x.trim()).filter((x) => x.length > 3);
-  return {
-    intent: intent.trim(),
-    problem: `Today ${users[0].toLowerCase()} cannot ${intent.charAt(0).toLowerCase() + intent.slice(1).replace(/\.$/, '')} easily; work is manual and not measurable.`,
-    users,
-    outcomeMetric: '_[baseline → target, e.g. task completion rate 40% → 70% within 8 weeks]_',
-    scopeIn: parts.length > 1 ? parts : [`Core flow: ${intent}`, 'Sign-in and profile', 'Admin overview', 'Analytics events'],
-    scopeOut: ['Native mobile apps', 'Payments (phase 2)'],
-    risks: ['Unclear success metric', 'Data privacy', 'Adoption by users'],
-  };
 }
 
 export const designText = (d: Design) => `${d.summary}\n${d.screens.map((s) => `${s.id} ${s.name} (${s.reqIds.join(', ')}): ${s.purpose}\n  elements: ${s.elements.join('; ')}\n  states: ${s.states.join('; ')}${s.frameUrl ? `\n  frame: ${s.frameUrl}` : ''}`).join('\n')}${d.notes ? `\nNotes: ${d.notes}` : ''}`;
