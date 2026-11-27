@@ -27,7 +27,7 @@ sign-in, and the rules allow that only for her email, stored as a one-way hash (
 1. **A team list per project.** On a project's new *Team* page, an admin adds a person by email address and ticks one
    or more roles: PO, BA, UX, QA, Dev, DM, Ops (the roles Compass already uses), plus **Admin**. The admin can change
    roles or remove the person later.
-   Only a super admin or that project's Admin can do this. The super admin also sees every project.
+   Only the super admin creates a project's first team; after that the super admin or that project's Admin manage it. The super admin also sees every project.
    Target: a new team member is added with their roles in under 1 minute, with no file edited by hand.
 2. **Sign in with Google, matched by email.** The portal shows a *Sign in with Google* screen. After sign-in, Compass
    compares the Google account's verified email (case-insensitive) with the team lists.
@@ -50,7 +50,7 @@ sign-in, and the rules allow that only for her email, stored as a one-way hash (
    from a person with the owning role; only then is it committed to GitHub. A record must carry the signed-in person's own
    verified email and a role they hold. When the team is created, the approvals already in `spec.json` are stored in
    Firebase as a baseline; any approval in neither the baseline nor a record is shown with an "Unconfirmed" badge,
-   whatever date it claims. Only an Admin or the super admin can store the baseline, once. Residual risk: an approval
+   whatever date it claims. Only the super admin creates a project's first team, and the baseline with it. Residual risk: an approval
    forged into `spec.json` before the team is first created ends up in the baseline and is never flagged.
    Target: every approval made after team access is switched on is either confirmed by Firebase or visibly flagged.
 
