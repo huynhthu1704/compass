@@ -4,23 +4,31 @@ Feature: F-003 · Requirements: REQ-081, REQ-082 (agents part) · Test cases: TC
 Intent: compass/intent/2026-11-27-project-design-files.md · Design: compass/design/2026-11-27-project-design-files.md
 (SCR-3, SCR-3b, SCR-4, SCR-4b)
 
-This is build 2 of 2. Build 1 (`REQ-080-082-project-settings-design-files.md`) added Project settings, the link checks
-and the storage (`src/designLinks.ts`).
+This is build 2 of 2. Build 1 (#102, `REQ-080-082-project-settings-design-files.md`) added Project settings, the link
+checks, the storage and the admin rule (`src/designLinks.ts`), and made the old one-link box on the Design page
+admin-only. This build removes that box.
 
 ## Files
 - compass/plans/REQ-081-082-design-page-preview.md: this plan (first commit)
-- src/designLinks.ts: adds the preview URLs (`figmaEmbed`, `miroEmbed`), the previews a Design page shows
+- src/designLinks.ts: removes `saveMainLink` and `mainLink` (only the old box used them); a hand-edited spec with only
+  `miroUrl` still shows its board (review nit on #102); the super admin counts as admin on sample projects; adds the preview URLs (`figmaEmbed`, `miroEmbed`), the previews a Design page shows
   (`designPreviews`), and the one line that names the project's design files for agents and AGENTS.md (`designToolText`)
-- src/pages/Design.tsx: the "Project design tool" box goes away. The page head gets a "Design files" button (count, or
+- src/pages/Design.tsx (on top of main's design gate from Team access, #100, which is unchanged): the old "Project
+  design tool" box goes away. The page head gets a "Design files" button (count, or
   "· none") at the top right; the phone label is "Files". A full-width preview follows, with a Figma/Miro switch only when
   both are linked. The empty state reads "No design files linked yet". The side panel shows the rows with Open ↗, plus
   "Change in Project settings →" for the admin
 - src/components/DesignFilesPanel.tsx (new): the panel. It is a dialog labelled "Design files" with focus moved in on
   open, and Esc, ✕ or a click outside closes it and puts focus back on the button. It reuses the row from Project
   settings (moved here and exported)
-- src/pages/ProjectSettings.tsx: imports the shared row (no behaviour change)
+- src/pages/ProjectSettings.tsx: imports the shared row; each field's error or help is linked to its input
+  (`aria-describedby`, label `for`), as the design notes ask (review nit on #102)
+- src/ui.tsx: `Field` takes an optional `id` (label `for`, help/error `id`); `PageHead`'s left column shrinks (`flex: 1 1 320px`) so the right-hand buttons stay at the top right
+  on desktop instead of wrapping under a long subtitle; on a phone they still wrap under the title
+- compass/intent/2026-11-27-project-design-files.md: the out-of-scope line says old Penpot and Sketch links are kept
+  too, matching REQ-082 and TC-507 (review nit on #87)
 - src/index.css: the side panel (420 px from the right) and, below 700 px, the bottom sheet; the preview frame
-- src/framework.ts: `designMd` and AGENTS.md name both files through `designToolText`
+- src/framework.ts: `designMd` and AGENTS.md name both files through `designToolMd` (the Markdown form of `designToolText`)
 - src/harness.ts: the design agent's prompt (`DESIGN TOOL:`) and its demo output name both files
 - tests/designLinks.test.mjs: TC-503 (preview URLs), TC-504 (agent prompt and AGENTS.md text), TC-507 (an old
   Penpot/Sketch/Other link is named after its tool and gets no preview), plus source checks for the Design page

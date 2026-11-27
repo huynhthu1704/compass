@@ -6,6 +6,7 @@
  *         → Evaluation & Guardrails (checks before anything is written to GitHub)
  * Without an API key every agent runs in DEMO mode: deterministic outputs, same trace/guardrails/evals.
  */
+import { designToolText } from './designLinks';
 import { checkChanges, evalChanges, evalRequirements, evalTests, scanInjection } from './guardrails';
 import { FRAMEWORK_VERSION, frameworkFiles, specFiles } from './framework';
 import { demoIdea } from './ideaDraft';
@@ -131,7 +132,7 @@ async function liveLoop(pid: string, rid: string, a: AgentDef, goal: string, con
 REPO: ${p.repo ? `${p.repo.owner}/${p.repo.name}` : '(not connected — spec only)'}
 TECH STACK: ${spec.stack}
 FEATURE: ${fid ? `${fid} ${featureOf(p, fid)?.name}\nIDEA: ${JSON.stringify(featureOf(p, fid)?.idea)}` : '(not specified)'}
-DESIGN TOOL: ${p.spec.designTool ? `${p.spec.designTool.kind} ${p.spec.designTool.url}` : '(none connected)'}
+DESIGN TOOL: ${designToolText(p.spec.designTool) || '(none connected)'}
 ${fid && featureOf(p, fid)?.design ? `DESIGN (${featureOf(p, fid)!.design!.status}):\n${designText(featureOf(p, fid)!.design!)}` : ''}
 OTHER FEATURES: ${spec.features.filter((f) => f.id !== fid).map((f) => `${f.id} ${f.name}`).join('; ') || 'none'}
 EXISTING REQUIREMENTS: ${spec.requirements.map((r) => `${r.id} [${r.featureId || '-'}] ${r.title} [${r.status}]`).join('; ') || 'none'}
@@ -251,7 +252,7 @@ async function demoRun(pid: string, rid: string, a: AgentDef, goal: string, reqI
     await tick('list_files(prefix: "src/")', rag.repoDocs(pid).map((d) => d.path).filter((x) => /\.(css|html|jsx?|tsx?)$/.test(x)).slice(0, 12).join('\n') || 'index.html\nstyles.css');
     const design = demoDesign(p, fid);
     await tick(`save_design(screens: [${design.screens.length}])`, design.screens.map((s) => `${s.id} ${s.name} → ${s.reqIds.join(', ')}`).join('\n'));
-    patchRun(pid, rid, (r) => ({ ...r, proposal: { design }, output: `${design.screens.length} screens designed for ${new Set(design.screens.flatMap((s) => s.reqIds)).size} approved requirements. Draw them in ${p.spec.designTool ? p.spec.designTool.kind : 'your design tool'} and link each frame.` }));
+    patchRun(pid, rid, (r) => ({ ...r, proposal: { design }, output: `${design.screens.length} screens designed for ${new Set(design.screens.flatMap((s) => s.reqIds)).size} approved requirements. Draw them in ${designToolText(p.spec.designTool) || 'your design tool'} and link each frame.` }));
   } else if (a.id === 'testdesign') {
     await tick('read_file(path: "compass/spec.json")');
     const tests = demoTests(p, fid);
