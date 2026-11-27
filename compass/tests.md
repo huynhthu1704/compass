@@ -309,10 +309,10 @@ Then max-width is 1600px, width is 100% and the side padding uses clamp() betwee
 And the below-900 px rule for .main is unchanged
 ```
 
-## TC-028 · No sideways scrolling on any page from 1920 px down to 390 px
+## TC-028 · No sideways scrolling and no text outside its row, from 1920 px down to 390 px
 Covers: REQ-015 · Type: Manual · Status: Not run
 ```gherkin
 Given every page in the sidebar (Projects, Agent architecture, Feature board, Team floor, Release, Agent runs, Knowledge, Connections, the feature stages) and New project
 When I open each at 1920, 1600, 1280, 1000, 901 and 390 px wide
-Then the content is 1600 px wide at 1920 px, forms keep their reading width, and no page scrolls sideways
+Then the content is 1600 px wide at 1920 px, forms keep their reading width, no page scrolls sideways, and no text in a list row is squeezed to one word per line or drawn outside its row
 ```

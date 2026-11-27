@@ -190,7 +190,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .option { display: flex; gap: var(--spacing-md); align-items: flex-start; padding: var(--spacing-md); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); cursor: pointer; background: var(--color-bg-surface); text-align: left; }
 /* REQ-015: option rows with a flexible text part (Release, Build, run changes) wrap on narrow screens;
    rows without one (the role picker) keep one line */
-.option:has(> .grow) { flex-wrap: wrap; }
+.option:has(> .grow) { flex-wrap: wrap; } .option:has(> .grow) > .grow { flex-basis: 8rem; } /* text moves to its own line instead of being squeezed */
 .option > .grow { min-width: 0; } .option > .mono { min-width: 0; overflow-wrap: anywhere; }
 .run-status { flex: none; width: 128px; display: flex; } /* fixed status column so run names line up */
 .option[aria-pressed="true"] { border-color: var(--color-border-brand); background: var(--color-bg-brand-subtle); }
