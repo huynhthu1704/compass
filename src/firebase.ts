@@ -29,6 +29,8 @@ export interface Session {
   superAdmin: boolean;
   access: ProjectAccess[];
   error?: string;
+  /** REQ-040: a signed-in person is trying the demo (sample projects only, nothing sent to Firebase or GitHub). */
+  demo?: boolean;
 }
 
 let session: Session = { status: firebaseEnabled ? 'loading' : 'off', superAdmin: false, access: [] };
@@ -60,8 +62,10 @@ function load(): Promise<Fb> {
 }
 
 /** May the signed-in person see this local project? Always true when sign-in is off; the super admin sees all. */
-export function canSeeProject(p: { repo: Pick<RepoRef, 'owner' | 'name'> | null }, s: Session = session) {
-  if (s.status === 'off' || s.superAdmin) return true;
+export function canSeeProject(p: { repo: Pick<RepoRef, 'owner' | 'name'> | null; demo?: boolean }, s: Session = session) {
+  if (s.status === 'off') return true;
+  if (s.demo) return !!p.demo; // REQ-040: only the sample projects while in the demo
+  if (s.superAdmin) return true;
   return !!p.repo && s.access.some((a) => a.id === projectKey(p.repo!));
 }
 
@@ -72,7 +76,7 @@ export async function startSession() {
     const { auth, authApp } = await load();
     currentAuth = authApp;
     auth.onAuthStateChanged(authApp, (user) => {
-      if (!user) { clearProjectTokens(); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined }); return; }
+      if (!user) { clearProjectTokens(); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false }); return; }
       if (session.email && normalizeEmail(user.email || '') !== session.email) clearProjectTokens(); // another account in this tab
       void loadAccess(user.email || '', user.emailVerified);
     });
@@ -212,3 +216,10 @@ export async function writeApprovalRecord(key: string, rec: { items: string[]; g
   const { fs, db } = await load();
   await fs.addDoc(fs.collection(db, 'projects', key, 'approvals'), { ...rec, at: fs.serverTimestamp() });
 }
+
+// ---- Demo after sign-in (REQ-040, ADR-014) ------------------------------------------------------------------------------
+
+/** Opens the demo for a signed-in person: sample projects only, a demo role of their choice. */
+export function enterDemo() { if (session.status === 'signed-in') set({ demo: true }); }
+/** Leaves the demo; the demo role is forgotten by the caller so it never leaks into real work. */
+export function leaveDemo() { set({ demo: false }); }

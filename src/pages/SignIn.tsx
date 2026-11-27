@@ -1,6 +1,6 @@
 // F-015 SCR-1 "Sign in to Compass" and SCR-2 "You have no access yet" (REQ-032). Design: compass/design/F-015.md.
 import { useState, type ReactNode } from 'react';
-import { reloadAccess, signInWithGoogle, signOut } from '../firebase';
+import { enterDemo, reloadAccess, signInWithGoogle, signOut } from '../firebase';
 import { Button } from '../ui';
 
 // Google's "G" keeps its official colours (Google sign-in branding), so it lives in public/ outside the colour tokens.
@@ -60,9 +60,10 @@ export function NoAccessPage({ logo, email, error }: { logo: ReactNode; email?: 
       {(err || error) && <p className="body-sm t-danger" role="alert">{err || error}</p>}
       <div className="row gap-sm wrap">
         <Button variant="accent" onClick={reload} disabled={busy}>{busy ? 'Reloading…' : 'Reload'}</Button>
+        <Button variant="secondary" onClick={() => enterDemo()}>Try the demo</Button>
         <Button variant="secondary" onClick={() => void out()}>Sign out</Button>
       </div>
-      <p className="body-sm t-tertiary">No project names or data are shown on this screen.</p>
+      <p className="body-sm t-tertiary">No project names or data are shown on this screen. "Try the demo" opens sample projects kept in this browser only.</p>
     </Card>
   );
 }

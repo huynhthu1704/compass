@@ -178,3 +178,15 @@ export function sharedToOpen<A extends { id: string; repo?: { owner: string; nam
 export function gateForAgent(agent: string): Gate {
   return ({ ideation: 'intent', requirements: 'requirements', designer: 'design', testdesign: 'tests', coder: 'build', reviewer: 'build', release: 'release' } as Record<string, Gate>)[agent] || 'build';
 }
+
+export type StartScreen = 'loading' | 'sign-in' | 'no-access' | 'role-picker' | 'app';
+
+/** What the portal shows first (REQ-032, REQ-039, REQ-040). With sign-in on, roles come from the team: the role picker
+ *  appears only inside the demo, which needs a signed-in person (the demo is never reachable before sign-in). */
+export function startScreen(s: { firebase: boolean; status: string; demo: boolean; hasRole: boolean; hasAccess: boolean }): StartScreen {
+  if (!s.firebase) return s.hasRole ? 'app' : 'role-picker';
+  if (s.status === 'loading' || s.status === 'off') return 'loading';
+  if (s.status !== 'signed-in') return 'sign-in';
+  if (s.demo) return s.hasRole ? 'app' : 'role-picker';
+  return s.hasAccess ? 'app' : 'no-access';
+}

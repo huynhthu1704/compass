@@ -24,6 +24,9 @@ import { Sidebar } from './components/Sidebar';
 import { canSeeProject, firebaseEnabled, loadProjectToken, projectKey, startSession, useProjectToken, useSession } from './firebase';
 import { tokenFor } from './token';
 import { NoAccessPage, SignInPage } from './pages/SignIn';
+import { startScreen } from './team';
+import { leaveDemo } from './firebase';
+import { store } from './store';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -56,11 +59,12 @@ export default function App() {
   const routeProject = parts[0] === 'p' ? parts[1] : undefined;
   const sync = useSync(routeProject); // hooks must run before any early return
   // F-015: with Firebase configured, people sign in with Google and their roles come from the team (REQ-032).
-  if (firebaseEnabled) {
-    if (session.status === 'loading') return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><span className="body t-secondary">Loading…</span></main>;
-    if (session.status === 'signed-out') return <><SignInPage logo={<Logo />} error={session.error} /><Toaster /></>;
-    if (!session.superAdmin && !session.access.length) return <><NoAccessPage logo={<Logo />} email={session.email} error={session.error} /><Toaster /></>;
-  } else if (!settings.role) return <><Onboarding /><Toaster /></>;
+  // REQ-039/040: with sign-in on, roles come from the team; the role screen appears only inside the demo.
+  const screen = startScreen({ firebase: firebaseEnabled, status: session.status, demo: !!session.demo, hasRole: !!settings.role, hasAccess: session.superAdmin || session.access.length > 0 });
+  if (screen === 'loading') return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><span className="body t-secondary">Loading…</span></main>;
+  if (screen === 'sign-in') return <><SignInPage logo={<Logo />} error={session.error} /><Toaster /></>;
+  if (screen === 'no-access') return <><NoAccessPage logo={<Logo />} email={session.email} error={session.error} /><Toaster /></>;
+  if (screen === 'role-picker') return <><Onboarding /><Toaster /></>;
 
   const p = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1] && canSeeProject(x, session)) : undefined;
   const sub = parts[2] || '';
@@ -87,7 +91,15 @@ export default function App() {
         <aside className={`sidebar ${menu ? 'open' : ''}`}>
           <Sidebar parts={parts} p={p} sync={sl ? { ...sl, title: sync?.message } : null} logo={<Logo />} />
         </aside>
-        <main className="main">{page}</main>
+        <main className="main">
+          {session.demo && (
+            <div className="row gap-md wrap" role="status" style={{ padding: '12px 16px', marginBottom: 16, borderRadius: 12, background: 'var(--color-bg-brand-subtle)', border: '1px solid var(--color-border-brand)', alignItems: 'center' }}>
+              <span className="stack grow"><strong className="body-sm">Demo — sample data, kept in this browser only</strong><span className="body-sm t-secondary">Nothing here is saved to GitHub or Firebase. Your real projects are not shown while you are in the demo.</span></span>
+              <button className="btn secondary sm" onClick={() => { store.setSettings({ role: undefined }); leaveDemo(); go('/'); }}>Leave demo</button>
+            </div>
+          )}
+          {page}
+        </main>
       </div>
       <Toaster />
     </>
