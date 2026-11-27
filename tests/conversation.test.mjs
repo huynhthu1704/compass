@@ -1,6 +1,6 @@
 // F-020 Quote an agent answer and ask (REQ-050 … REQ-054) — TC-200, TC-201, TC-203 … TC-210, TC-212.
-// TC-202, TC-211 and the UI part of TC-213 are manual checks; the live token count (TC-204) and the guardrails/evals
-// filled in again after a revision (TC-208) run in the harness and are checked by hand in a live project. src/conversation.ts is pure, so Node 22 runs it directly.
+// TC-202, TC-211 and the UI part of TC-213 are manual checks, and so are the live Claude calls: the token count of a
+// live answer (TC-214) and the guardrails/evals of a live revision (TC-215). src/conversation.ts is pure, so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -55,7 +55,7 @@ test('TC-203 (REQ-051): Ask adds an answer and leaves the proposal unchanged', (
   assert.equal(canAsk(next), true);
 });
 
-test('TC-204 (REQ-051): the follow-up prompt carries goal, proposal, conversation and quotes as data; the answer shows its tokens', () => {
+test('TC-204 (REQ-051): the follow-up prompt carries goal, proposal, conversation and quotes as data', () => {
   const r = run({ conversation: [you('ask', [{ source: 'REQ-050', text: 'x' }], 'first question'), { id: 'a', at: '', who: 'agent', text: 'first answer', tokens: 812 }] });
   const p = followUpPrompt(r, 'ask', { quotes: [{ source: 'REQ-051 · AC 2', text: 'Then f' }], message: 'make it measurable' });
   assert.match(p, /ORIGINAL GOAL: Write requirements for sharing/);
@@ -246,4 +246,14 @@ test('TC-201 (REQ-050): a selection across idea fields or design texts is not th
   assert.equal(selectionSource(end('Design · summary'), end('Design · notes'), 'awaiting-approval'), 'Answer');
   assert.equal(revisableQuotes([{ source: 'Answer', text: 'x' }]), false);
   assert.deepEqual(scopeDelta({ idea: { intent: 'x' }, design: { summary: 's', notes: 'n' } }, [{ source: 'Idea', text: 'x' }, { source: 'Design', text: 'y' }]).delta, {}, 'a bare Idea / Design quote allows nothing');
+});
+
+test('TC-216 (REQ-050, REQ-053): every RunView is keyed by its run, so quotes never carry over to another run', async () => {
+  const { readFileSync } = await import('node:fs');
+  for (const f of ['src/components/AgentBox.tsx', 'src/pages/Build.tsx', 'src/pages/Runs.tsx']) {
+    const src = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+    const views = src.match(/<RunView\b[^>]*>/g) || [];
+    assert.ok(views.length > 0, f);
+    for (const v of views) assert.match(v, /\bkey=\{[^}]*\.id\}/, `${f}: ${v}`);
+  }
 });
