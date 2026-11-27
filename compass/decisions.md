@@ -41,3 +41,13 @@ _2026-11-26 · Accepted · REQ-010, REQ-011, REQ-012_
 **Decision:** The Product Owner chose to rebrand all Compass pages (not only the Team floor) to the Honey edition of the design system in the Figma file "Compass — Team floor", which becomes the project design tool. Honey means brand and "your turn"; working moves from amber/teal to sky so the two never look alike.
 
 **Consequences:** The teal theme is retired; the colour tokens in src/index.css follow the Figma variables; a test keeps old teal out of src/. Where Bee There's text colours fall below WCAG AA 4.5:1 (grey #8A8072, brand text #A87400, and the state texts on pale honey), Compass uses one shade darker; the Product Owner approved this on 2026-11-26.
+
+## ADR-005 · Intents say "Done when"; a baseline and target only for bets
+
+_2026-11-27 · Accepted · REQ-020, REQ-021_
+
+**Context:** The Ideation agent asked every business intent for "baseline → target, by when" and invented numbers with no data behind them (e.g. "0% → 20% within 90 days" for a Bee There feature). The Product Owner found them hard to judge.
+
+**Decision:** The Product Owner decided on 2026-11-27 (same rule as travel-map ADR-021): every intent has a "Done when" in plain words. A small feature may add one optional signal to watch without a target; a process change has "Done when" only; only a change she names a bet gets a metric with its current value, and its target is set after a few weeks of real data. The Ideation agent never invents a baseline or target.
+
+**Consequences:** The Ideation agent prompt, its offline draft, the installed framework text and the Idea page change; the stored field outcomeMetric keeps its name so existing briefs need no migration. Existing briefs keep their text until the agent is re-run.

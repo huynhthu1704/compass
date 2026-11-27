@@ -28,6 +28,15 @@
 | REQ-018 | F-012 | The deleted feature's open GitHub issues are closed as not planned | Must | Approved | TC-035, TC-036 |
 | REQ-019 | F-012 | A strong warning before deleting a feature that has code | Should | Approved | TC-037 |
 | REQ-015 | F-011 | Pages use up to 1600 px on large screens and stay responsive | Should | Approved | TC-027, TC-028 |
+| REQ-020 | F-001 | The Ideation agent writes "Done when" and never invents a baseline or target | Must | Approved | TC-039, TC-040, TC-041 |
+| REQ-021 | F-001 | The Idea page and briefs say "Done when" instead of "Outcome metric" | Should | Approved | TC-042 |
+| REQ-060 | F-009 | Each waiting item says what it is and how long it has waited | Must | Approved | TC-300, TC-301, TC-306 |
+| REQ-061 | F-009 | The approval desk stays compact, with a link to all waiting runs | Must | Approved | TC-302, TC-303, TC-307 |
+| REQ-062 | F-009 | Details of a waiting item open in a side panel | Should | Approved | TC-304, TC-305, TC-308, TC-309 |
+| REQ-070 | F-013 | The sidebar is grouped, has icons and shows the open project as a card | Must | Approved | TC-400, TC-401, TC-405 |
+| REQ-071 | F-013 | The approval count shows once, on Team floor | Must | Approved | TC-402 |
+| REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
+| REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202 |
 | REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208 |
@@ -297,7 +306,7 @@ _AC1_
 ```gherkin
 Given runs awaiting approval
 When I look at the Your approval desk
-Then it lists each waiting run (agent and feature) with a "Review & approve" button, and the desk says "Nothing waiting" when there is none
+Then it lists the waiting runs (the 3 that have waited longest and "+N more", REQ-061); each item opens its details with "Open run to approve" (REQ-062), and the desk says "Nothing waiting" when there is none
 ```
 
 _AC2_
@@ -325,7 +334,7 @@ _AC2_
 ```gherkin
 Given a phone-sized screen (below 720 px)
 When I open the Team floor
-Then an approval banner is on top, the desks are in a 2-column grid in pipeline order and the activity list is collapsed
+Then an approval banner is on top listing the waiting runs like the desk (REQ-060, REQ-061), the desks are in a 2-column grid in pipeline order and the activity list is collapsed
 ```
 
 _AC3_
@@ -641,6 +650,251 @@ _AC4_
 Given a form page that sets its own reading width (New project, Connections)
 When it is shown on a large screen
 Then it keeps that reading width
+```
+
+## REQ-020 · The Ideation agent writes "Done when" and never invents a baseline or target
+As the product owner, I want the Ideation agent to say what will be true when the change is done instead of inventing numbers, so that I can judge and approve a brief without making up a baseline or target.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a business need
+When the Ideation agent drafts a brief
+Then the intent says who and what changes, "Done when" says what will be true afterwards, and there is no baseline or target unless the need itself gives numbers or names the change a bet
+```
+
+_AC2_
+```gherkin
+Given no AI key (the offline draft)
+When a brief is drafted
+Then it has no "[baseline %]", "[target %]" or "baseline → target" placeholders
+```
+
+_AC3_
+```gherkin
+Given the framework text Compass installs (AGENTS.md and compass/intent/README.md)
+When an agent reads it
+Then it asks every intent for "## Done when" and a metric with a baseline only for a bet the Product Owner names, the same rule as travel-map REQ-059
+```
+
+## REQ-021 · The Idea page and briefs say "Done when" instead of "Outcome metric"
+As the product owner, I want the Idea page and briefs to ask what will be true when it is done, so that the form no longer asks me for a baseline → target.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given the Idea page
+When I look at the brief fields
+Then "Outcome metric (baseline → target)" is called "Done when (and optional signal to watch)" and no label or help text asks for a baseline → target
+```
+
+_AC2_
+```gherkin
+Given an Ideation agent run brief and the generated compass/features/F-xxx.md and compass/intent/F-xxx.md
+When they show the brief
+Then the heading reads "Done when" instead of "Outcome metric" or "Success measure"
+```
+
+## REQ-060 · Each waiting item says what it is and how long it has waited
+As the product owner, I want each waiting item on the Team floor to say what it is about and how long it has waited, so that I can tell them apart without opening them.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a run waiting for approval
+When it is listed on the Your approval desk (or the phone banner)
+Then the item shows the agent, the feature, one line of the run's goal (cut with … when longer) and how long it has waited since it started waiting ("now" under a minute, then "6m", "2h", "2d")
+```
+
+_AC2_
+```gherkin
+Given two waiting runs of the same agent and feature
+When they are listed
+Then their goals tell them apart
+```
+
+_AC3_
+```gherkin
+Given a waiting run blocked by a guardrail
+When it is listed
+Then the item is marked "blocked", and its side panel shows "Open run · blocked" instead of "Open run to approve"
+```
+
+## REQ-061 · The approval desk stays compact, with a link to all waiting runs
+As the product owner, I want the approval desk to stay the same size however many runs wait, so that the floor keeps its shape.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given more than 3 runs waiting for approval
+When the Team floor is shown
+Then the desk (and the phone banner) lists the 3 that have waited longest (by the time they started waiting) and a "+N more → Agent runs" link
+```
+
+_AC2_
+```gherkin
+Given the "+N more" link
+When I click it
+Then Agent runs opens showing only the runs awaiting approval, with a way to show all runs again
+```
+
+_AC3_
+```gherkin
+Given 3 or fewer runs waiting
+When the desk is shown
+Then all of them are listed and there is no "+N more" link
+```
+
+## REQ-062 · Details of a waiting item open in a side panel
+As the product owner, I want to read the details of a waiting item without leaving the Team floor, so that I decide quickly what to approve first.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a waiting item on the desk or the phone banner
+When I click it
+Then a side panel opens (full screen on a phone) with the agent and feature, the waiting time, the full goal, a short summary of the proposal (idea brief, number of requirements, design screens or test cases, or number of changed files, from the run's proposal and change set) and the guardrail and evaluation results
+```
+
+_AC2_
+```gherkin
+Given the side panel
+When I choose "Open run to approve" ("Open run · blocked" for a blocked run, REQ-060)
+Then the run page opens, where approving or rejecting works exactly as from Agent runs; the panel itself has no Approve button
+```
+
+_AC3_
+```gherkin
+Given the side panel is open
+When I press Escape, click outside it or choose Close
+Then it closes and keyboard focus returns to the item I opened it from
+```
+
+## REQ-070 · The sidebar is grouped, has icons and shows the open project as a card
+As any portal user, I want the sidebar grouped with an icon on every link and the open project shown as a card, so that I find a page and see the project's state at a glance.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given any page of the portal on a desktop screen
+When I look at the sidebar
+Then it shows three groups separated by a line — workspace (Projects, Agent architecture), the open project (only when one is open) and an account footer at the bottom — and every page link starts with an icon
+```
+
+_AC2_
+```gherkin
+Given a project is open
+When I look at the project group
+Then a card shows the project's first letter, its name and its state ("Demo project", the GitHub sync state such as "Synced with GitHub" or "Sync failed", or "Local project" when it is not on GitHub), and clicking it opens the project list
+```
+
+_AC3_
+```gherkin
+Given a project is open
+When I look under the project card
+Then the links are, in order, Feature board, Team floor, Agent runs, Release and Knowledge, and Knowledge has the tooltip "Project knowledge the agents search (RAG)"
+```
+
+_AC4_
+```gherkin
+Given I use the keyboard
+When I press Tab through the sidebar in light or dark mode
+Then every link, card and button shows a visible focus ring
+```
+
+## REQ-071 · The approval count shows once, on Team floor
+As the product owner, I want one clear count of the agent runs waiting for my approval, so that the same number shown twice does not look like two different things to do.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given N agent runs of the open project wait for approval (N > 0)
+When I look at the sidebar
+Then only Team floor shows a count pill with N, announced as "N waiting for approval", with a tooltip saying N agent run(s) wait for my approval, and Agent runs shows no count
+```
+
+_AC2_
+```gherkin
+Given no agent run waits for approval
+When I look at the sidebar
+Then no count is shown
+```
+
+## REQ-072 · The feature list is readable
+As any portal user, I want to read each feature's name and stage in the sidebar, so that I can open the right feature without guessing from a cut-off name.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a project with features
+When I look at the sidebar
+Then a "Features" heading shows how many features are listed, and each feature shows a dot in its stage colour, its name on up to two lines and its short id (e.g. F01) on the right
+```
+
+_AC2_
+```gherkin
+Given I hover a feature
+When the tooltip shows
+Then it gives the feature id, the full name and the stage
+```
+
+_AC3_
+```gherkin
+Given a feature is open
+When I look under it
+Then its five stages (Idea, Requirements, Design, Test cases, Build) are listed indented, each with its step number or ✓ when done
+```
+
+## REQ-073 · The account footer shows the connection, the role and one theme button
+As any portal user, I want my GitHub connection, my role and the theme together at the bottom of the sidebar, so that settings are in one tidy place.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given GitHub is connected as @user
+When I look at the bottom of the sidebar
+Then an account card shows the initial, "@user" and "GitHub connected"; without a connection it shows "Not connected" and "Demo mode · connect"; clicking the card opens Connections
+```
+
+_AC2_
+```gherkin
+Given the footer
+When I look under the account card
+Then the role picker fills the row next to one theme button labelled "Switch to dark theme" (or "Switch to light theme"), and clicking it switches the theme
+```
+
+_AC3_
+```gherkin
+Given a phone (below 900 px)
+When I open the Menu
+Then the sidebar shows the same groups, card and footer
 ```
 
 ## REQ-050 · Quote any part of an agent run

@@ -22,7 +22,7 @@ export interface RepoRef {
 
 export interface Idea {
   need?: string;           // the Product Owner's raw business need, in their own words
-  intent: string;          // business intent: the need revised into a measurable business outcome
+  intent: string;          // business intent: the need revised into the outcome (who, what changes); outcomeMetric holds "Done when" (REQ-020)
   problem: string;
   users: string[];
   outcomeMetric: string;
