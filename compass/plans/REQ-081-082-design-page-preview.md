@@ -46,7 +46,8 @@ admin-only. This build removes that box.
 - **Embeds from other sites.** The previews are plain iframes from www.figma.com/embed and miro.com/app/live-embed,
   built only from links that passed the checks. Nothing from the link is placed into HTML.
 - **Focus traps or lost focus.** The panel keeps a ref to the button and moves focus back on every way of closing.
-  Esc is handled on the panel; a click on the backdrop closes it.
+  Esc and Tab are handled at document level while the panel is open (focus stays inside it); a click on the backdrop
+  closes it.
 - **Old projects.** A Penpot/Sketch/Other link gets no preview. It is listed in the panel under its tool (TC-507), and
   the feature's own frame link still previews when it is a Figma link.
 - **AGENTS.md and design views change wording** for projects that use the portal: only the design-tool line, which now
