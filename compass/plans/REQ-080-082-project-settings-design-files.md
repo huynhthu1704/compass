@@ -11,7 +11,7 @@ does the Design page (button, side panel, Miro preview) and names both files in 
 - compass/plans/REQ-080-082-project-settings-design-files.md: this plan (first commit)
 - src/designLinks.ts (new, pure, types-only imports): checks a Figma and a Miro link, reads the project's files from
   `designTool` (old single-link projects included), builds the new `designTool` when saving, and decides who the admin
-  is (PO role until Team access, F-015)
+  is (project Admin or super admin with sign-in on; the PO role with sign-in off)
 - src/types.ts: `DesignToolKind` gains `'miro'`; `DesignTool` gains an optional `miroUrl`
 - src/pages/ProjectSettings.tsx (new): the Project settings page with the "Design files" card. The admin sees the two
   fields, Save and Cancel, with errors. Everyone else sees one row per file with Open ↗, or "No design files linked
@@ -43,8 +43,10 @@ does the Design page (button, side panel, Miro preview) and names both files in 
   and the field help says so.
 - **Unsafe links.** Only `https://` links on figma.com or miro.com board paths are accepted (no look-alike hosts such
   as `evil.com/figma.com/…`). Links open with `rel="noreferrer"` in a new tab.
-- **Not real access control.** "Admin" is the PO role picked in the sidebar until Team access (F-015) adds sign-in.
-  This is stated in the intent, and the check is a single function (`isDesignAdmin`) so F-015 can swap it.
+- **Who is the admin.** Team access (F-015) is now on main. With sign-in on, the project's Admin (from the team in
+  Firebase) or the super admin edits the links. With sign-in off (demo, local use) the PO role picker stands in, as the
+  intent says. It is one function (`isDesignAdmin`, TC-502). It is a UI check: `designTool` lives in the repo's
+  spec.json, which only people with GitHub write access can change anyway.
 - **The Design page still has its old editable box until build 2.** It keeps working on the same `designTool`
   (Figma, Penpot, Sketch, Other). A saved Miro link only appears on Project settings until build 2 lands.
 

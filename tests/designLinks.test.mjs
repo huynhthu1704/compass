@@ -50,10 +50,16 @@ test('TC-501 (REQ-080, REQ-082): saving writes designTool and keeps old projects
 });
 
 test('TC-502 (REQ-080): only the admin role edits; the page shows the hint and the empty state', () => {
-  assert.equal(isDesignAdmin('PO'), true);
-  for (const r of ['BA', 'DM', 'UX', 'Dev', 'QA', 'Ops', undefined]) assert.equal(isDesignAdmin(r), false, `${r} is not the admin`);
+  const off = (role) => ({ role, signIn: 'off', superAdmin: false, projectRoles: [] });
+  assert.equal(isDesignAdmin(off('PO')), true, 'sign-in off: the PO role picker stands in for the admin');
+  for (const r of ['BA', 'DM', 'UX', 'Dev', 'QA', 'Ops', undefined]) assert.equal(isDesignAdmin(off(r)), false, `${r} is not the admin`);
+  const on = (projectRoles, superAdmin = false) => ({ role: 'PO', signIn: 'signed-in', superAdmin, projectRoles });
+  assert.equal(isDesignAdmin(on(['BA', 'Admin'])), true, 'sign-in on: the project Admin');
+  assert.equal(isDesignAdmin(on([], true)), true, 'sign-in on: the super admin');
+  assert.equal(isDesignAdmin(on(['PO'])), false, 'sign-in on: the role picker no longer decides');
+  assert.equal(isDesignAdmin({ role: 'PO', signIn: 'signed-out', superAdmin: false, projectRoles: [] }), false);
   const src = read('src/pages/ProjectSettings.tsx');
-  assert.match(src, /isDesignAdmin\(settings\.role\)/);
+  assert.match(src, /isDesignAdmin\(\{ role: settings\.role, signIn: session\.status, superAdmin: session\.superAdmin, projectRoles \}\)/);
   assert.match(src, /Only the project admin can change the design files\./);
   assert.match(src, /No design files linked yet\./);
   assert.match(src, /saveDesignFiles\(/);

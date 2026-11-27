@@ -59,5 +59,9 @@ export function saveDesignFiles(current: DesignTool | undefined, input: { figma:
   return main.kind !== 'miro' && miro ? { ...main, miroUrl: miro } : main;
 }
 
-/** REQ-080: who may change the design files — the PO role until Team access (F-015) adds project Admins. */
-export const isDesignAdmin = (role?: Role | string) => role === 'PO';
+/** Who is looking: the role picker, and — when sign-in (Team access, F-015) is on — their roles in this project. */
+export type Viewer = { role?: Role | string; signIn: 'off' | 'loading' | 'signed-out' | 'signed-in'; superAdmin: boolean; projectRoles: string[] };
+
+/** REQ-080: who may change the design files. With sign-in on: the project's Admin or the super admin (Team access,
+ *  F-015). With sign-in off (demo, local use): the PO role from the role picker, as before Team access. */
+export const isDesignAdmin = (v: Viewer) => (v.signIn === 'off' ? v.role === 'PO' : v.superAdmin || v.projectRoles.includes('Admin'));

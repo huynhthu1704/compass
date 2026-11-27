@@ -1,6 +1,7 @@
 // F-003 Project settings (REQ-080, REQ-082, ADR-015) — design: compass/design/2026-11-27-project-design-files.md (SCR-1, SCR-2, SCR-2b).
 import { useState } from 'react';
 import { checkFigmaUrl, checkMiroUrl, designFiles, FIGMA_HELP, isDesignAdmin, MIRO_HELP, saveDesignFiles, TOOL_NAMES } from '../designLinks';
+import { projectKey, useSession } from '../firebase';
 import { store, useStore } from '../store';
 import type { DesignToolKind, Project } from '../types';
 import { Badge, Button, Field, PageHead, toast } from '../ui';
@@ -24,7 +25,9 @@ function FileRow({ kind, url }: { kind: DesignToolKind; url: string }) {
 
 export function ProjectSettingsPage({ p }: { p: Project }) {
   const { settings } = useStore();
-  const admin = isDesignAdmin(settings.role);
+  const session = useSession();
+  const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
+  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles });
   const files = designFiles(p.spec.designTool);
   const empty = !files.figma && !files.miro && !files.other;
   const [editing, setEditing] = useState(empty);
