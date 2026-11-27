@@ -8,8 +8,8 @@ configured by me"
 ## What we want
 With sign-in on, in phase 1:
 - **One GitHub token and one Anthropic key, set only by the super admin**, on Connections. Compass uses them for every
-  person's GitHub work and live agent runs on team projects. Nobody else sees a token or key box, and a token or key that
-  someone saved on their own device is never used for a team project.
+  person's GitHub work and live agent runs on team projects. The Connections page is hidden from everyone else, and a
+  token or key that someone saved on their own device is never used for a team project.
 - **Project Admins no longer set a project token.** The per-project token card on the Team page is removed and stored
   project tokens are deleted (the super admin's token replaces them).
 - **A clear audit trail anyway:** every commit and pull request Compass makes says who did it ("Made in Compass by

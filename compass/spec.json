@@ -2063,7 +2063,7 @@
       "story": "As the super admin, I want everyone to work through my GitHub and Anthropic accounts in phase 1, and nobody else to configure them, so that I control all access and cost.",
       "ac": [
         "Given sign-in is on and the super admin saved a GitHub token and an Anthropic key on Connections\nWhen any team member saves to GitHub, approves, releases or runs an agent on a team project\nThen Compass uses the super admin's token and key; a token or key saved on the member's own device is never used for a team project",
-        "Given sign-in is on\nWhen a person who is not the super admin opens Connections\nThen no GitHub token or Anthropic key box is shown, only whether each is set (\"Set by the super admin\" or \"Not set yet — ask the super admin\"); the Firestore rules let only the super admin write or replace them, and let only signed-in team members and the super admin read them",
+        "Given sign-in is on\nWhen a person who is not the super admin uses Compass\nThen the Connections page is hidden: no sidebar card or link leads to it, and opening its address goes to Projects; the Firestore rules let only the super admin write or replace the GitHub token and Anthropic key, and let only signed-in team members and the super admin read them",
         "Given the super admin has not set a GitHub token (or an Anthropic key)\nWhen a member tries a GitHub action (or a live agent run)\nThen nothing is written, the GitHub action says \"No GitHub token yet — ask the super admin\", and agents run in demo mode",
         "Given the super admin replaces or removes the token or key\nWhen members next act\nThen the new value is used, or the actions above are disabled",
         "Given sign-in is off, or the demo is open\nWhen anyone uses Compass\nThen tokens and keys work as today, per device"
@@ -3361,10 +3361,10 @@
       "reqIds": [
         "REQ-041"
       ],
-      "title": "Connections shows no token or key box to anyone but the super admin",
+      "title": "The Connections page is hidden from everyone but the super admin",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given sign-in on\nWhen a member and the super admin open Connections\nThen the member sees \"Set by the super admin\" (or \"Not set yet — ask the super admin\") and no input; the super admin sees the token and key boxes"
+      "gherkin": "Given sign-in on\nWhen a member looks for Connections in the sidebar and then opens its address directly, and the super admin does the same\nThen the member finds no link and lands on Projects; the super admin sees Connections with the GitHub token and Anthropic key boxes; with sign-in off or in the demo, Connections is shown as today"
     },
     {
       "id": "TC-081",
