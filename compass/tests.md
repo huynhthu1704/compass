@@ -40,8 +40,8 @@
 | REQ-073 The account footer shows the connection, the role and one theme button | TC-404 (Not run), TC-405 (Not run) |
 | REQ-074 The portal shows no "AI dev portal" tagline | TC-406 (Not run) |
 | REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run) |
-| REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run) |
-| REQ-052 Revise the proposal from the quoted text | TC-206 (Not run), TC-207 (Not run), TC-208 (Not run) |
+| REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run), TC-214 (Not run) |
+| REQ-052 Revise the proposal from the quoted text | TC-206 (Not run), TC-207 (Not run), TC-208 (Not run), TC-215 (Not run) |
 | REQ-053 Proposal versions and compare | TC-209 (Not run), TC-210 (Not run), TC-211 (Not run) |
 | REQ-054 The conversation is kept with the run, safely | TC-212 (Not run), TC-213 (Not run) |
 | REQ-063 Handoffs are shown on phones too | TC-311 (Not run), TC-312 (Not run), TC-313 (Not run), TC-314 (Not run), TC-315 (Not run) |
@@ -620,12 +620,12 @@ When I ask "why Must?" with a quote of REQ-050
 Then the conversation has my message and a demo answer naming "REQ-050", the proposal is deep-equal to before and the status is still awaiting approval
 ```
 
-## TC-204 · The follow-up prompt carries goal, proposal, conversation and quotes as data; the answer shows its tokens
+## TC-204 · The follow-up prompt carries goal, proposal, conversation and quotes as data
 Covers: REQ-051 · Type: Automated · Status: Not run
 ```gherkin
 Given a run with goal G, a proposal, one earlier question and answer, and a new reply with a quote
 When the follow-up prompt is built
-Then it contains G, the proposal as JSON, the earlier turns in order, the quote inside <quoted_text source="…"> markers and the message, and no retrieved repository chunks, and the agent answer saved on the run shows the token count reported by the API
+Then it contains G, the proposal as JSON, the earlier turns in order, the quote inside <quoted_text source="…"> markers and the message, and no retrieved repository chunks
 ```
 
 ## TC-205 · Ask and Revise are disabled for an empty reply
@@ -657,7 +657,7 @@ Covers: REQ-052 · Type: Automated · Status: Not run
 ```gherkin
 Given a run awaiting approval, a rejected run and an approved run
 When each is revised
-Then the run awaiting approval and the rejected run both get new guardrail and eval results and status awaiting approval; the approved run is refused with "Already applied — start a new run"; Ask still works on the approved run
+Then the run awaiting approval and the rejected run both are awaiting approval with their old guardrail and eval results cleared, and a revised version without stored guardrail results cannot be approved; the approved run is refused with "Already applied — start a new run"; Ask still works on the approved run
 ```
 
 ## TC-209 · The version marker names what changed
@@ -749,4 +749,20 @@ Covers: REQ-063 · Type: Automated · Status: Not run
 Given src/index.css and src/pages/TeamFloor.tsx
 When the test reads the strip and desk-ring rules
 Then a back strip and the ring on its receiving desk use the danger (coral) tokens, and a forward strip and its ring use the brand (honey) tokens
+```
+
+## TC-214 · A live answer shows the tokens it used
+Covers: REQ-051 · Type: Manual · Status: Not run
+```gherkin
+Given a live project with an Anthropic API key and a run awaiting approval
+When I quote a requirement and click Ask
+Then the agent answer appears in the conversation with the token count reported by the API, and the trace shows the same tokens
+```
+
+## TC-215 · A live revision runs the guardrails and evals again
+Covers: REQ-052 · Type: Manual · Status: Not run
+```gherkin
+Given a live project with an Anthropic API key and a coding run awaiting approval
+When I quote one file and click Revise
+Then the trace shows the guardrails and evaluation of v2, the approval card shows their new results, and Approve v2 is enabled only after they finished
 ```

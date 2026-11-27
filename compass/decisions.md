@@ -51,3 +51,13 @@ _2026-11-27 · Accepted · REQ-020, REQ-021_
 **Decision:** The Product Owner decided on 2026-11-27 (same rule as travel-map ADR-021): every intent has a "Done when" in plain words. A small feature may add one optional signal to watch without a target; a process change has "Done when" only; only a change she names a bet gets a metric with its current value, and its target is set after a few weeks of real data. The Ideation agent never invents a baseline or target.
 
 **Consequences:** The Ideation agent prompt, its offline draft, the installed framework text and the Idea page change; the stored field outcomeMetric keeps its name so existing briefs need no migration. Existing briefs keep their text until the agent is re-run.
+
+## ADR-006 · Quote and revise: every agent, with versions
+
+_2026-11-27 · Accepted · REQ-050, REQ-051, REQ-052, REQ-053, REQ-054_
+
+**Context:** F-020 lets the reviewer quote part of an agent answer and Ask or Revise. Two scope questions came up before the requirements were written.
+
+**Decision:** The Product Owner decided in chat on 2026-11-27: (1) every agent can be quoted and revised, including the coding agent, whose revision re-proposes only the quoted files; (2) a revision creates versions v1, v2… with a compare view, and Approve always applies the latest version. A revision may change only the quoted items; anything else is refused.
+
+**Consequences:** Runs keep a conversation and their versions. A revised version waits for its guardrails before it can be approved. The Ask and Revise of live runs cost Claude tokens, shown per answer.
