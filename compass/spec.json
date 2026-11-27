@@ -578,6 +578,101 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-26T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-013",
+      "name": "Sidebar navigation: grouped, scannable and keyboard friendly",
+      "createdAt": "2026-11-27T00:00:00.000Z",
+      "idea": {
+        "need": "revise the left sidebar for better UI/UX",
+        "intent": "Any role finds a page, the open project's state and the settings in the sidebar at a glance (today: text-only links, the approval count shown twice, jargon, cut-off feature names, a crowded footer and no keyboard focus).",
+        "problem": "The sidebar is a plain list of text links with a large empty gap; the same approval count shows on Team floor and Agent runs; \"Knowledge (RAG)\" is jargon; feature names are cut off; the footer mixes Connections, the role and two theme buttons; keyboard users see no focus.",
+        "users": [
+          "Product Owner",
+          "Business Analyst",
+          "Delivery Manager",
+          "Designer",
+          "Developer",
+          "QA",
+          "Ops"
+        ],
+        "outcomeMetric": "Before/after screenshots approved by the Product Owner; approval count shown 2 times → 1; sidebar items with a visible keyboard focus: 0 → all.",
+        "scopeIn": [
+          "Icons and three groups (workspace, project, account)",
+          "Project card with sync state",
+          "One approval count on Team floor",
+          "Readable feature list",
+          "Account footer with one theme button",
+          "Visible keyboard focus"
+        ],
+        "scopeOut": [
+          "Collapsible icon-only sidebar",
+          "Project switcher drop-down",
+          "Search",
+          "Redesign of the pages"
+        ],
+        "risks": [
+          "Honey tokens only, light and dark mode",
+          "No new libraries",
+          "Phone menu must keep working"
+        ]
+      },
+      "design": {
+        "status": "Approved",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=83-574",
+        "summary": "The 248 px sidebar is split into three groups by thin lines: the workspace links (Projects, Agent architecture), the open project, and an account footer pinned to the bottom. Every page link starts with an 18 px stroke icon; the current page is honey with a 3 px brand bar on the left. The open project is a card (letter avatar, name, sync state with a coloured dot, chevron) that leads to the project list; under it Feature board, Team floor (the only approval count, a honey pill), Agent runs, Release and Knowledge. \"Features\" has a count; each feature row has a stage-coloured dot, the name on up to two lines and the short id (F01) on the right; the open feature lists its five stages indented with step numbers or ✓. The footer is an account card (initial, @user, \"GitHub connected\" or \"Demo mode · connect\") that opens Connections, then the role picker and one sun/moon theme button.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Desktop · Sidebar, light, a feature open",
+            "purpose": "The three groups, icons, the project card, the single approval count and the feature list with stages.",
+            "reqIds": [
+              "REQ-020",
+              "REQ-021",
+              "REQ-022",
+              "REQ-023"
+            ],
+            "elements": [
+              "Brand: logo, \"Compass\", \"AI dev portal\" under it",
+              "Workspace: Projects, Agent architecture (icons)",
+              "Project card: avatar, name, sync state, chevron",
+              "Feature board, Team floor (count pill), Agent runs, Release, Knowledge",
+              "Features heading with count; dot · name · F0x rows; stage sub-list",
+              "Account card, role picker, theme button"
+            ],
+            "states": [
+              "Current page: honey fill and left brand bar",
+              "Hover: subtle fill",
+              "Keyboard focus: focus ring",
+              "No runs waiting → no count"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=83-577"
+          },
+          {
+            "id": "SCR-2",
+            "name": "Desktop · Sidebar, dark",
+            "purpose": "The same sidebar in dark mode, with long feature names on two lines.",
+            "reqIds": [
+              "REQ-020",
+              "REQ-022",
+              "REQ-023"
+            ],
+            "elements": [
+              "Same groups and elements as SCR-1 on the dark tokens",
+              "Long feature names wrap to two lines",
+              "Sun icon on the theme button"
+            ],
+            "states": [
+              "GitHub connected (mint) / demo mode (honey)",
+              "Sync failed shown in red on the project card"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=86-682"
+          }
+        ],
+        "notes": "Approved by the Product Owner from before/after screenshots of a working prototype on 2026-11-27; the Figma frames redraw that prototype with the Compass color variables (Light/Dark modes) and text styles. Keyboard: every item is a button with a visible focus ring; the count has an aria-label \"N waiting for approval\"; the theme button is labelled \"Switch to dark/light theme\". Below 900 px the sidebar keeps opening from the Menu button with the same groups. Honey tokens only.",
+        "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-27T00:00:00.000Z"
+      }
     }
   ],
   "requirements": [
@@ -908,6 +1003,62 @@
         "Given a feature with a requirement In build or Done\nWhen the delete dialog opens\nThen a red warning names those requirements and says that code and tests in the repo still reference them and need a separate change",
         "Given a feature with open agent pull requests\nWhen the delete dialog opens\nThen the pull requests are listed with links, and deleting the feature does not close or merge them",
         "Given a feature whose requirements are all Draft or Approved and that has no open pull request\nWhen the delete dialog opens\nThen no warning is shown"
+      ]
+    },
+    {
+      "id": "REQ-020",
+      "featureId": "F-013",
+      "title": "The sidebar is grouped, has icons and shows the open project as a card",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-sidebar-navigation.md",
+      "story": "As any portal user, I want the sidebar grouped with an icon on every link and the open project shown as a card, so that I find a page and see the project's state at a glance.",
+      "ac": [
+        "Given any page of the portal on a desktop screen\nWhen I look at the sidebar\nThen it shows three groups separated by a line — workspace (Projects, Agent architecture), the open project (only when one is open) and an account footer at the bottom — and every page link starts with an icon",
+        "Given a project is open\nWhen I look at the project group\nThen a card shows the project's first letter, its name and its state (\"Demo project\", the GitHub sync state such as \"Synced with GitHub\" or \"Sync failed\", or \"Local only\"), and clicking it opens the project list",
+        "Given a project is open\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs, Release and Knowledge, and Knowledge has the tooltip \"Project knowledge the agents search (RAG)\"",
+        "Given I use the keyboard\nWhen I press Tab through the sidebar in light or dark mode\nThen every link, card and button shows a visible focus ring"
+      ]
+    },
+    {
+      "id": "REQ-021",
+      "featureId": "F-013",
+      "title": "The approval count shows once, on Team floor",
+      "priority": "Must",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-sidebar-navigation.md",
+      "story": "As the product owner, I want one clear count of the agent runs waiting for my approval, so that the same number shown twice does not look like two different things to do.",
+      "ac": [
+        "Given N agent runs of the open project wait for approval (N > 0)\nWhen I look at the sidebar\nThen only Team floor shows a count pill with N, announced as \"N waiting for approval\", with a tooltip saying N agent run(s) wait for my approval, and Agent runs shows no count",
+        "Given no agent run waits for approval\nWhen I look at the sidebar\nThen no count is shown"
+      ]
+    },
+    {
+      "id": "REQ-022",
+      "featureId": "F-013",
+      "title": "The feature list is readable",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-sidebar-navigation.md",
+      "story": "As any portal user, I want to read each feature's name and stage in the sidebar, so that I can open the right feature without guessing from a cut-off name.",
+      "ac": [
+        "Given a project with features\nWhen I look at the sidebar\nThen a \"Features\" heading shows how many features are listed, and each feature shows a dot in its stage colour, its name on up to two lines and its short id (e.g. F01) on the right",
+        "Given I hover a feature\nWhen the tooltip shows\nThen it gives the feature id, the full name and the stage",
+        "Given a feature is open\nWhen I look under it\nThen its five stages (Idea, Requirements, Design, Test cases, Build) are listed indented, each with its step number or ✓ when done"
+      ]
+    },
+    {
+      "id": "REQ-023",
+      "featureId": "F-013",
+      "title": "The account footer shows the connection, the role and one theme button",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-sidebar-navigation.md",
+      "story": "As any portal user, I want my GitHub connection, my role and the theme together at the bottom of the sidebar, so that settings are in one tidy place.",
+      "ac": [
+        "Given GitHub is connected as @user\nWhen I look at the bottom of the sidebar\nThen an account card shows the initial, \"@user\" and \"GitHub connected\"; without a connection it shows \"Not connected\" and \"Demo mode · connect\"; clicking the card opens Connections",
+        "Given the footer\nWhen I look under the account card\nThen the role picker fills the row next to one theme button labelled \"Switch to dark theme\" (or \"Switch to light theme\"), and clicking it switches the theme",
+        "Given a phone (below 900 px)\nWhen I open the Menu\nThen the sidebar shows the same groups, card and footer"
       ]
     }
   ],
@@ -1341,6 +1492,68 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues \"REQ-002: …\" and \"REQ-001: …\"\nWhen the delete dialog's list is computed\nThen it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue \"REQ-002: …\""
+    },
+    {
+      "id": "TC-039",
+      "reqIds": [
+        "REQ-020"
+      ],
+      "title": "Sidebar groups, icons, project card and link order",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed and no open project\nWhen the sidebar sections are computed\nThen the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs, Release and Knowledge, each with an icon, Knowledge has the RAG tooltip, and the project card state is \"Demo project\", \"Synced with GitHub\", \"Sync failed\" or absent"
+    },
+    {
+      "id": "TC-040",
+      "reqIds": [
+        "REQ-020"
+      ],
+      "title": "Keyboard focus is visible in the sidebar",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the portal in light and then dark mode\nWhen I press Tab from the top of the page through the sidebar\nThen every link, the project card, the account card, the role picker and the theme button show the focus ring"
+    },
+    {
+      "id": "TC-041",
+      "reqIds": [
+        "REQ-021"
+      ],
+      "title": "The approval count appears once",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a project with 3 runs awaiting approval and one with none\nWhen the sidebar model is computed\nThen only Team floor has the count 3 with the label \"3 waiting for approval\", Agent runs has none, and the project with none has no count"
+    },
+    {
+      "id": "TC-042",
+      "reqIds": [
+        "REQ-022"
+      ],
+      "title": "Feature rows: count, dot, two-line name, id and tooltip",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a project with three features, one archived, and a long feature name\nWhen the sidebar model is computed\nThen the heading count is 2 (the open archived feature included), each row has its stage, short id (F01) and the tooltip \"F-001 · <full name> — <stage>\", and the CSS clamps the name to two lines"
+    },
+    {
+      "id": "TC-043",
+      "reqIds": [
+        "REQ-023"
+      ],
+      "title": "Account footer and single theme button",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given GitHub connected as @alice, and no connection\nWhen the account card is computed\nThen it shows \"A\", \"@alice\", \"GitHub connected\" (or \"?\", \"Not connected\", \"Demo mode · connect\"), and the theme button label is \"Switch to dark theme\" in light mode and \"Switch to light theme\" in dark mode"
+    },
+    {
+      "id": "TC-044",
+      "reqIds": [
+        "REQ-020",
+        "REQ-022",
+        "REQ-023"
+      ],
+      "title": "Sidebar on desktop and phone, light and dark",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the demo project with a feature open, at 1280 px and at 390 px (after pressing Menu), in light and dark mode\nWhen I compare the sidebar with the approved design\nThen the groups, the project card, the feature list with long names on two lines and the footer match, with no hard-coded colours"
     }
   ],
   "decisions": [
