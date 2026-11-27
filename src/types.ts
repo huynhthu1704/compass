@@ -144,8 +144,9 @@ export interface RunVersion { n: number; at: string; proposal?: Run['proposal'];
 
 export interface Run {
   id: string;
-  /** F-015 REQ-037 AC4: the approval record written for this run; a retry after a failed GitHub step reuses it. */
-  approval?: { id: string; by: string };
+  /** F-015 REQ-037 AC4: the approval record written for this run; a retry after a failed GitHub step reuses it only for
+   *  the same signed-in email and the same version (sig of proposal + changes). */
+  approval?: { id: string; by: string; email: string; sig: string };
   agent: AgentId;
   stage: Stage;
   featureId?: string;

@@ -128,12 +128,21 @@ export function membersFromDoc(d: Partial<Pick<TeamDoc, 'members' | 'admins' | '
 
 export interface BaselineApproval { item: string; gate: Gate; approvedBy: string }
 
-/** The approvals already in spec.json when a project's first team is created (REQ-038 AC1): approved designs and
- *  requirements past Draft. Stored once in Firebase; approvals not in it and without a record are flagged later. */
-export function baselineFrom(spec: { features: { id: string; design?: { status: string; approvedBy?: string } }[]; requirements: { id: string; status: string; approvedBy?: string }[] }): BaselineApproval[] {
+/** The approvals already in spec.json when a project's first team is created (REQ-038 AC1): intents and test cases
+ *  with an approvedBy, approved designs and requirements past Draft. Stored once in Firebase; approvals not in it and without a record are flagged later. */
+/** The parts of spec.json that carry approvals: intents, designs, requirements and test cases. */
+export interface ApprovalSpec {
+  features: { id: string; idea?: { approvedBy?: string }; design?: { status: string; approvedBy?: string } }[];
+  requirements: { id: string; status: string; approvedBy?: string; featureId?: string }[];
+  tests?: { id: string; reqIds?: string[]; approvedBy?: string }[];
+}
+
+export function baselineFrom(spec: ApprovalSpec): BaselineApproval[] {
   return [
+    ...spec.features.filter((f) => f.idea?.approvedBy).map((f) => ({ item: f.id, gate: 'intent' as const, approvedBy: f.idea?.approvedBy || '' })),
     ...spec.features.filter((f) => f.design?.status === 'Approved').map((f) => ({ item: f.id, gate: 'design' as const, approvedBy: f.design?.approvedBy || '' })),
     ...spec.requirements.filter((r) => r.status !== 'Draft').map((r) => ({ item: r.id, gate: 'requirements' as const, approvedBy: r.approvedBy || '' })),
+    ...(spec.tests || []).filter((t) => t.approvedBy).map((t) => ({ item: t.id, gate: 'tests' as const, approvedBy: t.approvedBy || '' })),
   ];
 }
 
@@ -215,11 +224,41 @@ export interface ApprovalEvidence {
 /** Approvals in spec.json that Firebase does not confirm (REQ-038 AC2/AC4): neither in the baseline stored with the
  *  first team (same item, gate and approvedBy) nor matched by an approval record (same item, gate, email and role).
  *  No repo date is trusted. Without a baseline, every approval needs a record. */
-export function unconfirmedApprovals(spec: Parameters<typeof baselineFrom>[0], ev: ApprovalEvidence): BaselineApproval[] {
+export function unconfirmedApprovals(spec: ApprovalSpec, ev: ApprovalEvidence): BaselineApproval[] {
+  // A record names the items its run approved: a test case is approved through its requirements (or their feature).
+  const keysOf = (a: BaselineApproval): string[] => {
+    if (a.gate !== 'tests') return [a.item];
+    const reqIds = spec.tests?.find((t) => t.id === a.item)?.reqIds || [];
+    const fids = spec.requirements.filter((r) => reqIds.includes(r.id)).map((r) => r.featureId || '').filter(Boolean);
+    return [a.item, ...reqIds, ...fids];
+  };
   return baselineFrom(spec).filter((a) => {
     if (ev.hasBaseline && ev.baseline.some((b) => b.item === a.item && b.gate === a.gate && b.approvedBy === a.approvedBy)) return false;
     const by = parseApprovedBy(a.approvedBy);
     if (!by) return true;
-    return !ev.records.some((r) => r.items.includes(a.item) && r.gate === a.gate && normalizeEmail(r.email) === by.email && r.role === by.role);
+    const keys = keysOf(a);
+    return !ev.records.some((r) => r.gate === a.gate && r.items.some((i) => keys.includes(i)) && normalizeEmail(r.email) === by.email && r.role === by.role);
   });
+}
+
+/** Whether the portal checks a project's approvals against Firebase (REQ-038 AC4): only for a signed-in person outside
+ *  the demo, on a real (non-demo) GitHub project that has a team. Nothing is flagged otherwise. */
+export function checksApprovals(x: { signedIn: boolean; demoSession: boolean; demoProject: boolean; hasRepo: boolean; hasTeam: boolean }): boolean {
+  return x.signedIn && !x.demoSession && !x.demoProject && x.hasRepo && x.hasTeam;
+}
+
+/** The approval record a run saved (REQ-037 AC4): who wrote it and for which version of the run's output. */
+export interface RunApproval { id: string; by: string; email: string; sig: string }
+
+/** A short fingerprint of what a run asks to approve (its proposal and change set), so a revised version is approved anew. */
+export function approvalSig(run: { proposal?: unknown; changes?: unknown }): string {
+  const s = JSON.stringify([run.proposal ?? null, run.changes ?? []]);
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return `${s.length}-${h.toString(36)}`;
+}
+
+/** A retry may reuse the run's saved record only for the same signed-in person and the same, unrevised version. */
+export function canReuseApproval(saved: RunApproval | undefined, email: string | undefined, sig: string): saved is RunApproval {
+  return !!saved && !!email && !!saved.email && normalizeEmail(saved.email) === normalizeEmail(email) && saved.sig === sig;
 }

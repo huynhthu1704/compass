@@ -15,7 +15,8 @@ import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
 import { missingToken, tokenFor } from './token';
 import { recordApproval } from './approvals';
-import { gateForAgent, withReqsInBuild } from './team';
+import { approvalSig, canReuseApproval, gateForAgent, withReqsInBuild } from './team';
+import { getSession } from './firebase';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
 import { canApprove } from './conversation';
@@ -340,8 +341,12 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   { const miss = !r.proposal && r.changes.length && r.mode !== 'demo' ? missingToken(getP(pid)) : null; if (miss) throw new Error(miss); }
   // REQ-037 AC1: the approval is recorded in Firebase (role checked) before anything is written; null with sign-in off.
   // A retry after a failed GitHub step reuses this run's record instead of writing another (REQ-037 AC4).
-  const rec = r.approval || await recordApproval(getP(pid), gateForAgent(r.agent), r.reqIds?.length ? r.reqIds : [r.featureId || r.id]).then((x) => (x ? { id: x.id, by: x.text } : undefined));
-  if (rec && !r.approval) patchRun(pid, rid, (x) => ({ ...x, approval: rec }));
+  // Reuse is only for the same signed-in person and the same, unrevised version; anything else writes a new, role-checked record.
+  const sig = approvalSig(r);
+  const email = getSession().email;
+  const reuse = canReuseApproval(r.approval, email, sig);
+  const rec = reuse ? r.approval : await recordApproval(getP(pid), gateForAgent(r.agent), r.reqIds?.length ? r.reqIds : [r.featureId || r.id]).then((x) => (x && email ? { id: x.id, by: x.text, email, sig } : undefined));
+  if (!reuse) patchRun(pid, rid, (x) => ({ ...x, approval: rec }));
   const by = rec?.by;
   const stamp = by ? { approvedBy: by, approvedAt: now() } : {};
   step(pid, rid, 'approval', r.agent === 'coder' && by ? `Started by ${by}` : 'Approved by human reviewer', by ? `by ${by}` : store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });

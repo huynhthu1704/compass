@@ -2,7 +2,7 @@
 // With sign-in off, or for demo and local projects, nothing changes: gates are open and no record is written.
 import { useEffect, useState } from 'react';
 import { getSession, loadApprovalEvidence, projectKey, useSession, writeApprovalRecord } from './firebase';
-import { approvalBy, baselineFrom, canPass, gateHint, unconfirmedApprovals, type BaselineApproval, type Gate } from './team';
+import { approvalBy, baselineFrom, canPass, checksApprovals, gateHint, unconfirmedApprovals, type BaselineApproval, type Gate } from './team';
 import type { Project } from './types';
 
 /** Gates apply to signed-in people on real (GitHub) projects. */
@@ -40,17 +40,19 @@ export async function recordApproval(p: Pick<Project, 'repo' | 'demo'>, gate: Ga
 }
 
 /** Approvals in spec.json that Firebase does not confirm (REQ-038), for a signed-in person on a project with a team.
- *  Empty with sign-in off, in the demo, for local projects, or while the evidence loads. */
-export function useUnconfirmed(p: Pick<Project, 'repo' | 'demo' | 'spec'>): BaselineApproval[] {
+ *  Empty with sign-in off, in the demo, for local projects, or while the evidence loads; `failed` when it could not load. */
+export function useUnconfirmed(p: Pick<Project, 'repo' | 'demo' | 'spec'>): BaselineApproval[] & { failed?: boolean } {
   const session = useSession();
-  const key = p.repo && !p.demo && session.status === 'signed-in' && !session.demo ? projectKey(p.repo) : '';
-  const hasTeam = !!key && session.access.some((a) => a.id === key);
+  const key = p.repo ? projectKey(p.repo) : '';
+  const hasTeam = checksApprovals({ signedIn: session.status === 'signed-in', demoSession: !!session.demo, demoProject: !!p.demo, hasRepo: !!p.repo, hasTeam: session.access.some((a) => a.id === key) });
   const approvals = JSON.stringify(baselineFrom(p.spec));
-  const [list, setList] = useState<BaselineApproval[]>([]);
+  const [list, setList] = useState<BaselineApproval[] & { failed?: boolean }>([]);
   useEffect(() => {
     if (!hasTeam) { setList([]); return; }
     let on = true;
-    loadApprovalEvidence(key).then((ev) => { if (on) setList(unconfirmedApprovals(JSON.parse(JSON.stringify(p.spec)), ev)); }).catch(() => { if (on) setList([]); });
+    loadApprovalEvidence(key)
+      .then((ev) => { if (on) setList(unconfirmedApprovals(JSON.parse(JSON.stringify(p.spec)), ev)); })
+      .catch(() => { if (on) setList(Object.assign([], { failed: true })); });
     return () => { on = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-check when the approvals in the spec change
   }, [key, hasTeam, approvals]);
