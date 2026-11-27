@@ -10,7 +10,7 @@ ask for more details or revision. Could you please make the same experience insi
 ## What we want
 1. **Quote any part of an agent's answer.** In a run (idea brief, requirements, design, test cases, summary, a file in
    the change set), selecting text shows a small "Quote" button. The quote lands in a reply box under the run, as a
-   quote block that names where it came from (e.g. `REQ-031 · acceptance criteria`). Several quotes can go in one reply;
+   quote block that names where it came from (e.g. `REQ-051 · acceptance criteria`). Several quotes can go in one reply;
    each can be removed. A whole item (one requirement, one screen, one test case) can also be quoted with one click.
    Target: from reading an answer to sending a quoted question in under 15 seconds, without copy-paste.
 2. **Ask for details, or ask for a revision.** The reply has two actions:
@@ -19,7 +19,7 @@ ask for more details or revision. Could you please make the same experience insi
      the message ask for; everything else is kept, including REQ/TC ids.
    Target: a revision keeps every item that was not quoted unchanged (checked by a unit test).
 3. **One conversation per run.** The run shows the conversation like a chat: your messages with their quotes, the
-   agent's answers, and "Proposal v2 — changed: REQ-031 AC 2" markers. You can compare a version with the previous one,
+   agent's answers, and "Proposal v2 — changed: REQ-051 AC 2" markers. You can compare a version with the previous one,
    and Approve always applies the latest version. The conversation is kept with the run (and on the Team floor).
 4. **Works in demo mode too**, with a predictable answer, so the flow can be tried without an API key.
 
@@ -48,9 +48,9 @@ quote gets an answer in the conversation and leaves the proposal as it was.
 ## Requirements
 Answers given in chat (2026-11-27): all agents can be quoted and revised (including the coding agent's files); a revision creates versions v1, v2… with a compare view.
 
-Feature F-016 · Quote an agent answer and ask for details or a revision (requirements approved 2026-11-27)
-- REQ-030 — Quote any part of an agent run
-- REQ-031 — Ask the agent about the quoted text
-- REQ-032 — Revise the proposal from the quoted text
-- REQ-033 — Proposal versions and compare
-- REQ-034 — The conversation is kept with the run, safely
+Feature F-020 · Quote an agent answer and ask for details or a revision (requirements approved 2026-11-27)
+- REQ-050 — Quote any part of an agent run (#54)
+- REQ-051 — Ask the agent about the quoted text (#55)
+- REQ-052 — Revise the proposal from the quoted text (#56)
+- REQ-053 — Proposal versions and compare (#57)
+- REQ-054 — The conversation is kept with the run, safely (#58)
