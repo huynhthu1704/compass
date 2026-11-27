@@ -5,6 +5,7 @@ import { ConnectPage } from './pages/Connect';
 import { IdeaPage } from './pages/Idea';
 import { ImportPage } from './pages/Import';
 import { KnowledgePage } from './pages/Knowledge';
+import { ProjectSettingsPage } from './pages/ProjectSettings';
 import { NewProjectPage } from './pages/NewProject';
 import { Onboarding } from './pages/Onboarding';
 import { OverviewPage } from './pages/Overview';
@@ -74,7 +75,7 @@ export default function App() {
     page = fs === 'idea' ? <IdeaPage p={p} fid={fid} /> : fs === 'requirements' ? <RequirementsPage p={p} fid={fid} /> : fs === 'design' ? <DesignPage p={p} fid={fid} /> : fs === 'tests' ? <TestsPage p={p} fid={fid} />
       : fs === 'build' ? <BuildPage p={p} fid={fid} /> : <FeaturePage p={p} fid={fid} />;
   } else if (p) {
-    page = sub === 'floor' ? <TeamFloorPage p={p} /> : sub === 'team' ? <TeamPage key={p.id} p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
+    page = sub === 'floor' ? <TeamFloorPage p={p} /> : sub === 'team' ? <TeamPage key={p.id} p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} /> : sub === 'settings' ? <ProjectSettingsPage p={p} />
       : sub === 'runs' && parts[3] ? <RunPage p={p} rid={parts[3]} /> : sub === 'runs' ? <RunsPage p={p} /> : <OverviewPage p={p} />;
   } else page = <ProjectsPage />;
 

@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { accountCard, approvalCount, featureRows, projectLinks, projectState, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS } from '../src/sidebar.ts';
+import { accountCard, approvalCount, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS } from '../src/sidebar.ts';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const runs = (...statuses) => statuses.map((status) => ({ status }));
@@ -17,6 +17,11 @@ test('TC-400 (REQ-070): groups, link order, icons and the project card state', (
   ]);
   for (const l of [...WORKSPACE_LINKS, ...links]) assert.ok(l.icon, `${l.label} has an icon`);
   assert.equal(new Set([...WORKSPACE_LINKS, ...links].map((l) => l.icon)).size, 6, 'every link has its own icon');
+  // REQ-080, ADR-015: Project settings, for every role, is the last link — after Release and after the Admin-only Team item.
+  assert.deepEqual(settingsLink('p1'), { key: 'settings', label: 'Project settings', path: '/p/p1/settings', icon: 'settings' });
+  assert.ok(![...WORKSPACE_LINKS, ...links, teamLink('p1')].some((l) => l.icon === 'settings'), 'the gear icon is its own');
+  const side = read('src/components/Sidebar.tsx');
+  assert.match(side, /\{team && link\(teamLink\(p\.id\), sub === 'team'\)\}\s*\{link\(settingsLink\(p\.id\), sub === 'settings'\)\}/, 'rendered after Team, for every role');
 
   assert.deepEqual(projectState({ demo: true }, null), { text: 'Demo project', tone: 'neutral' });
   assert.deepEqual(projectState({}, { tone: 'success', text: 'Synced with GitHub' }), { text: 'Synced with GitHub', tone: 'success' });

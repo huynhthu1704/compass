@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { go } from '../App';
 import { featureStage, stageStatus } from '../progress';
 import { projectKey, signOut, useSession } from '../firebase';
-import { accountCard, featureRows, projectLinks, projectState, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
+import { accountCard, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
 import { STAGES, type Project, type Stage } from '../types';
 import { STAGE_INFO } from '../ui';
@@ -17,6 +17,7 @@ const PATHS = {
   release: 'M5 15c-1 1-2 4-2 6 2 0 5-1 6-2m-4-4 4 4m-4-4 3-3 4 4-3 3m-4-4c2-6 7-11 15-12-1 8-6 13-12 15',
   runs: 'M5 4l14 8-14 8z',
   team: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21v-1a6 6 0 0 1 12 0v1m3-11 2 2 4-4',
+  settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
   chevron: 'M9 6l6 6-6 6',
   sun: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
   moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
@@ -98,6 +99,7 @@ function ProjectGroup({ p, sync, sub, openId, fsub, link, team }: { p: Project; 
       <nav className="nav" aria-label="Project">
         {projectLinks(p.id, p.runs).map((l) => link(l, sub === l.key))}
         {team && link(teamLink(p.id), sub === 'team')}
+        {link(settingsLink(p.id), sub === 'settings')}
       </nav>
       {rows.length > 0 && (
         <>

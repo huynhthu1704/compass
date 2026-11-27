@@ -2,7 +2,7 @@
 // Types-only imports, so Node runs this file directly in tests/sidebar.test.mjs.
 import type { Feature, Run, Stage } from './types.ts';
 
-export type IconName = 'projects' | 'architecture' | 'board' | 'floor' | 'runs' | 'release' | 'team';
+export type IconName = 'projects' | 'architecture' | 'board' | 'floor' | 'runs' | 'release' | 'team' | 'settings';
 export type NavLink = { key: string; label: string; path: string; icon: IconName; title?: string; count?: ApprovalCount };
 export type ApprovalCount = { n: number; label: string; title: string };
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
@@ -64,6 +64,9 @@ export function themeToggle(theme: 'light' | 'dark'): { next: 'light' | 'dark'; 
 
 /** F-015 SCR-3: the Team item, shown after the project links to Admins of the project and the super admin. */
 export const teamLink = (projectId: string): NavLink => ({ key: 'team', label: 'Team', path: `/p/${projectId}/team`, icon: 'team', title: 'People on this project and their roles' });
+
+/** REQ-080, ADR-015: Project settings, for every role — the last link of the project group, after Team. */
+export const settingsLink = (projectId: string): NavLink => ({ key: 'settings', label: 'Project settings', path: `/p/${projectId}/settings`, icon: 'settings' });
 
 /** F-015 REQ-032 AC2: the account card when signed in with Google. */
 export function signedInCard(email: string, superAdmin: boolean): { initial: string; name: string; state: string; tone: Tone } {

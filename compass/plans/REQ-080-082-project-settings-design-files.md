@@ -15,22 +15,25 @@ does the Design page (button, side panel, Miro preview) and names both files in 
 - src/types.ts: `DesignToolKind` gains `'miro'`; `DesignTool` gains an optional `miroUrl`
 - src/pages/ProjectSettings.tsx (new): the Project settings page with the "Design files" card. The admin sees the two
   fields, Save and Cancel, with errors. Everyone else sees one row per file with Open ↗, or "No design files linked
-  yet". A note says Team and the GitHub token come later
-- src/sidebar.ts: the project group gets "Project settings" (gear icon) after Knowledge
-- src/components/Sidebar.tsx: the gear icon path
+  yet"
+- src/sidebar.ts: `settingsLink`, "Project settings" (gear icon) for every role
+- src/components/Sidebar.tsx: the gear icon, and the link rendered last: after Release and after Team access's
+  Admin-only Team item (ADR-015; REQ-075 removed Knowledge)
 - src/App.tsx: the route `/p/<id>/settings`
 - tests/designLinks.test.mjs (new): TC-500 (link checks) and TC-501 (saving keeps old projects working); the page uses
   the helpers and shows the admin hint (TC-502 source check; the manual run is in the PR)
-- tests/sidebar.test.mjs: TC-400 expects the new link, its own icon and the order
-- compass/spec.json: REQ-070's link-order criterion and TC-400's wording add "Project settings" after Knowledge
-  (ADR-015); compass/requirements.md and compass/tests.md are regenerated
+- tests/sidebar.test.mjs: TC-400 expects the new link, its own icon, and that it comes after Team
+- src/pages/Design.tsx: one line only. Its tool names come from `TOOL_NAMES`, so the new `miro` kind type-checks.
+  The page itself changes in build 2
+- The wording of REQ-070's link-order criterion and of TC-400 ("Project settings" after Knowledge, ADR-015) is changed
+  in the spec PR (#87), so this build changes no spec file
 
 ## Steps
 1. Commit this plan.
 2. Write tests/designLinks.test.mjs and the TC-400 change first. They fail because the helpers and the link do not exist yet.
 3. Add src/designLinks.ts and the type changes, then the sidebar link and the route.
 4. Build ProjectSettings.tsx with the existing UI parts (`PageHead`, `Field`, `Button`, `Badge`, `card`). No new CSS.
-5. Update REQ-070 / TC-400 wording and regenerate the views with the portal's generator.
+5. Point Design.tsx's tool names at `TOOL_NAMES`.
 6. Run `npm test`, `npm run build`, `node compass/check-spec.mjs` and `node compass/check-guardrails.mjs origin/main`.
    Take screenshots of the page as PO and as BA, on desktop and on a phone.
 

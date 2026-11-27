@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { go } from '../App';
 import { AgentBox } from '../components/AgentBox';
+import { TOOL_NAMES } from '../designLinks';
 import { featureOf } from '../spec';
 import { now, store, useStore } from '../store';
 import type { Design, DesignScreen, DesignTool, DesignToolKind, Project } from '../types';
 import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead } from '../ui';
 
-const TOOLS: Record<DesignToolKind, string> = { figma: 'Figma', penpot: 'Penpot', sketch: 'Sketch', other: 'Other' };
+const TOOLS: Record<DesignToolKind, string> = TOOL_NAMES; // REQ-082: Miro joins the tools (the page itself changes in build 2, REQ-081)
 
 /** figma.com links can be embedded with Figma's official embed URL; other tools are opened in a new tab. */
 const figmaEmbed = (url?: string) => (url && /^https:\/\/([\w-]+\.)?figma\.com\//.test(url) ? `https://www.figma.com/embed?embed_host=compass&url=${encodeURIComponent(url)}` : null);
