@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, missingTokenMessage, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -129,4 +129,16 @@ test('TC-068 (REQ-034): GitHub calls use the project token for signed-in members
   assert.equal(pickToken('own-token', null, true), 'own-token', 'no project token yet → own token');
   assert.equal(pickToken(undefined, null, true), undefined, 'no token at all → missing (the portal asks for an Admin)');
   assert.equal(pickToken('own-token', 'project-token', false), 'own-token', 'sign-in off → device token, as before');
+});
+
+test('TC-068 (REQ-034 AC4): with no token, a signed-in member is told to ask an Admin', () => {
+  assert.equal(missingTokenMessage(true), "The project's GitHub token is missing or expired — ask an Admin");
+  assert.equal(missingTokenMessage(false), 'Connect GitHub first', 'sign-in off: as before');
+});
+
+test('TC-068 (REQ-034 AC4): In build is prepared on a copy, so a refused GitHub commit leaves the spec unchanged', () => {
+  const spec = { requirements: [{ id: 'REQ-001', status: 'Approved' }, { id: 'REQ-002', status: 'Approved' }] };
+  const next = withReqsInBuild(spec, ['REQ-002']);
+  assert.deepEqual(next.requirements.map((q) => q.status), ['Approved', 'In build']);
+  assert.deepEqual(spec.requirements.map((q) => q.status), ['Approved', 'Approved'], 'the input (the store copy) is not changed');
 });
