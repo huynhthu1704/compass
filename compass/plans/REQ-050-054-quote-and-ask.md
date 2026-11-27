@@ -43,8 +43,11 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
    and an item, Ask, Revise, compare, approve v2; screenshots at 1440 px and 390 px compared with the Figma screens.
 
 ## Risks
-- **A revision silently changes items that were not quoted:** the model returns only changed or new items and the merge
-  copies every other item from the previous version, so they stay deep-equal (TC-206, TC-207). Removing an item is not
+- **A revision silently changes items that were not quoted:** the model returns only changed or new items, and
+  `scopeDelta` enforces it: every revised item, idea field, design text or existing file that was not quoted is refused
+  (told to the agent in the tool result and to the reviewer in the answer) before the merge, which copies every other item
+  from the previous version, so they stay deep-equal (TC-206, TC-207). A revision that changes nothing makes no new
+  version (review of #69). Removing an item is not
   supported by Revise (out of scope); the agent says so in its answer.
 - **Prompt injection through quotes or the message:** both are wrapped as data (`<quoted_text>`, `<message>`, closing tags
   in the text are neutralised), scanned with the same rule as retrieved context, and a warning is shown in the trace
@@ -53,6 +56,9 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
   read-only snapshots (TC-210).
 - **Token cost:** a follow-up sends the run's goal, proposal, change set (quoted files in full, others by path) and the
   conversation — no new repository index; tokens are shown per answer.
+- **A reload during Ask or Revise:** `replying` is stored with the run, but it counts only while this page is waiting for
+  that run (`activeReply` with an in-memory set), so an interrupted follow-up never blocks Approve, Reject, Ask or Revise
+  (TC-213, review of #69).
 - **Stored runs from before this change:** all new fields are optional; v1 is snapshotted at the first revision.
 - **Phone long-press:** the browser's own selection menu cannot be extended, so the Quote button appears just under the
   selection; every item also has a 44 px Quote pill.

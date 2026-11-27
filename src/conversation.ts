@@ -179,6 +179,57 @@ export function mergeProposal(prev: Proposal | undefined, delta: Delta, taken: s
   return p;
 }
 
+/**
+ * REQ-052: a revision may only touch what was quoted. Items with an id (REQ, TC, SCR), idea fields, the design summary /
+ * notes and files of the change set are kept only when the reviewer quoted them; new items (no id) and new files are
+ * allowed. Everything else is dropped and listed, so the agent and the reviewer see it was refused.
+ */
+export function scopeDelta(delta: Delta, quotes: Quote[], existingPaths: string[] = []): { delta: Delta; dropped: string[] } {
+  const items = new Set(quotes.map((q) => quoteItem(q.source)));
+  const ideaParts = new Set(quotes.filter((q) => quoteItem(q.source) === 'Idea').map((q) => q.source.split(' · ')[1] || 'whole brief'));
+  const designParts = new Set(quotes.filter((q) => quoteItem(q.source) === 'Design').map((q) => q.source.split(' · ')[1] || ''));
+  const dropped: string[] = [];
+  const keep = <T extends { id?: string }>(list?: T[]) => (list || []).filter((x) => { if (!x.id || items.has(x.id)) return true; dropped.push(x.id); return false; });
+  const out: Delta = {};
+  const reqs = keep(delta.requirements); if (reqs.length) out.requirements = reqs;
+  const tests = keep(delta.tests); if (tests.length) out.tests = tests;
+  if (delta.design) {
+    const d: NonNullable<Delta['design']> = {};
+    const screens = keep(delta.design.screens); if (screens.length) d.screens = screens;
+    for (const k of ['summary', 'notes'] as const) {
+      if (delta.design[k] === undefined) continue;
+      if (designParts.has(k) || designParts.has('')) d[k] = delta.design[k]; else dropped.push(`Design · ${k}`);
+    }
+    if (Object.keys(d).length) out.design = d;
+  }
+  if (delta.idea) {
+    const idea: Record<string, unknown> = {};
+    for (const k of IDEA_FIELDS) {
+      if (delta.idea[k] === undefined) continue;
+      if (ideaParts.has('whole brief') || ideaParts.has(IDEA_LABEL[k])) idea[k] = delta.idea[k]; else dropped.push(`Idea · ${IDEA_LABEL[k]}`);
+    }
+    if (Object.keys(idea).length) out.idea = idea as Partial<Idea>;
+  }
+  const files = (delta.changes || []).filter((c) => { if (items.has(c.path) || !existingPaths.includes(c.path)) return true; dropped.push(c.path); return false; });
+  if (files.length) out.changes = files;
+  return { delta: out, dropped };
+}
+
+/** Adds one tool call's delta to the revision collected so far. */
+export const addDelta = (a: Delta, b: Delta): Delta => ({
+  ...(a.idea || b.idea ? { idea: { ...a.idea, ...b.idea } } : {}),
+  ...(a.requirements || b.requirements ? { requirements: [...(a.requirements || []), ...(b.requirements || [])] } : {}),
+  ...(a.tests || b.tests ? { tests: [...(a.tests || []), ...(b.tests || [])] } : {}),
+  ...(a.design || b.design ? { design: { ...a.design, ...b.design, screens: [...(a.design?.screens || []), ...(b.design?.screens || [])] } } : {}),
+  ...(a.changes || b.changes ? { changes: mergeChanges(a.changes || [], b.changes || []) } : {}),
+});
+
+/**
+ * REQ-054: `replying` is stored with the run, but a follow-up only lives in the open page. A stored flag counts only
+ * while this page is really waiting for that run, so a reload during Ask or Revise never leaves the run stuck.
+ */
+export const activeReply = (run: Pick<Run, 'id' | 'replying'>, inFlight: ReadonlySet<string>): Run['replying'] => (run.replying && inFlight.has(run.id) ? run.replying : undefined);
+
 /** A revision of a change set: re-proposed files replace their earlier version, new files are added, the rest stay. */
 export function mergeChanges(prev: FileChange[], revised: FileChange[] = []): FileChange[] {
   const out = prev.map((c) => revised.find((r) => r.path === c.path) || c);

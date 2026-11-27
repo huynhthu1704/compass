@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ideaLabel, makeQuote, reqText, screenText, selectionSource, testText, versionItems, type SelectionEnd } from '../conversation';
+import { replyingNow } from '../followUp';
 import { agent, approveRun, rejectRun } from '../harness';
 import { blocked, pct } from '../guardrails';
 import { store, useStore } from '../store';
@@ -24,6 +25,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const [pop, setPop] = useState<{ x: number; y: number; source: string; text: string } | null>(null);
   const answerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const replying = replyingNow(r); // a stored flag from an interrupted follow-up does not count
   const isBlocked = blocked(r.guardrails);
   const needsProt = r.guardrails.some((g) => (g.id === 'G3' || g.id === 'G6' || g.id === 'G7') && g.level === 'warn');
   const tokens = r.steps.reduce((x, s) => x + (s.tokens || 0), 0);
@@ -55,7 +57,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
         const el = n.nodeType === 1 ? (n as Element) : n.parentElement;
         return { inAnswer: root.contains(n), source: el?.closest('[data-quote-source]')?.getAttribute('data-quote-source') ?? null };
       };
-      const source = selectionSource(end(sel.anchorNode), end(sel.focusNode), r.status, r.replying);
+      const source = selectionSource(end(sel.anchorNode), end(sel.focusNode), r.status, replying);
       const text = sel.toString();
       if (!source || !text.trim()) { setPop(null); return; }
       const rect = sel.getRangeAt(0).getBoundingClientRect();
@@ -67,7 +69,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
     window.addEventListener('scroll', later, true);
     window.addEventListener('resize', later);
     return () => { clearTimeout(t); document.removeEventListener('selectionchange', later); window.removeEventListener('scroll', later, true); window.removeEventListener('resize', later); };
-  }, [r.status, r.replying]);
+  }, [r.status, replying]);
 
   const pill = (label: string, source: string, text: string) => (quotable ? <QuotePill label={label} onQuote={() => addQuote(source, text)} /> : null);
   const ideaText = prop?.idea ? versionItems({ proposal: { idea: prop.idea }, changes: [] }).map((x) => `${x.key.replace('Idea · ', '')}: ${x.text}`).join('\n') : '';
@@ -115,16 +117,16 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
           {shown && <div className="panel body-sm row gap-sm wrap"><span className="grow">You are reading <strong>v{shown.n}</strong> — v{latestN} is the latest and is what Approve applies.</span><Button variant="ghost" size="sm" onClick={() => setView(null)}>Show latest</Button></div>}
           {cmp?.prev && cmp.next && <CompareView prev={cmp.prev} next={cmp.next} onClose={() => setCompareN(null)} />}
 
+          {(r.guardrails.length > 0 || r.evals.length > 0) && !shown && (
+            <section className="card stack gap-sm">
+              <div className="row between"><span className="overline t-tertiary">Guardrails & evaluation</span>{r.evals.length > 0 && <span className="score t-brand">{pct(r.evals)}%</span>}</div>
+              {r.guardrails.map((g) => <div key={g.id} className="row gap-sm start body-sm"><Badge tone={g.level === 'pass' ? 'success' : g.level === 'warn' ? 'warning' : 'danger'}>{g.level}</Badge><span><strong>{g.name}</strong> — <span className="t-secondary">{g.message}</span></span></div>)}
+              {r.evals.map((e) => <div key={e.id} className="row gap-sm wrap body-sm"><span className="score" style={{ minWidth: 44, color: e.score / e.max >= 0.8 ? 'var(--color-text-success)' : e.score / e.max >= 0.5 ? 'var(--color-text-warning)' : 'var(--color-text-danger)' }}>{e.score}/{e.max}</span><span>{e.name}</span><span className="t-tertiary">{e.note}</span></div>)}
+            </section>
+          )}
           <div ref={answerRef} className="stack gap-md" data-quote-root>
             {output && <div className="panel body-sm" data-quote-source="Summary">{output}</div>}
 
-            {(r.guardrails.length > 0 || r.evals.length > 0) && !shown && (
-              <section className="card stack gap-sm">
-                <div className="row between"><span className="overline t-tertiary">Guardrails & evaluation</span>{r.evals.length > 0 && <span className="score t-brand">{pct(r.evals)}%</span>}</div>
-                {r.guardrails.map((g) => <div key={g.id} className="row gap-sm start body-sm"><Badge tone={g.level === 'pass' ? 'success' : g.level === 'warn' ? 'warning' : 'danger'}>{g.level}</Badge><span><strong>{g.name}</strong> — <span className="t-secondary">{g.message}</span></span></div>)}
-                {r.evals.map((e) => <div key={e.id} className="row gap-sm wrap body-sm"><span className="score" style={{ minWidth: 44, color: e.score / e.max >= 0.8 ? 'var(--color-text-success)' : e.score / e.max >= 0.5 ? 'var(--color-text-warning)' : 'var(--color-text-danger)' }}>{e.score}/{e.max}</span><span>{e.name}</span><span className="t-tertiary">{e.note}</span></div>)}
-              </section>
-            )}
 
             {prop?.idea && (
               <section className="card stack gap-sm">
@@ -146,7 +148,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
               <div className="body-sm" data-quote-source="Design · summary">{prop.design.summary}</div>
               {prop.design.screens.map((s) => (
                 <div key={s.id} className="stack gap-xs" data-quote-source={s.id}>
-                  <div className="row gap-sm wrap"><span className="mono t-brand">{s.id}</span><strong>{s.name}</strong><Badge tone="info">{s.reqIds.join(', ')}</Badge><span className="grow" />{pill(s.id, `${s.id} · whole screen`, screenText(s))}</div>
+                  <div className="row gap-sm wrap"><span className="mono t-brand">{s.id}</span><strong>{s.name}</strong><Badge tone="info">{s.reqIds.join(', ')}</Badge><span className="grow" />{pill(s.id, `${s.id} · ${s.name}`, screenText(s))}</div>
                   <div className="body-sm t-secondary" data-quote-source={`${s.id} · purpose`}>{s.purpose}</div>
                   <div className="mono-sm t-tertiary" data-quote-source={`${s.id} · elements`}>Elements: {s.elements.join(' · ')}</div>
                   <div className="mono-sm t-tertiary" data-quote-source={`${s.id} · states`}>States: {s.states.join(' · ')}</div>
@@ -195,8 +197,8 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
                   : 'Approving marks this change ready. Connect a GitHub repo to open a real pull request.'}
               </div>
               <div className="row gap-sm">
-                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!r.replying} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
-                <Button variant="secondary" disabled={busy || !!r.replying} onClick={() => { const why = prompt('Why reject? (recorded in the trace)') || 'No reason given'; rejectRun(p.id, r.id, why); }}>Reject</Button>
+                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
+                <Button variant="secondary" disabled={busy || !!replying} onClick={() => { const why = prompt('Why reject? (recorded in the trace)') || 'No reason given'; rejectRun(p.id, r.id, why); }}>Reject</Button>
               </div>
             </section>
           )}
