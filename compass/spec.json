@@ -998,7 +998,7 @@
       "ac": [
         "Given a run waiting for approval\nWhen it is listed on the Your approval desk (or the phone banner)\nThen the item shows the agent, the feature, one line of the run's goal (cut with … when longer) and how long it has waited since it started waiting (\"now\" under a minute, then \"6m\", \"2h\", \"2d\")",
         "Given two waiting runs of the same agent and feature\nWhen they are listed\nThen their goals tell them apart",
-        "Given a waiting run blocked by a guardrail\nWhen it is listed\nThen the item says \"blocked\" and leads to \"Open run · blocked\" instead of approving"
+        "Given a waiting run blocked by a guardrail\nWhen it is listed\nThen the item is marked \"blocked\", and its side panel shows \"Open run · blocked\" instead of \"Open run to approve\""
       ]
     },
     {
@@ -1010,7 +1010,7 @@
       "intent": "compass/intent/2026-11-27-approval-details.md",
       "story": "As the product owner, I want the approval desk to stay the same size however many runs wait, so that the floor keeps its shape.",
       "ac": [
-        "Given more than 3 runs waiting for approval\nWhen the Team floor is shown\nThen the desk (and the phone banner) lists the 3 oldest and a \"+N more → Agent runs\" link",
+        "Given more than 3 runs waiting for approval\nWhen the Team floor is shown\nThen the desk (and the phone banner) lists the 3 that have waited longest (by the time they started waiting) and a \"+N more → Agent runs\" link",
         "Given the \"+N more\" link\nWhen I click it\nThen Agent runs opens showing only the runs awaiting approval, with a way to show all runs again",
         "Given 3 or fewer runs waiting\nWhen the desk is shown\nThen all of them are listed and there is no \"+N more\" link"
       ]
@@ -1025,7 +1025,7 @@
       "story": "As the product owner, I want to read the details of a waiting item without leaving the Team floor, so that I decide quickly what to approve first.",
       "ac": [
         "Given a waiting item on the desk or the phone banner\nWhen I click it\nThen a side panel opens (full screen on a phone) with the agent and feature, the waiting time, the full goal, a short summary of the proposal (idea brief, number of requirements, design screens or test cases, or number of changed files, from the run's proposal and change set) and the guardrail and evaluation results",
-        "Given the side panel\nWhen I choose \"Open run to approve\"\nThen the run page opens, where approving or rejecting works exactly as from Agent runs; the panel itself has no Approve button",
+        "Given the side panel\nWhen I choose \"Open run to approve\" (\"Open run · blocked\" for a blocked run, REQ-060)\nThen the run page opens, where approving or rejecting works exactly as from Agent runs; the panel itself has no Approve button",
         "Given the side panel is open\nWhen I press Escape, click outside it or choose Close\nThen it closes and keyboard focus returns to the item I opened it from"
       ]
     }
@@ -1189,7 +1189,7 @@
       "title": "Approving or rejecting from the floor equals doing it from Agent runs",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given two runs awaiting approval\nWhen I approve the first from the Your approval desk and reject the second from its agent's desk\nThen each run, the spec and the next agent are exactly as when approved or rejected from Agent runs"
+      "gherkin": "Given two runs awaiting approval\nWhen I open the first from its approval-desk item (side panel → \"Open run to approve\") and the second from its agent's desk, and approve the first and reject the second on the run page\nThen each run, the spec and the next agent are exactly as when approved or rejected from Agent runs"
     },
     {
       "id": "TC-010",
@@ -1489,7 +1489,7 @@
       "title": "Waiting items carry goal and waiting time",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given runs awaiting approval started 6 minutes, 2 hours and 2 days ago with different goals\nWhen the Team floor state is computed\nThen each approval item has its agent, feature, goal and waiting time \"6m\", \"2h\", \"2d\""
+      "gherkin": "Given runs that all started a day ago but began waiting for approval 30 seconds, 6 minutes, 2 hours and 2 days ago\nWhen the Team floor state is computed\nThen each approval item has its agent, feature and goal, and waiting times \"now\", \"6m\", \"2h\" and \"2d\" (measured from when it began waiting, not from its start)"
     },
     {
       "id": "TC-301",
@@ -1509,7 +1509,7 @@
       "title": "At most 3 items plus \"+N more\"",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given 6 runs awaiting approval\nWhen the Team floor state is computed\nThen the desk shows the 3 oldest and \"+3 more\"; with 3 waiting runs it shows all 3 and no link"
+      "gherkin": "Given 6 runs awaiting approval\nWhen the Team floor state is computed\nThen the desk shows the 3 that have waited longest and \"+3 more\", whose link is /p/<id>/runs?status=awaiting-approval; with 3 waiting runs it shows all 3 and no link"
     },
     {
       "id": "TC-303",
@@ -1549,7 +1549,7 @@
       "title": "Same agent and feature are told apart by their goal; blocked runs are marked",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given two waiting Ideation runs for F-003 with different goals, and a waiting Coding run blocked by a guardrail\nWhen the Team floor state is computed\nThen the two Ideation items carry their own goals and the Coding item is marked blocked"
+      "gherkin": "Given two waiting Ideation runs for F-003 with different goals, and a waiting Coding run blocked by a guardrail\nWhen the Team floor state is computed and the blocked item's side panel is shown\nThen the two Ideation items carry their own goals, the Coding item is marked blocked, and its panel button reads \"Open run · blocked\""
     },
     {
       "id": "TC-307",

@@ -163,7 +163,7 @@ Then a card moves Requirements → Design, and later Review → Coding along a c
 Covers: REQ-008 · Type: Manual · Status: Not run
 ```gherkin
 Given two runs awaiting approval
-When I approve the first from the Your approval desk and reject the second from its agent's desk
+When I open the first from its approval-desk item (side panel → "Open run to approve") and the second from its agent's desk, and approve the first and reject the second on the run page
 Then each run, the spec and the next agent are exactly as when approved or rejected from Agent runs
 ```
 
@@ -407,9 +407,9 @@ Then the content is 1600 px wide at 1920 px, forms keep their reading width, no 
 ## TC-300 · Waiting items carry goal and waiting time
 Covers: REQ-060 · Type: Automated · Status: Not run
 ```gherkin
-Given runs awaiting approval started 6 minutes, 2 hours and 2 days ago with different goals
+Given runs that all started a day ago but began waiting for approval 30 seconds, 6 minutes, 2 hours and 2 days ago
 When the Team floor state is computed
-Then each approval item has its agent, feature, goal and waiting time "6m", "2h", "2d"
+Then each approval item has its agent, feature and goal, and waiting times "now", "6m", "2h" and "2d" (measured from when it began waiting, not from its start)
 ```
 
 ## TC-301 · Goal line is cut with an ellipsis
@@ -425,7 +425,7 @@ Covers: REQ-061 · Type: Automated · Status: Not run
 ```gherkin
 Given 6 runs awaiting approval
 When the Team floor state is computed
-Then the desk shows the 3 oldest and "+3 more"; with 3 waiting runs it shows all 3 and no link
+Then the desk shows the 3 that have waited longest and "+3 more", whose link is /p/<id>/runs?status=awaiting-approval; with 3 waiting runs it shows all 3 and no link
 ```
 
 ## TC-303 · Agent runs filter for waiting runs
@@ -456,8 +456,8 @@ Then it closes and focus is back on the item
 Covers: REQ-060 · Type: Automated · Status: Not run
 ```gherkin
 Given two waiting Ideation runs for F-003 with different goals, and a waiting Coding run blocked by a guardrail
-When the Team floor state is computed
-Then the two Ideation items carry their own goals and the Coding item is marked blocked
+When the Team floor state is computed and the blocked item's side panel is shown
+Then the two Ideation items carry their own goals, the Coding item is marked blocked, and its panel button reads "Open run · blocked"
 ```
 
 ## TC-307 · Phone banner lists 3 items and "+N more"

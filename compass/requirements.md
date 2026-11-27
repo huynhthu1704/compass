@@ -666,7 +666,7 @@ _AC3_
 ```gherkin
 Given a waiting run blocked by a guardrail
 When it is listed
-Then the item says "blocked" and leads to "Open run · blocked" instead of approving
+Then the item is marked "blocked", and its side panel shows "Open run · blocked" instead of "Open run to approve"
 ```
 
 ## REQ-061 · The approval desk stays compact, with a link to all waiting runs
@@ -680,7 +680,7 @@ _AC1_
 ```gherkin
 Given more than 3 runs waiting for approval
 When the Team floor is shown
-Then the desk (and the phone banner) lists the 3 oldest and a "+N more → Agent runs" link
+Then the desk (and the phone banner) lists the 3 that have waited longest (by the time they started waiting) and a "+N more → Agent runs" link
 ```
 
 _AC2_
@@ -714,7 +714,7 @@ Then a side panel opens (full screen on a phone) with the agent and feature, the
 _AC2_
 ```gherkin
 Given the side panel
-When I choose "Open run to approve"
+When I choose "Open run to approve" ("Open run · blocked" for a blocked run, REQ-060)
 Then the run page opens, where approving or rejecting works exactly as from Agent runs; the panel itself has no Approve button
 ```
 
