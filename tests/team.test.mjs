@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, gateForAgent, projectVisible, startScreen, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, checksApprovals, gateForAgent, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -180,4 +180,64 @@ test('TC-076 (REQ-040 AC2/AC3): in the demo only sample projects are visible; ne
   const member = { status: 'signed-in', demo: false, superAdmin: false, accessIds: ['o__travel'] };
   assert.deepEqual([real, sample, local].map((p) => projectVisible(p, member)), [true, false, false]);
   assert.equal(projectVisible(real, { status: 'off', superAdmin: false, accessIds: [] }), true, 'sign-in off: as before');
+});
+
+test('TC-073 (REQ-038): approvals in neither the baseline nor a Firebase record are unconfirmed, whatever their date', () => {
+  const spec = {
+    features: [
+      { id: 'F-001', idea: { approvedBy: 'po@example.com (PO)', approvedAt: '2026-11-01' }, design: { status: 'Approved', approvedBy: 'ux@example.com (UX)', approvedAt: '2026-11-20' } },
+    ],
+    requirements: [
+      { id: 'REQ-001', featureId: 'F-001', status: 'Approved', approvedBy: 'ba@example.com (BA)' },   // has a record
+      { id: 'REQ-002', featureId: 'F-001', status: 'In build', approvedBy: 'ba@example.com (PO)' },   // record says BA, claims PO
+      { id: 'REQ-003', featureId: 'F-001', status: 'Draft' },
+    ],
+    tests: [
+      { id: 'TC-001', reqIds: ['REQ-001'], approvedBy: 'qa@example.com (QA)' },   // a tests record names TC-001
+      { id: 'TC-002', reqIds: ['REQ-003'], approvedBy: 'qa@example.com (QA)' },   // no tests record names TC-002
+      { id: 'TC-003', reqIds: ['REQ-001'] },                                      // not approved: nothing to check
+    ],
+  };
+  const ev = {
+    hasBaseline: true,
+    baseline: [{ item: 'F-001', gate: 'intent', approvedBy: 'po@example.com (PO)' }],
+    records: [
+      { items: ['REQ-001', 'REQ-002'], gate: 'requirements', email: 'BA@example.com', role: 'BA' },
+      { items: ['F-001', 'TC-001'], gate: 'tests', email: 'qa@example.com', role: 'QA' },
+    ],
+  };
+  const ids = (list) => list.map((a) => `${a.gate}:${a.item}`);
+  assert.deepEqual(ids(unconfirmedApprovals(spec, ev)), ['design:F-001', 'requirements:REQ-002', 'tests:TC-002'],
+    'the design (dated before the team) has no record; REQ-002 claims the wrong role; TC-002 has no tests record');
+  assert.deepEqual(ids(unconfirmedApprovals(spec, { ...ev, hasBaseline: false, baseline: [] })), ['intent:F-001', 'design:F-001', 'requirements:REQ-002', 'tests:TC-002'],
+    'no baseline: every approval without a record is flagged, the intent included');
+  const forged = { ...spec, features: [{ ...spec.features[0], idea: { approvedBy: 'mallory@example.com (PO)' } }] };
+  assert.ok(ids(unconfirmedApprovals(forged, ev)).includes('intent:F-001'), 'an intent approvedBy changed after the baseline is flagged');
+  const recordByFeature = { ...ev, records: [...ev.records, { items: ['F-001', 'REQ-003'], gate: 'tests', email: 'qa@example.com', role: 'QA' }] };
+  assert.ok(ids(unconfirmedApprovals(spec, recordByFeature)).includes('tests:TC-002'), 'a forged test case is flagged: a record for its feature or requirement does not name it');
+  const recordByTc = { ...ev, records: [...ev.records, { items: ['F-001', 'TC-002'], gate: 'tests', email: 'qa@example.com', role: 'QA' }] };
+  assert.ok(!ids(unconfirmedApprovals(spec, recordByTc)).includes('tests:TC-002'), 'a tests record naming the test case confirms it');
+  assert.deepEqual(recordItems({ id: 'run1', featureId: 'F-001', proposal: { tests: [{ id: 'TC-002' }, { id: 'TC-004' }] } }), ['F-001', 'TC-002', 'TC-004']);
+  assert.deepEqual(recordItems({ id: 'run1', featureId: 'F-001', reqIds: ['REQ-001'] }), ['REQ-001']);
+  // Demo mode, local projects and projects without a team are never checked, so nothing is flagged (REQ-038 AC4).
+  const base = { signedIn: true, demoSession: false, demoProject: false, hasRepo: true, hasTeam: true };
+  assert.equal(checksApprovals(base), true);
+  for (const k of ['demoSession', 'demoProject']) assert.equal(checksApprovals({ ...base, [k]: true }), false, k);
+  for (const k of ['signedIn', 'hasRepo', 'hasTeam']) assert.equal(checksApprovals({ ...base, [k]: false }), false, k);
+  assert.deepEqual(parseApprovedBy('Ba@Example.com (BA)'), { email: 'ba@example.com', role: 'BA' });
+  assert.equal(parseApprovedBy('the Product Owner (in chat)'), null);
+});
+
+test('TC-072 (REQ-037 AC4): a retry reuses its record only for the same person and the same version', () => {
+  const run = { proposal: { requirements: [{ id: 'REQ-001', title: 'A' }] }, changes: [] };
+  const sig = approvalSig(run);
+  const saved = { id: 'rec1', by: 'ba@example.com (BA)', email: 'ba@example.com', sig };
+  assert.equal(canReuseApproval(saved, 'BA@example.com', sig), true, 'same person, same version: reuse');
+  assert.equal(canReuseApproval(saved, 'po@example.com', sig), false, 'another person signed in: new record');
+  assert.equal(canReuseApproval(saved, undefined, sig), false, 'signed out: no reuse');
+  const revised = approvalSig({ ...run, proposal: { requirements: [{ id: 'REQ-001', title: 'B' }] } });
+  assert.notEqual(revised, sig);
+  assert.equal(canReuseApproval(saved, 'ba@example.com', revised), false, 'a revised version: new record');
+  assert.equal(canReuseApproval(undefined, 'ba@example.com', sig), false);
+  assert.equal(canReuseApproval({ id: 'old', by: 'x' }, 'ba@example.com', sig), false, 'a record saved before this check has no email/sig');
 });

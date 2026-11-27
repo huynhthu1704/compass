@@ -30,6 +30,8 @@ export interface Idea {
   scopeIn: string[];
   scopeOut: string[];
   risks: string[];
+  approvedBy?: string;     // F-015 REQ-036: who approved the intent, "<email> (<role>)"
+  approvedAt?: string;
   stack?: string;          // (v1) moved to Spec.stack
 }
 
@@ -84,6 +86,8 @@ export interface TestCase {
   gherkin: string;
   type: 'Automated' | 'Manual';
   status: 'Not run' | 'Pass' | 'Fail';
+  approvedBy?: string;     // F-015 REQ-036: who approved the test case
+  approvedAt?: string;
 }
 
 export interface Spec {
@@ -141,6 +145,9 @@ export interface RunVersion { n: number; at: string; proposal?: Run['proposal'];
 
 export interface Run {
   id: string;
+  /** F-015 REQ-037 AC4: the approval record written for this run; a retry after a failed GitHub step reuses it only for
+   *  the same signed-in email and the same version (sig of proposal + changes). */
+  approval?: { id: string; by: string; email: string; sig: string };
   agent: AgentId;
   stage: Stage;
   featureId?: string;
@@ -164,7 +171,7 @@ export interface Run {
   replying?: 'ask' | 'revise'; // F-020: the agent is answering a follow-up
 }
 
-export interface ReleaseRec { tag: string; name: string; url: string; date: string; prs: number[]; featureIds?: string[] }
+export interface ReleaseRec { tag: string; name: string; url: string; date: string; prs: number[]; featureIds?: string[]; approvedBy?: string }
 
 export interface Project {
   id: string;

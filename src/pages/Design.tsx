@@ -6,7 +6,7 @@ import { designFiles, designPreviews, isDesignAdmin } from '../designLinks';
 import { projectKey, useSession } from '../firebase';
 import { featureOf } from '../spec';
 import { now, store, useStore } from '../store';
-import { gateState, recordApproval } from '../approvals';
+import { gateState, recordApproval, useUnconfirmed } from '../approvals';
 import type { Design, DesignScreen, Project } from '../types';
 import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead, toast } from '../ui';
 
@@ -19,6 +19,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
   const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!session.demo || !!p.demo });
   const [approving, setApproving] = useState(false);
+  const unconfirmed = useUnconfirmed(p); // REQ-038
   const [panel, setPanel] = useState(false);
   const [shown, setShown] = useState<'figma' | 'miro'>('figma');
   const filesBtn = useRef<HTMLButtonElement>(null);
@@ -37,7 +38,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
     setApproving(true);
     try {
       const by = await recordApproval(p, 'design', [fid]);
-      setD({ status: 'Approved', approvedBy: by || (settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO'), approvedAt: now() });
+      setD({ status: 'Approved', approvedBy: by?.text || (settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO'), approvedAt: now() });
     } catch (e) { toast((e as Error).message); } finally { setApproving(false); }
   };
   const files = designFiles(p.spec.designTool);
@@ -88,6 +89,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
               <h2 className="h4 grow">Design</h2>
               <Badge tone={DESIGN_STATUS_TONE[d.status]}>{d.status}</Badge>
               {d.approvedBy && <span className="body-sm t-tertiary">by {d.approvedBy} · {d.approvedAt?.slice(0, 10)}</span>}
+              {unconfirmed.some((u) => u.item === fid && u.gate === 'design') && <Badge tone="danger" title="No Firebase record confirms this approval">Unconfirmed — claims {d.approvedBy || 'no approver'}</Badge>}
             </div>
             {d.status === 'Approved' && <div className="body-sm">Coding is unlocked. <button className="btn ghost sm" onClick={() => go(`/p/${p.id}/f/${fid}/build`)}>Go to Build →</button></div>}
             {uncovered.length > 0 && <div className="body-sm t-accent">Not covered by any screen: {uncovered.map((r) => r.id).join(', ')}. Add them to a screen before approving.</div>}

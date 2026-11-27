@@ -15,8 +15,9 @@ import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
 import { missingToken, tokenFor } from './token';
-import { recordApproval } from './approvals';
-import { gateForAgent, withReqsInBuild } from './team';
+import { gateState, recordApproval } from './approvals';
+import { approvalSig, canReuseApproval, gateForAgent, recordItems, withReqsInBuild } from './team';
+import { getSession } from './firebase';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
 import { canApprove } from './conversation';
@@ -340,15 +341,24 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   // REQ-034 AC4: a code change on a real repo needs a token; stop before anything is written.
   { const miss = !r.proposal && r.changes.length && r.mode !== 'demo' ? missingToken(getP(pid)) : null; if (miss) throw new Error(miss); }
   // REQ-037 AC1: the approval is recorded in Firebase (role checked) before anything is written; null with sign-in off.
-  const by = await recordApproval(getP(pid), gateForAgent(r.agent), r.reqIds?.length ? r.reqIds : [r.featureId || r.id]);
-  step(pid, rid, 'approval', 'Approved by human reviewer', by ? `by ${by}` : store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
+  // A retry after a failed GitHub step reuses this run's record instead of writing another (REQ-037 AC4).
+  // Reuse is only for the same signed-in person and the same, unrevised version; anything else writes a new, role-checked record.
+  const sig = approvalSig(r);
+  const email = getSession().email;
+  // The person must still hold the owning role: a reused record never skips today's role check.
+  const reuse = canReuseApproval(r.approval, email, sig) && gateState(getP(pid), gateForAgent(r.agent)).allowed;
+  const rec = reuse ? r.approval : await recordApproval(getP(pid), gateForAgent(r.agent), recordItems(r)).then((x) => (x && email ? { id: x.id, by: x.text, email, sig } : undefined));
+  if (!reuse) patchRun(pid, rid, (x) => ({ ...x, approval: rec }));
+  const by = rec?.by;
+  const stamp = by ? { approvedBy: by, approvedAt: now() } : {};
+  step(pid, rid, 'approval', r.agent === 'coder' && by ? `Started by ${by}` : 'Approved by human reviewer', by ? `by ${by}` : store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
   if (r.proposal) {
     const pi = r.proposal.idea;
     store.spec(pid, (s) => ({
       ...s,
-      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi, need: f.idea.need || (r.agent === 'ideation' ? r.goal : undefined) } } : f)) : s.features,
+      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi, ...(r.agent === 'ideation' ? stamp : {}), need: f.idea.need || (r.agent === 'ideation' ? r.goal : undefined) } } : f)) : s.features,
       requirements: [...s.requirements, ...(r.proposal!.requirements || [])],
-      tests: [...s.tests, ...(r.proposal!.tests || [])],
+      tests: [...s.tests, ...(r.proposal!.tests || []).map((t) => ({ ...t, ...stamp }))],
     }));
     if (r.proposal.design) store.spec(pid, (s) => ({ ...s, features: s.features.map((f) => (f.id === r.featureId ? { ...f, design: { ...r.proposal!.design!, url: f.design?.url } } : f)) }));
     patchRun(pid, rid, (x) => ({ ...x, status: 'done' }));
@@ -528,7 +538,7 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
   const runs = p.runs.filter((r) => runIds.includes(r.id) && (!live || r.prNumber));
   if (live && !runs.length) throw new Error('No pull requests to release. Demo-mode changes are never pushed to GitHub — build with a live agent or merge your own PRs.');
   const reqIds = [...new Set(runs.flatMap((r) => r.reqIds || []))];
-  await recordApproval(p, 'release', reqIds.length ? reqIds : runIds); // REQ-033/037: DM or PO, recorded before any merge
+  const releasedBy = (await recordApproval(p, 'release', reqIds.length ? reqIds : runIds))?.text; // REQ-033/037: DM or PO, recorded before any merge
   const tag = nextVersion(p.releases.map((x) => x.tag));
   const byFeature = new Map<string, string[]>();
   for (const id of reqIds) { const r = p.spec.requirements.find((x) => x.id === id); const k = r?.featureId || '—'; byFeature.set(k, [...(byFeature.get(k) || []), `- **${id}** ${r?.title || ''}`]); }
@@ -540,7 +550,7 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
     store.update(pid, (x) => ({
       ...x, runs: x.runs.map((r) => (runIds.includes(r.id) ? { ...r, status: 'done' } : r)),
       spec: { ...x.spec, requirements: x.spec.requirements.map((q) => (reqIds.includes(q.id) ? { ...q, status: 'Done' } : q)), tests: x.spec.tests.map((t) => (t.reqIds.some((id) => reqIds.includes(id)) && t.type === 'Automated' ? { ...t, status: 'Pass' } : t)) },
-      releases: [{ tag, name: tag, url: '', date: now(), prs: runs.map((r) => r.prNumber || 0), featureIds: [...new Set(runs.map((r) => r.featureId || ''))].filter(Boolean) }, ...x.releases],
+      releases: [{ tag, name: tag, url: '', date: now(), prs: runs.map((r) => r.prNumber || 0), featureIds: [...new Set(runs.map((r) => r.featureId || ''))].filter(Boolean), ...(releasedBy ? { approvedBy: releasedBy } : {}) }, ...x.releases],
     }));
     return tag;
   }
@@ -566,6 +576,6 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
   onStep(`Creating release ${tag}`);
   const rel = await github.createRelease(t, repo, tag, tag, notes);
   onStep('Deploy workflow triggered by the push to ' + repo.defaultBranch);
-  store.update(pid, (x) => ({ ...x, dirty: false, releases: [{ tag, name: rel.name, url: rel.html_url, date: rel.published_at || now(), prs: runs.map((r) => r.prNumber || 0), featureIds: [...new Set(runs.map((r) => r.featureId || ''))].filter(Boolean) }, ...x.releases] }));
+  store.update(pid, (x) => ({ ...x, dirty: false, releases: [{ tag, name: rel.name, url: rel.html_url, date: rel.published_at || now(), prs: runs.map((r) => r.prNumber || 0), featureIds: [...new Set(runs.map((r) => r.featureId || ''))].filter(Boolean), ...(releasedBy ? { approvedBy: releasedBy } : {}) }, ...x.releases] }));
   return tag;
 }
