@@ -1,6 +1,6 @@
 # Design: "Done when" instead of "Outcome metric" on the Idea page and briefs
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-27, in chat)
 Requirements: REQ-021 (#53)
 Design tool: none: text-only change, no new layout. The Product Owner reviews the before/after wording below
 (agreed in chat on 2026-11-27 that a text note is enough).
