@@ -43,22 +43,22 @@ export function Toaster() {
   return msg ? <div className="toast" role="status">{msg}</div> : null;
 }
 
-export function Field({ label, help, error, children }: { label: string; help?: ReactNode; error?: string; children: ReactNode }) {
+export function Field({ label, help, error, children, id }: { label: string; help?: ReactNode; error?: string; children: ReactNode; id?: string }) {
   return (
     <div className="field">
-      <label>{label}</label>
+      <label htmlFor={id}>{label}</label>
       {children}
-      {(error || help) && <div className={`help ${error ? 'error' : ''}`}>{error || help}</div>}
+      {(error || help) && <div id={id ? `${id}-help` : undefined} className={`help ${error ? 'error' : ''}`}>{error || help}</div>}
     </div>
   );
 }
 
-export const PageHead = ({ over, title, sub, right }: { over?: string; title: string; sub?: ReactNode; right?: ReactNode }) => (
+export const PageHead = ({ over, title, sub, right, titleRight }: { over?: string; title: string; sub?: ReactNode; right?: ReactNode; titleRight?: ReactNode }) => (
   <div className="page-head">
     <div className="row between start gap-lg wrap">
-      <div className="stack gap-sm" style={{ minWidth: 0 }}>
+      <div className="stack gap-sm" style={{ minWidth: 0, flex: '1 1 320px' }}>{/* REQ-081: the right-hand buttons stay top right */}
         {over && <div className="overline t-brand">{over}</div>}
-        <h1 className="display-lg">{title}</h1>
+        {titleRight ? <div className="row between gap-md" style={{ alignItems: 'center' }}><h1 className="display-lg">{title}</h1>{titleRight}</div> : <h1 className="display-lg">{title}</h1>}{/* REQ-081: a button that stays next to the title, also on phones */}
         {sub && <p className="body-lg t-secondary" style={{ maxWidth: 780 }}>{sub}</p>}
       </div>
       {right && <div className="row gap-sm wrap">{right}</div>}
