@@ -9,15 +9,16 @@ Requested: 2026-11-27 by the Product Owner, in chat
 Answers given in chat (2026-11-27):
 - A project holds **both** links, each optional: one Figma file and one Miro board.
 - **Admin = the PO role for now.** It becomes the project Admin / super admin once Team access (F-015) is merged.
-- The links are set on the **project page** (the Feature board, which holds the project's settings such as Repository & framework). Each feature's Design page shows them read-only.
+- The links are set on a new **Project settings** page (a sidebar link under Knowledge), not on the Feature board
+  (the Product Owner's choice on 2026-11-27, ADR-012). Each feature's Design page shows them read-only.
 
 ## What we want
-A project admin can set, on the project page of the portal, which Figma file and/or Miro board a project's design work lives in. Everyone
+A project admin can set, on the project's Project settings page in the portal, which Figma file and/or Miro board a project's design work lives in. Everyone
 on the project sees those links in one place: they can open them and preview them in the portal. The design agent
 and the generated framework files point to them.
 
 ## Done when
-- On the project page (Feature board → "Design files" card), an admin adds, changes or removes the project's Figma file link and its Miro board link
+- On a new Project settings page (sidebar → Project settings → "Design files" card), an admin adds, changes or removes the project's Figma file link and its Miro board link
   without editing `compass/spec.json` by hand. The portal checks that each link is a real figma.com or miro.com link.
 - People who are not admins see the links and can open them, but cannot change them.
 - The Design page shows the linked file (Figma embed or Miro board embed) and an "Open ↗" button for each tool.
@@ -45,6 +46,6 @@ Number of projects with a Figma or Miro link set (no target).
 - Other tools (Penpot, Sketch) beyond keeping the existing "Other" link.
 
 ## Requirements
-- REQ-080 — The admin links the project's Figma file and Miro board on the project page
+- REQ-080 — The admin links the project's Figma file and Miro board on a Project settings page
 - REQ-081 — Every Design page shows the project's design files read-only, with a preview
 - REQ-082 — Projects with the old single design link keep working, and agents name both files

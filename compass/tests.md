@@ -45,7 +45,7 @@
 | REQ-053 Proposal versions and compare | TC-209 (Not run), TC-210 (Not run), TC-211 (Not run), TC-216 (Not run) |
 | REQ-054 The conversation is kept with the run, safely | TC-212 (Not run), TC-213 (Not run) |
 | REQ-063 Handoffs are shown on phones too | TC-311 (Not run), TC-312 (Not run), TC-313 (Not run), TC-314 (Not run), TC-315 (Not run) |
-| REQ-080 The admin links the project's Figma file and Miro board on the project page | TC-500 (Not run), TC-501 (Not run), TC-502 (Not run) |
+| REQ-080 The admin links the project's Figma file and Miro board on a Project settings page | TC-500 (Not run), TC-501 (Not run), TC-502 (Not run) |
 | REQ-081 Every Design page shows the project's design files read-only, with a preview | TC-502 (Not run), TC-503 (Not run), TC-505 (Not run) |
 | REQ-082 Projects with the old single design link keep working, and agents name both files | TC-501 (Not run), TC-504 (Not run) |
 
@@ -798,8 +798,8 @@ Then designTool keeps kind and url while they are set, holds the Miro link next 
 Covers: REQ-080, REQ-081 · Type: Manual · Status: Not run
 ```gherkin
 Given a project with a Figma file and a Miro board linked
-When I pick the PO role and open the Feature board, then pick the BA role and open it again and open a feature's Design page
-Then as PO the Design files card has edit fields and Save; as BA it shows both links with Open ↗, no fields and the hint "Only the project admin can change the design files"; the Design page has no edit fields for either role
+When I pick the PO role and open Project settings from the sidebar, then pick the BA role and open it again and open a feature's Design page
+Then the sidebar shows "Project settings" after Knowledge for both roles; as PO the Design files card has edit fields and Save; as BA it shows both links with Open ↗, no fields and the hint "Only the project admin can change the design files"; the Design page has no edit fields for either role
 ```
 
 ## TC-503 · Miro and Figma previews on the Design page
@@ -822,6 +822,6 @@ Then both contain the Figma link and the Miro link
 Covers: REQ-081 · Type: Manual · Status: Not run
 ```gherkin
 Given a 390 px wide screen and a project with both links
-When I open the Feature board and a feature's Design page
+When I open Project settings from the sidebar menu and a feature's Design page
 Then the Design files cards and both previews fit the screen width with no sideways scrolling, and every button is reachable with the keyboard with a visible focus ring
 ```

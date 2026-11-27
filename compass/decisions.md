@@ -61,3 +61,13 @@ _2026-11-27 · Accepted · REQ-050, REQ-051, REQ-052, REQ-053, REQ-054_
 **Decision:** The Product Owner decided in chat on 2026-11-27: (1) every agent can be quoted and revised, including the coding agent, whose revision re-proposes only the quoted files; (2) a revision creates versions v1, v2… with a compare view, and Approve always applies the latest version. A revision may change only the quoted items; anything else is refused.
 
 **Consequences:** Runs keep a conversation and their versions. A revised version waits for its guardrails before it can be approved. The Ask and Revise of live runs cost Claude tokens, shown per answer.
+
+## ADR-012 · Project design files live on a new Project settings page
+
+_2026-11-27 · Accepted · REQ-080, REQ-081, REQ-082_
+
+**Context:** The first design put the project's Figma and Miro links on the Feature board; the Product Owner found that page unsuitable for them.
+
+**Decision:** The Product Owner chose in chat on 2026-11-27: a "Project settings" link with a gear icon is added to the sidebar's project group after Knowledge, for every role. Its page holds the "Design files" card; only the admin edits it, others see the links with Open ↗.
+
+**Consequences:** The sidebar gets one more link (REQ-070 lists the links up to Knowledge). Team access (F-015) can put its team list and project GitHub token on the same page instead of a separate Team item.

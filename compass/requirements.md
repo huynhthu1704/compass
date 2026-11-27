@@ -44,7 +44,7 @@
 | REQ-053 | F-020 | Proposal versions and compare | Should | Approved | TC-209, TC-210, TC-211, TC-216 |
 | REQ-054 | F-020 | The conversation is kept with the run, safely | Should | Approved | TC-212, TC-213 |
 | REQ-063 | F-009 | Handoffs are shown on phones too | Should | Approved | TC-311, TC-312, TC-313, TC-314, TC-315 |
-| REQ-080 | F-003 | The admin links the project's Figma file and Miro board on the project page | Must | Approved | TC-500, TC-501, TC-502 |
+| REQ-080 | F-003 | The admin links the project's Figma file and Miro board on a Project settings page | Must | Approved | TC-500, TC-501, TC-502 |
 | REQ-081 | F-003 | Every Design page shows the project's design files read-only, with a preview | Must | Approved | TC-502, TC-503, TC-505 |
 | REQ-082 | F-003 | Projects with the old single design link keep working, and agents name both files | Must | Approved | TC-501, TC-504 |
 
@@ -1168,8 +1168,8 @@ When the Team floor is shown
 Then there is no strip (desktop keeps the corridor as today)
 ```
 
-## REQ-080 · The admin links the project's Figma file and Miro board on the project page
-As the project admin, I want to set the project's Figma file and Miro board once on the project page, so that everyone on the project works from the right design files.
+## REQ-080 · The admin links the project's Figma file and Miro board on a Project settings page
+As the project admin, I want to set the project's Figma file and Miro board once on the project's settings page, so that everyone on the project works from the right design files.
 
 **Priority:** Must · **Status:** Approved
 
@@ -1177,22 +1177,29 @@ As the project admin, I want to set the project's Figma file and Miro board once
 
 _AC1_
 ```gherkin
-Given I am the project admin (the PO role until Team access, F-015, is merged) and a project is open
-When I open the project page (Feature board)
-Then a "Design files" card shows a Figma file field and a Miro board field, both optional, and I can save, change or clear each one; the saved links are written to compass/spec.json → designTool
+Given a project is open
+When I look at the sidebar
+Then the project group has a "Project settings" link with a gear icon after Knowledge, for every role, and it opens the Project settings page
 ```
 
 _AC2_
+```gherkin
+Given I am the project admin (the PO role until Team access, F-015, is merged)
+When I open Project settings
+Then a "Design files" card shows a Figma file field and a Miro board field, both optional, and I can save, change or clear each one; the saved links are written to compass/spec.json → designTool
+```
+
+_AC3_
 ```gherkin
 Given I enter a Figma link that is not an https://www.figma.com/ design, file, proto or board link, or a Miro link that is not an https://miro.com/app/board/ link
 When I save
 Then the field shows an error naming the link expected and nothing is saved
 ```
 
-_AC3_
+_AC4_
 ```gherkin
 Given my role is not the admin role
-When I open the project page
+When I open Project settings
 Then the "Design files" card shows the linked files with an "Open ↗" button each, no edit fields, and the hint "Only the project admin can change the design files"
 ```
 
@@ -1207,7 +1214,7 @@ _AC1_
 ```gherkin
 Given a project with a Figma link, a Miro link or both
 When I open any feature's Design page
-Then the "Project design files" card shows a badge and an "Open ↗" button for each linked tool, no edit fields, and for the admin a "Change on the project page" link
+Then the "Project design files" card shows a badge and an "Open ↗" button for each linked tool, no edit fields, and for the admin a "Change in Project settings" link
 ```
 
 _AC2_
@@ -1221,7 +1228,7 @@ _AC3_
 ```gherkin
 Given no design file is linked
 When I open the Design page
-Then the card says "No design files linked yet", and the admin also sees a link to the project page
+Then the card says "No design files linked yet", and the admin also sees a link to Project settings
 ```
 
 ## REQ-082 · Projects with the old single design link keep working, and agents name both files
@@ -1235,7 +1242,7 @@ _AC1_
 ```gherkin
 Given a compass/spec.json whose designTool has only kind and url (Figma, Penpot, Sketch or Other)
 When the portal opens the project
-Then that link is shown under its tool on the project page and the Design page, and saving the Miro link keeps designTool.kind and designTool.url unchanged
+Then that link is shown under its tool on Project settings and the Design page, and saving the Miro link keeps designTool.kind and designTool.url unchanged
 ```
 
 _AC2_
