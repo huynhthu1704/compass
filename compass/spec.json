@@ -1864,7 +1864,7 @@
       "featureId": "F-015",
       "title": "A project Admin stores one GitHub token that the project's members use",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As a project admin, I want to save one GitHub token for the project, so that members without their own GitHub account can save their work to the repo.",
       "ac": [
@@ -3005,7 +3005,7 @@
       ],
       "title": "GitHub calls use the project token for members",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a project with a saved token and a member with no own token\nWhen the portal chooses the token for a GitHub call on that project\nThen it uses the project token; with no project token it reports \"The project's GitHub token is missing or expired — ask an Admin\""
     },
     {

@@ -14,6 +14,8 @@ import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
 import { tokenFor } from './token';
+import { getSession } from './firebase';
+import { missingTokenMessage } from './team';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
 import { canApprove } from './conversation';
@@ -460,7 +462,7 @@ _Opened by the Compass coding agent (${r.mode}). Trace id: ${r.id}._`;
 export async function installFramework(pid: string, opts: { starter: boolean; direct: boolean }) {
   const p = getP(pid);
   const token = tokenFor(getP(pid));
-  if (!token || !p.repo) throw new Error('Connect GitHub first');
+  if (!token || !p.repo) throw new Error(missingTokenMessage(getSession().status === 'signed-in'));
   const files = frameworkFiles(p, opts);
   const existing = new Set((await github.tree(token, p.repo)).map((f) => f.path));
   // On an existing repo, only ADD missing framework files: a repo may have its own, stronger versions of the
@@ -486,7 +488,7 @@ export async function installFramework(pid: string, opts: { starter: boolean; di
 export async function commitSpec(pid: string) {
   const p = getP(pid);
   const token = tokenFor(getP(pid));
-  if (!token || !p.repo) throw new Error('Connect GitHub first');
+  if (!token || !p.repo) throw new Error(missingTokenMessage(getSession().status === 'signed-in'));
   const snapshot = JSON.stringify(p.spec);
   const c = await github.commit(token, p.repo, p.repo.defaultBranch, `docs(compass): update spec — ${p.spec.requirements.length} requirements, ${p.spec.tests.length} tests`, specFiles(p));
   // only clear "dirty" if nothing changed while the commit was in flight
@@ -497,7 +499,7 @@ export async function commitSpec(pid: string) {
 export async function pullSpec(pid: string) {
   const p = getP(pid);
   const token = tokenFor(getP(pid));
-  if (!token || !p.repo) throw new Error('Connect GitHub first');
+  if (!token || !p.repo) throw new Error(missingTokenMessage(getSession().status === 'signed-in'));
   const f = await github.file(token, p.repo, 'compass/spec.json');
   if (!f) throw new Error('No compass/spec.json in this repo yet');
   store.update(pid, (x) => ({ ...x, spec: migrateSpec(JSON.parse(f.content)), specSha: f.sha, dirty: false, frameworkInstalled: true }));

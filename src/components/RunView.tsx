@@ -5,6 +5,7 @@ import { agent, approveRun, rejectRun } from '../harness';
 import { blocked, pct } from '../guardrails';
 import { traceOpen, traceSummary, traceToggleLabel } from '../trace';
 import { store, uid, useStore } from '../store';
+import { tokenFor } from '../token';
 import type { Project, Run, StepKind } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
 import { AskBox, CompareView, ConversationThread, QuotePill, ReplyCard, VersionPicker, type Card } from './RunConversation';
@@ -224,7 +225,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
               <div className="body-sm t-secondary">
                 {vs.length > 1 ? `Approving applies Proposal v${latestN} (latest). Earlier versions stay readable in this run. ` : ''}
                 {r.proposal ? 'Approving merges this proposal into the project spec (compass/spec.json). Commit the spec to GitHub afterwards.'
-                  : p.repo && settings.githubToken && !p.demo ? `Approving commits ${r.changes.length} file(s) to a new branch and opens a pull request on ${p.repo.owner}/${p.repo.name}. CI runs automatically.`
+                  : p.repo && tokenFor(p) && !p.demo ? `Approving commits ${r.changes.length} file(s) to a new branch and opens a pull request on ${p.repo.owner}/${p.repo.name}. CI runs automatically.`
                   : 'Approving marks this change ready. Connect a GitHub repo to open a real pull request.'}
               </div>
               <div className="row gap-sm">
