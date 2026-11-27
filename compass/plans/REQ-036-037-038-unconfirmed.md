@@ -30,8 +30,10 @@ emulator run, PR.
 ## Risks
 - Loading records costs Firestore reads (one per project open; a small team makes few approvals) — free plan limits
   are far above this.
-- The baseline covers requirement and design approvals (the only ones spec.json recorded before team access); intent,
-  test-case and release approvals made after team access always have records, so the check covers the same two gates.
+- The check and the baseline cover intent, design, requirement and test-case approvals (review of #104). A record names
+  the run's requirements (or feature) plus the ids of the test cases it approves, so each test case is matched on its own
+  id. A release's approver is kept in `Project.releases` (portal data), not in spec.json, so it is not checked.
+- A retry reuses a run's record only for the same signed-in person, the same version, and a role that still passes.
 - Sign-in off, demo, local projects, or a project without a team → no check, no badge.
 
 ## Proof

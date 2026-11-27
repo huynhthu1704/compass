@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, checksApprovals, gateForAgent, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, checksApprovals, gateForAgent, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -193,8 +193,8 @@ test('TC-073 (REQ-038): approvals in neither the baseline nor a Firebase record 
       { id: 'REQ-003', featureId: 'F-001', status: 'Draft' },
     ],
     tests: [
-      { id: 'TC-001', reqIds: ['REQ-001'], approvedBy: 'qa@example.com (QA)' },   // a tests record for REQ-001
-      { id: 'TC-002', reqIds: ['REQ-003'], approvedBy: 'qa@example.com (QA)' },   // no tests record covers REQ-003
+      { id: 'TC-001', reqIds: ['REQ-001'], approvedBy: 'qa@example.com (QA)' },   // a tests record names TC-001
+      { id: 'TC-002', reqIds: ['REQ-003'], approvedBy: 'qa@example.com (QA)' },   // no tests record names TC-002
       { id: 'TC-003', reqIds: ['REQ-001'] },                                      // not approved: nothing to check
     ],
   };
@@ -203,7 +203,7 @@ test('TC-073 (REQ-038): approvals in neither the baseline nor a Firebase record 
     baseline: [{ item: 'F-001', gate: 'intent', approvedBy: 'po@example.com (PO)' }],
     records: [
       { items: ['REQ-001', 'REQ-002'], gate: 'requirements', email: 'BA@example.com', role: 'BA' },
-      { items: ['REQ-001'], gate: 'tests', email: 'qa@example.com', role: 'QA' },
+      { items: ['F-001', 'TC-001'], gate: 'tests', email: 'qa@example.com', role: 'QA' },
     ],
   };
   const ids = (list) => list.map((a) => `${a.gate}:${a.item}`);
@@ -213,8 +213,12 @@ test('TC-073 (REQ-038): approvals in neither the baseline nor a Firebase record 
     'no baseline: every approval without a record is flagged, the intent included');
   const forged = { ...spec, features: [{ ...spec.features[0], idea: { approvedBy: 'mallory@example.com (PO)' } }] };
   assert.ok(ids(unconfirmedApprovals(forged, ev)).includes('intent:F-001'), 'an intent approvedBy changed after the baseline is flagged');
-  const recordByFeature = { ...ev, records: [...ev.records, { items: ['F-001'], gate: 'tests', email: 'qa@example.com', role: 'QA' }] };
-  assert.ok(!ids(unconfirmedApprovals(spec, recordByFeature)).includes('tests:TC-002'), 'a tests record for the feature covers its test cases');
+  const recordByFeature = { ...ev, records: [...ev.records, { items: ['F-001', 'REQ-003'], gate: 'tests', email: 'qa@example.com', role: 'QA' }] };
+  assert.ok(ids(unconfirmedApprovals(spec, recordByFeature)).includes('tests:TC-002'), 'a forged test case is flagged: a record for its feature or requirement does not name it');
+  const recordByTc = { ...ev, records: [...ev.records, { items: ['F-001', 'TC-002'], gate: 'tests', email: 'qa@example.com', role: 'QA' }] };
+  assert.ok(!ids(unconfirmedApprovals(spec, recordByTc)).includes('tests:TC-002'), 'a tests record naming the test case confirms it');
+  assert.deepEqual(recordItems({ id: 'run1', featureId: 'F-001', proposal: { tests: [{ id: 'TC-002' }, { id: 'TC-004' }] } }), ['F-001', 'TC-002', 'TC-004']);
+  assert.deepEqual(recordItems({ id: 'run1', featureId: 'F-001', reqIds: ['REQ-001'] }), ['REQ-001']);
   // Demo mode, local projects and projects without a team are never checked, so nothing is flagged (REQ-038 AC4).
   const base = { signedIn: true, demoSession: false, demoProject: false, hasRepo: true, hasTeam: true };
   assert.equal(checksApprovals(base), true);

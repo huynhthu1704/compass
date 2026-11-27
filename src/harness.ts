@@ -14,8 +14,8 @@ import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
 import { missingToken, tokenFor } from './token';
-import { recordApproval } from './approvals';
-import { approvalSig, canReuseApproval, gateForAgent, withReqsInBuild } from './team';
+import { gateState, recordApproval } from './approvals';
+import { approvalSig, canReuseApproval, gateForAgent, recordItems, withReqsInBuild } from './team';
 import { getSession } from './firebase';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
@@ -344,8 +344,9 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   // Reuse is only for the same signed-in person and the same, unrevised version; anything else writes a new, role-checked record.
   const sig = approvalSig(r);
   const email = getSession().email;
-  const reuse = canReuseApproval(r.approval, email, sig);
-  const rec = reuse ? r.approval : await recordApproval(getP(pid), gateForAgent(r.agent), r.reqIds?.length ? r.reqIds : [r.featureId || r.id]).then((x) => (x && email ? { id: x.id, by: x.text, email, sig } : undefined));
+  // The person must still hold the owning role: a reused record never skips today's role check.
+  const reuse = canReuseApproval(r.approval, email, sig) && gateState(getP(pid), gateForAgent(r.agent)).allowed;
+  const rec = reuse ? r.approval : await recordApproval(getP(pid), gateForAgent(r.agent), recordItems(r)).then((x) => (x && email ? { id: x.id, by: x.text, email, sig } : undefined));
   if (!reuse) patchRun(pid, rid, (x) => ({ ...x, approval: rec }));
   const by = rec?.by;
   const stamp = by ? { approvedBy: by, approvedAt: now() } : {};

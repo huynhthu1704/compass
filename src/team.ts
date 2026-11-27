@@ -225,19 +225,12 @@ export interface ApprovalEvidence {
  *  first team (same item, gate and approvedBy) nor matched by an approval record (same item, gate, email and role).
  *  No repo date is trusted. Without a baseline, every approval needs a record. */
 export function unconfirmedApprovals(spec: ApprovalSpec, ev: ApprovalEvidence): BaselineApproval[] {
-  // A record names the items its run approved: a test case is approved through its requirements (or their feature).
-  const keysOf = (a: BaselineApproval): string[] => {
-    if (a.gate !== 'tests') return [a.item];
-    const reqIds = spec.tests?.find((t) => t.id === a.item)?.reqIds || [];
-    const fids = spec.requirements.filter((r) => reqIds.includes(r.id)).map((r) => r.featureId || '').filter(Boolean);
-    return [a.item, ...reqIds, ...fids];
-  };
   return baselineFrom(spec).filter((a) => {
     if (ev.hasBaseline && ev.baseline.some((b) => b.item === a.item && b.gate === a.gate && b.approvedBy === a.approvedBy)) return false;
     const by = parseApprovedBy(a.approvedBy);
     if (!by) return true;
-    const keys = keysOf(a);
-    return !ev.records.some((r) => r.gate === a.gate && r.items.some((i) => keys.includes(i)) && normalizeEmail(r.email) === by.email && r.role === by.role);
+    // Same item: a test case needs a record that names the test case itself (a run's record lists the TC ids it approved).
+    return !ev.records.some((r) => r.gate === a.gate && r.items.includes(a.item) && normalizeEmail(r.email) === by.email && r.role === by.role);
   });
 }
 
@@ -245,6 +238,13 @@ export function unconfirmedApprovals(spec: ApprovalSpec, ev: ApprovalEvidence): 
  *  the demo, on a real (non-demo) GitHub project that has a team. Nothing is flagged otherwise. */
 export function checksApprovals(x: { signedIn: boolean; demoSession: boolean; demoProject: boolean; hasRepo: boolean; hasTeam: boolean }): boolean {
   return x.signedIn && !x.demoSession && !x.demoProject && x.hasRepo && x.hasTeam;
+}
+
+/** The items an agent run's approval record names (REQ-038 "same item"): its requirements (or feature), plus the ids of
+ *  any test cases it proposes, so each approved test case is confirmed by its own id. */
+export function recordItems(run: { id: string; featureId?: string; reqIds?: string[]; proposal?: { tests?: { id: string }[] } }): string[] {
+  const base = run.reqIds?.length ? run.reqIds : [run.featureId || run.id];
+  return [...new Set([...base, ...(run.proposal?.tests || []).map((t) => t.id)])];
 }
 
 /** The approval record a run saved (REQ-037 AC4): who wrote it and for which version of the run's output. */
