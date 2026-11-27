@@ -6,6 +6,8 @@ import { blocked, pct } from '../guardrails';
 import { traceOpen, traceSummary, traceToggleLabel } from '../trace';
 import { store, uid, useStore } from '../store';
 import { missingToken, tokenFor } from '../token';
+import { useGate } from '../approvals';
+import { gateForAgent } from '../team';
 import type { Project, Run, StepKind } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
 import { AskBox, CompareView, ConversationThread, QuotePill, ReplyCard, VersionPicker, type Card } from './RunConversation';
@@ -29,6 +31,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const repliesRef = useRef<HTMLDivElement>(null);
   const replying = replyingNow(r); // a stored flag from an interrupted follow-up does not count
   const gate = canApprove(r);
+  const roleGate = useGate(p, gateForAgent(r.agent)); // F-015 REQ-033: the role that owns this run's gate
   // REQ-045: her own fold/unfold choice, kept per run; null until she uses the toggle
   const [traceManual, setTraceManual] = useState<{ id: string; open: boolean } | null>(null);
   const traceIsOpen = traceOpen(r.status, traceManual?.id === r.id ? traceManual.open : null);
@@ -230,7 +233,8 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
                   : missingToken(p) || 'Approving marks this change ready. Connect a GitHub repo to open a real pull request.'}
               </div>
               <div className="row gap-sm">
-                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying || !gate.ok} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
+                {!roleGate.allowed && <span className="body-sm t-tertiary">{roleGate.hint}</span>}
+                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying || !gate.ok || !roleGate.allowed} title={roleGate.hint} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
                 <Button variant="secondary" disabled={busy || !!replying} onClick={() => { const why = prompt('Why reject? (recorded in the trace)') || 'No reason given'; rejectRun(p.id, r.id, why); }}>Reject</Button>
               </div>
             </section>

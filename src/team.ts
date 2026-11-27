@@ -166,3 +166,9 @@ export function sharedToOpen<A extends { id: string; repo?: { owner: string; nam
   const local = new Set(localRepos.filter((r): r is { owner: string; name: string } => !!r).map(key));
   return access.filter((a) => a.repo && !local.has(key(a.repo)));
 }
+
+/** Which gate approving an agent's run passes (REQ-033): the ideation run approves the intent, a coder (or reviewer)
+ *  run starts a build, and so on. */
+export function gateForAgent(agent: string): Gate {
+  return ({ ideation: 'intent', requirements: 'requirements', designer: 'design', testdesign: 'tests', coder: 'build', reviewer: 'build', release: 'release' } as Record<string, Gate>)[agent] || 'build';
+}
