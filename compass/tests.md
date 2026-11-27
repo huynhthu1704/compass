@@ -31,6 +31,7 @@
 | REQ-015 Pages use up to 1600 px on large screens and stay responsive | TC-027 (Not run), TC-028 (Not run) |
 | REQ-020 The Ideation agent writes "Done when" and never invents a baseline or target | TC-039 (Not run), TC-040 (Not run), TC-041 (Not run) |
 | REQ-021 The Idea page and briefs say "Done when" instead of "Outcome metric" | TC-042 (Not run) |
+| REQ-025 Figma components on the Components page, one section per feature | TC-045 (Pass) |
 | REQ-060 Each waiting item says what it is and how long it has waited | TC-300 (Not run), TC-301 (Not run), TC-306 (Not run) |
 | REQ-061 The approval desk stays compact, with a link to all waiting runs | TC-302 (Not run), TC-303 (Not run), TC-307 (Not run) |
 | REQ-062 Details of a waiting item open in a side panel | TC-304 (Not run), TC-305 (Not run), TC-308 (Not run), TC-309 (Not run) |
@@ -448,6 +449,14 @@ Covers: REQ-021 · Type: Automated · Status: Not run
 Given the Idea page, the run brief and the generated feature and intent files
 When their labels and headings are read
 Then they say "Done when" and none says "Outcome metric" or "baseline → target"
+```
+
+## TC-045 · The design template, its installed copy and AGENTS.md state the Figma file layout
+Covers: REQ-025 · Type: Automated · Status: Pass
+```gherkin
+Given compass/design/README.md, src/framework/design-README.md and AGENTS.md
+When they are read
+Then they ask for components only on the "Components" page and one Figma section per feature
 ```
 
 ## TC-300 · Waiting items carry goal and waiting time

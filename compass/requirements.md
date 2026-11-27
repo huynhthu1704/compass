@@ -30,6 +30,7 @@
 | REQ-015 | F-011 | Pages use up to 1600 px on large screens and stay responsive | Should | Approved | TC-027, TC-028 |
 | REQ-020 | F-001 | The Ideation agent writes "Done when" and never invents a baseline or target | Must | Approved | TC-039, TC-040, TC-041 |
 | REQ-021 | F-001 | The Idea page and briefs say "Done when" instead of "Outcome metric" | Should | Approved | TC-042 |
+| REQ-025 | F-003 | Figma components on the Components page, one section per feature | Should | Done | TC-045 |
 | REQ-060 | F-009 | Each waiting item says what it is and how long it has waited | Must | In build | TC-300, TC-301, TC-306 |
 | REQ-061 | F-009 | The approval desk stays compact, with a link to all waiting runs | Must | In build | TC-302, TC-303, TC-307 |
 | REQ-062 | F-009 | Details of a waiting item open in a side panel | Should | In build | TC-304, TC-305, TC-308, TC-309 |
@@ -702,6 +703,34 @@ _AC2_
 Given an Ideation agent run brief and the generated compass/features/F-xxx.md and compass/intent/F-xxx.md
 When they show the brief
 Then the heading reads "Done when" instead of "Outcome metric" or "Success measure"
+```
+
+## REQ-025 · Figma components on the Components page, one section per feature
+As the product owner, I want every Figma component on the "Components" page and each feature's screens grouped in one Figma section, so that I review a feature at a glance and find reusable pieces in one place.
+
+**Priority:** Should · **Status:** Done
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given the project Figma file
+When an agent creates or finds a component (component or component set)
+Then it lives on the "Components" page, never on a feature, prototype or brand page, and an instance stays where it was shown
+```
+
+_AC2_
+```gherkin
+Given a new feature with UI
+When an agent draws its screens
+Then all of them sit inside one Figma section named "<F-xxx / REQ ids> · <topic>", and the design links that section
+```
+
+_AC3_
+```gherkin
+Given the framework text Compass installs (compass/design/README.md) and AGENTS.md
+When an agent reads it
+Then it states both rules, the same as travel-map REQ-061
 ```
 
 ## REQ-060 · Each waiting item says what it is and how long it has waited
