@@ -691,10 +691,11 @@
               "REQ-070",
               "REQ-071",
               "REQ-072",
-              "REQ-073"
+              "REQ-073",
+              "REQ-074"
             ],
             "elements": [
-              "Brand: logo, \"Compass\", \"AI dev portal\" under it",
+              "Brand: logo, \"Compass\"",
               "Workspace: Projects, Agent architecture (icons)",
               "Project card: avatar, name, sync state, chevron",
               "Feature board, Team floor (count pill), Agent runs, Release, Knowledge",
@@ -1345,6 +1346,19 @@
         "Given GitHub is connected as @user\nWhen I look at the bottom of the sidebar\nThen an account card shows the initial, \"@user\" and \"GitHub connected\"; without a connection it shows \"Not connected\" and \"Demo mode · connect\"; clicking the card opens Connections",
         "Given the footer\nWhen I look under the account card\nThen the role picker fills the row next to one theme button labelled \"Switch to dark theme\" (or \"Switch to light theme\"), and clicking it switches the theme",
         "Given a phone (below 900 px)\nWhen I open the Menu\nThen the sidebar shows the same groups, card and footer"
+      ]
+    },
+    {
+      "id": "REQ-074",
+      "featureId": "F-013",
+      "title": "The portal shows no \"AI dev portal\" tagline",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-remove-portal-tagline.md",
+      "story": "As the Product Owner, I want the portal to present itself as \"Compass\" only, so that the \"AI dev portal\" tagline is not shown anywhere in the product.",
+      "ac": [
+        "Given any page of the portal\nWhen I look at the sidebar brand\nThen it shows the logo and \"Compass\" with no \"AI dev portal\" line under it",
+        "Given the onboarding page\nWhen I look at the overline above the title\nThen it reads \"Compass\" and no screen of the portal shows the text \"AI dev portal\""
       ]
     },
     {
@@ -2079,6 +2093,16 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the demo project with a feature open, at 1280 px and at 390 px (after pressing Menu), in light and dark mode\nWhen I compare the sidebar with the approved design\nThen the groups, the project card, the feature list with long names on two lines and the footer match, the role picker fills the row next to the theme button, with no hard-coded colours"
+    },
+    {
+      "id": "TC-406",
+      "reqIds": [
+        "REQ-074"
+      ],
+      "title": "No \"AI dev portal\" tagline in the UI",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the portal source under src/\nWhen it is searched for the text \"AI dev portal\"\nThen no file contains it, the sidebar brand renders \"Compass\" without a second line and the onboarding overline is \"Compass\""
     },
     {
       "id": "TC-200",

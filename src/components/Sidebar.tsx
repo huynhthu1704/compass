@@ -47,7 +47,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
 
   return (
     <>
-      <div className="brand">{logo}<div className="brand-text">Compass<span>AI dev portal</span></div></div>
+      <div className="brand">{logo}<div className="brand-text">Compass</div></div>
 
       <nav className="nav" aria-label="Workspace">
         {link(WORKSPACE_LINKS[0], !p && !['connect', 'architecture'].includes(parts[0]))}

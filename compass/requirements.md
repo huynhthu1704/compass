@@ -37,6 +37,7 @@
 | REQ-071 | F-013 | The approval count shows once, on Team floor | Must | Approved | TC-402 |
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
+| REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
 | REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202 |
 | REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208 |
@@ -895,6 +896,27 @@ _AC3_
 Given a phone (below 900 px)
 When I open the Menu
 Then the sidebar shows the same groups, card and footer
+```
+
+## REQ-074 · The portal shows no "AI dev portal" tagline
+As the Product Owner, I want the portal to present itself as "Compass" only, so that the "AI dev portal" tagline is not shown anywhere in the product.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given any page of the portal
+When I look at the sidebar brand
+Then it shows the logo and "Compass" with no "AI dev portal" line under it
+```
+
+_AC2_
+```gherkin
+Given the onboarding page
+When I look at the overline above the title
+Then it reads "Compass" and no screen of the portal shows the text "AI dev portal"
 ```
 
 ## REQ-050 · Quote any part of an agent run

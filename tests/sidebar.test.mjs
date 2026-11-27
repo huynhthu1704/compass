@@ -88,3 +88,13 @@ test('TC-404 (REQ-073): account card and one theme button', () => {
   assert.match(read('src/index.css'), /\.sidebar button:focus-visible[^{]*\{[^}]*var\(--focus-ring\)/, 'sidebar buttons show the focus ring (TC-401)');
   assert.match(read('src/index.css'), /\.sidebar \.nav button\[aria-current="page"\]:focus-visible \{[^}]*var\(--focus-ring\)/, 'the current page keeps its focus ring next to the brand bar');
 });
+
+test('TC-406 (REQ-074): no "AI dev portal" tagline in the UI', async () => {
+  const { readdirSync } = await import('node:fs');
+  const files = readdirSync(new URL('../src/', import.meta.url), { recursive: true }).filter((f) => /\.(tsx?|css|html)$/.test(f));
+  // Code comments are not shown in the UI (src/types.ts starts with one), so they are stripped before the search.
+  const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const f of files) assert.doesNotMatch(noComments(read(`src/${f}`)), /AI dev portal/i, `src/${f} shows the tagline`);
+  assert.match(read('src/components/Sidebar.tsx'), /<div className="brand-text">Compass<\/div>/, 'the brand is "Compass" only');
+  assert.match(read('src/pages/Onboarding.tsx'), /<div className="overline t-brand">Compass<\/div>/, 'the overline is "Compass"');
+});

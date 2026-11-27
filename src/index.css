@@ -338,8 +338,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 /* ===== F-013 sidebar navigation (REQ-070 … REQ-073): groups, icons, cards, one approval count ===== */
 .sidebar { gap: var(--spacing-lg); padding: var(--spacing-lg) var(--spacing-md); }
 .sidebar .brand { padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm); }
-.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
-.brand-text span { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: .2px; }
+.brand-text { line-height: 1.1; }
 .sidebar .nav button { padding: 7px var(--spacing-md); border-radius: var(--radius-sm); }
 .sidebar .nav button .icon { flex: none; color: var(--color-text-tertiary); }
 .sidebar .nav button:hover .icon, .sidebar .nav button[aria-current="page"] .icon { color: inherit; }
