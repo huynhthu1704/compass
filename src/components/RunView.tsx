@@ -51,11 +51,18 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
     setCards((cs) => [...cs, { id: uid(), quote: q }]); // the new card focuses its message field and scrolls into view
   };
 
-  /** Closes one card; keyboard focus moves to the next open card, or the Ask box, so nobody loses their place. */
+  /**
+   * Closes one card. Only when the focus was inside that card (its Cancel, Esc, or Ask / Revise just finished there) does
+   * it move to the next open card or the Ask box; if she is already typing elsewhere, the focus stays where it is.
+   */
   const closeCard = (id: string) => {
-    const i = cards.findIndex((x) => x.id === id);
+    const root = repliesRef.current;
+    const el = root?.querySelector(`[data-card-id="${id}"]`);
+    const had = !!el && el.contains(document.activeElement);
+    const i = el && root ? [...root.querySelectorAll('[data-card-id]')].indexOf(el) : 0;
     setCards((cs) => cs.filter((x) => x.id !== id));
-    setTimeout(() => { const fields = repliesRef.current?.querySelectorAll<HTMLTextAreaElement>('textarea'); fields?.[Math.min(Math.max(i, 0), fields.length - 1)]?.focus(); }, 0);
+    if (!had) return;
+    setTimeout(() => { const fields = root?.querySelectorAll<HTMLTextAreaElement>('textarea'); fields?.[Math.min(Math.max(i, 0), fields.length - 1)]?.focus(); }, 0);
   };
 
   // A selection fully inside the answer of a finished run shows the floating Quote button (REQ-050)

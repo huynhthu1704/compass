@@ -51,7 +51,7 @@ export function ReplyCard({ p, r, card, onClose }: { p: Project; r: Run; card: C
     : !revisableQuotes(quotes) ? 'This quote spans several items or the summary — Ask about it, or quote inside one item to Revise it.'
     : null;
   return (
-    <section className="card stack gap-sm reply-card" aria-label={`Reply to the quote ${card.quote.source}`}
+    <section className="card stack gap-sm reply-card" data-card-id={card.id} aria-label={`Reply to the quote ${card.quote.source}`}
       onKeyDown={(e) => { if (e.key === 'Escape' && !busy) { e.preventDefault(); onClose(); } }}>
       <span className="overline t-tertiary">Reply to this quote</span>
       <QuoteBlock q={card.quote} />
