@@ -137,7 +137,7 @@ test('TC-012 (REQ-008): a run blocked by a guardrail is marked, so the floor off
   const f = computeFloor(project([blockedRun, ok]), 'all', NOW);
   assert.deepEqual(f.approvals.map((a) => [a.agent, a.blocked]), [['coder', true], ['requirements', false]]);
   const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
-  assert.match(page, /a\.blocked \? 'Open run · blocked' : 'Open run to approve'/, 'the details panel offers "Open run to approve" or, for a blocked run, "Open run · blocked" (REQ-060, REQ-062)');
+  assert.match(page, /sel\.blocked \? 'Open run · blocked' : 'Open run to approve'/, 'the details panel offers "Open run to approve" or, for a blocked run, "Open run · blocked" (REQ-060, REQ-062)');
 });
 
 test('TC-007 (REQ-006): the newest step is announced politely, even before the list exists or when it is folded', () => {

@@ -1021,7 +1021,7 @@
       "featureId": "F-009",
       "title": "Each waiting item says what it is and how long it has waited",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-approval-details.md",
       "story": "As the product owner, I want each waiting item on the Team floor to say what it is about and how long it has waited, so that I can tell them apart without opening them.",
       "ac": [
@@ -1035,7 +1035,7 @@
       "featureId": "F-009",
       "title": "The approval desk stays compact, with a link to all waiting runs",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-approval-details.md",
       "story": "As the product owner, I want the approval desk to stay the same size however many runs wait, so that the floor keeps its shape.",
       "ac": [
@@ -1049,7 +1049,7 @@
       "featureId": "F-009",
       "title": "Details of a waiting item open in a side panel",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-approval-details.md",
       "story": "As the product owner, I want to read the details of a waiting item without leaving the Team floor, so that I decide quickly what to approve first.",
       "ac": [

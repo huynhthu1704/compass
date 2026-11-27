@@ -13,6 +13,8 @@ Intent: compass/intent/2026-11-27-approval-details.md · Design: compass/design/
 - src/pages/TeamFloor.tsx — desk and phone banner list `approvalsShown` (agent · feature, waiting time, one-line goal, "blocked")
   and "+N more → Agent runs"; clicking an item opens the details panel (`role="dialog"`, Escape / outside click / Close, focus
   goes back to the item); its only actions are "Open run to approve" ("Open run · blocked") and Close
+  (found while checking in the browser: on the narrow desktop desk the item header is cut at the end, so it reads
+  "F-004 · Ideation" — feature first — instead of the Figma "Ideation · F-004", so the feature id stays visible)
 - src/pages/Runs.tsx — `?status=awaiting-approval` shows only waiting runs, with "Show all runs"
 - src/index.css — desk items, banner list and the panel (tokens only; full screen below 720 px)
 - tests/teamFloor.test.mjs — TC-300, TC-302, TC-303, TC-306, TC-309 and the amended TC-012 test
