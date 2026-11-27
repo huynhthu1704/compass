@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -108,4 +108,17 @@ test('TC-073 (REQ-038 AC1): the baseline lists the approvals already in the spec
     { item: 'REQ-001', gate: 'requirements', approvedBy: 'the Product Owner (in chat)' },
     { item: 'REQ-003', gate: 'requirements', approvedBy: '' },
   ]);
+});
+
+test('TC-062, TC-063 (REQ-031): a change is applied to the team as saved now, so a stale page cannot bring back a removed person', () => {
+  // A second Admin loaded [po, ba, dev]; meanwhile the super admin removed ba. The second Admin now adds qa.
+  const saved = [{ email: 'po@example.com', roles: ['Admin'] }, { email: 'dev@example.com', roles: ['Dev'] }];
+  const r = applyTeamOp(saved, { kind: 'add', email: 'qa@example.com', roles: ['QA'] });
+  assert.deepEqual(r.team.map((m) => m.email), ['po@example.com', 'dev@example.com', 'qa@example.com'], 'ba stays removed');
+  assert.deepEqual(applyTeamOp(saved, { kind: 'remove', email: 'po@example.com' }), { ok: false, team: saved, error: LAST_ADMIN });
+  assert.equal(applyTeamOp(saved, { kind: 'set', email: 'dev@example.com', roles: ['Dev', 'QA'] }).team[1].roles.join(), 'QA,Dev');
+  const first = applyTeamOp([], { kind: 'add', email: 'ba@example.com', roles: ['BA'] }, true);
+  assert.equal(first.ok, false, 'a new team needs an Admin');
+  assert.match(first.error, /new team needs an Admin/);
+  assert.equal(applyTeamOp([], { kind: 'add', email: 'ba@example.com', roles: ['BA', 'Admin'] }, true).ok, true);
 });

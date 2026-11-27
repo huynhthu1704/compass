@@ -130,3 +130,13 @@ export function baselineFrom(spec: { features: { id: string; design?: { status: 
     ...spec.requirements.filter((r) => r.status !== 'Draft').map((r) => ({ item: r.id, gate: 'requirements' as const, approvedBy: r.approvedBy || '' })),
   ];
 }
+
+/** One change to a team, applied to the team as it is in the database at save time (never to a stale copy). */
+export type TeamOp = { kind: 'add'; email: string; roles: TeamRole[] } | { kind: 'set'; email: string; roles: TeamRole[] } | { kind: 'remove'; email: string };
+
+/** Applies one change to the current team (REQ-030, REQ-031). A first team must name an Admin. */
+export function applyTeamOp(current: Member[], op: TeamOp, isNew = false): TeamResult {
+  const r = op.kind === 'add' ? addMember(current, op.email, op.roles) : op.kind === 'set' ? setRoles(current, op.email, op.roles) : removeMember(current, op.email);
+  if (r.ok && !r.team.some((m) => m.roles.includes('Admin'))) return { ok: false, team: current, error: isNew ? 'Tick Admin for at least one person: a new team needs an Admin.' : LAST_ADMIN };
+  return r;
+}

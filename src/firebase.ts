@@ -2,7 +2,7 @@
 // Off unless the build has VITE_FIREBASE_CONFIG (the deploy workflow passes the FIREBASE_CONFIG repository variable).
 // Without it the portal works exactly as before (REQ-032 AC5). The firebase library is only loaded when it is on.
 import { useSyncExternalStore } from 'react';
-import { accessFor, membersFromDoc, normalizeEmail, type BaselineApproval, type Member, type TeamDoc, type TeamRole } from './team';
+import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, teamDoc, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
 import type { RepoRef } from './types';
 
 export interface FirebaseWebConfig { apiKey: string; authDomain: string; projectId: string; appId: string; [k: string]: string }
@@ -143,19 +143,21 @@ export async function loadTeam(key: string): Promise<{ name: string; members: Me
   return { name: d.name, members: membersFromDoc(d) };
 }
 
-/** Saves the whole team document (Admins of the project or the super admin; the rules check the rest). */
-export async function saveTeam(key: string, doc: TeamDoc) {
+/** Applies one change to the team as it is in the database right now, in a transaction, so a tab that loaded the team
+ *  earlier cannot undo another Admin's change (e.g. bring back a removed person). The first change creates the team
+ *  together with its approval baseline (REQ-038 AC1; super admin only, enforced by the rules). */
+export async function changeTeam(key: string, project: { name: string; repo: { owner: string; name: string } }, op: TeamOp, baseline: () => BaselineApproval[]): Promise<TeamResult & { created?: boolean }> {
   const { fs, db } = await load();
-  await fs.setDoc(fs.doc(db, 'projects', key), doc);
-  await reloadAccess();
-}
-
-/** The super admin creates a project's first team together with its approval baseline, in one write (REQ-038 AC1). */
-export async function createFirstTeam(key: string, doc: TeamDoc, approvals: BaselineApproval[]) {
-  const { fs, db } = await load();
-  const batch = fs.writeBatch(db);
-  batch.set(fs.doc(db, 'projects', key), doc);
-  batch.set(fs.doc(db, 'projects', key, 'baseline', 'initial'), { approvals });
-  await batch.commit();
-  await reloadAccess();
+  const ref = fs.doc(db, 'projects', key);
+  const result = await fs.runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const current = snap.exists() ? membersFromDoc(snap.data() as TeamDoc) : [];
+    const r = applyTeamOp(current, op, !snap.exists());
+    if (!r.ok) return r;
+    tx.set(ref, teamDoc(project.name, project.repo, r.team));
+    if (!snap.exists()) tx.set(fs.doc(db, 'projects', key, 'baseline', 'initial'), { approvals: baseline() });
+    return { ...r, created: !snap.exists() };
+  });
+  if (result.ok) await reloadAccess();
+  return result;
 }

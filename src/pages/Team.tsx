@@ -2,8 +2,8 @@
 // The super admin creates a project's first team (with its approval baseline); Admins add people with one or more
 // roles, change roles and remove people. The project GitHub token card (REQ-034) comes with the next step.
 import { useEffect, useState } from 'react';
-import { createFirstTeam, loadTeam, projectKey, saveTeam, useSession } from '../firebase';
-import { addMember, baselineFrom, LAST_ADMIN, removeMember, setRoles, TEAM_ROLES, teamDoc, type Member, type TeamResult, type TeamRole } from '../team';
+import { changeTeam, loadTeam, projectKey, useSession } from '../firebase';
+import { baselineFrom, LAST_ADMIN, TEAM_ROLES, type Member, type TeamOp, type TeamRole } from '../team';
 import type { Project } from '../types';
 import { Badge, Button, PageHead } from '../ui';
 
@@ -36,12 +36,13 @@ export function TeamPage({ p }: { p: Project }) {
   const [msg, setMsg] = useState<{ tone: 'danger' | 'success'; text: string } | null>(null);
   const [removed, setRemoved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     if (!key || session.status !== 'signed-in') { setLoading(false); return; }
     let on = true;
-    loadTeam(key).then((t) => { if (!on) return; setTeam(t?.members || []); setExists(!!t); })
-      .catch((e) => on && setMsg({ tone: 'danger', text: `Could not load the team: ${(e as Error).message}` }))
+    loadTeam(key).then((t) => { if (!on) return; setTeam(t?.members || []); setExists(!!t); setLoadFailed(false); })
+      .catch((e) => { if (on) { setLoadFailed(true); setMsg({ tone: 'danger', text: `Could not load the team: ${(e as Error).message}. Reload the page to try again.` }); } })
       .finally(() => on && setLoading(false));
     return () => { on = false; };
   }, [key, session.status]);
@@ -50,16 +51,14 @@ export function TeamPage({ p }: { p: Project }) {
   if (!p.repo) return <PageHead over={`${p.name} · Team`} title="Team" sub="A team needs a GitHub repository. Local and demo projects have no team." />;
   if (!canManage) return <PageHead over={`${p.name} · Team`} title="Team" sub="Only Admins of this project and the super admin can manage its team." />;
 
-  /** Saves a changed team; the first save (super admin only) creates the team with its approval baseline. */
-  const commit = async (r: TeamResult, done: string, removedEmail?: string) => {
-    if (!r.ok) { setMsg({ tone: 'danger', text: r.error }); return false; }
-    if (!r.team.some((m) => m.roles.includes('Admin'))) { setMsg({ tone: 'danger', text: exists ? LAST_ADMIN : 'Tick Admin for at least one person: a new team needs an Admin.' }); return false; }
+  /** Applies one change to the team as it is in the database now (never a stale copy); the first change (super admin
+   *  only) creates the team with its approval baseline. The page then shows the saved team. */
+  const commit = async (op: TeamOp, done: string) => {
     setBusy(true); setMsg(null);
     try {
-      const doc = teamDoc(p.name, p.repo!, r.team);
-      if (exists) await saveTeam(key, doc);
-      else await createFirstTeam(key, doc, baselineFrom(p.spec));
-      setTeam(r.team); setExists(true); setMsg({ tone: 'success', text: done }); setRemoved(removedEmail || null);
+      const r = await changeTeam(key, { name: p.name, repo: p.repo! }, op, () => baselineFrom(p.spec));
+      if (!r.ok) { setTeam(r.team); setMsg({ tone: 'danger', text: r.error }); return false; }
+      setTeam(r.team); setExists(true); setMsg({ tone: 'success', text: done }); setRemoved(op.kind === 'remove' ? op.email.trim().toLowerCase() : null);
       return true;
     } catch (e) {
       setMsg({ tone: 'danger', text: `Not saved: ${(e as Error).message}` });
@@ -68,8 +67,7 @@ export function TeamPage({ p }: { p: Project }) {
   };
 
   const add = async () => {
-    const r = addMember(team || [], email, roles);
-    if (await commit(r, r.ok ? `${r.team[r.team.length - 1].email} added.` : '')) { setEmail(''); setRolesNew([]); }
+    if (await commit({ kind: 'add', email, roles }, `${email.trim().toLowerCase()} added.`)) { setEmail(''); setRolesNew([]); }
   };
 
   return (
@@ -95,7 +93,7 @@ export function TeamPage({ p }: { p: Project }) {
         </label>
         <RoleBoxes value={roles} onChange={setRolesNew} name="new-roles" />
         <div className="row gap-md wrap">
-          <Button variant="accent" onClick={add} disabled={busy || !email.trim()}>{busy ? 'Saving…' : 'Add person'}</Button>
+          <Button variant="accent" onClick={add} disabled={busy || loading || loadFailed || !email.trim()}>{busy ? 'Saving…' : 'Add person'}</Button>
           <span className="body-sm t-tertiary">They sign in with that Google account. Emails are saved in lower case.</span>
         </div>
       </section>
@@ -111,14 +109,14 @@ export function TeamPage({ p }: { p: Project }) {
                 <strong className="body-sm" style={{ minWidth: 220 }}>{m.email}</strong>
                 <span className="row gap-xs wrap" style={{ flex: 1 }}>{m.roles.map((r) => <Badge key={r} tone="brand">{r}</Badge>)}</span>
                 {onlyAdmin && <span className="body-sm t-tertiary">Only Admin — cannot be removed</span>}
-                <Button variant="secondary" size="sm" disabled={busy} onClick={() => { setEditing(editing === m.email ? null : m.email); setEditRoles(m.roles); }}>{editing === m.email ? 'Cancel' : 'Edit roles'}</Button>
-                <Button variant="secondary" size="sm" disabled={busy || onlyAdmin} title={onlyAdmin ? LAST_ADMIN : undefined}
-                  onClick={() => { if (window.confirm(`Remove ${m.email} from ${p.name}?`)) void commit(removeMember(team || [], m.email), `${m.email} removed.`, m.email); }}>Remove</Button>
+                <Button variant="secondary" size="sm" disabled={busy || loadFailed} aria-label={`${editing === m.email ? 'Cancel editing roles of' : 'Edit roles of'} ${m.email}`} onClick={() => { setEditing(editing === m.email ? null : m.email); setEditRoles(m.roles); }}>{editing === m.email ? 'Cancel' : 'Edit roles'}</Button>
+                <Button variant="secondary" size="sm" disabled={busy || loadFailed || onlyAdmin} title={onlyAdmin ? LAST_ADMIN : undefined} aria-label={`Remove ${m.email}`}
+                  onClick={() => { if (window.confirm(`Remove ${m.email} from ${p.name}?`)) void commit({ kind: 'remove', email: m.email }, `${m.email} removed.`); }}>Remove</Button>
               </div>
               {editing === m.email && (
                 <div className="stack gap-sm">
                   <RoleBoxes value={editRoles} onChange={setEditRoles} name={`roles-${m.email}`} />
-                  <div><Button variant="accent" size="sm" disabled={busy} onClick={async () => { if (await commit(setRoles(team || [], m.email, editRoles), `Roles of ${m.email} saved.`)) setEditing(null); }}>Save roles</Button></div>
+                  <div><Button variant="accent" size="sm" disabled={busy} aria-label={`Save roles of ${m.email}`} onClick={async () => { if (await commit({ kind: 'set', email: m.email, roles: editRoles }, `Roles of ${m.email} saved.`)) setEditing(null); }}>Save roles</Button></div>
                 </div>
               )}
             </div>
