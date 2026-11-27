@@ -25,7 +25,7 @@ does the Design page (button, side panel, Miro preview) and names both files in 
 - tests/sidebar.test.mjs: TC-400 expects the new link, its own icon, and that it comes after Team
 - src/pages/Design.tsx: one line only. Its tool names come from `TOOL_NAMES`, so the new `miro` kind type-checks.
   The page itself changes in build 2
-- The wording of REQ-070's link-order criterion and of TC-400 ("Project settings" after Knowledge, ADR-015) is changed
+- The wording of REQ-070's link-order criterion and of TC-400 ("Project settings" last, ADR-015) is changed
   in the spec PR (#87), so this build changes no spec file
 
 ## Steps
