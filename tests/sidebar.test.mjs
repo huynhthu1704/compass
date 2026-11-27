@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { WORKSPACE_LINKS, accountCard, approvalCount, featureRows, projectLinks, projectState, themeToggle } from '../src/sidebar.ts';
+import { accountCard, approvalCount, featureRows, projectLinks, projectState, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS } from '../src/sidebar.ts';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const runs = (...statuses) => statuses.map((status) => ({ status }));
@@ -111,4 +111,10 @@ test('TC-407 (REQ-075): no Knowledge link in the sidebar for any role; the page 
   assert.doesNotMatch(sidebar, /knowledge/i, 'no Knowledge link or icon in the Sidebar component');
   assert.doesNotMatch(read('src/sidebar.ts').replace(/\/\*[\s\S]*?\*\//g, ''), /'knowledge'/, 'no knowledge link key or icon');
   assert.match(read('src/App.tsx'), /sub === 'knowledge' \? <KnowledgePage p=\{p\} \/>/, 'the /knowledge route still renders the page');
+});
+
+test('F-015 (REQ-030, REQ-032): the Team item and the signed-in account card', () => {
+  assert.deepEqual(teamLink('p1'), { key: 'team', label: 'Team', path: '/p/p1/team', icon: 'team', title: 'People on this project and their roles' });
+  assert.deepEqual(signedInCard('ba@example.com', false), { initial: 'B', name: 'ba@example.com', state: 'Google sign-in', tone: 'success' });
+  assert.equal(signedInCard('po@example.com', true).state, 'Google · super admin');
 });
