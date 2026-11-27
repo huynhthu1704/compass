@@ -1,6 +1,6 @@
 // F-003 Project settings (REQ-080, REQ-082, ADR-015) — design: compass/design/2026-11-27-project-design-files.md (SCR-1, SCR-2, SCR-2b).
 import { useState } from 'react';
-import { checkFigmaUrl, checkMiroUrl, designFiles, FIGMA_HELP, isDesignAdmin, MIRO_HELP, saveDesignFiles, TOOL_NAMES } from '../designLinks';
+import { checkDesignInput, designFiles, FIGMA_HELP, isDesignAdmin, MIRO_HELP, saveDesignFiles, TOOL_NAMES } from '../designLinks';
 import { projectKey, useSession } from '../firebase';
 import { store, useStore } from '../store';
 import type { DesignToolKind, Project } from '../types';
@@ -37,15 +37,16 @@ export function ProjectSettingsPage({ p }: { p: Project }) {
 
   const start = () => { setFigma(files.figma || ''); setMiro(files.miro || ''); setErrors({}); setEditing(true); };
   const save = () => {
-    const e = { figma: checkFigmaUrl(figma) || undefined, miro: checkMiroUrl(miro) || undefined };
+    const e = checkDesignInput(p.spec.designTool, { figma, miro });
     setErrors(e);
     if (e.figma || e.miro) return; // nothing is saved while a link is wrong
+    const cleared = !saveDesignFiles(p.spec.designTool, { figma, miro });
     store.spec(p.id, (s) => {
       const next = saveDesignFiles(s.designTool, { figma, miro });
       const { designTool: _old, ...rest } = s;
       return next ? { ...rest, designTool: next } : rest;
     });
-    setEditing(false);
+    setEditing(cleared); // SCR-2b: with no link left, the admin sees the empty fields again
     toast('Design files saved');
   };
 
@@ -65,10 +66,10 @@ export function ProjectSettingsPage({ p }: { p: Project }) {
             <p className="body-sm t-secondary">The project's Figma file and Miro board. Every feature's Design page shows them, and the design agent works from them. Both are optional.</p>
             <div className="row gap-lg wrap start">
               <div style={{ flex: '1 1 240px', minWidth: 0 }}><Field label="Figma file" help={files.other ? `${FIGMA_HELP}. Saving one replaces the ${TOOL_NAMES[files.other.kind]} link.` : FIGMA_HELP} error={errors.figma}>
-                <input className="input mono-sm" value={figma} placeholder="https://www.figma.com/design/…" aria-invalid={!!errors.figma} onChange={(e) => setFigma(e.target.value)} />
+                <input className="input mono-sm" value={figma} placeholder="https://www.figma.com/design/…" aria-invalid={!!errors.figma} style={errors.figma ? { borderColor: 'var(--color-border-danger)' } : undefined} onChange={(e) => setFigma(e.target.value)} />
               </Field></div>
               <div style={{ flex: '1 1 240px', minWidth: 0 }}><Field label="Miro board" help={MIRO_HELP} error={errors.miro}>
-                <input className="input mono-sm" value={miro} placeholder="https://miro.com/app/board/…" aria-invalid={!!errors.miro} onChange={(e) => setMiro(e.target.value)} />
+                <input className="input mono-sm" value={miro} placeholder="https://miro.com/app/board/…" aria-invalid={!!errors.miro} style={errors.miro ? { borderColor: 'var(--color-border-danger)' } : undefined} onChange={(e) => setMiro(e.target.value)} />
               </Field></div>
             </div>
             {files.other && <FileRow kind={files.other.kind} url={files.other.url} />}

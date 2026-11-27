@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { go } from '../App';
 import { AgentBox } from '../components/AgentBox';
-import { TOOL_NAMES } from '../designLinks';
+import { saveMainLink, TOOL_NAMES } from '../designLinks';
 import { featureOf } from '../spec';
 import { now, store, useStore } from '../store';
 import type { Design, DesignScreen, DesignTool, DesignToolKind, Project } from '../types';
 import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead } from '../ui';
 
-const TOOLS: Record<DesignToolKind, string> = TOOL_NAMES; // REQ-082: Miro joins the tools (the page itself changes in build 2, REQ-081)
+// The old one-link box stays until build 2 (REQ-081); Miro is set on Project settings, so it is not offered here.
+const TOOLS = Object.fromEntries(Object.entries(TOOL_NAMES).filter(([k]) => k !== 'miro')) as Record<Exclude<DesignToolKind, 'miro'>, string>;
 
 /** figma.com links can be embedded with Figma's official embed URL; other tools are opened in a new tab. */
 const figmaEmbed = (url?: string) => (url && /^https:\/\/([\w-]+\.)?figma\.com\//.test(url) ? `https://www.figma.com/embed?embed_host=compass&url=${encodeURIComponent(url)}` : null);
@@ -25,7 +26,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const uncovered = d ? approvedReqs.filter((r) => !d.screens.some((s) => s.reqIds.includes(r.id))) : [];
   const setD = (patch: Partial<Design>) => store.spec(p.id, (s) => ({ ...s, features: s.features.map((x) => (x.id === fid && x.design ? { ...x, design: { ...x.design, ...patch } } : x)) }));
   const setS = (id: string, patch: Partial<DesignScreen>) => d && setD({ screens: d.screens.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
-  const saveTool = () => { store.spec(p.id, (s) => ({ ...s, designTool: tool.url.trim() ? { kind: tool.kind, url: tool.url.trim() } : undefined })); setEditTool(false); };
+  const saveTool = () => { store.spec(p.id, (s) => { const { designTool: _old, ...rest } = s; const next = saveMainLink(s.designTool, tool.kind, tool.url); return next ? { ...rest, designTool: next } : rest; }); setEditTool(false); };
   const approve = () => setD({ status: 'Approved', approvedBy: settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO', approvedAt: now() });
   const embed = figmaEmbed(d?.url || p.spec.designTool?.url);
 
@@ -38,7 +39,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
       <section className="card pad-xl stack gap-md">
         <div className="row gap-sm wrap">
           <h2 className="h4 grow">Project design tool</h2>
-          {p.spec.designTool && !editTool && <><Badge tone="brand">{TOOLS[p.spec.designTool.kind]}</Badge><a className="btn ghost sm" href={p.spec.designTool.url} target="_blank" rel="noreferrer">Open ↗</a><Button size="sm" variant="ghost" onClick={() => setEditTool(true)}>Change</Button></>}
+          {p.spec.designTool && !editTool && <><Badge tone="brand">{TOOL_NAMES[p.spec.designTool.kind]}</Badge><a className="btn ghost sm" href={p.spec.designTool.url} target="_blank" rel="noreferrer">Open ↗</a><Button size="sm" variant="ghost" onClick={() => setEditTool(true)}>Change</Button></>}
         </div>
         {editTool ? (
           <div className="row gap-sm wrap end">
@@ -64,7 +65,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
             {d.status === 'Approved' && <div className="body-sm">Coding is unlocked. <button className="btn ghost sm" onClick={() => go(`/p/${p.id}/f/${fid}/build`)}>Go to Build →</button></div>}
             {uncovered.length > 0 && <div className="body-sm t-accent">Not covered by any screen: {uncovered.map((r) => r.id).join(', ')}. Add them to a screen before approving.</div>}
             <Field label="Approach"><textarea className="textarea" style={{ minHeight: 60 }} value={d.summary} onChange={(e) => setD({ summary: e.target.value })} /></Field>
-            <Field label={`This feature in ${p.spec.designTool ? TOOLS[p.spec.designTool.kind] : 'the design tool'}`} help="Link to the page or frame of this feature"><input className="input" value={d.url || ''} placeholder="https://www.figma.com/design/…?node-id=…" onChange={(e) => setD({ url: e.target.value || undefined })} /></Field>
+            <Field label={`This feature in ${p.spec.designTool ? TOOL_NAMES[p.spec.designTool.kind] : 'the design tool'}`} help="Link to the page or frame of this feature"><input className="input" value={d.url || ''} placeholder="https://www.figma.com/design/…?node-id=…" onChange={(e) => setD({ url: e.target.value || undefined })} /></Field>
             <Field label="Notes (accessibility, responsive, open questions)"><textarea className="textarea" style={{ minHeight: 60 }} value={d.notes || ''} onChange={(e) => setD({ notes: e.target.value })} /></Field>
           </section>
 

@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkFigmaUrl, checkMiroUrl, designFiles, isDesignAdmin, saveDesignFiles } from '../src/designLinks.ts';
+import { checkDesignInput, checkFigmaUrl, checkMiroUrl, designFiles, saveMainLink, isDesignAdmin, saveDesignFiles } from '../src/designLinks.ts';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const FIG = 'https://www.figma.com/design/79331aUkgSOKxR8y54x6fS/Compass';
@@ -17,9 +17,9 @@ test('TC-500 (REQ-080): Figma and Miro links are checked before they are saved',
     assert.equal(checkMiroUrl(ok), null, `${ok} is a Miro board link (or empty)`);
   }
   const badFigma = ['http://www.figma.com/design/abc/x', 'https://evil.com/figma.com/design/x', 'https://figma.com.evil.com/design/x', 'https://www.figma.com/files/recent', MIRO, 'figma.com/design/abc'];
-  badFigma.push('https://www.figma.com/community/file/123');
+  badFigma.push('https://www.figma.com/community/file/123', 'https://u:p@www.figma.com/design/abc/x', 'https://www.figma.com:8443/design/abc/x');
   for (const bad of badFigma) assert.match(checkFigmaUrl(bad) || '', /figma\.com design, file, proto or board link/, `${bad} is rejected`);
-  const badMiro = ['https://miro.com/about', 'http://miro.com/app/board/abc=/', 'https://evil.com/miro.com/app/board/abc=/', 'https://miro.com.evil.com/app/board/abc=/', FIG];
+  const badMiro = ['https://miro.com/about', 'https://miro.com:444/app/board/abc=/', 'https://u@miro.com/app/board/abc=/', 'http://miro.com/app/board/abc=/', 'https://evil.com/miro.com/app/board/abc=/', 'https://miro.com.evil.com/app/board/abc=/', FIG];
   for (const bad of badMiro) assert.match(checkMiroUrl(bad) || '', /Paste a Miro board link: https:\/\/miro\.com\/app\/board\//, `${bad} is rejected`);
 });
 
@@ -46,6 +46,20 @@ test('TC-501 (REQ-080, REQ-082): saving writes designTool and keeps old projects
   assert.deepEqual(saveDesignFiles(pen, { figma: '', miro: '' }), pen, 'the old link stays when the admin saves empty fields');
   // A Figma link replaces the old Penpot link.
   assert.deepEqual(saveDesignFiles(pen, { figma: FIG, miro: '' }), { kind: 'figma', url: FIG });
+  // An older Figma link that predates the checks (a Figma project page) does not block adding the Miro board.
+  const oldFig = { kind: 'figma', url: 'https://www.figma.com/files/team/123/project/456' };
+  assert.deepEqual(checkDesignInput(oldFig, { figma: oldFig.url, miro: MIRO }), {}, 'an unchanged stored link is not re-checked');
+  assert.deepEqual(saveDesignFiles(oldFig, { figma: oldFig.url, miro: MIRO }), { ...oldFig, miroUrl: MIRO });
+  assert.match(checkDesignInput(oldFig, { figma: 'https://evil.com/figma.com/design/x', miro: '' }).figma || '', /figma\.com design/, 'a changed link is checked');
+  assert.match(checkDesignInput(undefined, { figma: '', miro: 'https://miro.com/about' }).miro || '', /Miro board link/);
+  // The old one-link box on the Design page (until build 2) keeps the Miro board.
+  assert.deepEqual(saveMainLink(both, 'figma', 'https://www.figma.com/design/new/X'), { kind: 'figma', url: 'https://www.figma.com/design/new/X', miroUrl: MIRO });
+  assert.deepEqual(saveMainLink(both, 'penpot', 'https://design.penpot.app/x'), { kind: 'penpot', url: 'https://design.penpot.app/x', miroUrl: MIRO });
+  assert.deepEqual(saveMainLink(both, 'figma', ''), { kind: 'miro', url: MIRO }, 'clearing the main link keeps the Miro board');
+  assert.equal(saveMainLink(fig, 'figma', ''), undefined);
+  const design = read('src/pages/Design.tsx');
+  assert.match(design, /saveMainLink\(s\.designTool, tool\.kind, tool\.url\)/, 'the old box saves through saveMainLink');
+  assert.match(design, /filter\(\(\[k\]\) => k !== 'miro'\)/, 'the old box does not offer Miro');
   // Spaces around a pasted link are trimmed.
   assert.deepEqual(saveDesignFiles(undefined, { figma: `  ${FIG} `, miro: '' }), { kind: 'figma', url: FIG });
 });

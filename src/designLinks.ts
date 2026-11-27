@@ -7,7 +7,8 @@ export const TOOL_NAMES: Record<DesignToolKind, string> = { figma: 'Figma', miro
 export const FIGMA_HELP = 'A figma.com design, file, proto or board link';
 export const MIRO_HELP = 'Paste a Miro board link: https://miro.com/app/board/…';
 
-const parse = (raw: string) => { try { return new URL(raw); } catch { return null; } };
+/** A plain https URL: no port, no user name or password in it. */
+const parse = (raw: string) => { try { const u = new URL(raw); return u.protocol === 'https:' && !u.port && !u.username && !u.password ? u : null; } catch { return null; } };
 
 /** REQ-080: an https figma.com (or www.figma.com) link to a design, file, prototype or FigJam board. Empty is allowed. */
 export function checkFigmaUrl(raw: string): string | null {
@@ -57,6 +58,27 @@ export function saveDesignFiles(current: DesignTool | undefined, input: { figma:
   const main: DesignTool | undefined = figma ? { kind: 'figma', url: figma } : old ? { kind: old.kind, url: old.url } : miro ? { kind: 'miro', url: miro } : undefined;
   if (!main) return undefined;
   return main.kind !== 'miro' && miro ? { ...main, miroUrl: miro } : main;
+}
+
+/**
+ * REQ-080 / REQ-082: the field errors when the admin saves. A link is checked only when it changed, so an older
+ * project whose stored link predates these checks (e.g. a Figma project page) can still add its Miro board.
+ */
+export function checkDesignInput(current: DesignTool | undefined, input: { figma: string; miro: string }): { figma?: string; miro?: string } {
+  const f = designFiles(current);
+  const figma = input.figma.trim() === (f.figma || '') ? null : checkFigmaUrl(input.figma);
+  const miro = input.miro.trim() === (f.miro || '') ? null : checkMiroUrl(input.miro);
+  return { ...(figma ? { figma } : {}), ...(miro ? { miro } : {}) };
+}
+
+/**
+ * The old one-link box on the Design page (until build 2 replaces it): changes only the main link and keeps the Miro
+ * board. Clearing the main link leaves the Miro board as the one link.
+ */
+export function saveMainLink(current: DesignTool | undefined, kind: DesignToolKind, url: string): DesignTool | undefined {
+  const u = url.trim(), miro = designFiles(current).miro;
+  if (!u) return miro ? { kind: 'miro', url: miro } : undefined;
+  return miro && kind !== 'miro' ? { kind, url: u, miroUrl: miro } : { kind, url: u };
 }
 
 /** Who is looking: the role picker, and — when sign-in (Team access, F-015) is on — their roles in this project. */

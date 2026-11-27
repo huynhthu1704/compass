@@ -48,6 +48,10 @@ does the Design page (button, side panel, Miro preview) and names both files in 
   intent says. It is one function (`isDesignAdmin`, TC-502). It is a UI check: `designTool` lives in the repo's
   spec.json, which only people with GitHub write access can change anyway. In the demo project (no team) the role picker
   decides even with sign-in on, as Team access does for the demo (REQ-040).
+- **The old Design-page box could drop the Miro board** (review of #102). It now saves through `saveMainLink`, which
+  keeps `miroUrl`, and it no longer offers Miro (set on Project settings). TC-501 covers both.
+- **Old links that predate the checks** (e.g. a Figma project page) would block saving the Miro board. Only a changed
+  link is checked (`checkDesignInput`, TC-501). Links with a port or a user name/password are rejected (TC-500).
 - **The Design page still has its old editable box until build 2.** It keeps working on the same `designTool`
   (Figma, Penpot, Sketch, Other). A saved Miro link only appears on Project settings until build 2 lands.
 
