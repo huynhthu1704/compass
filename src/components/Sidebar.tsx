@@ -101,7 +101,7 @@ function ProjectGroup({ p, sync, sub, openId, fsub, link }: { p: Project; sync: 
               const st = open ? stageStatus(p, f.id) : null;
               return (
                 <div key={f.id} className="stack">
-                  <button aria-current={open && fsub === '' ? 'page' : undefined} aria-expanded={open} onClick={() => go(`/p/${p.id}/f/${f.id}`)} title={f.title}>
+                  <button aria-current={open && fsub === '' ? 'page' : undefined} onClick={() => go(`/p/${p.id}/f/${f.id}`)} title={f.title}>
                     <span className={`feature-dot ${f.stage === 'done' ? 'tone-success' : STAGE_INFO[f.stage].cls}`} aria-hidden />
                     <span className="nav-label">{f.name}</span>
                     <span className="feature-id">{f.short}</span>

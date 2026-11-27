@@ -86,4 +86,5 @@ test('TC-043 (REQ-023): account card and one theme button', () => {
   assert.match(src, /aria-label=\{theme\.label\}/);
   assert.match(src, /onClick=\{\(\) => store\.setSettings\(\{ theme: theme\.next \}\)\}/, 'the button switches to the other theme');
   assert.match(read('src/index.css'), /\.sidebar button:focus-visible[^{]*\{[^}]*var\(--focus-ring\)/, 'sidebar buttons show the focus ring (TC-040)');
+  assert.match(read('src/index.css'), /\.sidebar \.nav button\[aria-current="page"\]:focus-visible \{[^}]*var\(--focus-ring\)/, 'the current page keeps its focus ring next to the brand bar');
 });
