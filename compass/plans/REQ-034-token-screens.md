@@ -18,7 +18,8 @@ nits. Opening a shared project on a new device follows in its own PR. Still off 
   real project with no usable token; null otherwise
 - `src/pages/Release.tsx` — Release button disabled and the message shown when the token is missing
 - `src/harness.ts` also: `approveRun` (code changes) and `release()` stop with that message before writing anything
-  (first review of #98). The #97 nits for `src/pages/Team.tsx` and `src/firebase.ts` move to the next PR (file limit).
+  (first review of #98). A demo-mode run on a real repo never changes the spec; a live code change sets In build in
+  the store only after GitHub accepted the commit and the PR (`withReqsInBuild` in `src/team.ts`; second review). The #97 nits for `src/pages/Team.tsx` and `src/firebase.ts` move to the next PR (file limit).
 - `tests/team.test.mjs` — `missingTokenMessage` (TC-068 second clause)
 - `compass/spec.json` — REQ-034 In build; TC-068 Pass
 

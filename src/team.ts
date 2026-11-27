@@ -152,3 +152,9 @@ export function pickToken(own: string | undefined, projectToken: string | null |
 export function missingTokenMessage(signedIn: boolean): string {
   return signedIn ? "The project's GitHub token is missing or expired — ask an Admin" : 'Connect GitHub first';
 }
+
+/** A copy of the spec with these requirements In build; never changes the input. approveRun applies it to the store only
+ *  after GitHub accepted the commit and the pull request (REQ-034 AC4: nothing half-written on an expired token). */
+export function withReqsInBuild<S extends { requirements: { id: string; status: string }[] }>(spec: S, reqIds: string[] = []): S {
+  return { ...spec, requirements: spec.requirements.map((q) => (reqIds.includes(q.id) ? { ...q, status: 'In build' } : q)) };
+}
