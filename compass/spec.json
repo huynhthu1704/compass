@@ -1483,7 +1483,7 @@
       "featureId": "F-009",
       "title": "Handoffs are shown on phones too",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-phone-handoffs.md",
       "story": "As the product owner, I want to see work move between agents on my phone, so that I can follow the team away from my desk.",
       "ac": [
