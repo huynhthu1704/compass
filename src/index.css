@@ -393,7 +393,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .version-picker button[aria-pressed="true"] { background: var(--color-bg-brand-subtle); color: var(--color-text-brand); font-weight: 600; }
 .version-picker button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .version-marker { background: var(--color-bg-success-subtle); color: var(--color-text-success); border-radius: var(--radius-md); padding: var(--spacing-xs) var(--spacing-md); }
-.ac-line { white-space: pre-line; }
+.ac-line { white-space: pre-line; font-size: 13px; line-height: 20px; }
 .idea-list { margin: 2px 0 0; padding-left: 18px; }
 @media (max-width: 719px) {
   .quote-pill { min-height: 44px; min-width: 44px; }

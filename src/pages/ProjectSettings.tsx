@@ -27,7 +27,7 @@ export function ProjectSettingsPage({ p }: { p: Project }) {
   const { settings } = useStore();
   const session = useSession();
   const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
-  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!p.demo });
+  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!session.demo || !!p.demo });
   const files = designFiles(p.spec.designTool);
   const empty = !files.figma && !files.miro && !files.other;
   const [editing, setEditing] = useState(empty);

@@ -190,7 +190,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
             {prop?.tests && <section className="card stack gap-md">{prop.tests.map((t) => (
               <div key={t.id} className="stack gap-xs" data-quote-source={t.id}>
                 <div className="row gap-sm wrap"><span className="mono t-brand">{t.id}</span><strong>{t.title}</strong><Badge tone="info">{t.reqIds.join(', ')}</Badge><Badge>{t.type}</Badge><span className="grow" />{pill(t.id, `${t.id} · whole test`, testText(t))}</div>
-                <div className="mono-sm t-tertiary" style={{ whiteSpace: 'pre-line' }} data-quote-source={`${t.id} · gherkin`}>{t.gherkin}</div>
+                <div className="mono-sm t-tertiary ac-line" data-quote-source={`${t.id} · gherkin`}>{t.gherkin}</div>
               </div>
             ))}</section>}
 
@@ -234,7 +234,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
               </div>
               <div className="row gap-sm">
                 {!roleGate.allowed && <span id={`gate-hint-${r.id}`} className="body-sm t-tertiary">{roleGate.hint}</span>}
-                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying || !gate.ok || !roleGate.allowed} aria-describedby={roleGate.allowed ? undefined : `gate-hint-${r.id}`} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
+                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying || !gate.ok || !roleGate.allowed} aria-describedby={roleGate.allowed ? undefined : `gate-hint-${r.id}`} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo && r.mode !== 'demo' ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
                 <Button variant="secondary" disabled={busy || !!replying} onClick={() => { const why = prompt('Why reject? (recorded in the trace)') || 'No reason given'; rejectRun(p.id, r.id, why); }}>Reject</Button>
               </div>
             </section>

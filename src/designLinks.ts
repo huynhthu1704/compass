@@ -93,6 +93,6 @@ export function mainLink(tool?: DesignTool): { kind: Exclude<DesignToolKind, 'mi
 export type Viewer = { role?: Role | string; signIn: 'off' | 'loading' | 'signed-out' | 'signed-in'; superAdmin: boolean; projectRoles: string[]; demo?: boolean };
 
 /** REQ-080: who may change the design files. With sign-in on: the project's Admin or the super admin (Team access,
- *  F-015). With sign-in off, or in the demo project (which has no team; REQ-040 lets a signed-in person pick a role
- *  there): the PO role from the role picker. */
+ *  F-015). With sign-in off, or in the demo (`session.demo` or a demo project: no team, and REQ-040 lets a signed-in
+ *  person pick a demo role): the PO role from the role picker. */
 export const isDesignAdmin = (v: Viewer) => (v.signIn === 'off' || v.demo ? v.role === 'PO' : v.superAdmin || v.projectRoles.includes('Admin'));

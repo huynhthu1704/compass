@@ -21,7 +21,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   // REQ-080: only the project admin may change the design link here too (the old box stays until build 2, REQ-081).
   const session = useSession();
   const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
-  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!p.demo });
+  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!session.demo || !!p.demo });
   const [editTool, setEditTool] = useState(false);
   const [approving, setApproving] = useState(false);
   const [tool, setTool] = useState<DesignTool>(() => mainLink(p.spec.designTool));

@@ -86,7 +86,7 @@ test('TC-502 (REQ-080): only the admin role edits; the page shows the hint and t
   assert.equal(isDesignAdmin({ role: 'PO', signIn: 'signed-in', superAdmin: false, projectRoles: [], demo: true }), true, 'demo with sign-in on: the role picker (REQ-040)');
   assert.equal(isDesignAdmin({ role: 'BA', signIn: 'signed-in', superAdmin: false, projectRoles: [], demo: true }), false);
   const src = read('src/pages/ProjectSettings.tsx');
-  assert.match(src, /isDesignAdmin\(\{ role: settings\.role, signIn: session\.status, superAdmin: session\.superAdmin, projectRoles, demo: !!p\.demo \}\)/);
+  assert.match(src, /isDesignAdmin\(\{ role: settings\.role, signIn: session\.status, superAdmin: session\.superAdmin, projectRoles, demo: !!session\.demo \|\| !!p\.demo \}\)/);
   assert.match(src, /Only the project admin can change the design files\./);
   assert.match(src, /No design files linked yet\./);
   assert.match(src, /saveDesignFiles\(/);
