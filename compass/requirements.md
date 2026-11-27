@@ -38,10 +38,10 @@
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
-| REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202 |
+| REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216 |
 | REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
-| REQ-053 | F-020 | Proposal versions and compare | Should | Approved | TC-209, TC-210, TC-211 |
+| REQ-053 | F-020 | Proposal versions and compare | Should | Approved | TC-209, TC-210, TC-211, TC-216 |
 | REQ-054 | F-020 | The conversation is kept with the run, safely | Should | Approved | TC-212, TC-213 |
 | REQ-063 | F-009 | Handoffs are shown on phones too | Should | Approved | TC-311, TC-312, TC-313, TC-314, TC-315 |
 

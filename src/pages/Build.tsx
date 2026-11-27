@@ -46,7 +46,7 @@ export function BuildPage({ p, fid }: { p: Project; fid: string }) {
 
       <AgentBox key={sel.join(',')} p={p} agentId="coder" featureId={fid} reqIds={sel} cta="Implement with agent" defaultGoal={chosen.map((r) => r.title).join(' + ') || 'Implement the selected requirements'} disabled={!designOk ? 'The design of this feature is not approved yet — approve it in the Design stage before coding.' : !sel.length ? 'Select at least one requirement.' : undefined} hint={p.repo && !p.demo ? `Approval will create branch compass/${fid.toLowerCase()}-${sel.join('-').toLowerCase()}-… on ${p.repo.owner}/${p.repo.name} and open a PR. CI (tests + spec check) runs on it.` : 'Demo / local project: the PR step is simulated.'} />
 
-      {latest && !['running', 'awaiting-approval', 'failed'].includes(latest.status) && <section className="card pad-xl"><RunView p={p} r={latest} /></section>}
+      {latest && !['running', 'awaiting-approval', 'failed'].includes(latest.status) && <section className="card pad-xl"><RunView key={latest.id} p={p} r={latest} /></section>}
 
       {runs.length > 0 && (
         <section className="stack gap-md">

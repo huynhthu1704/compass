@@ -2377,6 +2377,17 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given a live project with an Anthropic API key and a coding run awaiting approval\nWhen I quote one file and click Revise\nThen the trace shows the guardrails and evaluation of v2, the approval card shows their new results, and Approve v2 is enabled only after they finished"
+    },
+    {
+      "id": "TC-216",
+      "reqIds": [
+        "REQ-050",
+        "REQ-053"
+      ],
+      "title": "Quotes and the version being read stay with their run",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a quote in the reply box of a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run's reply box is empty and it shows its own latest version"
     }
   ],
   "decisions": [

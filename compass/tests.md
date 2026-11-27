@@ -39,10 +39,10 @@
 | REQ-072 The feature list is readable | TC-403 (Not run), TC-405 (Not run) |
 | REQ-073 The account footer shows the connection, the role and one theme button | TC-404 (Not run), TC-405 (Not run) |
 | REQ-074 The portal shows no "AI dev portal" tagline | TC-406 (Not run) |
-| REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run) |
+| REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run), TC-216 (Not run) |
 | REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run), TC-214 (Not run) |
 | REQ-052 Revise the proposal from the quoted text | TC-206 (Not run), TC-207 (Not run), TC-208 (Not run), TC-215 (Not run) |
-| REQ-053 Proposal versions and compare | TC-209 (Not run), TC-210 (Not run), TC-211 (Not run) |
+| REQ-053 Proposal versions and compare | TC-209 (Not run), TC-210 (Not run), TC-211 (Not run), TC-216 (Not run) |
 | REQ-054 The conversation is kept with the run, safely | TC-212 (Not run), TC-213 (Not run) |
 | REQ-063 Handoffs are shown on phones too | TC-311 (Not run), TC-312 (Not run), TC-313 (Not run), TC-314 (Not run), TC-315 (Not run) |
 
@@ -765,4 +765,12 @@ Covers: REQ-052 · Type: Manual · Status: Not run
 Given a live project with an Anthropic API key and a coding run awaiting approval
 When I quote one file and click Revise
 Then the trace shows the guardrails and evaluation of v2, the approval card shows their new results, and Approve v2 is enabled only after they finished
+```
+
+## TC-216 · Quotes and the version being read stay with their run
+Covers: REQ-050, REQ-053 · Type: Automated · Status: Not run
+```gherkin
+Given a quote in the reply box of a run shown in the agent box
+When a new run is started from the same box (or another run is opened)
+Then the new run's reply box is empty and it shows its own latest version
 ```

@@ -43,7 +43,7 @@ export function RunPage({ p, rid }: { p: Project; rid: string }) {
   return (
     <div className="stack gap-lg">
       <div><Button variant="ghost" size="sm" onClick={() => go(`/p/${p.id}/runs`)}>← All runs</Button></div>
-      <RunView p={p} r={r} />
+      <RunView key={r.id} p={p} r={r} />
     </div>
   );
 }
