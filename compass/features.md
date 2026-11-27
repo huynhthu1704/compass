@@ -6,7 +6,7 @@ Each feature is one business intent moving through Idea → Requirements → Tes
 |---|---|---|---|---|
 | [F-001 Idea: business need → business intent](features/F-001.md) | Design | [—](design/F-001.md) | 3 | 5 |
 | [F-002 Requirements: generate and approve](features/F-002.md) | Released | [—](design/F-002.md) | 1 | 1 |
-| [F-003 Design: design tool and approval gate](features/F-003.md) | Released | [—](design/F-003.md) | 1 | 2 |
+| [F-003 Design: design tool and approval gate](features/F-003.md) | Requirements | [—](design/F-003.md) | 4 | 8 |
 | [F-004 Test cases: one or more per requirement](features/F-004.md) | Released | [—](design/F-004.md) | 1 | 1 |
 | [F-005 Build: coding agent, plan and pull request](features/F-005.md) | Released | [—](design/F-005.md) | 1 | 1 |
 | [F-006 Release: merge, tag and deploy](features/F-006.md) | Released | [—](design/F-006.md) | 1 | 1 |

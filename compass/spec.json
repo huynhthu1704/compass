@@ -1493,6 +1493,47 @@
         "Given several handoffs within the same 4 seconds\nWhen the strip is shown on a phone\nThen it lists each of them, newest first, one line per handoff (at most 3)",
         "Given no handoff in the last 4 seconds, or a screen 720 px or wider\nWhen the Team floor is shown\nThen there is no strip (desktop keeps the corridor as today)"
       ]
+    },
+    {
+      "id": "REQ-080",
+      "featureId": "F-003",
+      "title": "The admin links the project's Figma file and Miro board on the project page",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-27-project-design-files.md",
+      "story": "As the project admin, I want to set the project's Figma file and Miro board once on the project page, so that everyone on the project works from the right design files.",
+      "ac": [
+        "Given I am the project admin (the PO role until Team access, F-015, is merged) and a project is open\nWhen I open the project page (Feature board)\nThen a \"Design files\" card shows a Figma file field and a Miro board field, both optional, and I can save, change or clear each one; the saved links are written to compass/spec.json → designTool",
+        "Given I enter a Figma link that is not an https://www.figma.com/ design, file, proto or board link, or a Miro link that is not an https://miro.com/app/board/ link\nWhen I save\nThen the field shows an error naming the link expected and nothing is saved",
+        "Given my role is not the admin role\nWhen I open the project page\nThen the \"Design files\" card shows the linked files with an \"Open ↗\" button each, no edit fields, and the hint \"Only the project admin can change the design files\""
+      ]
+    },
+    {
+      "id": "REQ-081",
+      "featureId": "F-003",
+      "title": "Every Design page shows the project's design files read-only, with a preview",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-27-project-design-files.md",
+      "story": "As anyone working on a feature's design, I want to see and preview the project's Figma file and Miro board on the Design page, so that I can open the right file without asking.",
+      "ac": [
+        "Given a project with a Figma link, a Miro link or both\nWhen I open any feature's Design page\nThen the \"Project design files\" card shows a badge and an \"Open ↗\" button for each linked tool, no edit fields, and for the admin a \"Change on the project page\" link",
+        "Given a Miro board is linked\nWhen I open the Design page\nThen the board is previewed with Miro's live embed; a Figma file or the feature's Figma frame link is previewed with the Figma embed as today; on a phone each preview fits the screen width",
+        "Given no design file is linked\nWhen I open the Design page\nThen the card says \"No design files linked yet\", and the admin also sees a link to the project page"
+      ]
+    },
+    {
+      "id": "REQ-082",
+      "featureId": "F-003",
+      "title": "Projects with the old single design link keep working, and agents name both files",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-27-project-design-files.md",
+      "story": "As a team with an existing project, I want my current design link to keep working and the agents to know both design files, so that nothing has to be fixed by hand.",
+      "ac": [
+        "Given a compass/spec.json whose designTool has only kind and url (Figma, Penpot, Sketch or Other)\nWhen the portal opens the project\nThen that link is shown under its tool on the project page and the Design page, and saving the Miro link keeps designTool.kind and designTool.url unchanged",
+        "Given a project with a Figma file and a Miro board linked\nWhen the design agent runs or the portal generates AGENTS.md\nThen both tools and their links are named in the agent's prompt and in AGENTS.md"
+      ]
     }
   ],
   "tests": [
@@ -2388,6 +2429,68 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given a quote in the reply box of a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run's reply box is empty and it shows its own latest version"
+    },
+    {
+      "id": "TC-500",
+      "reqIds": [
+        "REQ-080"
+      ],
+      "title": "Design links are checked before they are saved",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the design-link check\nWhen it gets https://www.figma.com/design/abc/File, https://figma.com/file/abc, https://miro.com/app/board/uXjVAbc=/, an http:// link, https://evil.com/figma.com/design/x and https://miro.com/about\nThen the Figma and Miro board links are accepted for their own tool and every other link is rejected with a message naming the link expected"
+    },
+    {
+      "id": "TC-501",
+      "reqIds": [
+        "REQ-080",
+        "REQ-082"
+      ],
+      "title": "Saving design links writes designTool and keeps old projects working",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a spec with designTool {kind: 'figma', url} and another with {kind: 'penpot', url}\nWhen a Miro link is saved, then cleared, and the Figma link is cleared\nThen designTool keeps kind and url while they are set, holds the Miro link next to them, and designTool is removed only when no link is left"
+    },
+    {
+      "id": "TC-502",
+      "reqIds": [
+        "REQ-080",
+        "REQ-081"
+      ],
+      "title": "Only the admin role can edit the design files",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a project with a Figma file and a Miro board linked\nWhen I pick the PO role and open the Feature board, then pick the BA role and open it again and open a feature's Design page\nThen as PO the Design files card has edit fields and Save; as BA it shows both links with Open ↗, no fields and the hint \"Only the project admin can change the design files\"; the Design page has no edit fields for either role"
+    },
+    {
+      "id": "TC-503",
+      "reqIds": [
+        "REQ-081"
+      ],
+      "title": "Miro and Figma previews on the Design page",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the embed helpers\nWhen they get a Miro board link https://miro.com/app/board/uXjVAbc=/?share_link_id=1 and a Figma file link\nThen the Miro preview URL is https://miro.com/app/live-embed/uXjVAbc=/ and the Figma preview URL is the Figma embed URL; any other link gives no preview"
+    },
+    {
+      "id": "TC-504",
+      "reqIds": [
+        "REQ-082"
+      ],
+      "title": "Agents and AGENTS.md name both design files",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a project with designTool {kind: 'figma', url: <figma>, miroUrl: <miro>}\nWhen the design agent prompt and AGENTS.md are generated\nThen both contain the Figma link and the Miro link"
+    },
+    {
+      "id": "TC-505",
+      "reqIds": [
+        "REQ-081"
+      ],
+      "title": "Design files on a phone",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a 390 px wide screen and a project with both links\nWhen I open the Feature board and a feature's Design page\nThen the Design files cards and both previews fit the screen width with no sideways scrolling, and every button is reachable with the keyboard with a visible focus ring"
     }
   ],
   "decisions": [
