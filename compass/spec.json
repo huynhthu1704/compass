@@ -3156,7 +3156,7 @@
       ],
       "title": "The demo never touches Firebase, GitHub or real projects",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a signed-in person in the demo with role QA\nWhen the portal lists projects and saves an approval\nThen only demo projects are listed, the approval is saved locally with approvedBy \"QA\", and no Firestore or GitHub call is made"
     },
     {

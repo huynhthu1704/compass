@@ -190,3 +190,12 @@ export function startScreen(s: { firebase: boolean; status: string; demo: boolea
   if (s.demo) return s.hasRole ? 'app' : 'role-picker';
   return s.hasAccess ? 'app' : 'no-access';
 }
+
+/** Which local projects a person sees (REQ-032 AC2, REQ-040 AC2/AC3). Sign-in off: all. In the demo: only the sample
+ *  projects — never a real project, its team or its token. Otherwise: the super admin all, others their team projects. */
+export function projectVisible(p: { repo: { owner: string; name: string } | null; demo?: boolean }, s: { status: string; demo?: boolean; superAdmin: boolean; accessIds: string[] }): boolean {
+  if (s.status === 'off') return true;
+  if (s.demo) return !!p.demo;
+  if (s.superAdmin) return true;
+  return !!p.repo && s.accessIds.includes(`${p.repo.owner}__${p.repo.name}`.toLowerCase());
+}

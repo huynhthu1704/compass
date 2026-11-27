@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, gateForAgent, startScreen, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, gateForAgent, projectVisible, startScreen, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -171,4 +171,13 @@ test('TC-075 (REQ-039, REQ-040): the role picker is shown only without Firebase 
   assert.equal(on({ status: 'loading' }), 'loading');
   assert.equal(startScreen({ firebase: false, status: 'off', demo: false, hasRole: false, hasAccess: false }), 'role-picker', 'sign-in off: as today');
   assert.equal(startScreen({ firebase: false, status: 'off', demo: false, hasRole: true, hasAccess: false }), 'app');
+});
+
+test('TC-076 (REQ-040 AC2/AC3): in the demo only sample projects are visible; never a real project', () => {
+  const real = { repo: { owner: 'O', name: 'Travel' } }, sample = { repo: null, demo: true }, local = { repo: null };
+  const demo = { status: 'signed-in', demo: true, superAdmin: true, accessIds: ['o__travel'] };
+  assert.deepEqual([real, sample, local].map((p) => projectVisible(p, demo)), [false, true, false], 'even the super admin sees only samples in the demo');
+  const member = { status: 'signed-in', demo: false, superAdmin: false, accessIds: ['o__travel'] };
+  assert.deepEqual([real, sample, local].map((p) => projectVisible(p, member)), [true, false, false]);
+  assert.equal(projectVisible(real, { status: 'off', superAdmin: false, accessIds: [] }), true, 'sign-in off: as before');
 });

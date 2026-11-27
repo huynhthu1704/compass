@@ -74,14 +74,15 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
         {signedIn && (
           <div className="row gap-sm wrap">
             {session.demo
-              ? <button className="btn secondary sm" onClick={() => { store.setSettings({ role: undefined }); leaveDemo(); go('/'); }}>Leave demo</button>
+              ? <button className="btn secondary sm" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</button>
               : <button className="btn secondary sm" onClick={() => enterDemo()}>Try the demo</button>}
             <button className="btn secondary sm" onClick={() => void signOut()}>Sign out</button>
           </div>
         )}
         {/* REQ-039: with sign-in on, roles come from the team (read-only); the role picker is only for the demo */}
-        {signedIn && !session.demo && p?.repo && <div className="body-sm t-secondary" aria-label="My roles">My roles: {myRoles.length ? myRoles.join(' · ') : session.superAdmin ? 'super admin' : '—'}</div>}
+        {signedIn && !session.demo && p?.repo && <div className="body-sm t-secondary" data-testid="my-roles">My roles: {myRoles.length ? myRoles.join(' · ') : session.superAdmin ? 'super admin' : '—'}</div>}
         <div className="row gap-sm">
+          {signedIn && session.demo && <span className="body-sm t-secondary">Demo role</span>}
           {(!signedIn || session.demo) && <select className="select role-select" value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label={session.demo ? 'Demo role' : 'Your role'}>
             {ROLES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>}

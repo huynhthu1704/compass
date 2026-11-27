@@ -14,7 +14,8 @@ export function ProjectsPage() {
   const session = useSession();
   const projects = all.filter((p) => canSeeProject(p, session)); // F-015 REQ-032: only projects whose team lists me
   // F-015: shared projects not on this device yet, opened from GitHub with the project's shared token (REQ-034).
-  const shared = session.status === 'signed-in' ? sharedToOpen(session.access, all.map((p) => p.repo)) : [];
+  const shared = session.status === 'signed-in' && !session.demo ? sharedToOpen(session.access, all.map((p) => p.repo)) : []; // never in the demo (REQ-040 AC3)
+  const inDemo = !!session.demo;
   const [opening, setOpening] = useState<string | null>(null);
   const [openErr, setOpenErr] = useState<string | null>(null);
   const openShared = async (a: ProjectAccess) => {
@@ -37,8 +38,8 @@ export function ProjectsPage() {
         sub="Every project is a GitHub repository with the Compass Framework: idea → requirements → test cases → code (agent PRs) → release."
         right={<>
           <Button variant="secondary" onClick={openDemo}>Open demo project</Button>
-          <Button variant="secondary" onClick={() => go('/import')} disabled={!settings.githubToken} title={settings.githubToken ? '' : 'Connect GitHub first'}>Import from GitHub</Button>
-          <Button variant="accent" onClick={() => go('/new')}>+ New project</Button>
+          {!inDemo && <Button variant="secondary" onClick={() => go('/import')} disabled={!settings.githubToken} title={settings.githubToken ? '' : 'Connect GitHub first'}>Import from GitHub</Button>}
+          {!inDemo && <Button variant="accent" onClick={() => go('/new')}>+ New project</Button>}
         </>}
       />
       {openErr && <p className="body-sm t-danger" role="alert">{openErr}</p>}
@@ -59,8 +60,8 @@ export function ProjectsPage() {
       )}
       {!projects.length && shared.length > 0 ? null : !projects.length ? (
         <div className="grid-3">
-          <button className="action-card recommended" onClick={() => go('/new')} style={{ padding: 24 }}><Badge tone="accent">Start</Badge><div className="h3">New idea → new repo</div><div className="t-secondary">Describe the idea. Compass creates the GitHub repo with the framework, a starter site, CI and Pages deploy.</div></button>
-          <button className="action-card" onClick={() => (settings.githubToken ? go('/import') : go('/connect'))} style={{ padding: 24 }}><Badge tone="brand">Existing</Badge><div className="h3">Import a GitHub repo</div><div className="t-secondary">Pick any of your repos. Compass indexes it for RAG and installs the framework through a pull request.</div></button>
+{!inDemo && <><button className="action-card recommended" onClick={() => go('/new')} style={{ padding: 24 }}><Badge tone="accent">Start</Badge><div className="h3">New idea → new repo</div><div className="t-secondary">Describe the idea. Compass creates the GitHub repo with the framework, a starter site, CI and Pages deploy.</div></button>
+          <button className="action-card" onClick={() => (settings.githubToken ? go('/import') : go('/connect'))} style={{ padding: 24 }}><Badge tone="brand">Existing</Badge><div className="h3">Import a GitHub repo</div><div className="t-secondary">Pick any of your repos. Compass indexes it for RAG and installs the framework through a pull request.</div></button></>}
           <button className="action-card" onClick={openDemo} style={{ padding: 24 }}><Badge>No keys needed</Badge><div className="h3">Explore the demo</div><div className="t-secondary">A sample project with requirements, tests, an agent PR and a release — all stages work in demo mode.</div></button>
         </div>
       ) : (

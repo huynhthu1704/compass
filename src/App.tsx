@@ -21,12 +21,10 @@ import { FeaturePage } from './pages/Feature';
 import { useStore } from './store';
 import { Toaster } from './ui';
 import { Sidebar } from './components/Sidebar';
-import { canSeeProject, firebaseEnabled, loadProjectToken, projectKey, startSession, useProjectToken, useSession } from './firebase';
+import { canSeeProject, firebaseEnabled, leaveDemo, loadProjectToken, projectKey, startSession, useProjectToken, useSession } from './firebase';
 import { tokenFor } from './token';
 import { NoAccessPage, SignInPage } from './pages/SignIn';
 import { startScreen } from './team';
-import { leaveDemo } from './firebase';
-import { store } from './store';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -51,7 +49,7 @@ export default function App() {
   useEffect(() => { void startSession(); }, []);
   const session = useSession();
   // F-015 REQ-034: when a signed-in person opens a project, load its shared GitHub token (members may read it).
-  const openRepo = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1])?.repo : undefined;
+  const openRepo = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1] && canSeeProject(x, session))?.repo : undefined;
   const openKey = openRepo && session.status === 'signed-in' ? projectKey(openRepo) : '';
   useEffect(() => { if (openKey) loadProjectToken(openKey).catch(() => undefined); }, [openKey]);
   useProjectToken(openKey); // re-render when the project token arrives, so the sync label and GitHub actions use it
@@ -69,7 +67,9 @@ export default function App() {
   const p = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1] && canSeeProject(x, session)) : undefined;
   const sub = parts[2] || '';
   let page;
-  if (parts[0] === 'connect') page = <ConnectPage />;
+  // REQ-040 AC3: the demo never creates or imports real repositories.
+  if (session.demo && ['new', 'import'].includes(parts[0])) page = <ProjectsPage />;
+  else if (parts[0] === 'connect') page = <ConnectPage />;
   else if (parts[0] === 'new') page = <NewProjectPage />;
   else if (parts[0] === 'import') page = <ImportPage />;
   else if (parts[0] === 'architecture') page = <ArchitecturePage />;
@@ -95,7 +95,7 @@ export default function App() {
           {session.demo && (
             <div className="row gap-md wrap" role="status" style={{ padding: '12px 16px', marginBottom: 16, borderRadius: 12, background: 'var(--color-bg-brand-subtle)', border: '1px solid var(--color-border-brand)', alignItems: 'center' }}>
               <span className="stack grow"><strong className="body-sm">Demo — sample data, kept in this browser only</strong><span className="body-sm t-secondary">Nothing here is saved to GitHub or Firebase. Your real projects are not shown while you are in the demo.</span></span>
-              <button className="btn secondary sm" onClick={() => { store.setSettings({ role: undefined }); leaveDemo(); go('/'); }}>Leave demo</button>
+              <button className="btn secondary sm" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</button>
             </div>
           )}
           {page}
