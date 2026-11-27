@@ -614,12 +614,12 @@ When the quote target is computed
 Then only the selection fully inside the answer of a finished run gets a Quote button
 ```
 
-## TC-202 · Quoting on a phone and by keyboard; removing a quote
+## TC-202 · Quoting on a phone and by keyboard opens a reply card
 Covers: REQ-050 · Type: Manual · Status: Not run
 ```gherkin
 Given a run at 390 px wide and with the keyboard only
-When I long-press text and tap Quote, Tab to an item's Quote icon and press Enter, then press × on the first quote
-Then both quotes were added, the reply box got the focus, and only the first quote is removed
+When I long-press text in the answer and tap Quote, and Tab to an item's Quote icon and press Enter
+Then each opens its own reply card in the page under the answer, its message field has the focus and is scrolled into view, and Cancel (or Esc) closes it with the focus moving to the next card or the Ask box
 ```
 
 ## TC-203 · Ask adds an answer and leaves the proposal unchanged
@@ -780,9 +780,9 @@ Then the trace shows the guardrails and evaluation of v2, the approval card show
 ## TC-216 · Quotes and the version being read stay with their run
 Covers: REQ-050, REQ-053 · Type: Automated · Status: Not run
 ```gherkin
-Given a quote in the reply box of a run shown in the agent box
+Given an open reply card in a run shown in the agent box
 When a new run is started from the same box (or another run is opened)
-Then the new run's reply box is empty and it shows its own latest version
+Then the new run shows no reply card and it shows its own latest version
 ```
 
 ## TC-090 · Trace folded by default once the run stops working; toggle switches it

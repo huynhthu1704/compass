@@ -2283,10 +2283,10 @@
       "reqIds": [
         "REQ-050"
       ],
-      "title": "Quoting on a phone and by keyboard; removing a quote",
+      "title": "Quoting on a phone and by keyboard opens a reply card",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given a run at 390 px wide and with the keyboard only\nWhen I long-press text and tap Quote, Tab to an item's Quote icon and press Enter, then press × on the first quote\nThen both quotes were added, the reply box got the focus, and only the first quote is removed"
+      "gherkin": "Given a run at 390 px wide and with the keyboard only\nWhen I long-press text in the answer and tap Quote, and Tab to an item's Quote icon and press Enter\nThen each opens its own reply card in the page under the answer, its message field has the focus and is scrolled into view, and Cancel (or Esc) closes it with the focus moving to the next card or the Ask box"
     },
     {
       "id": "TC-203",
@@ -2487,7 +2487,7 @@
       "title": "Quotes and the version being read stay with their run",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a quote in the reply box of a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run's reply box is empty and it shows its own latest version"
+      "gherkin": "Given an open reply card in a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run shows no reply card and it shows its own latest version"
     },
     {
       "id": "TC-090",

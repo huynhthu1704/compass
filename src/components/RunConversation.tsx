@@ -9,14 +9,13 @@ import { replyingNow, replyToRun } from '../followUp';
 import type { Project, Quote, Run, RunVersion } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
 
-export function QuoteBlock({ q, onRemove }: { q: Quote; onRemove?: () => void }) {
+export function QuoteBlock({ q }: { q: Quote }) {
   return (
     <div className="quote-block">
       <div className="grow" style={{ minWidth: 0 }}>
         <div className="quote-src">{q.source}</div>
         <div className="quote-text">{q.text}</div>
       </div>
-      {onRemove && <button type="button" className="quote-x" onClick={onRemove} aria-label={`Remove quote ${q.source}`}>×</button>}
     </div>
   );
 }

@@ -25,6 +25,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const [compareN, setCompareN] = useState<number | null>(null);
   const [pop, setPop] = useState<{ x: number; y: number; source: string; text: string } | null>(null);
   const answerRef = useRef<HTMLDivElement>(null);
+  const repliesRef = useRef<HTMLDivElement>(null);
   const replying = replyingNow(r); // a stored flag from an interrupted follow-up does not count
   const gate = canApprove(r);
   // REQ-045: her own fold/unfold choice, kept per run; null until she uses the toggle
@@ -48,6 +49,13 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
     const q = makeQuote(source, text);
     if (!q) return;
     setCards((cs) => [...cs, { id: uid(), quote: q }]); // the new card focuses its message field and scrolls into view
+  };
+
+  /** Closes one card; keyboard focus moves to the next open card, or the Ask box, so nobody loses their place. */
+  const closeCard = (id: string) => {
+    const i = cards.findIndex((x) => x.id === id);
+    setCards((cs) => cs.filter((x) => x.id !== id));
+    setTimeout(() => { const fields = repliesRef.current?.querySelectorAll<HTMLTextAreaElement>('textarea'); fields?.[Math.min(Math.max(i, 0), fields.length - 1)]?.focus(); }, 0);
   };
 
   // A selection fully inside the answer of a finished run shows the floating Quote button (REQ-050)
@@ -195,8 +203,10 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
             )}
           </div>
 
-          {canReply && cards.map((c) => <ReplyCard key={c.id} p={p} r={r} card={c} onClose={() => setCards((cs) => cs.filter((x) => x.id !== c.id))} />)}
-          {canReply && <AskBox p={p} r={r} />}
+          {canReply && <div ref={repliesRef} className="stack gap-md">
+            {cards.map((c) => <ReplyCard key={c.id} p={p} r={r} card={c} onClose={() => closeCard(c.id)} />)}
+            <AskBox p={p} r={r} />
+          </div>}
 
           {r.status === 'awaiting-approval' && (
             <section className="card stack gap-md" style={{ borderColor: 'var(--color-bg-accent)', background: 'var(--color-bg-accent-subtle)' }}>
