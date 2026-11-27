@@ -1473,9 +1473,10 @@
       "intent": "compass/intent/2026-11-27-phone-handoffs.md",
       "story": "As the product owner, I want to see work move between agents on my phone, so that I can follow the team away from my desk.",
       "ac": [
-        "Given a screen narrower than 720 px\nWhen a run is handed to the next agent within the last 4 seconds\nThen a strip above the desks shows \"<from agent> [card with the feature or REQ ids] → <to agent>\" and \"Handed to the <to agent> — it starts now\", in honey, and the receiving desk is marked with a honey ring",
+        "Given a screen narrower than 720 px\nWhen a run is handed to the next agent within the last 4 seconds\nThen a strip inside the floor, above the desks, shows \"<from agent> [card with the feature or REQ ids] → <to agent>\" and the sentence \"Handed to the <to agent name> — it starts now\" (for example \"Handed to the Requirements agent — it starts now\"), in honey, and the receiving desk is marked with a honey ring",
         "Given a screen narrower than 720 px\nWhen a review sends a change set back within the last 4 seconds\nThen the strip shows \"Coding ← [↩ <findings>] Review\" and \"The review sent the work back to the Coding agent\", in coral, and the Coding desk is marked with a coral ring",
         "Given reduced motion or Pause motion\nWhen a handoff is shown on a phone\nThen nothing slides: the strip simply appears and disappears after 4 seconds",
+        "Given several handoffs within the same 4 seconds\nWhen the strip is shown on a phone\nThen it lists each of them, newest first, one line per handoff (at most 3)",
         "Given no handoff in the last 4 seconds, or a screen 720 px or wider\nWhen the Team floor is shown\nThen there is no strip (desktop keeps the corridor as today)"
       ]
     }
@@ -2291,7 +2292,7 @@
       "title": "Strip content for forward and back handoffs",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a recent approval of a Requirements run for REQ-005, REQ-006 and a recent blocking review of a Coding run\nWhen the phone handoff strip items are computed\nThen the forward item reads Requirements → Design with \"REQ-005, REQ-006\" and the back item reads Review → Coding with \"1 finding\", each with its sentence and its receiving desk"
+      "gherkin": "Given a recent approval of a Requirements run for REQ-005, REQ-006 and, 1 second later, a recent blocking review of a Coding run\nWhen the phone handoff strip items are computed\nThen the back item comes first and reads Review → Coding with \"1 finding\" and \"The review sent the work back to the Coding agent\"; the forward item reads Requirements → Design with \"REQ-005, REQ-006\" and \"Handed to the Design agent — it starts now\"; each names its receiving desk\nAnd with 4 recent handoffs only the newest 3 are listed"
     },
     {
       "id": "TC-312",
@@ -2301,7 +2302,7 @@
       "title": "Strip and desk ring on a 390 px phone",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given demo mode at 390 px\nWhen I approve a waiting Ideation run\nThen the honey strip shows Ideation → Requirements above the desks, the Requirements desk has a honey ring, and both disappear after about 4 seconds"
+      "gherkin": "Given demo mode at 390 px\nWhen I approve a waiting Ideation run\nThen the honey strip shows Ideation → Requirements above the desks with its sentence, the Requirements desk has a honey ring, and both disappear after about 4 seconds\nAnd when a review sends a Coding run back, the coral strip shows Coding ← [↩ 1 finding] Review with its sentence, the Coding desk has a coral ring, and both disappear after about 4 seconds"
     },
     {
       "id": "TC-313",
@@ -2311,7 +2312,7 @@
       "title": "No sliding with reduced motion or Pause",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given src/index.css\nWhen the test reads the phone strip rules\nThen its animation is only inside @media (prefers-reduced-motion: no-preference) and .floor:not(.paused)"
+      "gherkin": "Given src/index.css and src/pages/TeamFloor.tsx\nWhen the test reads the phone strip\nThen the strip is rendered inside section.floor (so Pause motion applies) and its animation is only inside @media (prefers-reduced-motion: no-preference) and .floor:not(.paused)"
     },
     {
       "id": "TC-314",
@@ -2322,6 +2323,16 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given the Team floor page and CSS\nWhen there is no recent handoff, or the screen is 720 px or wider\nThen no strip is rendered (no handoffs) and the strip is hidden from 720 px"
+    },
+    {
+      "id": "TC-315",
+      "reqIds": [
+        "REQ-063"
+      ],
+      "title": "Back handoffs use coral, forward handoffs use honey",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given src/index.css and src/pages/TeamFloor.tsx\nWhen the test reads the strip and desk-ring rules\nThen a back strip and the ring on its receiving desk use the danger (coral) tokens, and a forward strip and its ring use the brand (honey) tokens"
     }
   ],
   "decisions": [

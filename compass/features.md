@@ -12,7 +12,7 @@ Each feature is one business intent moving through Idea → Requirements → Tes
 | [F-006 Release: merge, tag and deploy](features/F-006.md) | Released | [—](design/F-006.md) | 1 | 1 |
 | [F-007 Compass Framework: install into repos safely](features/F-007.md) | Released | [—](design/F-007.md) | 1 | 1 |
 | [F-008 Compass follows its own delivery process](features/F-008.md) | Release | [—](design/F-008.md) | 4 | 4 |
-| [F-009 Team floor: watch the agent team work, live](features/F-009.md) | Build | [Approved](design/F-009.md) | 9 | 23 |
+| [F-009 Team floor: watch the agent team work, live](features/F-009.md) | Build | [Approved](design/F-009.md) | 9 | 24 |
 | [F-010 Honey brand: Compass shares the Bee There look](features/F-010.md) | Release | [Approved](design/F-010.md) | 3 | 9 |
 | [F-011 Readability follow-ups: status labels and phone stage strip](features/F-011.md) | Build | [Approved](design/F-011.md) | 3 | 6 |
 | [F-012 Delete a feature and close its GitHub issues](features/F-012.md) | Build | [Approved](design/F-012.md) | 4 | 10 |

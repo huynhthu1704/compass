@@ -29,4 +29,4 @@ New kinds of handoffs; sound or vibration.
 
 ## Requirements
 Feature F-009 · Team floor (follow-up, issue #26)
-- REQ-063 — Handoffs are shown on phones too (#26)
+- REQ-063 — Handoffs are shown on phones too (#26) · tests TC-311 … TC-315
