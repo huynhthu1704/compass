@@ -28,6 +28,9 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
 - src/index.css — quote blocks, pill, floating button, thread, version picker, compare; reply box sticks to the bottom on
   phones (< 720 px)
 - tests/conversation.test.mjs — TC-200, TC-201, TC-203 … TC-209, TC-210, TC-212 (TC-202, TC-211, TC-213 are manual)
+- tests/doneWhen.test.mjs — TC-042 (REQ-021) read the old one-line Markdown brief in RunView; the brief now labels each
+  (quotable) field through `ideaLabel`, so the check asserts `ideaLabel('outcomeMetric')` is "done when" and that RunView uses
+  it. Its "no Outcome metric anywhere" check is unchanged.
 - No spec status change in this PR (as in #37, it would regenerate the views and pass the 12-file limit).
 
 ## Steps
