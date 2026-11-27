@@ -38,6 +38,7 @@
 | REQ-071 The approval count shows once, on Team floor | TC-402 (Not run) |
 | REQ-072 The feature list is readable | TC-403 (Not run), TC-405 (Not run) |
 | REQ-073 The account footer shows the connection, the role and one theme button | TC-404 (Not run), TC-405 (Not run) |
+| REQ-074 The portal shows no "AI dev portal" tagline | TC-406 (Not run) |
 | REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run) |
 | REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run) |
 | REQ-052 Revise the proposal from the quoted text | TC-206 (Not run), TC-207 (Not run), TC-208 (Not run) |
@@ -576,6 +577,14 @@ Covers: REQ-070, REQ-072, REQ-073 · Type: Manual · Status: Not run
 Given the demo project with a feature open, at 1280 px and at 390 px (after pressing Menu), in light and dark mode
 When I compare the sidebar with the approved design
 Then the groups, the project card, the feature list with long names on two lines and the footer match, the role picker fills the row next to the theme button, with no hard-coded colours
+```
+
+## TC-406 · No "AI dev portal" tagline in the UI
+Covers: REQ-074 · Type: Automated · Status: Not run
+```gherkin
+Given the portal source under src/
+When it is searched for the text "AI dev portal"
+Then no file contains it, the sidebar brand renders "Compass" without a second line and the onboarding overline is "Compass"
 ```
 
 ## TC-200 · A quote keeps the selected text and names its source
