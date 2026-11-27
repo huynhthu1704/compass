@@ -2,9 +2,9 @@ import { go } from '../App';
 import { demoProject } from '../demo';
 import { featureStage } from '../progress';
 import { useState } from 'react';
-import { canSeeProject, loadProjectToken, projectTokenOf, useSession, type ProjectAccess } from '../firebase';
-import { github } from '../github';
-import { missingTokenMessage, pickToken, sharedToOpen } from '../team';
+import { canSeeProject, getSession, loadProjectToken, projectTokenOf, useSession, type ProjectAccess } from '../firebase';
+import { github, GitHubError } from '../github';
+import { missingTokenMessage, pickToken, sharedOpenProblem, sharedToOpen } from '../team';
 import { importRepo } from './Import';
 import { store, useStore } from '../store';
 import { ago, Badge, Button, PageHead, StageChip } from '../ui';
@@ -24,7 +24,15 @@ export function ProjectsPage() {
       await loadProjectToken(a.id).catch(() => undefined);
       const t = pickToken(settings.githubToken, projectTokenOf(a.id), true);
       if (!t) throw new Error(missingTokenMessage(true));
-      const r = await github.getRepo(t, a.repo!.owner, a.repo!.name);
+      const who = session.email;
+      const r = await github.getRepo(t, a.repo!.owner, a.repo!.name).catch((e) => {
+        if (e instanceof GitHubError && e.status === 404) throw new Error(sharedOpenProblem(a.repo!, null, 404)!);
+        throw e;
+      });
+      const moved = sharedOpenProblem(a.repo!, { owner: r.owner.login, name: r.name });
+      if (moved) throw new Error(moved);
+      // Signed out (or another account) while GitHub answered: import nothing for the old session (#99).
+      if (getSession().status !== 'signed-in' || getSession().email !== who) return;
       const p = await importRepo(t, r, a.name || r.name);
       go(`/p/${p.id}`);
     } catch (e) { setOpenErr(`${a.name || a.id}: ${(e as Error).message}`); } finally { setOpening(null); }

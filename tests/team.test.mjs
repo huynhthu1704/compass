@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, checksApprovals, gateForAgent, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -228,7 +228,7 @@ test('TC-073 (REQ-038): approvals in neither the baseline nor a Firebase record 
   assert.equal(parseApprovedBy('the Product Owner (in chat)'), null);
 });
 
-test('TC-072 (REQ-037 AC4): a retry reuses its record only for the same person and the same version', () => {
+test('TC-072 (part, REQ-037 AC4): a retry reuses its record only for the same person and the same version', () => {
   const run = { proposal: { requirements: [{ id: 'REQ-001', title: 'A' }] }, changes: [] };
   const sig = approvalSig(run);
   const saved = { id: 'rec1', by: 'ba@example.com (BA)', email: 'ba@example.com', sig };
@@ -240,4 +240,22 @@ test('TC-072 (REQ-037 AC4): a retry reuses its record only for the same person a
   assert.equal(canReuseApproval(saved, 'ba@example.com', revised), false, 'a revised version: new record');
   assert.equal(canReuseApproval(undefined, 'ba@example.com', sig), false);
   assert.equal(canReuseApproval({ id: 'old', by: 'x' }, 'ba@example.com', sig), false, 'a record saved before this check has no email/sig');
+});
+
+test('TC-066 (REQ-033): approval gates fail closed while sign-in is on and nobody is signed in', () => {
+  const real = { hasRepo: true, demoProject: false };
+  assert.equal(gatesApply({ firebase: true, status: 'loading', ...real }), true, 'signing in or loading: gated, so no role passes');
+  assert.equal(gatesApply({ firebase: true, status: 'signed-out', ...real }), true);
+  assert.equal(gatesApply({ firebase: true, status: 'signed-in', ...real }), true);
+  assert.equal(gatesApply({ firebase: false, status: 'off', ...real }), false, 'sign-in off: as before');
+  assert.equal(gatesApply({ firebase: true, status: 'signed-in', hasRepo: true, demoProject: true }), false, 'demo project');
+  assert.equal(gatesApply({ firebase: true, status: 'signed-in', hasRepo: false, demoProject: false }), false, 'local project');
+});
+
+test('TC-064 (REQ-032 AC2, REQ-034): a shared project that the token cannot reach, or that was renamed, is not opened', () => {
+  const want = { owner: 'Acme', name: 'Travel' };
+  assert.equal(sharedOpenProblem(want, { owner: 'acme', name: 'travel' }), null, 'same repo, any letter case');
+  assert.match(sharedOpenProblem(want, null, 404), /token cannot reach Acme\/Travel — ask an Admin/);
+  assert.match(sharedOpenProblem(want, { owner: 'acme', name: 'travel-map' }), /is now acme\/travel-map on GitHub \(renamed or moved\) — ask an Admin/);
+  assert.match(sharedOpenProblem(want, { owner: 'other', name: 'Travel' }), /renamed or moved/);
 });

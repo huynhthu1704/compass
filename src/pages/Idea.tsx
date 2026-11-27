@@ -1,11 +1,13 @@
 import { AgentBox } from '../components/AgentBox';
+import { useUnconfirmed } from '../approvals';
 import { featureOf } from '../spec';
 import { store } from '../store';
 import type { Idea, Project } from '../types';
-import { Field, PageHead } from '../ui';
+import { Badge, Field, PageHead } from '../ui';
 
 export function IdeaPage({ p, fid }: { p: Project; fid: string }) {
   const f = featureOf(p, fid);
+  const unconfirmed = useUnconfirmed(p); // REQ-038 AC2
   if (!f) return <div className="empty">Feature not found.</div>;
   const i = f.idea;
   const set = (patch: Partial<Idea>) => store.spec(p.id, (s) => ({ ...s, features: s.features.map((x) => (x.id === fid ? { ...x, idea: { ...x.idea, ...patch } } : x)) }));
@@ -17,6 +19,7 @@ export function IdeaPage({ p, fid }: { p: Project; fid: string }) {
   return (
     <div className="stack gap-xl">
       <PageHead over={`${f.id} ${f.name} · Stage 1 · Idea · owner: Product Owner`} title="Idea" sub={`An outcome-focused brief for this feature. Saved to compass/spec.json and compass/features/${f.id}.md.`} />
+      {unconfirmed.some((u) => u.item === f.id && u.gate === 'intent') && <div><Badge tone="danger" title="No Firebase record confirms this approval">Unconfirmed — claims {i.approvedBy || 'no approver'}</Badge></div>}
       <AgentBox p={p} agentId="ideation" featureId={fid} cta="Revise into business intent" defaultGoal={i.need || i.intent} placeholder="Business need — what you need, in your own words (Vietnamese or English)" hint="The agent revises your business need into a business intent (who, what changes) and what will be true when it is done, finds users, scope and risks, and proposes a brief. Approving it starts the Requirements agent automatically." />
       <section className="card pad-xl stack gap-lg">
         {i.need && <Field label="Business need (as the Product Owner wrote it)"><textarea className="textarea" style={{ minHeight: 48 }} value={i.need} onChange={(e) => set({ need: e.target.value })} /></Field>}
