@@ -3,6 +3,7 @@
 ## Traceability matrix
 | Requirement | Test cases |
 |---|---|
+| REQ-025 Figma components on the Components page, one section per feature | TC-045 (Pass) |
 | REQ-001 The Compass repo has the Compass Framework | TC-001 (Not run) |
 | REQ-002 Every pull request is checked by CI | TC-002 (Not run) |
 | REQ-003 The checking scripts have unit tests | TC-003 (Pass) |
@@ -448,6 +449,14 @@ Covers: REQ-021 · Type: Automated · Status: Not run
 Given the Idea page, the run brief and the generated feature and intent files
 When their labels and headings are read
 Then they say "Done when" and none says "Outcome metric" or "baseline → target"
+```
+
+## TC-045 · The design template, its installed copy and AGENTS.md state the Figma file layout
+Covers: REQ-025 · Type: Automated · Status: Pass
+```gherkin
+Given compass/design/README.md, src/framework/design-README.md and AGENTS.md
+When they are read
+Then they ask for components only on the "Components" page and one Figma section per feature
 ```
 
 ## TC-300 · Waiting items carry goal and waiting time
