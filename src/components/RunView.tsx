@@ -43,7 +43,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
         <section className="card stack gap-sm">
           <div className="trace-head">
             <span className="t-tertiary" aria-hidden="true">{traceIsOpen ? '▾' : '▸'}</span>
-            <span className="overline t-tertiary grow">Trace · harness → RAG → tools → guardrails & evals</span>
+            <span className="overline t-tertiary">Trace · harness → RAG → tools → guardrails & evals</span>
             <span className="mono-sm t-tertiary">{trace.steps} step{trace.steps === 1 ? '' : 's'}</span>
             {trace.failed > 0 && <Badge tone="danger">{trace.failed} failed</Badge>}
             <button type="button" className="btn secondary sm" aria-expanded={traceIsOpen} aria-controls={traceId} onClick={() => setTraceManual({ id: r.id, open: !traceIsOpen })}>{traceToggleLabel(traceIsOpen)} {traceIsOpen ? '▴' : '▾'}</button>

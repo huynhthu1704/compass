@@ -215,7 +215,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .diff .del { background: var(--color-bg-danger-subtle); color: var(--color-text-danger); text-decoration: line-through; text-decoration-color: var(--color-strike-danger); }
 /* REQ-045: header row of the collapsible agent trace; wraps on narrow screens */
 .trace-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--spacing-sm); }
-.trace-head .overline { min-width: 0; }
+.trace-head .overline { flex: 1 1 14rem; min-width: 0; }
 .timeline { display: flex; flex-direction: column; }
 .timeline .ev { display: grid; grid-template-columns: 22px 1fr; gap: var(--spacing-sm); padding: 6px 0; position: relative; }
 .timeline .ev::before { content: ''; position: absolute; left: 10px; top: 24px; bottom: -6px; width: 1px; background: var(--color-border-default); }
