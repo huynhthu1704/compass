@@ -140,3 +140,9 @@ export function applyTeamOp(current: Member[], op: TeamOp, isNew = false): TeamR
   if (r.ok && !r.team.some((m) => m.roles.includes('Admin'))) return { ok: false, team: current, error: isNew ? 'Tick Admin for at least one person: a new team needs an Admin.' : LAST_ADMIN };
   return r;
 }
+
+/** The GitHub token to use for a project (REQ-034, ADR-011): with sign-in on, the project's shared token wins over the
+ *  person's own device token; without sign-in (or no project token yet) the device token is used, as before. */
+export function pickToken(own: string | undefined, projectToken: string | null | undefined, signedIn: boolean): string | undefined {
+  return (signedIn && projectToken) || own || undefined;
+}
