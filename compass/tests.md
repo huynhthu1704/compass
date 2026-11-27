@@ -28,6 +28,7 @@
 | REQ-017 Deleting a feature removes everything that belongs to it | TC-032 (Not run), TC-033 (Not run), TC-034 (Not run) |
 | REQ-018 The deleted feature's open GitHub issues are closed as not planned | TC-035 (Not run), TC-036 (Not run) |
 | REQ-019 A strong warning before deleting a feature that has code | TC-037 (Not run) |
+| REQ-015 Pages use up to 1600 px on large screens and stay responsive | TC-027 (Not run), TC-028 (Not run) |
 | REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run) |
 | REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run) |
 | REQ-052 Revise the proposal from the quoted text | TC-206 (Not run), TC-207 (Not run), TC-208 (Not run) |
@@ -388,6 +389,23 @@ When the delete dialog's list is computed
 Then it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue "REQ-002: …"
 ```
 
+## TC-027 · Content width up to 1600 px with fluid padding
+Covers: REQ-015 · Type: Automated · Status: Not run
+```gherkin
+Given src/index.css
+When the test reads the .main rule
+Then max-width is 1600px, width is 100% and the side padding uses clamp() between the small and large spacing tokens
+And the below-900 px rule for .main is unchanged
+```
+
+## TC-028 · No sideways scrolling and no text outside its row, from 1920 px down to 390 px
+Covers: REQ-015 · Type: Manual · Status: Not run
+```gherkin
+Given every page in the sidebar (Projects, Agent architecture, Feature board, Team floor, Release, Agent runs, Knowledge, Connections, the feature stages) and New project
+When I open each at 1920, 1600, 1280, 1000, 901 and 390 px wide
+Then the content is 1600 px wide at 1920 px, forms keep their reading width, no page scrolls sideways, and no text in a list row is squeezed to one word per line or drawn outside its row
+```
+
 ## TC-200 · A quote keeps the selected text and names its source
 Covers: REQ-050 · Type: Automated · Status: Not run
 ```gherkin
@@ -436,12 +454,12 @@ When the reply is checked
 Then it cannot be sent; with one quote or a non-empty message it can
 ```
 
-## TC-206 · A revision changes only the quoted items and keeps their ids
+## TC-206 · A revision changes only the quoted items and keeps their ids (requirements, test cases, screens)
 Covers: REQ-052 · Type: Automated · Status: Not run
 ```gherkin
 Given proposed requirements REQ-050, REQ-051, REQ-052 and a revision that returns a changed REQ-051 and one new requirement
 When the revision is merged
-Then REQ-050 and REQ-052 are deep-equal to v1, REQ-051 keeps its id with the new text, and the new requirement gets the next free id
+Then REQ-050 and REQ-052 are deep-equal to v1, REQ-051 keeps its id with the new text, and the new requirement gets the next free id; the same holds for a revised test case (TC id kept, new test gets the next free TC id) and a revised design screen (SCR id kept, new screen gets the next SCR number)
 ```
 
 ## TC-207 · Revising code re-proposes only the quoted files
@@ -455,9 +473,9 @@ Then v2 has the new src/a.ts and src/b.ts and tests/a.test.mjs unchanged from v1
 ## TC-208 · Revision re-runs checks; rejected runs reopen; approved runs cannot be revised but can be asked
 Covers: REQ-052 · Type: Automated · Status: Not run
 ```gherkin
-Given a rejected run and an approved run
+Given a run awaiting approval, a rejected run and an approved run
 When each is revised
-Then the rejected run gets new guardrail and eval results and status awaiting approval; the approved run is refused with "Already applied — start a new run"; Ask still works on the approved run
+Then the run awaiting approval and the rejected run both get new guardrail and eval results and status awaiting approval; the approved run is refused with "Already applied — start a new run"; Ask still works on the approved run
 ```
 
 ## TC-209 · The version marker names what changed
@@ -468,12 +486,12 @@ When the change summary is computed
 Then it is "Proposal v2 — changed: REQ-051 · AC 2, src/app.ts"
 ```
 
-## TC-210 · Approve applies the latest version
+## TC-210 · Approve applies the latest version (spec merge and pull request)
 Covers: REQ-053 · Type: Automated · Status: Not run
 ```gherkin
 Given a demo run with proposal v1 and a revised v2
 When the run is approved
-Then the spec contains the v2 requirements and none of the text that only v1 had
+Then the spec contains the v2 requirements and none of the text that only v1 had; and given a coding run revised to v2, the change set the pull request is opened with is the v2 change set
 ```
 
 ## TC-211 · Compare with the previous version
