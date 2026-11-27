@@ -1499,7 +1499,7 @@
       "featureId": "F-003",
       "title": "The admin links the project's Figma file and Miro board on the project page",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-design-files.md",
       "story": "As the project admin, I want to set the project's Figma file and Miro board once on the project page, so that everyone on the project works from the right design files.",
       "ac": [
@@ -1513,7 +1513,7 @@
       "featureId": "F-003",
       "title": "Every Design page shows the project's design files read-only, with a preview",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-design-files.md",
       "story": "As anyone working on a feature's design, I want to see and preview the project's Figma file and Miro board on the Design page, so that I can open the right file without asking.",
       "ac": [
@@ -1527,7 +1527,7 @@
       "featureId": "F-003",
       "title": "Projects with the old single design link keep working, and agents name both files",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-design-files.md",
       "story": "As a team with an existing project, I want my current design link to keep working and the agents to know both design files, so that nothing has to be fixed by hand.",
       "ac": [
