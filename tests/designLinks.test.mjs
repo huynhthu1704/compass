@@ -136,4 +136,9 @@ test('TC-506 (REQ-081, source part): the Design page has a Design files button a
   assert.match(panel, /Change in Project settings →/);
   assert.match(panel, /Only the project admin can change the design files\./);
   assert.doesNotMatch(panel, /<input/, 'no edit fields in the panel');
+  assert.match(panel, /document\.addEventListener\('keydown', onKey, true\)/, 'Esc works wherever focus is');
+  assert.match(panel, /document\.addEventListener\('focusin', onFocus\)/, 'focus cannot leave the panel');
+  assert.match(panel, /\/\^https:\\\/\\\/\/i\.test\(url\)/, 'only https links are opened');
+  assert.match(src, /titleRight=\{filesButton\}/, 'the button stays next to the title (SCR-3, SCR-4)');
+  assert.match(src, /ArrowRight/, 'the preview switch follows the arrow keys');
 });

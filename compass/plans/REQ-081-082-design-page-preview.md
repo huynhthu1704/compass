@@ -23,10 +23,9 @@ admin-only. This build removes that box.
   settings (moved here and exported)
 - src/pages/ProjectSettings.tsx: imports the shared row; each field's error or help is linked to its input
   (`aria-describedby`, label `for`), as the design notes ask (review nit on #102)
-- src/ui.tsx: `Field` takes an optional `id` (label `for`, help/error `id`); `PageHead`'s left column shrinks (`flex: 1 1 320px`) so the right-hand buttons stay at the top right
-  on desktop instead of wrapping under a long subtitle; on a phone they still wrap under the title
-- compass/intent/2026-11-27-project-design-files.md: the out-of-scope line says old Penpot and Sketch links are kept
-  too, matching REQ-082 and TC-507 (review nit on #87)
+- src/ui.tsx: `Field` takes an optional `id` (label `for`, help/error `id`); `PageHead` takes `titleRight`, a button kept
+  next to the title on every screen width (SCR-3/SCR-4); its left column shrinks (`flex: 1 1 320px`) so the right-hand buttons stay at the top right
+  on desktop instead of wrapping under a long subtitle
 - src/index.css: the side panel (420 px from the right) and, below 700 px, the bottom sheet; the preview frame
 - src/framework.ts: `designMd` and AGENTS.md name both files through `designToolMd` (the Markdown form of `designToolText`)
 - src/harness.ts: the design agent's prompt (`DESIGN TOOL:`) and its demo output name both files

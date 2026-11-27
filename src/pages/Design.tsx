@@ -44,7 +44,8 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const count = [files.figma, files.other, files.miro].filter(Boolean).length;
   const previews = designPreviews(files, d?.url);
   const preview = previews.find((x) => x.kind === shown) || previews[0];
-  const closePanel = () => { setPanel(false); filesBtn.current?.focus(); };
+  // Focus goes back to the button once the panel is gone (the panel keeps focus inside itself while it is open).
+  const closePanel = () => { setPanel(false); requestAnimationFrame(() => filesBtn.current?.focus()); };
   const settingsPath = `/p/${p.id}/settings`;
   const filesButton = (
     <button ref={filesBtn} className="btn secondary" aria-haspopup="dialog" aria-expanded={panel} onClick={() => setPanel(true)}>
@@ -57,17 +58,19 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
     <div className="stack gap-xl">
       <PageHead over={`${f.id} ${f.name} · Stage 3 · Design · owner: UX / PO`} title="Design" sub={`Screens traced to the approved requirements. Coding is locked until the design is approved. Saved to compass/spec.json and compass/design/${f.id}.md.`}
         right={<>{d && d.status === 'Draft' ? <>{!gate.allowed && <span id="design-gate-hint" className="body-sm t-tertiary">{gate.hint}</span>}<Button variant="accent" disabled={uncovered.length > 0 || !gate.allowed || approving} title={uncovered.length ? 'Every approved requirement needs a screen' : undefined} aria-describedby={gate.allowed ? undefined : 'design-gate-hint'} onClick={() => void approve()}>Approve design</Button></>
-          : d ? <Button variant="ghost" onClick={() => setD({ status: 'Draft', approvedBy: undefined, approvedAt: undefined })}>Reopen as draft</Button> : null}{filesButton}</>} />
-      {panel && <DesignFilesPanel files={files} admin={admin} settingsPath={settingsPath} onClose={closePanel} />}
+          : d ? <Button variant="ghost" onClick={() => setD({ status: 'Draft', approvedBy: undefined, approvedAt: undefined })}>Reopen as draft</Button> : null}</>} titleRight={filesButton} />
+      {panel && <DesignFilesPanel files={files} admin={admin} settingsPath={settingsPath} featurePreview={!count && previews.length > 0} onClose={closePanel} />}
 
       <section className="stack gap-sm" aria-label="Design preview">
         {previews.length > 1 && (
           <div className="segmented" role="tablist" aria-label="Preview">
-            {previews.map((x) => <button key={x.kind} role="tab" aria-selected={preview?.kind === x.kind} onClick={() => setShown(x.kind)}>{x.label}</button>)}
+            {previews.map((x, i) => <button key={x.kind} id={`preview-tab-${x.kind}`} role="tab" aria-selected={preview?.kind === x.kind} aria-controls="design-preview" tabIndex={preview?.kind === x.kind ? 0 : -1}
+              onClick={() => setShown(x.kind)}
+              onKeyDown={(e) => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); const next = previews[(i + (e.key === 'ArrowRight' ? 1 : previews.length - 1)) % previews.length]; setShown(next.kind); document.getElementById(`preview-tab-${next.kind}`)?.focus(); }}>{x.label}</button>)}
           </div>
         )}
         {preview
-          ? <iframe key={preview.src} className="design-preview" title={preview.label} src={preview.src} allowFullScreen />
+          ? <iframe key={preview.src} id="design-preview" role={previews.length > 1 ? 'tabpanel' : undefined} aria-labelledby={previews.length > 1 ? `preview-tab-${preview.kind}` : undefined} className="design-preview" title={preview.label} src={preview.src} allowFullScreen />
           : <div className="empty stack gap-sm" style={{ alignItems: 'center' }}>
               <span>{count ? 'No preview for this design tool. Open it from Design files.' : 'No design files linked yet'}</span>
               {!count && admin && <button className="btn ghost sm" onClick={() => go(settingsPath)}>Link them in Project settings →</button>}

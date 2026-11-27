@@ -436,6 +436,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 @media (max-width: 700px) {
   .panel-backdrop { align-items: flex-end; }
   .side-panel { width: 100%; height: auto; max-height: 85vh; border-left: 0; border-radius: var(--radius-xl) var(--radius-xl) 0 0; padding: 12px var(--spacing-lg) var(--spacing-xl); }
+  .side-panel .settings-link { width: 100%; justify-content: center; }
   .sheet-grabber { display: block; align-self: center; width: 36px; height: 4px; border-radius: 2px; background: var(--color-border-default); }
   .design-preview { height: 60vh; }
   .hide-phone { display: none; } .show-phone { display: inline; }

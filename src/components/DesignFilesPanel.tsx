@@ -17,7 +17,9 @@ export function FileRow({ kind, url }: { kind: DesignToolKind; url: string }) {
         <span className="body-sm" style={{ fontWeight: 600 }}>{name}</span>
         <span className="mono-sm t-secondary file-url">{url}</span>
       </div>
-      <a className="btn ghost sm" href={url} target="_blank" rel="noreferrer" aria-label={`Open the ${name} in a new tab`}>Open ↗</a>
+      {/^https:\/\//i.test(url) // links come from compass/spec.json, which anyone with GitHub write access can edit: open https only
+        ? <a className="btn ghost sm" href={url} target="_blank" rel="noreferrer" aria-label={`Open the ${name} in a new tab`}>Open ↗</a>
+        : <span className="body-sm t-tertiary">Not an https link</span>}
     </div>
   );
 }
@@ -31,25 +33,44 @@ export const FileRows = ({ files }: { files: DesignFiles }) => (
   </div>
 );
 
-type Props = { files: DesignFiles; admin: boolean; settingsPath: string; onClose: () => void };
+type Props = { files: DesignFiles; admin: boolean; settingsPath: string; featurePreview?: boolean; onClose: () => void };
 
 /** REQ-081: read-only list of the project's design files. Esc, ✕ or a click outside closes it (the caller restores focus). */
-export function DesignFilesPanel({ files, admin, settingsPath, onClose }: Props) {
+export function DesignFilesPanel({ files, admin, settingsPath, featurePreview, onClose }: Props) {
   const panel = useRef<HTMLDivElement>(null);
   const empty = !files.figma && !files.miro && !files.other;
   useEffect(() => { panel.current?.focus(); }, []);
+  // REQ-081 AC2: keyboard stays inside the panel and Esc closes it wherever focus is (same pattern as DeleteFeatureDialog).
+  const closeRef = useRef(onClose);
+  useEffect(() => { closeRef.current = onClose; });
+  useEffect(() => {
+    const focusables = () => (panel.current ? [...panel.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')] : []);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); closeRef.current(); return; }
+      if (e.key !== 'Tab') return;
+      const items = focusables();
+      if (!items.length) { e.preventDefault(); return; }
+      const first = items[0], last = items[items.length - 1], at = items.indexOf(document.activeElement as HTMLElement);
+      if (e.shiftKey && at <= 0) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (at === -1 || at === items.length - 1)) { e.preventDefault(); first.focus(); }
+    };
+    const onFocus = (e: FocusEvent) => { if (panel.current && !panel.current.contains(e.target as Node)) panel.current.focus(); };
+    document.addEventListener('keydown', onKey, true);
+    document.addEventListener('focusin', onFocus);
+    return () => { document.removeEventListener('keydown', onKey, true); document.removeEventListener('focusin', onFocus); };
+  }, []);
   return (
     <div className="panel-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) { e.preventDefault(); onClose(); } }}>
       <div ref={panel} className="side-panel stack gap-md" role="dialog" aria-modal="true" aria-label="Design files" tabIndex={-1}
-        onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}>
+>
         <span className="sheet-grabber" aria-hidden />
         <div className="row gap-sm">
           <h2 className="h4 grow">Design files</h2>
           <button className="btn ghost sm" aria-label="Close" onClick={onClose}>✕</button>
         </div>
-        {empty ? <p className="body-sm t-secondary">No design files linked yet.</p> : <FileRows files={files} />}
+        {empty ? <p className="body-sm t-secondary">{featurePreview ? "No project design files linked yet. The preview shows this feature's own frame link." : 'No design files linked yet.'}</p> : <FileRows files={files} />}
         {admin
-          ? <div><button className="btn secondary sm" onClick={() => { onClose(); go(settingsPath); }}>Change in Project settings →</button></div>
+          ? <div><button className="btn secondary sm settings-link" onClick={() => { onClose(); go(settingsPath); }}>Change in Project settings →</button></div>
           : <p className="body-sm t-tertiary">Only the project admin can change the design files.</p>}
       </div>
     </div>
