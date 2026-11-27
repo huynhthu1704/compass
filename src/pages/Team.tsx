@@ -2,7 +2,7 @@
 // The super admin creates a project's first team (with its approval baseline); Admins add people with one or more
 // roles, change roles and remove people. The project GitHub token card (REQ-034) comes with the next step.
 import { useEffect, useState } from 'react';
-import { changeTeam, loadTeam, projectKey, useSession } from '../firebase';
+import { changeTeam, loadTeam, projectKey, reloadAccess, useSession } from '../firebase';
 import { baselineFrom, LAST_ADMIN, TEAM_ROLES, type Member, type TeamOp, type TeamRole } from '../team';
 import type { Project } from '../types';
 import { Badge, Button, PageHead } from '../ui';
@@ -61,7 +61,9 @@ export function TeamPage({ p }: { p: Project }) {
       setTeam(r.team); setExists(true); setMsg({ tone: 'success', text: done }); setRemoved(op.kind === 'remove' ? op.email.trim().toLowerCase() : null);
       return true;
     } catch (e) {
-      setMsg({ tone: 'danger', text: `Not saved: ${(e as Error).message}` });
+      const denied = (e as { code?: string }).code === 'permission-denied';
+      if (denied) void reloadAccess().catch(() => undefined);
+      setMsg({ tone: 'danger', text: denied ? 'Not saved: you can no longer change this team (your Admin role may have been removed). Reload the page.' : `Not saved: ${(e as Error).message}` });
       return false;
     } finally { setBusy(false); }
   };
