@@ -99,7 +99,7 @@ export function VersionPicker({ r, view, setView }: { r: Run; view: number | nul
   if (vs.length < 2) return null;
   const latest = vs[vs.length - 1].n;
   return (
-    <div className="seg version-picker" role="group" aria-label="Proposal version">
+    <div className="version-picker" role="group" aria-label="Proposal version">
       {vs.map((v) => <button key={v.n} type="button" aria-pressed={(view ?? latest) === v.n} onClick={() => setView(v.n === latest ? null : v.n)}>{v.n === latest ? `v${v.n} · latest` : `v${v.n}`}</button>)}
     </div>
   );

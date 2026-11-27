@@ -12,7 +12,7 @@ Project: **Compass** — AI dev portal: Idea → Requirements → Design → Tes
 
 ## Workflow (every change) — AI-native SDLC
 0. **Intent:** a new request starts as `compass/intent/YYYY-MM-DD-topic.md` (template in [`compass/intent/README.md`](compass/intent/README.md)), or as a feature idea in the portal (`compass/intent/F-xxx.md`). Get the Product Owner's approval before creating requirements.
-0b. **Business need → business intent:** the Product Owner writes the raw business need; it is revised into a measurable business intent (outcome, baseline → target) and approved.
+0b. **Business need → business intent:** the Product Owner writes the raw business need; it is revised into a business intent (who, what changes) with **Done when** (what will be true when the change is done) and approved. Never invent a baseline or target: a metric with its current value only for a change the Product Owner names a bet; its target is set after a few weeks of real data.
 1. **Intent → Requirement:** every change belongs to a feature (F-xxx, see `compass/features.md`) and starts from a requirement in `compass/spec.json` with Given/When/Then acceptance criteria.
 1b. **Requirement → Design:** once every requirement of the feature is approved, the design is drafted in `compass/spec.json → features[].design` (view: `compass/design/F-xxx.md`): screens traced to REQ ids, drawn in the project's design tool. **No code before the design is Approved** — CI fails a requirement In build whose feature design is still a Draft.
 2. **Requirement → Test:** add at least one test case that references the requirement id. For a bug, commit the failing test first.

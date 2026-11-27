@@ -12,7 +12,7 @@ export interface Reply { quotes: Quote[]; message: string }
 
 const MAX_QUOTE = 4000;
 const IDEA_FIELDS = ['intent', 'problem', 'users', 'outcomeMetric', 'scopeIn', 'scopeOut', 'risks'] as const;
-const IDEA_LABEL: Record<(typeof IDEA_FIELDS)[number], string> = { intent: 'intent', problem: 'problem', users: 'users', outcomeMetric: 'outcome metric', scopeIn: 'in scope', scopeOut: 'out of scope', risks: 'risks' };
+const IDEA_LABEL: Record<(typeof IDEA_FIELDS)[number], string> = { intent: 'intent', problem: 'problem', users: 'users', outcomeMetric: 'done when', scopeIn: 'in scope', scopeOut: 'out of scope', risks: 'risks' };
 export const ideaLabel = (k: (typeof IDEA_FIELDS)[number]) => IDEA_LABEL[k];
 
 // ---------------- quotes (REQ-050) ----------------
