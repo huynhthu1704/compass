@@ -211,9 +211,20 @@ export async function saveProjectToken(key: string, token: string) {
 
 /** Writes one approval record; the rules accept it only from the signer's own verified email and a role that owns the
  *  gate (or "super admin"), with the server's time. Records are never changed or deleted. */
-export async function writeApprovalRecord(key: string, rec: { items: string[]; gate: string; email: string; role: string }) {
+export async function writeApprovalRecord(key: string, rec: { items: string[]; gate: string; email: string; role: string }): Promise<string> {
   const { fs, db } = await load();
-  await fs.addDoc(fs.collection(db, 'projects', key, 'approvals'), { ...rec, at: fs.serverTimestamp() });
+  return (await fs.addDoc(fs.collection(db, 'projects', key, 'approvals'), { ...rec, at: fs.serverTimestamp() })).id;
+}
+
+/** The project's approval baseline and records (members and the super admin may read them), for REQ-038. */
+export async function loadApprovalEvidence(key: string): Promise<import('./team').ApprovalEvidence> {
+  const { fs, db } = await load();
+  const [base, recs] = await Promise.all([fs.getDoc(fs.doc(db, 'projects', key, 'baseline', 'initial')), fs.getDocs(fs.collection(db, 'projects', key, 'approvals'))]);
+  return {
+    hasBaseline: base.exists(),
+    baseline: base.exists() ? ((base.data().approvals || []) as import('./team').BaselineApproval[]) : [],
+    records: recs.docs.map((d) => { const x = d.data(); return { items: x.items || [], gate: x.gate, email: x.email, role: x.role }; }),
+  };
 }
 
 // ---- Demo after sign-in (REQ-040, ADR-014) ------------------------------------------------------------------------------

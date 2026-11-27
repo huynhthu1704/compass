@@ -3126,7 +3126,7 @@
       ],
       "title": "Approvals in neither the baseline nor a Firebase record are unconfirmed, whatever their date",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a baseline with the intent approval by po@example.com, an approval record for the requirements approval by ba@example.com, and in spec.json those two plus a design approval by ux@example.com dated 2026-11-20 (before the team existed) with no record and not in the baseline\nWhen unconfirmed approvals are computed\nThen only the design approval by ux@example.com is unconfirmed; in demo mode nothing is; a requirements approval in spec.json claiming \"ba@example.com (PO)\" while the record says BA is unconfirmed; and for a project with a team but no baseline, every approval without a matching record (including the intent approval) is unconfirmed"
     },
     {

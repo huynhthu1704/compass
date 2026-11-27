@@ -1,4 +1,5 @@
 import { missingToken, tokenFor } from '../token';
+import { useUnconfirmed } from '../approvals';
 import { useState } from 'react';
 import { go } from '../App';
 import { syncLabel, syncNow, useSync } from '../autosync';
@@ -37,8 +38,23 @@ export function OverviewPage({ p }: { p: Project }) {
   const feats = p.spec.features.filter((f) => showArchived || !f.archived);
   const waiting = p.runs.filter((r) => r.status === 'awaiting-approval');
 
+  const unconfirmed = useUnconfirmed(p); // REQ-038 AC3: approvals Firebase does not confirm
+  const linkOf = (item: string) => {
+    if (item.startsWith('F-')) return `/p/${p.id}/f/${item}/design`;
+    const fid = p.spec.requirements.find((r) => r.id === item)?.featureId;
+    return fid ? `/p/${p.id}/f/${fid}/requirements` : `/p/${p.id}`;
+  };
   return (
     <div className="stack gap-2xl">
+      {unconfirmed.length > 0 && (
+        <div className="card stack gap-xs" role="status" style={{ padding: '12px 16px', background: 'var(--color-bg-danger-subtle)', borderColor: 'var(--color-border-danger)' }}>
+          <strong className="body-sm t-danger">{unconfirmed.length === 1 ? '1 approval is' : `${unconfirmed.length} approvals are`} not confirmed by Firebase</strong>
+          <span className="body-sm t-secondary">Saved outside the portal, with no approval record. A person with the owning role can approve again.</span>
+          <ul className="body-sm" style={{ margin: 0, paddingLeft: 18 }}>
+            {unconfirmed.map((u) => <li key={`${u.gate}-${u.item}`}><button className="btn ghost sm" style={{ padding: 0 }} onClick={() => go(linkOf(u.item))}>{u.item} ({u.gate})</button> — claims {u.approvedBy || 'no approver'}</li>)}
+          </ul>
+        </div>
+      )}
       <PageHead
         over={p.repo ? `${p.repo.owner}/${p.repo.name}` : p.demo ? 'Demo project · not on GitHub' : 'Local project · not on GitHub'}
         title={p.name}

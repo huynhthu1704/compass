@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, gateForAgent, projectVisible, startScreen, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, gateForAgent, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -180,4 +180,25 @@ test('TC-076 (REQ-040 AC2/AC3): in the demo only sample projects are visible; ne
   const member = { status: 'signed-in', demo: false, superAdmin: false, accessIds: ['o__travel'] };
   assert.deepEqual([real, sample, local].map((p) => projectVisible(p, member)), [true, false, false]);
   assert.equal(projectVisible(real, { status: 'off', superAdmin: false, accessIds: [] }), true, 'sign-in off: as before');
+});
+
+test('TC-073 (REQ-038): approvals in neither the baseline nor a Firebase record are unconfirmed, whatever their date', () => {
+  const spec = {
+    features: [{ id: 'F-001', design: { status: 'Approved', approvedBy: 'ux@example.com (UX)' } }],
+    requirements: [
+      { id: 'REQ-001', status: 'Approved', approvedBy: 'po@example.com (PO)' },   // in the baseline (before the team)
+      { id: 'REQ-002', status: 'Approved', approvedBy: 'ba@example.com (BA)' },   // has a record
+      { id: 'REQ-003', status: 'In build', approvedBy: 'ba@example.com (PO)' },   // record says BA, claims PO
+      { id: 'REQ-004', status: 'Draft' },
+    ],
+  };
+  const ev = {
+    hasBaseline: true,
+    baseline: [{ item: 'REQ-001', gate: 'requirements', approvedBy: 'po@example.com (PO)' }],
+    records: [{ items: ['REQ-002', 'REQ-003'], gate: 'requirements', email: 'BA@example.com', role: 'BA' }],
+  };
+  assert.deepEqual(unconfirmedApprovals(spec, ev).map((a) => a.item), ['F-001', 'REQ-003'], 'design has no record (backdated or not); REQ-003 claims the wrong role');
+  assert.deepEqual(unconfirmedApprovals(spec, { ...ev, hasBaseline: false, baseline: [] }).map((a) => a.item), ['F-001', 'REQ-001', 'REQ-003'], 'no baseline: every approval needs a record');
+  assert.deepEqual(parseApprovedBy('Ba@Example.com (BA)'), { email: 'ba@example.com', role: 'BA' });
+  assert.equal(parseApprovedBy('the Product Owner (in chat)'), null);
 });

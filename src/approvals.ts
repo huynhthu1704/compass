@@ -1,7 +1,8 @@
 // F-015 Gates follow my roles (REQ-033) and every approval is recorded in Firebase first (REQ-036, REQ-037; ADR-012).
 // With sign-in off, or for demo and local projects, nothing changes: gates are open and no record is written.
-import { getSession, projectKey, useSession, writeApprovalRecord } from './firebase';
-import { approvalBy, canPass, gateHint, type Gate } from './team';
+import { useEffect, useState } from 'react';
+import { getSession, loadApprovalEvidence, projectKey, useSession, writeApprovalRecord } from './firebase';
+import { approvalBy, baselineFrom, canPass, gateHint, unconfirmedApprovals, type BaselineApproval, type Gate } from './team';
 import type { Project } from './types';
 
 /** Gates apply to signed-in people on real (GitHub) projects. */
@@ -27,12 +28,31 @@ export const NOT_ALLOWED = 'Not allowed for your roles';
 /** Records an approval before anything else is written (REQ-037 AC1). Returns the approvedBy text ("ba@example.com (BA)"),
  *  or null when gates do not apply (sign-in off, demo or local project). Throws "Not allowed for your roles" when the
  *  person's roles do not own the gate, or when Firestore refuses the record (REQ-033 AC3, REQ-037 AC2). */
-export async function recordApproval(p: Pick<Project, 'repo' | 'demo'>, gate: Gate, items: string[]): Promise<string | null> {
+export async function recordApproval(p: Pick<Project, 'repo' | 'demo'>, gate: Gate, items: string[]): Promise<{ text: string; id: string } | null> {
   if (!gated(p)) return null;
   const { roles, superAdmin, email } = rolesFor(p);
   const by = canPass(gate, roles, superAdmin) ? approvalBy(email, roles, gate, superAdmin) : null;
   if (!by) throw new Error(NOT_ALLOWED);
-  try { await writeApprovalRecord(projectKey(p.repo!), { items: items.length ? items : ['(none)'], gate, email, role: by.role }); }
+  let id: string;
+  try { id = await writeApprovalRecord(projectKey(p.repo!), { items: items.length ? items : ['(none)'], gate, email, role: by.role }); }
   catch (e) { throw new Error((e as { code?: string }).code === 'permission-denied' ? NOT_ALLOWED : `Approval not recorded: ${(e as Error).message}`); }
-  return by.text;
+  return { text: by.text, id };
+}
+
+/** Approvals in spec.json that Firebase does not confirm (REQ-038), for a signed-in person on a project with a team.
+ *  Empty with sign-in off, in the demo, for local projects, or while the evidence loads. */
+export function useUnconfirmed(p: Pick<Project, 'repo' | 'demo' | 'spec'>): BaselineApproval[] {
+  const session = useSession();
+  const key = p.repo && !p.demo && session.status === 'signed-in' && !session.demo ? projectKey(p.repo) : '';
+  const hasTeam = !!key && session.access.some((a) => a.id === key);
+  const approvals = JSON.stringify(baselineFrom(p.spec));
+  const [list, setList] = useState<BaselineApproval[]>([]);
+  useEffect(() => {
+    if (!hasTeam) { setList([]); return; }
+    let on = true;
+    loadApprovalEvidence(key).then((ev) => { if (on) setList(unconfirmedApprovals(JSON.parse(JSON.stringify(p.spec)), ev)); }).catch(() => { if (on) setList([]); });
+    return () => { on = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-check when the approvals in the spec change
+  }, [key, hasTeam, approvals]);
+  return list;
 }

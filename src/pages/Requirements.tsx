@@ -4,7 +4,7 @@ import { evalRequirements, pct } from '../guardrails';
 import { featureOf } from '../spec';
 import { autoAdvance } from '../harness';
 import { nextId, now, store } from '../store';
-import { recordApproval, useGate } from '../approvals';
+import { recordApproval, useGate, useUnconfirmed } from '../approvals';
 import type { Project, Requirement } from '../types';
 import { Badge, Button, Field, PageHead, REQ_STATUS_TONE, toast } from '../ui';
 
@@ -20,13 +20,14 @@ export function RequirementsPage({ p, fid }: { p: Project; fid: string }) {
   const drafts = reqs.filter((r) => r.status === 'Draft');
   // F-015 REQ-033/036/037: PO or BA approve requirements; the approval is recorded in Firebase first.
   const gate = useGate(p, 'requirements');
+  const unconfirmed = useUnconfirmed(p); // REQ-038: approvals Firebase does not confirm
   const [approving, setApproving] = useState(false);
   const approve = async (ids: string[], then?: Requirement['status']) => {
     if (approving) return;
     setApproving(true);
     try {
       const by = await recordApproval(p, 'requirements', ids);
-      store.spec(p.id, (s) => ({ ...s, requirements: s.requirements.map((r) => (ids.includes(r.id) && r.status === 'Draft' ? { ...r, status: 'Approved', ...(by ? { approvedBy: by, approvedAt: now() } : {}) } : r)) }));
+      store.spec(p.id, (s) => ({ ...s, requirements: s.requirements.map((r) => (ids.includes(r.id) && r.status === 'Draft' ? { ...r, status: 'Approved', ...(by ? { approvedBy: by.text, approvedAt: now() } : {}) } : r)) }));
       if (then && then !== 'Approved') set(ids[0], { status: then });
       advance();
     } catch (e) { toast((e as Error).message); } finally { setApproving(false); }
@@ -68,6 +69,7 @@ export function RequirementsPage({ p, fid }: { p: Project; fid: string }) {
                   {r.status === 'Draft' && <Button size="sm" variant="secondary" disabled={!gate.allowed || approving} aria-describedby={gate.allowed ? undefined : `hint-${r.id}`} aria-label={`Approve ${r.id}`} onClick={() => void approve([r.id])}>Approve</Button>}
                   {r.status === 'Draft' && !gate.allowed && <span id={`hint-${r.id}`} className="body-sm t-tertiary">{gate.hint}</span>}
                   {r.approvedBy && <span className="body-sm t-tertiary">Approved by {r.approvedBy}</span>}
+                  {unconfirmed.some((u) => u.item === r.id) && <Badge tone="danger" title="No Firebase record confirms this approval">Unconfirmed — claims {r.approvedBy || 'no approver'}</Badge>}
                   <Button size="sm" variant="ghost" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? 'Close' : 'Edit'}</Button>
                 </div>
                 {open !== r.id ? <div className="body-sm t-secondary">{r.story}</div> : (

@@ -199,3 +199,27 @@ export function projectVisible(p: { repo: { owner: string; name: string } | null
   if (s.superAdmin) return true;
   return !!p.repo && s.accessIds.includes(`${p.repo.owner}__${p.repo.name}`.toLowerCase());
 }
+
+/** "<email> (<role>)" → { email, role }; null for older free-text values such as "PO" or "the Product Owner". */
+export function parseApprovedBy(s: string | undefined): { email: string; role: string } | null {
+  const m = /^(\S+@\S+) \(([^)]+)\)$/.exec((s || '').trim());
+  return m ? { email: normalizeEmail(m[1]), role: m[2] } : null;
+}
+
+export interface ApprovalEvidence {
+  hasBaseline: boolean;
+  baseline: BaselineApproval[];
+  records: { items: string[]; gate: string; email: string; role: string }[];
+}
+
+/** Approvals in spec.json that Firebase does not confirm (REQ-038 AC2/AC4): neither in the baseline stored with the
+ *  first team (same item, gate and approvedBy) nor matched by an approval record (same item, gate, email and role).
+ *  No repo date is trusted. Without a baseline, every approval needs a record. */
+export function unconfirmedApprovals(spec: Parameters<typeof baselineFrom>[0], ev: ApprovalEvidence): BaselineApproval[] {
+  return baselineFrom(spec).filter((a) => {
+    if (ev.hasBaseline && ev.baseline.some((b) => b.item === a.item && b.gate === a.gate && b.approvedBy === a.approvedBy)) return false;
+    const by = parseApprovedBy(a.approvedBy);
+    if (!by) return true;
+    return !ev.records.some((r) => r.items.includes(a.item) && r.gate === a.gate && normalizeEmail(r.email) === by.email && r.role === by.role);
+  });
+}
