@@ -40,8 +40,8 @@
 | REQ-072 The feature list is readable | TC-403 (Not run), TC-405 (Not run) |
 | REQ-073 The account footer shows the connection, the role and one theme button | TC-404 (Not run), TC-405 (Not run) |
 | REQ-074 The portal shows no "AI dev portal" tagline | TC-406 (Not run) |
-| REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run), TC-216 (Not run) |
-| REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run), TC-214 (Not run) |
+| REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run), TC-216 (Not run), TC-217 (Not run) |
+| REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run), TC-214 (Not run), TC-217 (Not run) |
 | REQ-052 Revise the proposal from the quoted text | TC-206 (Not run), TC-207 (Not run), TC-208 (Not run), TC-215 (Not run) |
 | REQ-053 Proposal versions and compare | TC-209 (Not run), TC-210 (Not run), TC-211 (Not run), TC-216 (Not run) |
 | REQ-054 The conversation is kept with the run, safely | TC-212 (Not run), TC-213 (Not run) |
@@ -799,4 +799,12 @@ Covers: REQ-045 · Type: Automated · Status: Not run
 Given the run view of an awaiting-approval run
 When the trace header is rendered
 Then the toggle is a native <button> (Enter/Space work) whose aria-expanded matches the open state and whose aria-controls points at the timeline's id, the timeline is rendered only when open, and each step with details still renders its own <details> element
+```
+
+## TC-217 · One reply card per quote; Cancel closes only its card
+Covers: REQ-050, REQ-051 · Type: Manual · Status: Not run
+```gherkin
+Given a run awaiting approval
+When I quote REQ-050 · AC 2 and the whole REQ-051, type a different message in each card, click Cancel on the first card, press Esc in a new card for REQ-052, and click Ask on the REQ-051 card
+Then two cards were open at once, Cancel and Esc closed only their own card without a new conversation message or trace step, Ask sent only the REQ-051 quote with its message, and no card is left; at 390 px the cards sit in the page under the answer
 ```
