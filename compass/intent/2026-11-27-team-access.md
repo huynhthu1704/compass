@@ -54,6 +54,10 @@ sign-in, and the rules allow that only for her email, stored as a one-way hash (
    forged into `spec.json` before the team is first created ends up in the baseline and is never flagged.
    Target: every approval made after team access is switched on is either confirmed by Firebase or visibly flagged.
 
+7. **Roles come from the team; the role picker lives on in a demo.** With sign-in on, the "What's your role?" screen
+   is not shown. A signed-in person on no team can "Try the demo" instead of a dead end: they pick a role and explore
+   the sample projects, kept in their browser only (ADR-014).
+
 ## Why
 Today Compass has no idea who is using it: whoever opens the portal on a device with a GitHub token can approve any
 gate. The AI-native SDLC relies on "a human with the right role approves", but nothing checks the role. Bringing in a
@@ -91,7 +95,7 @@ that is not on any team sees no project. Unit tests cover email matching, multip
 - Per-requirement or per-feature permissions.
 
 ## Requirements
-Feature F-015 · Team access: Google sign-in, project teams and roles (decisions ADR-010, ADR-011, ADR-012, ADR-013)
+Feature F-015 · Team access: Google sign-in, project teams and roles (decisions ADR-010, ADR-011, ADR-012, ADR-013, ADR-014)
 - REQ-030 — An admin adds a person to a project by email with one or more roles (#39)
 - REQ-031 — An admin changes a person's roles or removes them from the project (#40)
 - REQ-032 — People sign in with Google and see only the projects whose team lists their email (#41)
@@ -101,3 +105,5 @@ Feature F-015 · Team access: Google sign-in, project teams and roles (decisions
 - REQ-036 — Every approval records the email and role of the person who gave it (#45)
 - REQ-037 — Each approval is recorded in Firebase, whose rules accept it only from the owning role (#82)
 - REQ-038 — Approvals in the repo that Firebase does not confirm are flagged (#83)
+- REQ-039 — With sign-in on, roles come from the team instead of the role picker
+- REQ-040 — A signed-in person can try the demo with a role of their choice
