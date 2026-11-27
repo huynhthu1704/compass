@@ -4,7 +4,7 @@
  * Design: compass/design/F-020.md (Figma SCR-1 … SCR-4).
  */
 import { useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
-import { canAsk, canRevise, canSend, versionItems } from '../conversation';
+import { canAsk, canRevise, canSend, revisableQuotes, versionItems } from '../conversation';
 import { replyingNow, replyToRun } from '../followUp';
 import type { Project, Quote, Run, RunVersion } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
@@ -42,12 +42,13 @@ export function ReplyBox({ p, r, quotes, setQuotes, inputRef }: { p: Project; r:
     setMessage('');
     return msg;
   });
-  const reviseOff = working || !rev.ok || !quotes.length;
+  const reviseOff = working || !rev.ok || !revisableQuotes(quotes);
   const askOff = working || !canAsk({ ...r, replying }) || !canSend(reply);
   const hint = working ? `${replying === 'revise' ? 'The agent is revising' : 'The agent is answering'} — Ask and Revise are disabled until it finishes.`
     : !rev.ok ? rev.why
     : !canSend(reply) ? 'Quote something or type a message.'
     : !quotes.length ? 'Ask: the agent answers, the proposal stays. Quote what should change to Revise.'
+    : !revisableQuotes(quotes) ? 'These quotes span several items or the summary — Ask about them, or quote inside one item to Revise it.'
     : 'Ask: the agent answers, the proposal stays. Revise: a new version changes only what you quoted.';
   return (
     <section className={`card stack gap-sm reply-box${quotes.length ? ' has-quotes' : ''}`} aria-label="Reply to the agent">

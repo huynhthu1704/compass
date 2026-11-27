@@ -15,6 +15,7 @@ import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
+import { canApprove } from './conversation';
 import type { AgentId, Design, DesignScreen, FileChange, GuardrailResult, Idea, Project, Requirement, Role, Run, Stage, StepKind, TestCase } from './types';
 
 export interface AgentDef { id: AgentId; name: string; stage: Stage; mirrors: Role; purpose: string; tools: string[]; output: string; gate: string; system: string }
@@ -329,6 +330,8 @@ function demoCode(p: Project, reqIds: string[]): FileChange[] {
 export async function approveRun(pid: string, rid: string): Promise<string> {
   const p = getP(pid);
   const r = p.runs.find((x) => x.id === rid)!;
+  const gate = canApprove(r);
+  if (!gate.ok) throw new Error(gate.why);
   const token = store.get().settings.githubToken;
   step(pid, rid, 'approval', 'Approved by human reviewer', store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
   if (r.proposal) {

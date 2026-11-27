@@ -4,8 +4,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  activeReply, addDelta, canAsk, canRevise, canSend, changedItems, changeSummary, demoAnswer, demoRevision, followUpPrompt, makeQuote,
-  mergeChanges, mergeProposal, quotesMarkdown, scanReply, scopeDelta, selectionSource, screenText, withAsk, withRevision,
+  activeReply, addDelta, canApprove, canAsk, canRevise, canSend, changedItems, changeSummary, demoAnswer, demoRevision, followUpPrompt, makeQuote,
+  mergeChanges, mergeProposal, versionItems, quotesMarkdown, revisableQuotes, scanReply, scopeDelta, selectionSource, screenText, withAsk, withRevision,
 } from '../src/conversation.ts';
 
 const req = (id, ac = ['Given a\nWhen b\nThen c', 'Given d\nWhen e\nThen f']) => ({ id, featureId: 'F-001', title: `${id} title`, story: 'As a user, I want x, so that y.', ac, priority: 'Must', status: 'Draft' });
@@ -196,4 +196,38 @@ test('TC-213 (REQ-054): a reload during Ask or Revise never leaves the run stuck
   const r = run({ replying: 'ask' });
   assert.deepEqual(canRevise({ ...r, replying: activeReply(r, new Set()) }), { ok: true });
   assert.equal(canAsk({ ...r, replying: activeReply(r, new Set()) }), true);
+});
+
+test('TC-206 (REQ-052): every quotable part revises in demo mode and survives the quote scope', () => {
+  const r = run({
+    agent: 'designer',
+    proposal: {
+      idea: { intent: 'i', problem: 'p', users: ['u'], outcomeMetric: 'o', scopeIn: ['a'], scopeOut: ['b'], risks: ['c'] },
+      requirements: [req('REQ-050')], tests: [tc('TC-001')],
+      design: { status: 'Draft', summary: 'summary', notes: 'notes', screens: [scr('SCR-1')] },
+    },
+    changes: [{ path: 'src/a.ts', action: 'update', content: 'a1' }],
+  });
+  const sources = [...versionItems(r).map((x) => x.key), 'REQ-050 · AC 2', 'REQ-050 · story', 'SCR-1 · states', 'TC-001 · gherkin', 'Idea · whole brief'];
+  for (const source of sources) {
+    const quotes = [{ source, text: 'x' }];
+    const d = demoRevision(r, { quotes, message: 'tighten' });
+    const s = scopeDelta(d, quotes, r.changes.map((c) => c.path));
+    assert.deepEqual(s.dropped, [], source);
+    assert.ok(changedItems(r, { proposal: mergeProposal(r.proposal, s.delta), changes: mergeChanges(r.changes, s.delta.changes) }).length > 0, `${source} makes a new version`);
+  }
+  assert.deepEqual(scopeDelta({ changes: [{ path: 'src/other.ts', action: 'update', content: 'x' }] }, [{ source: 'src/a.ts', text: 'a' }], ['src/a.ts']).dropped, ['src/other.ts'], 'an existing repo file that was never proposed or quoted');
+  assert.equal(revisableQuotes([{ source: 'Answer', text: 'x' }, { source: 'Summary', text: 'y' }]), false);
+  assert.equal(revisableQuotes([{ source: 'Answer', text: 'x' }, { source: 'REQ-050 · AC 1', text: 'y' }]), true);
+});
+
+test('TC-208 (REQ-052): a revised version without finished checks cannot be approved', () => {
+  const r = run();
+  const reply = { quotes: [{ source: 'REQ-051 · AC 2', text: 'Then f' }], message: 'measurable' };
+  const v2 = withRevision(r, you('revise', reply.quotes, reply.message), { proposal: mergeProposal(r.proposal, demoRevision(r, reply)), changes: r.changes }, { id: 'a', at: '', text: 'Revised.' });
+  assert.equal(canApprove(v2).ok, false, 'saved before the checks ran (page closed): Approve stays off');
+  assert.match(canApprove(v2).why, /Revise/);
+  assert.deepEqual(canApprove({ ...v2, guardrails: [{ id: 'G0', name: 'x', level: 'pass', message: '' }] }), { ok: true });
+  assert.deepEqual(canApprove(r), { ok: true }, 'a run that was never revised is unchanged');
+  assert.equal(canApprove({ ...r, status: 'done' }).ok, false);
 });

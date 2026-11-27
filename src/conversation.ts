@@ -76,6 +76,19 @@ export function canRevise(run: Pick<Run, 'status' | 'replying' | 'proposal' | 'c
   return { ok: true };
 }
 
+/**
+ * REQ-052 AC 4: a revised version is approvable only once its guardrails ran. If the page closed while the checks ran,
+ * the stored version has none, so Approve stays off until the reviewer revises again.
+ */
+export function canApprove(run: Pick<Run, 'status' | 'versions' | 'guardrails'>): { ok: boolean; why?: string } {
+  if (run.status !== 'awaiting-approval') return { ok: false, why: 'Nothing waits for approval' };
+  if ((run.versions?.length || 0) > 1 && !run.guardrails.length) return { ok: false, why: 'The checks of this version did not finish — quote the part again and Revise' };
+  return { ok: true };
+}
+
+/** Quotes that span several items ("Answer") or the summary cannot be revised: nothing in them has an id to change. */
+export const revisableQuotes = (quotes: Quote[]) => quotes.some((q) => !['Answer', 'Summary'].includes(quoteItem(q.source)));
+
 /** REQ-054: quotes and message are scanned with the same rule as retrieved context. */
 export function scanReply(r: Reply): GuardrailResult {
   const hit = findInjection([...r.quotes.map((q) => q.text), r.message]);
@@ -181,8 +194,8 @@ export function mergeProposal(prev: Proposal | undefined, delta: Delta, taken: s
 
 /**
  * REQ-052: a revision may only touch what was quoted. Items with an id (REQ, TC, SCR), idea fields, the design summary /
- * notes and files of the change set are kept only when the reviewer quoted them; new items (no id) and new files are
- * allowed. Everything else is dropped and listed, so the agent and the reviewer see it was refused.
+ * notes and files of the change set are kept only when the reviewer quoted them; new items (no id) and new files
+ * (action create, outside the change set) are allowed. Everything else is dropped and listed, so the agent and the reviewer see it was refused.
  */
 export function scopeDelta(delta: Delta, quotes: Quote[], existingPaths: string[] = []): { delta: Delta; dropped: string[] } {
   const items = new Set(quotes.map((q) => quoteItem(q.source)));
@@ -210,7 +223,7 @@ export function scopeDelta(delta: Delta, quotes: Quote[], existingPaths: string[
     }
     if (Object.keys(idea).length) out.idea = idea as Partial<Idea>;
   }
-  const files = (delta.changes || []).filter((c) => { if (items.has(c.path) || !existingPaths.includes(c.path)) return true; dropped.push(c.path); return false; });
+  const files = (delta.changes || []).filter((c) => { if (items.has(c.path) || (!existingPaths.includes(c.path) && c.action === 'create')) return true; dropped.push(c.path); return false; });
   if (files.length) out.changes = files;
   return { delta: out, dropped };
 }
@@ -339,7 +352,10 @@ export function demoRevision(run: Run, reply: Reply): Delta {
       delta.idea = { ...delta.idea, [k]: Array.isArray(v) ? [...v, note] : `${v || ''} (${note})` };
       continue;
     }
-    if (item === 'Design' && p.design) { delta.design = { ...delta.design, notes: `${p.design.notes ? `${p.design.notes} ` : ''}Revised: ${note}` }; continue; }
+    if (item === 'Design' && p.design) {
+      delta.design = part === 'summary' ? { ...delta.design, summary: `${p.design.summary} (${note})` } : { ...delta.design, notes: `${p.design.notes ? `${p.design.notes} ` : ''}Revised: ${note}` };
+      continue;
+    }
     const c = run.changes.find((x) => x.path === item);
     if (c && c.action !== 'delete') {
       const line = comment(c.path, `Revised in demo mode: ${note}`);

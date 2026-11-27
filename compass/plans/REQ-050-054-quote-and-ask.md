@@ -56,6 +56,9 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
   read-only snapshots (TC-210).
 - **Token cost:** a follow-up sends the run's goal, proposal, change set (quoted files in full, others by path) and the
   conversation — no new repository index; tokens are shown per answer.
+- **A revised version approved before its checks ran:** `canApprove` refuses a revised version without guardrail
+  results (the page closed while they ran); the button and `approveRun` both check it, and revising again re-runs them
+  (TC-208, second review of #69).
 - **A reload during Ask or Revise:** `replying` is stored with the run, but it counts only while this page is waiting for
   that run (`activeReply` with an in-memory set), so an interrupted follow-up never blocks Approve, Reject, Ask or Revise
   (TC-213, review of #69).

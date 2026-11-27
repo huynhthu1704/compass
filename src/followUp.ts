@@ -5,7 +5,7 @@
 import { checkChanges } from './guardrails';
 import { agent, evaluate, getP, patchRun, preview, step, TOOLS, type AgentDef } from './harness';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
-import { activeReply, addDelta, canAsk, canRevise, canSend, changedItems, demoAnswer, demoRevision, followUpPrompt, mergeChanges, mergeProposal, scanReply, scopeDelta, withAsk, withRevision, type Delta } from './conversation';
+import { activeReply, addDelta, canAsk, canRevise, canSend, changedItems, revisableQuotes, demoAnswer, demoRevision, followUpPrompt, mergeChanges, mergeProposal, scanReply, scopeDelta, withAsk, withRevision, type Delta } from './conversation';
 import { now, store, uid } from './store';
 import type { AgentId, ConvTurn, FileChange, Idea, Quote, Run } from './types';
 
@@ -86,7 +86,7 @@ export async function replyToRun(pid: string, rid: string, kind: 'ask' | 'revise
   const r0 = { ...found, replying: replyingNow(found) };
   const reply = { quotes, message };
   if (!canSend(reply)) throw new Error('Quote something or type a message first.');
-  if (kind === 'revise') { const c = canRevise(r0); if (!c.ok) throw new Error(c.why); if (!quotes.length) throw new Error('Quote what should change first.'); }
+  if (kind === 'revise') { const c = canRevise(r0); if (!c.ok) throw new Error(c.why); if (!revisableQuotes(quotes)) throw new Error('Quote inside one requirement, screen, test case, idea field or file to revise it.'); }
   else if (!canAsk(r0)) throw new Error('The agent is still working.');
   const a = agent(r0.agent);
   const live = r0.mode === 'live' && !!store.get().settings.apiKey && !p.demo;
@@ -106,7 +106,8 @@ export async function replyToRun(pid: string, rid: string, kind: 'ask' | 'revise
       return 'The agent answered.';
     }
     const res = live ? await liveRevise(pid, rid, a, r0, prompt, quotes) : { delta: demoRevision(r0, reply), text: `Demo revision of ${quotes.map((q) => q.source).join(', ')}.`, tokens: 0 };
-    const cur = getP(pid).runs.find((x) => x.id === rid)!;
+    const cur = getP(pid).runs.find((x) => x.id === rid);
+    if (!cur) return 'The run was deleted.';
     const scoped = scopeDelta(res.delta, quotes, cur.changes.map((c) => c.path));
     const taken = [...getP(pid).spec.requirements.map((x) => x.id), ...getP(pid).spec.tests.map((x) => x.id)];
     const revised = { proposal: mergeProposal(cur.proposal, scoped.delta, taken), changes: mergeChanges(cur.changes, scoped.delta.changes) };

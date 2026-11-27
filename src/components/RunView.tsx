@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ideaLabel, makeQuote, reqText, screenText, selectionSource, testText, versionItems, type SelectionEnd } from '../conversation';
+import { canApprove, ideaLabel, makeQuote, reqText, screenText, selectionSource, testText, versionItems, type SelectionEnd } from '../conversation';
 import { replyingNow } from '../followUp';
 import { agent, approveRun, rejectRun } from '../harness';
 import { blocked, pct } from '../guardrails';
@@ -26,6 +26,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const answerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const replying = replyingNow(r); // a stored flag from an interrupted follow-up does not count
+  const gate = canApprove(r);
   const isBlocked = blocked(r.guardrails);
   const needsProt = r.guardrails.some((g) => (g.id === 'G3' || g.id === 'G6' || g.id === 'G7') && g.level === 'warn');
   const tokens = r.steps.reduce((x, s) => x + (s.tokens || 0), 0);
@@ -188,6 +189,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
           {r.status === 'awaiting-approval' && (
             <section className="card stack gap-md" style={{ borderColor: 'var(--color-bg-accent)', background: 'var(--color-bg-accent-subtle)' }}>
               <div className="h4">Human approval — {a.gate}</div>
+              {!gate.ok && <div className="body-sm t-danger">{gate.why}.</div>}
               {isBlocked && <div className="body-sm t-danger">Blocked by a guardrail. Fix the issue (quote it and Revise, or ask the agent again with a narrower goal) before this can be approved.</div>}
               {needsProt && !isBlocked && <label className="row gap-sm body-sm"><input type="checkbox" checked={protOk} onChange={(e) => setProtOk(e.target.checked)} /> I reviewed the protected-path / deletion / dependency warnings above.</label>}
               <div className="body-sm t-secondary">
@@ -197,7 +199,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
                   : 'Approving marks this change ready. Connect a GitHub repo to open a real pull request.'}
               </div>
               <div className="row gap-sm">
-                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
+                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying || !gate.ok} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
                 <Button variant="secondary" disabled={busy || !!replying} onClick={() => { const why = prompt('Why reject? (recorded in the trace)') || 'No reason given'; rejectRun(p.id, r.id, why); }}>Reject</Button>
               </div>
             </section>
