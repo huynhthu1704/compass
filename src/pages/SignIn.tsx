@@ -47,7 +47,9 @@ export function SignInPage({ logo, error }: { logo: ReactNode; error?: string })
 /** SCR-2: a signed-in Google account that is on no team and is not the super admin. Shows no project data. */
 export function NoAccessPage({ logo, email, error }: { logo: ReactNode; email?: string; error?: string }) {
   const [busy, setBusy] = useState(false);
-  const reload = async () => { setBusy(true); try { await reloadAccess(); } finally { setBusy(false); } };
+  const [err, setErr] = useState<string | undefined>();
+  const reload = async () => { setBusy(true); setErr(undefined); try { await reloadAccess(); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); } };
+  const out = async () => { setErr(undefined); try { await signOut(); } catch (e) { setErr(`Could not sign out: ${(e as Error).message}`); } };
   return (
     <Card logo={logo}>
       <h1 className="h1">You have no access yet</h1>
@@ -55,10 +57,10 @@ export function NoAccessPage({ logo, email, error }: { logo: ReactNode; email?: 
         <span className="body-sm t-secondary">Signed in as</span><strong className="body-sm">{email || '—'}</strong>
       </div>
       <p className="body t-secondary">This Google account is not on any project team. Ask your admin to add this email to a project, then reload the page.</p>
-      {error && <p className="body-sm t-danger" role="alert">{error}</p>}
+      {(err || error) && <p className="body-sm t-danger" role="alert">{err || error}</p>}
       <div className="row gap-sm wrap">
         <Button variant="accent" onClick={reload} disabled={busy}>{busy ? 'Reloading…' : 'Reload'}</Button>
-        <Button variant="secondary" onClick={() => void signOut()}>Sign out</Button>
+        <Button variant="secondary" onClick={() => void out()}>Sign out</Button>
       </div>
       <p className="body-sm t-tertiary">No project names or data are shown on this screen.</p>
     </Card>

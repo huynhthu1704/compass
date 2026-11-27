@@ -60,6 +60,7 @@ export async function startSession() {
   if (!CONFIG) return;
   try {
     const { auth, authApp } = await load();
+    currentAuth = authApp;
     auth.onAuthStateChanged(authApp, (user) => {
       if (!user) { set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined }); return; }
       void loadAccess(user.email || '', user.emailVerified);
@@ -75,24 +76,35 @@ async function loadAccess(rawEmail: string, verified: boolean) {
   try {
     const { fs, db } = await load();
     const accessRef = fs.doc(db, 'config', 'access');
-    let snap = await fs.getDoc(accessRef);
-    if (!snap.exists()) {
-      // Only the account whose hashed email is in firestore.rules may create it; anyone else is refused, silently.
-      try { await fs.setDoc(accessRef, { superAdmins: [email] }); snap = await fs.getDoc(accessRef); } catch { /* not the super admin */ }
+    // Only a super admin can read config/access; for anyone else (or when it does not exist yet) the read is refused.
+    const readAccess = async () => { try { const s = await fs.getDoc(accessRef); return s.exists() ? (s.data().superAdmins as string[] || []) : null; } catch { return null; } };
+    let superAdmins = await readAccess();
+    if (!superAdmins) {
+      // Created once, by the account whose hashed email is in firestore.rules (ADR-013); anyone else is refused, silently.
+      try { await fs.setDoc(accessRef, { superAdmins: [email] }); superAdmins = await readAccess(); } catch { /* not the super admin, or it exists */ }
     }
-    const superAdmins: string[] = snap.exists() ? (snap.data().superAdmins || []) : [];
+    superAdmins ||= [];
     const viewer = { email, emailVerified: true };
     const superAdmin = superAdmins.map(normalizeEmail).includes(email);
     const q = superAdmin ? fs.collection(db, 'projects') : fs.query(fs.collection(db, 'projects'), fs.where('members', 'array-contains', email));
     const docs = (await fs.getDocs(q)).docs.map((d) => {
+      // Admin comes only from `admins` (one source of truth, as in firestore.rules); 'Admin' in a role list is ignored.
       const team = (d.data().team || {}) as Record<string, TeamRole[]>;
-      return { id: d.id, team: Object.entries(team).map(([e, roles]): Member => ({ email: e, roles })) };
+      const admins = ((d.data().admins || []) as string[]).map(normalizeEmail);
+      return { id: d.id, team: Object.entries(team).map(([e, roles]): Member => ({ email: e, roles: [...roles.filter((r) => r !== 'Admin'), ...(admins.includes(normalizeEmail(e)) ? ['Admin' as const] : [])] })) };
     });
+    if (!stillSignedIn(email)) return; // signed out (or switched account) while loading
     set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins), error: undefined });
   } catch (e) {
-    set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` });
+    if (stillSignedIn(email)) set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` });
   }
 }
+
+/** True while the same account is still signed in (guards against a load finishing after sign-out). */
+function stillSignedIn(email: string) {
+  return !!currentAuth && normalizeEmail(currentAuth.currentUser?.email || '') === email;
+}
+let currentAuth: import('firebase/auth').Auth | null = null;
 
 export async function signInWithGoogle() {
   const { auth, authApp } = await load();

@@ -22,6 +22,7 @@ service cloud.firestore {
     function project(pid) { return get(projectPath(pid)).data; }
     function isMember(pid) { return signedIn() && exists(projectPath(pid)) && me() in project(pid).members; }
     function isAdmin(pid) { return isMember(pid) && me() in project(pid).admins; }
+    // Admin lives only in `admins` (one source of truth); an 'Admin' entry in a team role list is ignored.
     function rolesOf(pid) { return project(pid).team.get(me(), []); }
 
     // Which roles may pass each gate (REQ-033). Must equal GATE_ROLES in src/team.ts.
@@ -37,7 +38,8 @@ service cloud.firestore {
       };
     }
 
-    // A team document: members, at least one Admin (REQ-031), every member has roles.
+    // A team document: members, at least one Admin (REQ-031), every member has roles. Emails are stored lower-case by
+    // the portal (src/team.ts); a mixed-case entry could never match me(), so it would only lock that person out.
     function validProject(d) {
       return d.keys().hasOnly(['name', 'repo', 'members', 'admins', 'team'])
         && d.members is list && d.admins is list && d.team is map
@@ -47,7 +49,10 @@ service cloud.firestore {
     }
 
     match /config/access {
-      allow read: if signedIn();
+      // Only a super admin may read it, so the plain email is never shown to other accounts (ADR-013).
+      // isSuperAdmin() still works for everyone: get() inside rules is not limited by read rules.
+      allow get: if signedIn() && resource != null && me() in resource.data.superAdmins;
+      allow list: if false;
       // Created once, by the super admin's own verified account (REQ-035, ADR-013); never changed from a browser.
       allow create: if signedIn()
         && hashing.sha256(me()).toHexString().lower() == superAdminHash()
@@ -81,9 +86,9 @@ service cloud.firestore {
         allow read: if isMember(pid) || isSuperAdmin();
         allow create: if signedIn() && (isMember(pid) || isSuperAdmin())
           && request.resource.data.keys().hasOnly(['items', 'gate', 'email', 'role', 'at'])
-          && request.resource.data.items is list
+          && request.resource.data.items is list && request.resource.data.items.size() > 0
           && request.resource.data.email == me()
-          && request.resource.data.gate in gateRoles().keys()
+          && request.resource.data.gate in gateRoles().keys() && request.resource.data.gate != 'team' // no record for team changes, so the 'Admin' role never signs one
           && request.resource.data.at == request.time
           && (
             (request.resource.data.role == 'super admin' && isSuperAdmin())

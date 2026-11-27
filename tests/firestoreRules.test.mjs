@@ -44,6 +44,7 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
       await setDoc(doc(db, 'projects/p1/baseline/initial'), { approvals: [] });
       await setDoc(doc(db, 'projects/p1/secrets/token'), { token: 'x' });
       await setDoc(doc(db, 'projects/p1/approvals/old'), { items: ['REQ-001'], gate: 'requirements', email: 'ba@example.com', role: 'BA', at: new Date() });
+      await setDoc(doc(db, 'projects/p4'), { ...p1, name: 'P4', repo: { owner: 'o', name: 'r4' } }); // a team without a baseline
     });
   };
   const record = (email, gate, role) => ({ items: ['REQ-001'], gate, email, role, at: serverTimestamp() });
@@ -56,7 +57,9 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     await assertFails(updateDoc(doc(ba, 'projects/p1'), { members: [...p1.members, 'z@example.com'], team: { ...team, 'z@example.com': ['QA'] } })); // not an Admin
     await assertFails(setDoc(doc(ba, 'projects/p1/secrets/token'), { token: 'y' }));
     await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'design', 'BA')));   // role does not own the gate
-    await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), record('admin@example.com', 'requirements', 'PO'))); // another person's email
+    await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), record('admin@example.com', 'requirements', 'BA'))); // another person's email (role BA is ba's own)
+    await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), { ...record('ba@example.com', 'requirements', 'BA'), at: new Date('2026-01-01') })); // a time chosen by the browser
+    await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), { ...record('ba@example.com', 'requirements', 'BA'), items: [] }));        // names no item
     await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'PO')));    // a role they do not hold
     await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'super admin')));
     await assertFails(addDoc(collection(as('ba@example.com', false), 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'BA'))); // unverified
@@ -65,7 +68,20 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     await assertFails(updateDoc(doc(admin, 'projects/p1'), { admins: [] }));                              // at least one Admin
     await assertFails(setDoc(doc(sa, 'projects/p1/baseline/initial'), { approvals: [{ x: 1 }] }));         // baseline never changes
     await assertFails(deleteDoc(doc(sa, 'projects/p1/baseline/initial')));
-    await assertFails(setDoc(doc(sa, 'projects/p1/baseline/other'), { approvals: [] }));                  // no baseline for an existing team
+    await assertFails(setDoc(doc(sa, 'projects/p1/baseline/other'), { approvals: [] }));                  // only baseline/initial exists
+    await assertFails(setDoc(doc(sa, 'projects/p4/baseline/initial'), { approvals: [] }));                // no baseline for a team that already exists
+    await assertFails(getDoc(doc(out, 'config/access')));                                                 // the super admin's email stays private (ADR-013)
+    await assertFails(getDoc(doc(ba, 'config/access')));
+    // One source of truth for Admin: the `admins` list. 'Admin' in a team role list gives nothing.
+    await env.withSecurityRulesDisabled(async (c) => updateDoc(doc(c.firestore(), 'projects/p1'), { team: { ...team, 'ba@example.com': ['BA', 'QA', 'Admin'] } }));
+    await assertFails(setDoc(doc(ba, 'projects/p1/secrets/token'), { token: 'y' }));                      // 'Admin' in team, not in admins
+    await assertFails(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'team', 'Admin')));
+    await assertFails(updateDoc(doc(ba, 'projects/p1'), { admins: ['admin@example.com', 'ba@example.com'] }));
+    const noAdmin = writeBatch(sa);                                                                        // a first team must name an Admin
+    noAdmin.set(doc(sa, 'projects/p5'), { name: 'P5', repo: { owner: 'o', name: 'r5' }, members: ['a@example.com'], admins: [], team: { 'a@example.com': ['QA'] } });
+    noAdmin.set(doc(sa, 'projects/p5/baseline/initial'), { approvals: [] });
+    await assertFails(noAdmin.commit());
+
     await assertFails(updateDoc(doc(sa, 'config/access'), { superAdmins: [SA, 'x@example.com'] }));        // config/access never changes
     const first = writeBatch(admin);                                                                       // first team by a non-super-admin
     first.set(doc(admin, 'projects/p2'), { ...p1, name: 'P2', members: ['admin@example.com'], admins: ['admin@example.com'], team: { 'admin@example.com': ['Admin'] } });
@@ -78,6 +94,13 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     await seed();
     const ba = as('ba@example.com'), admin = as('admin@example.com'), sa = as(SA);
     await assertSucceeds(getDoc(doc(ba, 'projects/p1')));
+    const mixed = as('Ba@Example.com');                                                                    // Google may report a mixed-case email
+    await assertSucceeds(getDoc(doc(mixed, 'projects/p1')));
+    await assertSucceeds(getDocs(query(collection(mixed, 'projects'), where('members', 'array-contains', 'ba@example.com'))));
+    await assertSucceeds(addDoc(collection(mixed, 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'BA')));
+    await assertSucceeds(getDoc(doc(sa, 'config/access')));                                                // the super admin reads it
+    await assertSucceeds(updateDoc(doc(sa, 'projects/p1'), { members: [...p1.members, 'ux@example.com'], team: { ...team, 'ux@example.com': ['UX'] } })); // super admin manages any team
+    await assertSucceeds(setDoc(doc(sa, 'projects/p1/secrets/token'), { token: 'z' }));
     await assertSucceeds(getDoc(doc(ba, 'projects/p1/secrets/token')));                                   // members' browsers read the token (ADR-011)
     await assertSucceeds(getDocs(query(collection(ba, 'projects'), where('members', 'array-contains', 'ba@example.com'))));
     await assertSucceeds(updateDoc(doc(admin, 'projects/p1'), { members: [...p1.members, 'z@example.com'], team: { ...team, 'z@example.com': ['QA'] } }));
