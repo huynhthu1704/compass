@@ -17,20 +17,23 @@ test('TC-039 (REQ-020): the Ideation agent asks for "Done when" and forbids inve
   assert.match(prompt, /bet/, 'numbers only for a bet');
   assert.match(prompt, /optional "Signal to watch" without a target/);
   assert.doesNotMatch(prompt, /baseline → target, by when|measurable business outcome/);
-  assert.match(src, /outcomeMetric: \{ type: 'string', description: 'Done when:/);
+  assert.match(src, /outcomeMetric: \{ type: 'string', description: 'Done when — /);
 });
 
 test('TC-040 (REQ-020): the offline draft has no baseline or target placeholders', () => {
   for (const need of ['travellers to add guide tips to their checklist', 'We need customers to pay online', 'cần quản lý chi phí chuyến đi']) {
     const idea = demoIdea(need);
     for (const k of ['intent', 'outcomeMetric', 'problem']) assert.doesNotMatch(idea[k], INVENTED, `${need}: ${k} = ${idea[k]}`);
-    assert.match(idea.outcomeMetric, /^Done when: /);
+    assert.match(idea.outcomeMetric, / can .* without manual work/);
+    assert.doesNotMatch(idea.outcomeMetric, /^Done when/, 'the label is added by the page, not repeated in the text');
     assert.equal(idea.need, need);
   }
   assert.doesNotMatch(demoBrief('Share trip pages').outcomeMetric, INVENTED);
   // Numbers the Product Owner wrote herself are kept as a signal to watch, never turned into a new target
   const own = demoIdea('travellers to finish sign-up from 55% to 80%');
-  assert.match(own.outcomeMetric, /^Done when: /);
+  assert.doesNotMatch(own.outcomeMetric, /^Done when/);
+  // An arrow without any number is not a target (review nit on #62)
+  assert.doesNotMatch(demoIdea('travellers to share check-in -> photo flow').outcomeMetric, /Signal to watch/);
   assert.match(own.outcomeMetric, /Signal to watch \(from the need\): travellers to finish sign-up from 55% to 80%$/);
   assert.doesNotMatch(read('src/harness.ts'), /\[baseline %\]|\[target %\]/, 'no placeholder left in the harness');
 });
