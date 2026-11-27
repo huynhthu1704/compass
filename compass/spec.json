@@ -1770,9 +1770,9 @@
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the super admin, I want to see every project and name its Admins, so that each project can manage its own team.",
       "ac": [
-        "Given the super admin emails are stored in the Firestore document config/access, which no browser can write (the Product Owner sets it once in the Firebase console)\nWhen a super admin account signs in\nThen it sees every project and can open every Team page",
+        "Given the super admin's Google email is fixed in the Firestore rules as a one-way hash (the plain email is never in the repo)\nWhen that account signs in to Compass for the first time\nThen the portal records it in the Firestore document config/access, and it sees every project and can open every Team page",
         "Given I am the super admin on a project's Team page\nWhen I tick Admin for a person\nThen that person can manage this project's team and token, and no other project's",
-        "Given any signed-in person, including a super admin\nWhen the portal tries to write config/access\nThen Firestore refuses it"
+        "Given a signed-in person whose email does not match the super admin hash\nWhen the portal tries to create or change config/access\nThen Firestore refuses it; once config/access exists, no browser can change it"
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-27T00:00:00.000Z"
@@ -2771,7 +2771,7 @@
       "title": "Firestore rules refuse writes and reads the roles do not allow",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the Firestore security rules in the emulator\nWhen a person on no team reads a project or its token document, a member who is not an Admin writes the team or the token, a BA writes a design approval record, anyone changes or deletes an approval record, and anyone writes config/access\nThen every one is refused; and a member can read the project and its token document, an Admin or the super admin can write the team and the token, and a BA can write a requirements approval record"
+      "gherkin": "Given the Firestore security rules in the emulator\nWhen a person on no team reads a project or its token document, a member who is not an Admin writes the team or the token, a BA writes a design approval record, anyone changes or deletes an approval record, a person whose email does not match the super admin hash creates config/access, and anyone changes config/access after it exists\nThen every one is refused; and a member can read the project and its token document, an Admin or the super admin can write the team and the token, a BA can write a requirements approval record, and the super admin's account can create config/access once"
     },
     {
       "id": "TC-068",
@@ -2954,6 +2954,18 @@
       "context": "The independent review of PR #74 found that approvals are commits of spec.json made with the shared project token, so Firestore rules never see them: any member could commit an approval for a gate their role does not own, or forge approvedBy.",
       "decision": "The Product Owner chose to write every approval to Firestore first (the rules accept it only from the owning role, and records cannot be changed or deleted), commit to GitHub only after that, and flag approvals in spec.json without a matching record — over accepting screen-only checks or going back to personal tokens.",
       "consequences": "Two more requirements (REQ-037, REQ-038). A member with the token can still edit spec.json directly, but such approvals show as Unconfirmed. The updated design (Unconfirmed badge) was approved on 2026-11-27."
+    },
+    {
+      "id": "ADR-013",
+      "date": "2026-11-27",
+      "title": "The super admin is recorded automatically at first sign-in",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-035"
+      ],
+      "context": "The Product Owner asked not to add herself to Firestore by hand. Writing her email into the rules would publish a personal email in the repo.",
+      "decision": "The Firestore rules hold a SHA-256 hash of the super admin's lower-case Google email. When that account signs in for the first time, the portal creates config/access with it; the rules allow that create only for a matching hash and refuse any later change from a browser.",
+      "consequences": "No manual Firestore step. Adding or changing a super admin later means a rules change (new hash) or an edit in the Firebase console. A hash of an email can be guessed by trying likely emails, so it hides the address from casual readers only."
     }
   ]
 }

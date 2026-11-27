@@ -20,6 +20,9 @@ Firestore rules alone cannot stop a member from committing an approval their rol
 to **record every approval in Firebase**, where the rules check the role, and to have the portal **flag any approval in
 the repo that Firebase does not confirm** (ADR-012).
 
+The Product Owner asked not to set the super admin by hand in Firestore: the portal records her account at its first
+sign-in, and the rules allow that only for her email, stored as a one-way hash (ADR-013).
+
 ## What we want
 1. **A team list per project.** On a project's new *Team* page, an admin adds a person by email address and ticks one
    or more roles: PO, BA, UX, QA, Dev, DM, Ops (the roles Compass already uses), plus **Admin**. The admin can change
@@ -84,7 +87,7 @@ that is not on any team sees no project. Unit tests cover email matching, multip
 - Per-requirement or per-feature permissions.
 
 ## Requirements
-Feature F-015 · Team access: Google sign-in, project teams and roles (decisions ADR-010, ADR-011, ADR-012)
+Feature F-015 · Team access: Google sign-in, project teams and roles (decisions ADR-010, ADR-011, ADR-012, ADR-013)
 - REQ-030 — An admin adds a person to a project by email with one or more roles (#39)
 - REQ-031 — An admin changes a person's roles or removes them from the project (#40)
 - REQ-032 — People sign in with Google and see only the projects whose team lists their email (#41)
@@ -92,5 +95,5 @@ Feature F-015 · Team access: Google sign-in, project teams and roles (decisions
 - REQ-034 — A project Admin stores one GitHub token that the project's members use (#43)
 - REQ-035 — The super admin sees every project and can make someone a project Admin (#44)
 - REQ-036 — Every approval records the email and role of the person who gave it (#45)
-- REQ-037 — Each approval is recorded in Firebase, whose rules accept it only from the owning role
-- REQ-038 — Approvals in the repo that Firebase does not confirm are flagged
+- REQ-037 — Each approval is recorded in Firebase, whose rules accept it only from the owning role (#82)
+- REQ-038 — Approvals in the repo that Firebase does not confirm are flagged (#83)
