@@ -1091,7 +1091,7 @@
       "featureId": "F-015",
       "title": "An admin adds a person to a project by email with one or more roles",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As a project admin, I want to add a person to my project by email and give them one or more roles, so that they can work on the project in the roles they have.",
       "ac": [
@@ -1108,7 +1108,7 @@
       "featureId": "F-015",
       "title": "An admin changes a person's roles or removes them from the project",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As a project admin, I want to change someone's roles or remove them, so that access follows the person's current job.",
       "ac": [
@@ -1143,7 +1143,7 @@
       "featureId": "F-015",
       "title": "Each approval gate can be passed only by a person with the role that owns it",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want each gate tied to its role, so that only the right person can approve each stage.",
       "ac": [
@@ -1177,7 +1177,7 @@
       "featureId": "F-015",
       "title": "The super admin sees every project and can make someone a project Admin",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the super admin, I want to see every project and name its Admins, so that each project can manage its own team.",
       "ac": [
@@ -1193,7 +1193,7 @@
       "featureId": "F-015",
       "title": "Every approval records the email and role of the person who gave it",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want every approval to name the person and role, so that the audit trail shows who approved what.",
       "ac": [
@@ -1642,7 +1642,7 @@
       ],
       "title": "Adding a person normalises the email and keeps several roles",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given an empty team\nWhen \"Ba@Example.com \" is added with BA and QA\nThen the team has one entry ba@example.com with roles [BA, QA]"
     },
     {
@@ -1652,7 +1652,7 @@
       ],
       "title": "Adding a person is refused for a bad email, no role or a duplicate",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a team with ba@example.com\nWhen \"not-an-email\", \"dev@example.com\" with no role, or \"BA@example.com\" is added\nThen each is refused with its reason and the team is unchanged"
     },
     {
@@ -1662,7 +1662,7 @@
       ],
       "title": "The last Admin cannot be removed or lose the Admin role",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a team whose only Admin is po@example.com\nWhen po@example.com is removed, or their Admin role is unticked\nThen both are refused with \"A project needs at least one Admin\"; with a second Admin both are allowed"
     },
     {
@@ -1672,7 +1672,7 @@
       ],
       "title": "Changing roles and removing a person update the team",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a team with ba@example.com (BA)\nWhen the roles are changed to BA and QA and then the person is removed\nThen the team first shows BA and QA, then no longer lists ba@example.com, and the result asks to replace the token"
     },
     {
@@ -1682,7 +1682,7 @@
       ],
       "title": "Email matching picks the projects of a signed-in person",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given projects A (ba@example.com: BA), B (BA@EXAMPLE.COM: QA) and C (dev@example.com: Dev)\nWhen ba@example.com signs in with a verified email\nThen projects A and B are visible with roles BA and QA; with an unverified email, or as x@example.com, no project is visible"
     },
     {
@@ -1702,7 +1702,7 @@
       ],
       "title": "Role → gate rules, including several roles and the super admin",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the gate rules\nWhen canPass is asked for each gate with roles [BA, QA], [UX], [DM], [] and as the super admin\nThen BA+QA may pass requirements and test cases only, UX may pass design only, DM may pass release only, no roles pass nothing, and the super admin passes every gate"
     },
     {
@@ -1755,7 +1755,7 @@
       ],
       "title": "approvedBy names the person and role",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given ba@example.com with roles BA and QA approves a requirement, and the demo user approves one\nWhen the approvals are recorded\nThen approvedBy is \"ba@example.com (BA)\" for the first and today's value for the second"
     }
   ],
