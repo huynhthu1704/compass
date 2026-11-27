@@ -9,8 +9,8 @@ Found by the independent review of #69 (APPROVE with nits on 6887972).
 - tests/conversation.test.mjs — TC-216: every place that renders a RunView gives it `key={…id}`, so its local state
   (quotes, message, version being read, compare) belongs to one run (second commit, fails before the fix)
 - src/components/AgentBox.tsx, src/pages/Build.tsx, src/pages/Runs.tsx — `key` on RunView (third commit)
-- No spec change in this PR: TC-216 is added to compass/spec.json with the next spec change (it would add the views
-  to this PR).
+- compass/spec.json + views (requirements, tests, handover, features/F-020) — TC-216 added after #76 merged; the test
+  file header and the TC-204 test name follow #76 (live parts are TC-214/TC-215)
 
 ## Steps
 1. Commit this plan.
