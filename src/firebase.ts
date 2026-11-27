@@ -172,8 +172,7 @@ const tokenChanged = () => tokenListeners.forEach((l) => l());
 /** The cached project token: a string, null when the project has none, undefined when not loaded yet. */
 export const projectTokenOf = (key: string) => tokens.get(key);
 /** Forget every cached project token (sign-out, or another account signs in in this tab). */
-export function clearProjectTokens() { tokenGeneration++; if (tokens.size) { tokens.clear(); tokenChanged(); } }
-let tokenGeneration = 0;
+export function clearProjectTokens() { if (tokens.size) { tokens.clear(); tokenChanged(); } }
 /** Called whenever a project token is loaded, replaced or forgotten (autosync re-checks dirty projects). */
 export function onProjectTokenChange(l: () => void) { tokenListeners.add(l); return () => { tokenListeners.delete(l); }; }
 export const useProjectToken = (key: string) => useSyncExternalStore((l) => { tokenListeners.add(l); return () => tokenListeners.delete(l); }, () => tokens.get(key));
@@ -181,12 +180,10 @@ export const useProjectToken = (key: string) => useSyncExternalStore((l) => { to
 /** Loads the project token (members and the super admin may read it). */
 export async function loadProjectToken(key: string) {
   const { fs, db } = await load();
-  const gen = tokenGeneration;
   try {
     const snap = await fs.getDoc(fs.doc(db, 'projects', key, 'secrets', 'token'));
-    if (gen !== tokenGeneration) return; // signed out or switched account while loading: drop the old result
     tokens.set(key, snap.exists() ? String(snap.data().token || '') || null : null);
-  } catch (e) { if (gen === tokenGeneration) { tokens.delete(key); tokenChanged(); } throw e; } // refused: forget it
+  } catch (e) { tokens.delete(key); tokenChanged(); throw e; } // refused (e.g. removed from the team): forget it
   tokenChanged();
 }
 

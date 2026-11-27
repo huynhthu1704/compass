@@ -14,9 +14,11 @@ nits. Opening a shared project on a new device follows in its own PR. Still off 
 - `src/harness.ts` — install framework / commit spec / pull spec: the missing-token message
 - `src/components/RunView.tsx`, `src/components/DeleteFeatureDialog.tsx`, `src/pages/Knowledge.tsx`,
   `src/pages/Overview.tsx`, `src/pages/Build.tsx` — `tokenFor(p)` and the missing-token message
-- `src/pages/Team.tsx` — "Test" on a pasted token says "This token is not valid or has expired"; the masked token is
-  read as "Token ending in 1234" (sr-only)
-- `src/firebase.ts` — a project-token load that finishes after sign-out / account switch is dropped
+- `src/token.ts` — `missingToken(p)`: the AC4 message (or "Loading the project token…") for a signed-in person on a
+  real project with no usable token; null otherwise
+- `src/pages/Release.tsx` — Release button disabled and the message shown when the token is missing
+- `src/harness.ts` also: `approveRun` (code changes) and `release()` stop with that message before writing anything
+  (first review of #98). The #97 nits for `src/pages/Team.tsx` and `src/firebase.ts` move to the next PR (file limit).
 - `tests/team.test.mjs` — `missingTokenMessage` (TC-068 second clause)
 - `compass/spec.json` — REQ-034 In build; TC-068 Pass
 

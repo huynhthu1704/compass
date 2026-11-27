@@ -1,6 +1,4 @@
-import { getSession } from '../firebase';
-import { missingTokenMessage } from '../team';
-import { tokenFor } from '../token';
+import { missingToken, tokenFor } from '../token';
 import { useState } from 'react';
 import { go } from '../App';
 import { syncLabel, syncNow, useSync } from '../autosync';
@@ -118,7 +116,7 @@ export function OverviewPage({ p }: { p: Project }) {
             <Button variant="secondary" disabled={!connected || busy || !p.dirty} onClick={() => run(async () => { await syncNow(p.id); return 'Synced'; })}>Sync now</Button>
             <Button variant="ghost" disabled={!connected || busy} onClick={() => run(async () => { if (p.dirty && !confirm('Discard local changes and load compass/spec.json from GitHub?')) return; await pullSpec(p.id); return 'Spec loaded from GitHub'; })}>Pull from GitHub</Button>
           </div>
-          {!connected && <div className="body-sm t-tertiary">{p.demo ? 'Demo project — GitHub actions are simulated.' : p.repo && getSession().status === 'signed-in' ? `${missingTokenMessage(true)}.` : 'Connect GitHub and link a repo to sync.'}</div>}
+          {!connected && <div className="body-sm t-tertiary">{p.demo ? 'Demo project — GitHub actions are simulated.' : missingToken(p) ? `${missingToken(p)}` : 'Connect GitHub and link a repo to sync.'}</div>}
           <h3 className="h4" style={{ marginTop: 8 }}>Recent agent runs</h3>
           {p.runs.length ? p.runs.slice(0, 5).map((r) => (
             <button key={r.id} className="option" style={{ padding: 10 }} onClick={() => go(`/p/${p.id}/runs/${r.id}`)}>

@@ -1,7 +1,5 @@
 /** F-012 · Delete a feature: the dialog (design SCR-1, SCR-2, SCR-3) and the notice on the feature board afterwards. */
-import { getSession } from '../firebase';
-import { missingTokenMessage } from '../team';
-import { tokenFor } from '../token';
+import { missingToken, tokenFor } from '../token';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { go } from '../App';
 import { canConfirmDelete, deleteFeature, deleteSummary, removeFeature, type DeleteGitHub, type DeleteResult, type IssueRef } from '../deleteFeature';
@@ -160,7 +158,7 @@ export function DeleteFeatureDialog({ p, fid, onClose }: { p: Project; fid: stri
           </section>
           <section className="stack gap-xs">
             <strong className="body-sm">Open GitHub issues{issues ? ` (${s.issues.length})` : ''} · closed as "not planned" with a comment</strong>
-            {!live ? <span className="body-sm t-tertiary">{p.demo || !p.repo ? 'Demo or local project: nothing is sent to GitHub.' : 'Connect GitHub to see and close its issues.'}</span>
+            {!live ? <span className="body-sm t-tertiary">{p.demo || !p.repo ? 'Demo or local project: nothing is sent to GitHub.' : missingToken(p) || 'Connect GitHub to see and close its issues.'}</span>
               : issues === null ? <span className="body-sm t-tertiary">Looking up open issues…</span>
               : issueErr ? <span className="body-sm t-danger">Could not read the issues: {issueErr}</span>
               : s.issues.length ? <ul className="stack gap-xs body-sm">{s.issues.map((i) => <li key={i.number} className="row gap-sm"><a className="mono-sm" href={i.html_url} target="_blank" rel="noreferrer">#{i.number}</a><span className="grow">{i.title}</span></li>)}</ul>
@@ -171,7 +169,7 @@ export function DeleteFeatureDialog({ p, fid, onClose }: { p: Project; fid: stri
         <div className="field">
           <label htmlFor="delete-confirm">Type {fid} to confirm</label>
           <input id="delete-confirm" ref={input} className="input" autoComplete="off" spellCheck={false} value={typed} onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') confirm(); }} />
-          {needsGitHub && <div className="help error">{getSession().status === 'signed-in' ? `${missingTokenMessage(true)}, so the feature's files and issues are removed too.` : "Connect GitHub first (Connections), so the feature's files and issues are removed too."}</div>}
+          {needsGitHub && <div className="help error">{missingToken(p) ? `${missingToken(p)} The feature's files and issues are removed only with a token.` : "Connect GitHub first (Connections), so the feature's files and issues are removed too."}</div>}
           {!canConfirmDelete(typed, fid) && <div className="help">Delete stays off until the text is exactly {fid}.</div>}
           {error && <div className="help error" role="alert">{error}</div>}
         </div>
