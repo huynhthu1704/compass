@@ -36,7 +36,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   const prop = shown ? shown.proposal : r.proposal;
   const changes = shown ? shown.changes : r.changes;
   const output = shown ? shown.output : r.output;
-  const quotable = r.status !== 'running';
+  const quotable = r.status !== 'running' && !shown; // an older version is read-only: Revise always works on the latest
   const canReply = r.status !== 'running' && !!(r.output || r.proposal || r.changes.length || r.conversation?.length);
 
   const addQuote = (source: string, text: string) => {
@@ -50,6 +50,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
   useEffect(() => {
     let t: ReturnType<typeof setTimeout> | undefined;
     const check = () => {
+      if (view != null) { setPop(null); return; }
       const sel = window.getSelection();
       const root = answerRef.current;
       if (!sel || sel.isCollapsed || !sel.rangeCount || !root) { setPop(null); return; }
@@ -70,7 +71,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
     window.addEventListener('scroll', later, true);
     window.addEventListener('resize', later);
     return () => { clearTimeout(t); document.removeEventListener('selectionchange', later); window.removeEventListener('scroll', later, true); window.removeEventListener('resize', later); };
-  }, [r.status, replying]);
+  }, [r.status, replying, view]);
 
   const pill = (label: string, source: string, text: string) => (quotable ? <QuotePill label={label} onQuote={() => addQuote(source, text)} /> : null);
   const ideaText = prop?.idea ? versionItems({ proposal: { idea: prop.idea }, changes: [] }).map((x) => `${x.key.replace('Idea · ', '')}: ${x.text}`).join('\n') : '';

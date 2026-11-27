@@ -231,3 +231,19 @@ test('TC-208 (REQ-052): a revised version without finished checks cannot be appr
   assert.deepEqual(canApprove(r), { ok: true }, 'a run that was never revised is unchanged');
   assert.equal(canApprove({ ...r, status: 'done' }).ok, false);
 });
+
+test('TC-207 (REQ-052): a file that exists in the repository is never taken as new — only a quoted file may change', () => {
+  const quotes = [{ source: 'src/a.ts', text: 'a' }];
+  // the caller passes the change-set paths plus the repository files the agent touched (looked up before scoping)
+  const s = scopeDelta({ changes: [{ path: 'package.json', action: 'create', content: '{}' }, { path: 'src/App.tsx', action: 'create', content: 'x', before: 'old' }, { path: 'src/new.ts', action: 'create', content: 'n' }] }, quotes, ['src/a.ts', 'package.json']);
+  assert.deepEqual(s.dropped, ['package.json', 'src/App.tsx'], 'claimed "create" on existing files is refused');
+  assert.deepEqual(s.delta.changes.map((c) => c.path), ['src/new.ts']);
+});
+
+test('TC-201 (REQ-050): a selection across idea fields or design texts is not the whole brief', () => {
+  const end = (source) => ({ inAnswer: true, source });
+  assert.equal(selectionSource(end('Idea · problem'), end('Idea · users'), 'awaiting-approval'), 'Answer');
+  assert.equal(selectionSource(end('Design · summary'), end('Design · notes'), 'awaiting-approval'), 'Answer');
+  assert.equal(revisableQuotes([{ source: 'Answer', text: 'x' }]), false);
+  assert.deepEqual(scopeDelta({ idea: { intent: 'x' }, design: { summary: 's', notes: 'n' } }, [{ source: 'Idea', text: 'x' }, { source: 'Design', text: 'y' }]).delta, {}, 'a bare Idea / Design quote allows nothing');
+});

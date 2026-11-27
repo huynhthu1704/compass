@@ -38,7 +38,9 @@ export interface SelectionEnd { inAnswer: boolean; source?: string | null }
 export function selectionSource(a: SelectionEnd, b: SelectionEnd, status: Run['status'], replying?: Run['replying']): string | null {
   if (status === 'running' || replying || !a.inAnswer || !b.inAnswer) return null;
   if (a.source && a.source === b.source) return a.source;
-  if (a.source && b.source && quoteItem(a.source) === quoteItem(b.source)) return quoteItem(a.source);
+  // Different parts of one requirement / screen / test give the item; parts of the idea brief or the design text are
+  // separate items, so a selection across them is "Answer" (Ask only), never the whole brief.
+  if (a.source && b.source && quoteItem(a.source) === quoteItem(b.source) && !['Idea', 'Design'].includes(quoteItem(a.source))) return quoteItem(a.source);
   return 'Answer';
 }
 
@@ -194,12 +196,13 @@ export function mergeProposal(prev: Proposal | undefined, delta: Delta, taken: s
 
 /**
  * REQ-052: a revision may only touch what was quoted. Items with an id (REQ, TC, SCR), idea fields, the design summary /
- * notes and files of the change set are kept only when the reviewer quoted them; new items (no id) and new files
- * (action create, outside the change set) are allowed. Everything else is dropped and listed, so the agent and the reviewer see it was refused.
+ * notes and files are kept only when the reviewer quoted them; new items (no id) and new files are allowed. A new file is
+ * one that is neither in the change set nor in the repository: the caller passes both in `existingPaths`, so a file that
+ * already exists is refused unless quoted, whatever action the agent claims. Everything else is dropped and listed, so the agent and the reviewer see it was refused.
  */
 export function scopeDelta(delta: Delta, quotes: Quote[], existingPaths: string[] = []): { delta: Delta; dropped: string[] } {
   const items = new Set(quotes.map((q) => quoteItem(q.source)));
-  const ideaParts = new Set(quotes.filter((q) => quoteItem(q.source) === 'Idea').map((q) => q.source.split(' · ')[1] || 'whole brief'));
+  const ideaParts = new Set(quotes.filter((q) => quoteItem(q.source) === 'Idea').map((q) => q.source.split(' · ')[1] || ''));
   const designParts = new Set(quotes.filter((q) => quoteItem(q.source) === 'Design').map((q) => q.source.split(' · ')[1] || ''));
   const dropped: string[] = [];
   const keep = <T extends { id?: string }>(list?: T[]) => (list || []).filter((x) => { if (!x.id || items.has(x.id)) return true; dropped.push(x.id); return false; });
@@ -211,7 +214,7 @@ export function scopeDelta(delta: Delta, quotes: Quote[], existingPaths: string[
     const screens = keep(delta.design.screens); if (screens.length) d.screens = screens;
     for (const k of ['summary', 'notes'] as const) {
       if (delta.design[k] === undefined) continue;
-      if (designParts.has(k) || designParts.has('')) d[k] = delta.design[k]; else dropped.push(`Design · ${k}`);
+      if (designParts.has(k)) d[k] = delta.design[k]; else dropped.push(`Design · ${k}`);
     }
     if (Object.keys(d).length) out.design = d;
   }
@@ -223,7 +226,7 @@ export function scopeDelta(delta: Delta, quotes: Quote[], existingPaths: string[
     }
     if (Object.keys(idea).length) out.idea = idea as Partial<Idea>;
   }
-  const files = (delta.changes || []).filter((c) => { if (items.has(c.path) || (!existingPaths.includes(c.path) && c.action === 'create')) return true; dropped.push(c.path); return false; });
+  const files = (delta.changes || []).filter((c) => { if (items.has(c.path) || (!existingPaths.includes(c.path) && c.action === 'create' && c.before === undefined)) return true; dropped.push(c.path); return false; });
   if (files.length) out.changes = files;
   return { delta: out, dropped };
 }

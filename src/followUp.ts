@@ -6,6 +6,8 @@ import { checkChanges } from './guardrails';
 import { agent, evaluate, getP, patchRun, preview, step, TOOLS, type AgentDef } from './harness';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { activeReply, addDelta, canAsk, canRevise, canSend, changedItems, revisableQuotes, demoAnswer, demoRevision, followUpPrompt, mergeChanges, mergeProposal, scanReply, scopeDelta, withAsk, withRevision, type Delta } from './conversation';
+import { github } from './github';
+import { rag } from './rag';
 import { now, store, uid } from './store';
 import type { AgentId, ConvTurn, FileChange, Idea, Quote, Run } from './types';
 
@@ -32,6 +34,9 @@ async function liveRevise(pid: string, rid: string, a: AgentDef, run: Run, promp
   const tools = [own, TOOLS.find((t) => t.name === 'finish')!];
   const messages: Msg[] = [{ role: 'user', content: prompt }];
   const paths = run.changes.map((c) => c.path);
+  const p = getP(pid), token = store.get().settings.githubToken;
+  /** The file as it is in the repository (indexed copy first, then GitHub), so an existing file is never taken as new. */
+  const repoFile = async (path: string) => rag.repoDocs(pid).find((d) => d.path === path)?.content ?? (token && p.repo ? (await github.file(token, p.repo, path))?.content : undefined);
   let delta: Delta = {};
   let tokens = 0, summary = '';
   for (let turn = 0; turn < 4 && !summary; turn++) {
@@ -55,7 +60,12 @@ async function liveRevise(pid: string, rid: string, a: AgentDef, run: Run, promp
         const prev = run.changes.find((c) => c.path === path);
         const g = checkChanges([{ path, action: 'create', content: String(i.content || '') }], getP(pid).spec, undefined, ['REQ-000']).filter((x) => (x.id === 'G1' || x.id === 'G2') && x.level === 'block');
         if (g.length) out = `REJECTED by guardrail: ${g.map((x) => x.message).join('; ')}`;
-        else one = { changes: [{ path, action: (i.action as FileChange['action']) || prev?.action || 'create', content: String(i.content || ''), before: prev?.before, reason: String(i.reason || prev?.reason || '') }] };
+        else {
+          const before = prev ? prev.before : await repoFile(path);
+          if (before !== undefined && !prev) paths.push(path); // exists in the repository: only a quoted file may change
+          const action = (i.action as FileChange['action']) || prev?.action || (before !== undefined ? 'update' : 'create');
+          one = { changes: [{ path, action, content: String(i.content || ''), before, reason: String(i.reason || prev?.reason || '') }] };
+        }
       } else out = `ERROR: unknown tool ${u.name}`;
       if (one) {
         const s = scopeDelta(one, quotes, paths);
@@ -108,7 +118,7 @@ export async function replyToRun(pid: string, rid: string, kind: 'ask' | 'revise
     const res = live ? await liveRevise(pid, rid, a, r0, prompt, quotes) : { delta: demoRevision(r0, reply), text: `Demo revision of ${quotes.map((q) => q.source).join(', ')}.`, tokens: 0 };
     const cur = getP(pid).runs.find((x) => x.id === rid);
     if (!cur) return 'The run was deleted.';
-    const scoped = scopeDelta(res.delta, quotes, cur.changes.map((c) => c.path));
+    const scoped = scopeDelta(res.delta, quotes, [...cur.changes.map((c) => c.path), ...(res.delta.changes || []).filter((c) => c.before !== undefined).map((c) => c.path)]);
     const taken = [...getP(pid).spec.requirements.map((x) => x.id), ...getP(pid).spec.tests.map((x) => x.id)];
     const revised = { proposal: mergeProposal(cur.proposal, scoped.delta, taken), changes: mergeChanges(cur.changes, scoped.delta.changes) };
     const refused = scoped.dropped.length ? ` Not saved, because they were not quoted: ${scoped.dropped.join(', ')}.` : '';
