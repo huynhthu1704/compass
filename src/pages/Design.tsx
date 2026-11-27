@@ -22,7 +22,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const unconfirmed = useUnconfirmed(p); // REQ-038
   const [panel, setPanel] = useState(false);
   const [shown, setShown] = useState<'figma' | 'miro'>('figma');
-  const filesBtn = useRef<HTMLButtonElement>(null);
+  const filesBtns = useRef<(HTMLButtonElement | null)[]>([]);
   if (!f) return <div className="empty">Feature not found.</div>;
   const d = f.design;
   const reqs = p.spec.requirements.filter((r) => r.featureId === fid);
@@ -46,10 +46,11 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const previews = designPreviews(files, d?.url);
   const preview = previews.find((x) => x.kind === shown) || previews[0];
   // Focus goes back to the button once the panel is gone (the panel keeps focus inside itself while it is open).
-  const closePanel = () => { setPanel(false); requestAnimationFrame(() => filesBtn.current?.focus()); };
+  // Two placements (desktop corner, phone title row); only one is displayed, and focus goes back to that one.
+  const closePanel = () => { setPanel(false); requestAnimationFrame(() => filesBtns.current.find((b) => b && b.offsetParent !== null)?.focus()); };
   const settingsPath = `/p/${p.id}/settings`;
-  const filesButton = (
-    <button ref={filesBtn} className="btn secondary" aria-haspopup="dialog" aria-expanded={panel} onClick={() => setPanel(true)}>
+  const filesButton = (where: 'desktop' | 'phone') => (
+    <button ref={(el) => { filesBtns.current[where === 'desktop' ? 0 : 1] = el; }} className={`btn secondary files-btn-${where}`} aria-haspopup="dialog" aria-expanded={panel} onClick={() => setPanel(true)}>
       🔗 <span className="hide-phone">{count ? 'Design files' : 'Design files · none'}</span><span className="show-phone">{count ? 'Files' : 'Files · none'}</span>
       {count > 0 && <span className="files-count" aria-label={`${count} linked`}>{count}</span>}
     </button>
@@ -59,7 +60,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
     <div className="stack gap-xl">
       <PageHead over={`${f.id} ${f.name} · Stage 3 · Design · owner: UX / PO`} title="Design" sub={`Screens traced to the approved requirements. Coding is locked until the design is approved. Saved to compass/spec.json and compass/design/${f.id}.md.`}
         right={<>{d && d.status === 'Draft' ? <>{!gate.allowed && <span id="design-gate-hint" className="body-sm t-tertiary">{gate.hint}</span>}<Button variant="accent" disabled={uncovered.length > 0 || !gate.allowed || approving} title={uncovered.length ? 'Every approved requirement needs a screen' : undefined} aria-describedby={gate.allowed ? undefined : 'design-gate-hint'} onClick={() => void approve()}>Approve design</Button></>
-          : d ? <Button variant="ghost" onClick={() => setD({ status: 'Draft', approvedBy: undefined, approvedAt: undefined })}>Reopen as draft</Button> : null}</>} titleRight={filesButton} />
+          : d ? <Button variant="ghost" onClick={() => setD({ status: 'Draft', approvedBy: undefined, approvedAt: undefined })}>Reopen as draft</Button> : null}{filesButton('desktop')}</>} titleRight={filesButton('phone')} />
       {panel && <DesignFilesPanel files={files} admin={admin} settingsPath={settingsPath} featurePreview={!count && previews.length > 0} onClose={closePanel} />}
 
       <section className="stack gap-sm" aria-label="Design preview">
