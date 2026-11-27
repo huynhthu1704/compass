@@ -1,4 +1,4 @@
-// F-013 Sidebar navigation — TC-400, TC-402, TC-403, TC-404 (REQ-070 … REQ-073).
+// F-013 Sidebar navigation — TC-400, TC-402, TC-403, TC-404, TC-406, TC-407 (REQ-070 … REQ-075).
 // TC-401 (keyboard focus) and TC-405 (desktop/phone, light/dark) are checked with screenshots.
 // src/sidebar.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
@@ -9,15 +9,14 @@ import { WORKSPACE_LINKS, accountCard, approvalCount, featureRows, projectLinks,
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const runs = (...statuses) => statuses.map((status) => ({ status }));
 
-test('TC-400 (REQ-070): groups, link order, icons, Knowledge tooltip and the project card state', () => {
+test('TC-400 (REQ-070): groups, link order, icons and the project card state', () => {
   assert.deepEqual(WORKSPACE_LINKS.map((l) => [l.label, l.path]), [['Projects', '/'], ['Agent architecture', '/architecture']]);
   const links = projectLinks('p1', []);
   assert.deepEqual(links.map((l) => [l.label, l.path]), [
-    ['Feature board', '/p/p1'], ['Team floor', '/p/p1/floor'], ['Agent runs', '/p/p1/runs'], ['Release', '/p/p1/release'], ['Knowledge', '/p/p1/knowledge'],
+    ['Feature board', '/p/p1'], ['Team floor', '/p/p1/floor'], ['Agent runs', '/p/p1/runs'], ['Release', '/p/p1/release'],
   ]);
   for (const l of [...WORKSPACE_LINKS, ...links]) assert.ok(l.icon, `${l.label} has an icon`);
-  assert.equal(new Set([...WORKSPACE_LINKS, ...links].map((l) => l.icon)).size, 7, 'every link has its own icon');
-  assert.equal(links.at(-1).title, 'Project knowledge the agents search (RAG)');
+  assert.equal(new Set([...WORKSPACE_LINKS, ...links].map((l) => l.icon)).size, 6, 'every link has its own icon');
 
   assert.deepEqual(projectState({ demo: true }, null), { text: 'Demo project', tone: 'neutral' });
   assert.deepEqual(projectState({}, { tone: 'success', text: 'Synced with GitHub' }), { text: 'Synced with GitHub', tone: 'success' });
@@ -97,4 +96,19 @@ test('TC-406 (REQ-074): no "AI dev portal" tagline in the UI', async () => {
   for (const f of files) assert.doesNotMatch(noComments(read(`src/${f}`)), /AI dev portal/i, `src/${f} shows the tagline`);
   assert.match(read('src/components/Sidebar.tsx'), /<div className="brand-text">Compass<\/div>/, 'the brand is "Compass" only');
   assert.match(read('src/pages/Onboarding.tsx'), /<div className="overline t-brand">Compass<\/div>/, 'the overline is "Compass"');
+});
+
+test('TC-407 (REQ-075): no Knowledge link in the sidebar for any role; the page still opens', () => {
+  // The sidebar links take no role, so the same list is shown to PO, BA, DM, UX, Dev, QA and Ops.
+  for (const runs of [[], [{ status: 'awaiting-approval' }]]) {
+    for (const l of [...WORKSPACE_LINKS, ...projectLinks('p1', runs)]) {
+      assert.doesNotMatch(l.path, /knowledge/, `${l.label} does not point to Knowledge`);
+      assert.doesNotMatch(l.label, /knowledge/i);
+    }
+  }
+  assert.equal(projectLinks.length, 2, 'projectLinks(projectId, runs) has no role argument');
+  const sidebar = read('src/components/Sidebar.tsx');
+  assert.doesNotMatch(sidebar, /knowledge/i, 'no Knowledge link or icon in the Sidebar component');
+  assert.doesNotMatch(read('src/sidebar.ts').replace(/\/\*[\s\S]*?\*\//g, ''), /'knowledge'/, 'no knowledge link key or icon');
+  assert.match(read('src/App.tsx'), /sub === 'knowledge' \? <KnowledgePage p=\{p\} \/>/, 'the /knowledge route still renders the page');
 });

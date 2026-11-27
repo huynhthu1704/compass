@@ -2,7 +2,7 @@
 // Types-only imports, so Node runs this file directly in tests/sidebar.test.mjs.
 import type { Feature, Run, Stage } from './types.ts';
 
-export type IconName = 'projects' | 'architecture' | 'board' | 'floor' | 'runs' | 'release' | 'knowledge';
+export type IconName = 'projects' | 'architecture' | 'board' | 'floor' | 'runs' | 'release';
 export type NavLink = { key: string; label: string; path: string; icon: IconName; title?: string; count?: ApprovalCount };
 export type ApprovalCount = { n: number; label: string; title: string };
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
@@ -19,7 +19,8 @@ export function approvalCount(runs: Pick<Run, 'status'>[]): ApprovalCount | null
   return n ? { n, label: `${n} waiting for approval`, title: `${n} agent run${n === 1 ? '' : 's'} waiting for your approval` } : null;
 }
 
-/** REQ-070 / REQ-071: the project group, in order; only Team floor carries the approval count. */
+/** REQ-070 / REQ-071: the project group, in order; only Team floor carries the approval count.
+ *  REQ-075: no Knowledge link for any role — the page stays reachable at `/p/<id>/knowledge`. */
 export function projectLinks(projectId: string, runs: Pick<Run, 'status'>[]): NavLink[] {
   const base = `/p/${projectId}`;
   const count = approvalCount(runs) || undefined;
@@ -28,7 +29,6 @@ export function projectLinks(projectId: string, runs: Pick<Run, 'status'>[]): Na
     { key: 'floor', label: 'Team floor', path: `${base}/floor`, icon: 'floor', count, title: count?.title },
     { key: 'runs', label: 'Agent runs', path: `${base}/runs`, icon: 'runs' },
     { key: 'release', label: 'Release', path: `${base}/release`, icon: 'release' },
-    { key: 'knowledge', label: 'Knowledge', path: `${base}/knowledge`, icon: 'knowledge', title: 'Project knowledge the agents search (RAG)' },
   ];
 }
 

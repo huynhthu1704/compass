@@ -719,7 +719,7 @@
       "design": {
         "status": "Approved",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=83-574",
-        "summary": "The 248 px sidebar is split into three groups by thin lines: the workspace links (Projects, Agent architecture), the open project, and an account footer pinned to the bottom. Every page link starts with an 18 px stroke icon; the current page is honey with a 3 px brand bar on the left. The open project is a card (letter avatar, name, sync state with a coloured dot, chevron) that leads to the project list; under it Feature board, Team floor (the only approval count, a honey pill), Agent runs, Release and Knowledge. \"Features\" has a count; each feature row has a stage-coloured dot, the name on up to two lines and the short id (F01) on the right; the open feature lists its five stages indented with step numbers or ✓. The footer is an account card (initial, @user, \"GitHub connected\" or \"Demo mode · connect\") that opens Connections, then the role picker and one sun/moon theme button.",
+        "summary": "The 248 px sidebar is split into three groups by thin lines: the workspace links (Projects, Agent architecture), the open project, and an account footer pinned to the bottom. Every page link starts with an 18 px stroke icon; the current page is honey with a 3 px brand bar on the left. The open project is a card (letter avatar, name, sync state with a coloured dot, chevron) that leads to the project list; under it Feature board, Team floor (the only approval count, a honey pill), Agent runs and Release (no Knowledge link, REQ-075). \"Features\" has a count; each feature row has a stage-coloured dot, the name on up to two lines and the short id (F01) on the right; the open feature lists its five stages indented with step numbers or ✓. The footer is an account card (initial, @user, \"GitHub connected\" or \"Demo mode · connect\") that opens Connections, then the role picker and one sun/moon theme button.",
         "screens": [
           {
             "id": "SCR-1",
@@ -730,13 +730,14 @@
               "REQ-071",
               "REQ-072",
               "REQ-073",
-              "REQ-074"
+              "REQ-074",
+              "REQ-075"
             ],
             "elements": [
               "Brand: logo, \"Compass\"",
               "Workspace: Projects, Agent architecture (icons)",
               "Project card: avatar, name, sync state, chevron",
-              "Feature board, Team floor (count pill), Agent runs, Release, Knowledge",
+              "Feature board, Team floor (count pill), Agent runs, Release",
               "Features heading with count; dot · name · F0x rows; stage sub-list",
               "Account card, role picker, theme button"
             ],
@@ -1621,7 +1622,7 @@
       "ac": [
         "Given any page of the portal on a desktop screen\nWhen I look at the sidebar\nThen it shows three groups separated by a line — workspace (Projects, Agent architecture), the open project (only when one is open) and an account footer at the bottom — and every page link starts with an icon",
         "Given a project is open\nWhen I look at the project group\nThen a card shows the project's first letter, its name and its state (\"Demo project\", the GitHub sync state such as \"Synced with GitHub\" or \"Sync failed\", or \"Local project\" when it is not on GitHub), and clicking it opens the project list",
-        "Given a project is open\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs, Release and Knowledge, and Knowledge has the tooltip \"Project knowledge the agents search (RAG)\"",
+        "Given a project is open\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs and Release (REQ-075: no Knowledge link)",
         "Given I use the keyboard\nWhen I press Tab through the sidebar in light or dark mode\nThen every link, card and button shows a visible focus ring"
       ]
     },
@@ -1677,6 +1678,19 @@
       "ac": [
         "Given any page of the portal\nWhen I look at the sidebar brand\nThen it shows the logo and \"Compass\" with no \"AI dev portal\" line under it",
         "Given the onboarding page\nWhen I look at the overline above the title\nThen it reads \"Compass\" and no screen of the portal shows the text \"AI dev portal\""
+      ]
+    },
+    {
+      "id": "REQ-075",
+      "featureId": "F-013",
+      "title": "The sidebar has no Knowledge link for any role",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-hide-knowledge-link.md",
+      "story": "As any portal user, I want the sidebar to show only the pages of the delivery flow, so that the technical Knowledge (RAG) page does not distract me.",
+      "ac": [
+        "Given a project is open, in any role (PO, BA, DM, UX, Dev, QA, Ops)\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs and Release, and there is no Knowledge link",
+        "Given the address /p/<project>/knowledge\nWhen I open it directly\nThen the Knowledge page still opens, and agent runs keep indexing and searching the repository as before"
       ]
     },
     {
@@ -2586,7 +2600,7 @@
       "title": "Sidebar groups, icons, project card and link order",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed, a project not on GitHub, and no open project\nWhen the sidebar sections are computed\nThen the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs, Release and Knowledge (only when a project is open), each with its own icon, Knowledge has the RAG tooltip, the project card state is \"Demo project\", \"Synced with GitHub\", \"Sync failed\" or \"Local project\", and clicking the project card opens the project list"
+      "gherkin": "Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed, a project not on GitHub, and no open project\nWhen the sidebar sections are computed\nThen the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs and Release (only when a project is open), each with its own icon, the project card state is \"Demo project\", \"Synced with GitHub\", \"Sync failed\" or \"Local project\", and clicking the project card opens the project list"
     },
     {
       "id": "TC-401",
@@ -2649,6 +2663,16 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given the portal source under src/\nWhen it is searched for the text \"AI dev portal\"\nThen no file contains it, the sidebar brand renders \"Compass\" without a second line and the onboarding overline is \"Compass\""
+    },
+    {
+      "id": "TC-407",
+      "reqIds": [
+        "REQ-075"
+      ],
+      "title": "No Knowledge link in the sidebar; the page still opens",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the sidebar model for an open project and the sidebar component, which take no role\nWhen the project links are computed and the sources are read\nThen no link points to /knowledge or is labelled Knowledge for any role, the sidebar has no knowledge icon, and App still renders the Knowledge page for the knowledge route"
     },
     {
       "id": "TC-200",
