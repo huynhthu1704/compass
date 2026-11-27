@@ -1103,7 +1103,7 @@
               "Super admin → every gate enabled",
               "Demo mode → gates as today, approvedBy unchanged",
               "Firestore refuses the approval record → red notice, nothing committed",
-              "Approval made outside the portal (no Firebase record) → Unconfirmed badge"
+              "Approval in neither the baseline (approvals that existed when the team was created) nor a Firebase record → Unconfirmed badge, whatever date it claims"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=138-2633"
           },
@@ -1812,7 +1812,7 @@
       "ac": [
         "Given the gate rules: intent and requirements → PO (BA may also approve requirements); design → UX or PO; test cases → QA; start a build → Dev; merge and release → DM or PO; team and token → Admin\nWhen a signed-in person opens a gate whose role they do not have\nThen its button is disabled with the hint \"Needs the <role> role\"",
         "Given a person with several roles (e.g. BA and QA)\nWhen they open the requirements and test-case gates\nThen both are enabled, and the design and release gates are disabled",
-        "Given a person changes the page in the browser to enable a disabled gate\nWhen the approval is saved\nThen the Firestore rules refuse its approval record (REQ-037), the portal shows \"Not allowed for your roles\" and nothing is committed to GitHub",
+        "Given a person changes the page in the browser to enable a disabled gate\nWhen the approval is saved\nThen the Firestore rules refuse its approval record (REQ-037), the portal shows \"Not allowed for your roles\" and nothing is committed to GitHub (an approval committed outside the portal without a record is flagged, REQ-038)",
         "Given the super admin\nWhen they open any gate\nThen it is enabled"
       ],
       "approvedBy": "the Product Owner (in chat)",
@@ -1844,9 +1844,9 @@
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the super admin, I want to see every project and name its Admins, so that each project can manage its own team.",
       "ac": [
-        "Given the super admin's Google email is fixed in the Firestore rules as a one-way hash (the plain email is never in the repo)\nWhen that account signs in to Compass for the first time\nThen the portal records it in the Firestore document config/access, and it sees every project and can open every Team page",
+        "Given the super admin's Google email is fixed in the Firestore rules as a one-way hash (the plain email is never in the repo)\nWhen that account, with a verified email, signs in to Compass for the first time\nThen the portal records it in the Firestore document config/access, and it sees every project and can open every Team page",
         "Given I am the super admin on a project's Team page\nWhen I tick Admin for a person\nThen that person can manage this project's team and token, and no other project's",
-        "Given a signed-in person whose email does not match the super admin hash\nWhen the portal tries to create or change config/access\nThen Firestore refuses it; once config/access exists, no browser can change it"
+        "Given a signed-in person whose email does not match the super admin hash, or is not verified\nWhen the portal tries to create or change config/access\nThen Firestore refuses it; once config/access exists, no browser can change it"
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-27T00:00:00.000Z"
@@ -1877,6 +1877,7 @@
       "ac": [
         "Given a signed-in person passes a gate (intent, requirements, design, test cases, build or release)\nWhen the portal saves the approval\nThen it first writes an approval record to Firestore (project, item ids, gate, email, role, time) and commits to GitHub only after Firestore accepts it",
         "Given a person without a role that owns the gate, who is not the super admin\nWhen an approval record is written for that gate\nThen the Firestore rules refuse it, the portal shows \"Not allowed for your roles\" and nothing is committed",
+        "Given a signed-in person writes an approval record\nWhen the record's email is not their own verified sign-in email, or its role is not one of their roles on that project, or that role does not own the gate\nThen the Firestore rules refuse it (a BA cannot record \"po@example.com (PO)\")",
         "Given an approval record exists\nWhen anyone tries to change or delete it\nThen the Firestore rules refuse it",
         "Given Firestore accepted the record but the GitHub commit fails\nWhen the portal reports the error\nThen the approval is shown as not saved and retrying reuses the same record"
       ],
@@ -1892,9 +1893,10 @@
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want approvals made outside the portal to stand out, so that a forged approvedBy is noticed.",
       "ac": [
-        "Given the project has a team (team access is on) and spec.json on GitHub has an approval made after that date\nWhen the portal loads the project\nThen an approval with no matching Firebase record (same item, gate and email) shows a red \"Unconfirmed\" badge naming who it claims",
+        "Given an Admin saves a project's team for the first time\nWhen the team is created\nThen the portal stores in Firebase a baseline of the approvals already in spec.json (item, gate, approvedBy), and the Firestore rules refuse any later change to it",
+        "Given the project has a team\nWhen the portal loads the project\nThen every approval in spec.json that is neither in the baseline nor matched by an approval record (same item, gate and email) shows a red \"Unconfirmed\" badge naming who it claims, whatever date it claims",
         "Given unconfirmed approvals exist\nWhen a person opens the project's Feature board\nThen a notice lists them with links, so a person with the owning role can approve again",
-        "Given demo mode, or approvals made before the project's team was created\nWhen the project loads\nThen they are not flagged"
+        "Given demo mode, or approvals listed in the baseline\nWhen the project loads\nThen they are not flagged"
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-27T00:00:00.000Z"
@@ -2891,12 +2893,13 @@
         "REQ-030",
         "REQ-034",
         "REQ-035",
-        "REQ-037"
+        "REQ-037",
+        "REQ-038"
       ],
       "title": "Firestore rules refuse writes and reads the roles do not allow",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the Firestore security rules in the emulator\nWhen a person on no team reads a project or its token document, a member who is not an Admin writes the team or the token, a BA writes a design approval record, anyone changes or deletes an approval record, a person whose email does not match the super admin hash creates config/access, and anyone changes config/access after it exists\nThen every one is refused; and a member can read the project and its token document, an Admin or the super admin can write the team and the token, a BA can write a requirements approval record, and the super admin's account can create config/access once"
+      "gherkin": "Given the Firestore security rules in the emulator\nWhen a person on no team reads a project or its token document, a member who is not an Admin writes the team or the token, a BA writes a design approval record, a BA writes a requirements record with email po@example.com or with role PO, a record is written by an account with an unverified email, anyone changes or deletes an approval record, a person whose email does not match the super admin hash creates config/access, anyone changes config/access after it exists, the super admin's account creates config/access with an unverified email, and anyone changes a project's approval baseline after it was created\nThen every one is refused; and a member can read the project and its token document, an Admin or the super admin can write the team and the token, a BA can write a requirements approval record, and the super admin's account can create config/access once"
     },
     {
       "id": "TC-068",
@@ -2953,10 +2956,10 @@
       "reqIds": [
         "REQ-038"
       ],
-      "title": "Approvals without a Firebase record are listed as unconfirmed",
+      "title": "Approvals in neither the baseline nor a Firebase record are unconfirmed, whatever their date",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a team created on 2026-12-01, approvals in spec.json by ba@example.com (requirements, 2026-12-02, with a record), ux@example.com (design, 2026-12-03, no record) and po@example.com (intent, 2026-11-20, no record)\nWhen unconfirmed approvals are computed\nThen only the design approval by ux@example.com is unconfirmed"
+      "gherkin": "Given a baseline with the intent approval by po@example.com, an approval record for the requirements approval by ba@example.com, and in spec.json those two plus a design approval by ux@example.com dated 2026-11-20 (before the team existed) with no record and not in the baseline\nWhen unconfirmed approvals are computed\nThen only the design approval by ux@example.com is unconfirmed; in demo mode nothing is"
     },
     {
       "id": "TC-074",
@@ -3093,8 +3096,8 @@
         "REQ-038"
       ],
       "context": "The independent review of PR #74 found that approvals are commits of spec.json made with the shared project token, so Firestore rules never see them: any member could commit an approval for a gate their role does not own, or forge approvedBy.",
-      "decision": "The Product Owner chose to write every approval to Firestore first (the rules accept it only from the owning role, and records cannot be changed or deleted), commit to GitHub only after that, and flag approvals in spec.json without a matching record — over accepting screen-only checks or going back to personal tokens.",
-      "consequences": "Two more requirements (REQ-037, REQ-038). A member with the token can still edit spec.json directly, but such approvals show as Unconfirmed. The updated design (Unconfirmed badge) was approved on 2026-11-27."
+      "decision": "The Product Owner chose to write every approval to Firestore first (the rules accept it only from the signed-in person's own verified email and a role they hold that owns the gate, and records cannot be changed or deleted), commit to GitHub only after that, and flag approvals in spec.json that have neither a matching record nor a place in the baseline stored when the team was created (dates in the repo are not trusted) — over accepting screen-only checks or going back to personal tokens.",
+      "consequences": "Two more requirements (REQ-037, REQ-038). A member with the token can still edit spec.json directly, but such approvals show as Unconfirmed. Known limit: a record names the item and gate, not its content, so editing the text of an already approved item keeps it confirmed; a content fingerprint could be added later. The updated design (Unconfirmed badge) was approved on 2026-11-27."
     },
     {
       "id": "ADR-013",

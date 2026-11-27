@@ -16,4 +16,5 @@ single place for lessons. Keep this file under one page.
 - **Branch every PR from fresh main.** Chained branches conflict after squash-merges.
 - **Branch names follow the repo pattern from the first push** (`compass/f-xxx-req-xxx-short-name`, or `compass/f-xxx-short-name` while the requirements have no ids yet), never the session's suggested `claude/…` name.
 - **Never trust an agent's own labels when its output is applied** (ids, "create" vs "update", which file): check them against the quotes, the change set and the repository. Three reviews of #69 found the same gap.
+- **A security claim must name the write path it guards** (Firestore rules never see GitHub commits; dates and names in the repo are set by whoever commits). Two reviews of #74 found an overstated guarantee.
 - **New F/REQ/TC ids must be free on main *and* every open branch** (`git fetch`, then grep each branch's spec.json; check-spec does not catch duplicate TC ids). Parallel sessions collided twice on F-013/REQ-020+ and on TC-101–103.

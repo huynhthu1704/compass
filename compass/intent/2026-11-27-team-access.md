@@ -33,8 +33,9 @@ sign-in, and the rules allow that only for her email, stored as a one-way hash (
    compares the Google account's verified email (case-insensitive) with the team lists.
    Target: a registered person sees only the projects they belong to; an unregistered email sees "You have no access
    yet — ask your admin" and no project data.
-3. **Roles decide what a person can do.** Each approval gate is tied to the role that owns it: PO approves intents,
-   requirements and releases; UX approves designs; QA approves test cases; Dev starts builds; DM/PO confirm releases.
+3. **Roles decide what a person can do.** Each approval gate is tied to the role that owns it: PO approves intents;
+   PO or BA approve requirements; UX or PO approve designs; QA approves test cases; Dev starts builds; DM or PO
+   confirm releases.
    Buttons a person's roles do not allow are hidden or disabled with a hint naming the role needed. Admin manages the
    team and the project's GitHub token.
    Target: 0 gates can be passed from the portal by someone without the owning role; an approval committed outside the
@@ -46,8 +47,10 @@ sign-in, and the rules allow that only for her email, stored as a one-way hash (
 5. **Every approval shows who gave it.** `approvedBy` records the signed-in person's email and role, so the audit
    trail in `spec.json` names a real person instead of "the Product Owner".
 6. **Approvals are confirmed by Firebase.** Each approval is first written to Firestore, where the rules accept it only
-   from a person with the owning role; only then is it committed to GitHub. Approvals in `spec.json` that Firebase does
-   not confirm are shown with an "Unconfirmed" badge.
+   from a person with the owning role; only then is it committed to GitHub. A record must carry the signed-in person's own
+   verified email and a role they hold. When the team is created, the approvals already in `spec.json` are stored in
+   Firebase as a baseline; any approval in neither the baseline nor a record is shown with an "Unconfirmed" badge,
+   whatever date it claims.
    Target: every approval made after team access is switched on is either confirmed by Firebase or visibly flagged.
 
 ## Why
