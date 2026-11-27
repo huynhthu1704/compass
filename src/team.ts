@@ -158,3 +158,11 @@ export function missingTokenMessage(signedIn: boolean): string {
 export function withReqsInBuild<S extends { requirements: { id: string; status: string }[] }>(spec: S, reqIds: string[] = []): S {
   return { ...spec, requirements: spec.requirements.map((q) => (reqIds.includes(q.id) ? { ...q, status: 'In build' } : q)) };
 }
+
+/** Shared projects to offer on this device (REQ-032 AC2): those the signed-in person may open whose repo is not a local
+ *  project yet. Repos are compared case-insensitively, like GitHub. */
+export function sharedToOpen<A extends { id: string; repo?: { owner: string; name: string } }>(access: A[], localRepos: ({ owner: string; name: string } | null | undefined)[]): A[] {
+  const key = (r: { owner: string; name: string }) => `${r.owner}/${r.name}`.toLowerCase();
+  const local = new Set(localRepos.filter((r): r is { owner: string; name: string } => !!r).map(key));
+  return access.filter((a) => a.repo && !local.has(key(a.repo)));
+}

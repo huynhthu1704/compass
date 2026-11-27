@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, missingTokenMessage, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -141,4 +141,10 @@ test('TC-068 (REQ-034 AC4): In build is prepared on a copy, so a refused GitHub 
   const next = withReqsInBuild(spec, ['REQ-002']);
   assert.deepEqual(next.requirements.map((q) => q.status), ['Approved', 'In build']);
   assert.deepEqual(spec.requirements.map((q) => q.status), ['Approved', 'Approved'], 'the input (the store copy) is not changed');
+});
+
+test('TC-064 (REQ-032 AC2): shared projects not on this device are offered to open', () => {
+  const access = [{ id: 'a', roles: ['BA'], repo: { owner: 'O', name: 'Travel' } }, { id: 'b', roles: ['QA'], repo: { owner: 'o', name: 'shop' } }, { id: 'c', roles: ['UX'] }];
+  assert.deepEqual(sharedToOpen(access, [{ owner: 'o', name: 'travel' }, null]).map((a) => a.id), ['b'], 'Travel is local (case-insensitive); c has no repo');
+  assert.deepEqual(sharedToOpen(access, []).map((a) => a.id), ['a', 'b']);
 });
