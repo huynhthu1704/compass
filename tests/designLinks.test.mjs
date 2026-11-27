@@ -69,7 +69,7 @@ test('TC-501 (REQ-080, REQ-082): saving writes designTool and keeps old projects
   assert.match(design, /filter\(\(\[k\]\) => k !== 'miro'\)/, 'the old box does not offer Miro');
   assert.match(design, /useState<DesignTool>\(\(\) => mainLink\(p\.spec\.designTool\)\)/, 'the old box starts from the main link');
   assert.match(design, /\{admin && <Button size="sm" variant="ghost"/, 'only the admin sees Change');
-  assert.match(design, /\{editTool && admin \?/, 'only the admin gets the edit fields');
+  assert.match(design, /\{\(editTool \|\| !p\.spec\.designTool\) && admin \?/, 'only the admin gets the edit fields');
   // Spaces around a pasted link are trimmed.
   assert.deepEqual(saveDesignFiles(undefined, { figma: `  ${FIG} `, miro: '' }), { kind: 'figma', url: FIG });
 });

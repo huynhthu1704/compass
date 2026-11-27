@@ -203,3 +203,12 @@ export async function saveProjectToken(key: string, token: string) {
   tokens.set(key, token);
   tokenChanged();
 }
+
+// ---- Approval records (REQ-037, ADR-012) -------------------------------------------------------------------------------
+
+/** Writes one approval record; the rules accept it only from the signer's own verified email and a role that owns the
+ *  gate (or "super admin"), with the server's time. Records are never changed or deleted. */
+export async function writeApprovalRecord(key: string, rec: { items: string[]; gate: string; email: string; role: string }) {
+  const { fs, db } = await load();
+  await fs.addDoc(fs.collection(db, 'projects', key, 'approvals'), { ...rec, at: fs.serverTimestamp() });
+}

@@ -5,8 +5,9 @@ import { isDesignAdmin, mainLink, saveMainLink, TOOL_NAMES } from '../designLink
 import { projectKey, useSession } from '../firebase';
 import { featureOf } from '../spec';
 import { now, store, useStore } from '../store';
+import { gateState, recordApproval } from '../approvals';
 import type { Design, DesignScreen, DesignTool, DesignToolKind, Project } from '../types';
-import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead } from '../ui';
+import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead, toast } from '../ui';
 
 // The old one-link box stays until build 2 (REQ-081); Miro is set on Project settings, so it is not offered here.
 const TOOLS = Object.fromEntries(Object.entries(TOOL_NAMES).filter(([k]) => k !== 'miro')) as Record<Exclude<DesignToolKind, 'miro'>, string>;
@@ -21,7 +22,8 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const session = useSession();
   const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
   const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!p.demo });
-  const [editTool, setEditTool] = useState(!p.spec.designTool && admin);
+  const [editTool, setEditTool] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [tool, setTool] = useState<DesignTool>(() => mainLink(p.spec.designTool));
   if (!f) return <div className="empty">Feature not found.</div>;
   const d = f.design;
@@ -32,13 +34,22 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const setD = (patch: Partial<Design>) => store.spec(p.id, (s) => ({ ...s, features: s.features.map((x) => (x.id === fid && x.design ? { ...x, design: { ...x.design, ...patch } } : x)) }));
   const setS = (id: string, patch: Partial<DesignScreen>) => d && setD({ screens: d.screens.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
   const saveTool = () => { store.spec(p.id, (s) => { const { designTool: _old, ...rest } = s; const next = saveMainLink(s.designTool, tool.kind, tool.url); return next ? { ...rest, designTool: next } : rest; }); setEditTool(false); };
-  const approve = () => setD({ status: 'Approved', approvedBy: settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO', approvedAt: now() });
+  // F-015 REQ-033/036/037: UX or PO approve a design; the approval is recorded in Firebase first.
+  const gate = gateState(p, 'design'); // not a hook: this page returns early above; App re-renders on session changes
+  const approve = async () => {
+    if (approving) return;
+    setApproving(true);
+    try {
+      const by = await recordApproval(p, 'design', [fid]);
+      setD({ status: 'Approved', approvedBy: by || (settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO'), approvedAt: now() });
+    } catch (e) { toast((e as Error).message); } finally { setApproving(false); }
+  };
   const embed = figmaEmbed(d?.url || p.spec.designTool?.url);
 
   return (
     <div className="stack gap-xl">
       <PageHead over={`${f.id} ${f.name} · Stage 3 · Design · owner: UX / PO`} title="Design" sub={`Screens traced to the approved requirements. Coding is locked until the design is approved. Saved to compass/spec.json and compass/design/${f.id}.md.`}
-        right={d && d.status === 'Draft' ? <Button variant="accent" disabled={uncovered.length > 0} title={uncovered.length ? 'Every approved requirement needs a screen' : undefined} onClick={approve}>Approve design</Button>
+        right={d && d.status === 'Draft' ? <>{!gate.allowed && <span id="design-gate-hint" className="body-sm t-tertiary">{gate.hint}</span>}<Button variant="accent" disabled={uncovered.length > 0 || !gate.allowed || approving} title={uncovered.length ? 'Every approved requirement needs a screen' : undefined} aria-describedby={gate.allowed ? undefined : 'design-gate-hint'} onClick={() => void approve()}>Approve design</Button></>
           : d ? <Button variant="ghost" onClick={() => setD({ status: 'Draft', approvedBy: undefined, approvedAt: undefined })}>Reopen as draft</Button> : undefined} />
 
       <section className="card pad-xl stack gap-md">
@@ -46,7 +57,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
           <h2 className="h4 grow">Project design tool</h2>
           {p.spec.designTool && !editTool && <><Badge tone="brand">{TOOL_NAMES[p.spec.designTool.kind]}</Badge><a className="btn ghost sm" href={p.spec.designTool.url} target="_blank" rel="noreferrer">Open ↗</a>{admin && <Button size="sm" variant="ghost" onClick={() => { setTool(mainLink(p.spec.designTool)); setEditTool(true); }}>Change</Button>}</>}
         </div>
-        {editTool && admin ? (
+        {(editTool || !p.spec.designTool) && admin ? (
           <div className="row gap-sm wrap end">
             <Field label="Tool"><select className="select" value={tool.kind} onChange={(e) => setTool({ ...tool, kind: e.target.value as DesignToolKind })}>{Object.entries(TOOLS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
             <div className="grow" style={{ minWidth: 240 }}><Field label="Project or file link" help="One design tool per project, e.g. https://www.figma.com/design/…"><input className="input" value={tool.url} placeholder="https://www.figma.com/design/…" onChange={(e) => setTool({ ...tool, url: e.target.value })} /></Field></div>

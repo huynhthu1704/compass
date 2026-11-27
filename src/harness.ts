@@ -14,7 +14,8 @@ import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
 import { missingToken, tokenFor } from './token';
-import { withReqsInBuild } from './team';
+import { recordApproval } from './approvals';
+import { gateForAgent, withReqsInBuild } from './team';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
 import { canApprove } from './conversation';
@@ -337,7 +338,9 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   const token = tokenFor(getP(pid));
   // REQ-034 AC4: a code change on a real repo needs a token; stop before anything is written.
   { const miss = !r.proposal && r.changes.length && r.mode !== 'demo' ? missingToken(getP(pid)) : null; if (miss) throw new Error(miss); }
-  step(pid, rid, 'approval', 'Approved by human reviewer', store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
+  // REQ-037 AC1: the approval is recorded in Firebase (role checked) before anything is written; null with sign-in off.
+  const by = await recordApproval(getP(pid), gateForAgent(r.agent), r.reqIds?.length ? r.reqIds : [r.featureId || r.id]);
+  step(pid, rid, 'approval', 'Approved by human reviewer', by ? `by ${by}` : store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
   if (r.proposal) {
     const pi = r.proposal.idea;
     store.spec(pid, (s) => ({
@@ -524,6 +527,7 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
   const runs = p.runs.filter((r) => runIds.includes(r.id) && (!live || r.prNumber));
   if (live && !runs.length) throw new Error('No pull requests to release. Demo-mode changes are never pushed to GitHub — build with a live agent or merge your own PRs.');
   const reqIds = [...new Set(runs.flatMap((r) => r.reqIds || []))];
+  await recordApproval(p, 'release', reqIds.length ? reqIds : runIds); // REQ-033/037: DM or PO, recorded before any merge
   const tag = nextVersion(p.releases.map((x) => x.tag));
   const byFeature = new Map<string, string[]>();
   for (const id of reqIds) { const r = p.spec.requirements.find((x) => x.id === id); const k = r?.featureId || '—'; byFeature.set(k, [...(byFeature.get(k) || []), `- **${id}** ${r?.title || ''}`]); }
