@@ -16,9 +16,10 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
   `mergeProposal` / `mergeChanges` (a revision is a delta: quoted items change, ids kept, new items get the next free id,
   everything else stays deep-equal), `changeSummary` ("Proposal v2 — changed: REQ-051 · AC 2, src/app.ts"), demo answer
   and demo revision
-- src/harness.ts — `replyToRun(pid, rid, kind, quotes, message)`: Ask (one Claude call, no tools) or Revise (revise_* tools
-  that return only changed/new items, or propose_file_change for code), then the guardrails and evals run again through
-  one shared `evaluate` step (also used by `startRun`); demo mode without a key; versions v1…vN kept on the run
+- src/followUp.ts — new: `replyToRun(pid, rid, kind, quotes, message)`: Ask (one Claude call, no tools) or Revise
+  (revise_* tools that return only changed/new items, or propose_file_change for code), then the guardrails and evals
+  run again; demo mode without a key; versions v1…vN kept on the run. Its own file keeps harness.ts under 600 lines.
+- src/harness.ts — one shared `evaluate` step (used by `startRun` and by revisions); the helpers followUp.ts needs are exported
 - src/components/RunConversation.tsx — new: quote blocks, reply box (Revise → vN, Ask, hint, disabled states), the
   conversation thread with version markers, the version picker and the compare view
 - src/components/RunView.tsx — the answer is quotable: `data-quote-source` on every item and AC line, a "❝ Quote" pill per

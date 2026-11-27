@@ -5,7 +5,7 @@
  */
 import { useState, type RefObject } from 'react';
 import { canAsk, canRevise, canSend, versionItems } from '../conversation';
-import { replyToRun } from '../harness';
+import { replyToRun } from '../followUp';
 import type { Project, Quote, Run, RunVersion } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
 
