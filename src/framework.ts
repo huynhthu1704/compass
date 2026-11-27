@@ -140,7 +140,7 @@ ${d.screens.map((s) => `### ${s.id} · ${s.name}\n**Elements:** ${s.elements.joi
 ${d.notes || '_(none)_'}
 
 ## Coverage
-${uncovered.length ? `⚠ Not covered by any screen: ${uncovered.map((r) => r.id).join(', ')}` : 'Every approved requirement is covered by at least one screen.'}${noScreen.length ? `\n\nNo screen needed: ${noScreen.map((r) => `${r.id} — ${r.reason}`).join('; ')}` : ''}
+${uncovered.length ? `⚠ Not covered by any screen: ${uncovered.map((r) => r.id).join(', ')}` : noScreen.length ? 'Every approved requirement that needs a screen is covered by at least one screen.' : 'Every approved requirement is covered by at least one screen.'}${noScreen.length ? `\n\nNo screen needed: ${noScreen.map((r) => `${r.id} — ${r.reason}`).join('; ')}` : ''}
 `;
 }
 

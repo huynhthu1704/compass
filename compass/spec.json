@@ -2227,7 +2227,7 @@
       ],
       "title": "Design coverage does not list requirements that need no screen (bug #31)",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a feature design whose screens deliver REQ-A, and approved requirements REQ-A, REQ-B (no design field) and REQ-C with design \"none: width only\"\nWhen the coverage is computed for compass/design/F-xxx.md\nThen REQ-B is listed as not covered by any screen\nAnd REQ-C is listed as needing no screen, with its reason, and not as not covered"
     }
   ],
