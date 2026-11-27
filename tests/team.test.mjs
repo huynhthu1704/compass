@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -121,4 +121,12 @@ test('TC-062, TC-063 (REQ-031): a change is applied to the team as saved now, so
   assert.equal(first.ok, false, 'a new team needs an Admin');
   assert.match(first.error, /new team needs an Admin/);
   assert.equal(applyTeamOp([], { kind: 'add', email: 'ba@example.com', roles: ['BA', 'Admin'] }, true).ok, true);
+});
+
+test('TC-068 (REQ-034): GitHub calls use the project token for signed-in members', () => {
+  assert.equal(pickToken(undefined, 'project-token', true), 'project-token', 'a member without their own token uses the project token');
+  assert.equal(pickToken('own-token', 'project-token', true), 'project-token', 'with team access the project token wins');
+  assert.equal(pickToken('own-token', null, true), 'own-token', 'no project token yet → own token');
+  assert.equal(pickToken(undefined, null, true), undefined, 'no token at all → missing (the portal asks for an Admin)');
+  assert.equal(pickToken('own-token', 'project-token', false), 'own-token', 'sign-in off → device token, as before');
 });

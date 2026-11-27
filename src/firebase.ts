@@ -161,3 +161,29 @@ export async function changeTeam(key: string, project: { name: string; repo: { o
   if (result.ok) await reloadAccess();
   return result;
 }
+
+// ---- Project GitHub token (REQ-034, ADR-011) -------------------------------------------------------------------------
+
+const tokens = new Map<string, string | null>();
+const tokenListeners = new Set<() => void>();
+const tokenChanged = () => tokenListeners.forEach((l) => l());
+
+/** The cached project token: a string, null when the project has none, undefined when not loaded yet. */
+export const projectTokenOf = (key: string) => tokens.get(key);
+export const useProjectToken = (key: string) => useSyncExternalStore((l) => { tokenListeners.add(l); return () => tokenListeners.delete(l); }, () => tokens.get(key));
+
+/** Loads the project token (members and the super admin may read it). */
+export async function loadProjectToken(key: string) {
+  const { fs, db } = await load();
+  const snap = await fs.getDoc(fs.doc(db, 'projects', key, 'secrets', 'token'));
+  tokens.set(key, snap.exists() ? String(snap.data().token || '') || null : null);
+  tokenChanged();
+}
+
+/** Saves the project token (Admins of the project or the super admin; the rules refuse anyone else). */
+export async function saveProjectToken(key: string, token: string) {
+  const { fs, db } = await load();
+  await fs.setDoc(fs.doc(db, 'projects', key, 'secrets', 'token'), { token });
+  tokens.set(key, token);
+  tokenChanged();
+}

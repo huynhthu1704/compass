@@ -13,6 +13,7 @@ import { github } from './github';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
+import { tokenFor } from './token';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
 import { canApprove } from './conversation';
@@ -80,7 +81,7 @@ export async function startRun(projectId: string, agentId: AgentId, goal: string
 
     // ---- RAG ----
     let index: Index;
-    try { index = await rag.ensure(settings.githubToken, p); }
+    try { index = await rag.ensure(tokenFor(p), p); }
     catch (e) { step(pid, rid, 'error', 'Repository indexing failed — continuing with spec only', (e as Error).message, { ok: false }); index = rag.index(p); }
     const reqText = (opts.reqIds || []).map((id) => p.spec.requirements.find((r) => r.id === id)).filter(Boolean).map((r) => `${r!.title} ${r!.story} ${r!.ac.join(' ')}`).join(' ');
     const hits = index.search(`${goal} ${reqText}`, 6);
@@ -165,7 +166,7 @@ export const preview = (o: Record<string, unknown>) => Object.entries(o).map(([k
 
 async function execTool(pid: string, rid: string, name: string, input: Record<string, unknown>, index: Index): Promise<string> {
   const p = getP(pid);
-  const token = store.get().settings.githubToken;
+  const token = tokenFor(getP(pid));
   switch (name) {
     case 'search_knowledge': return fmtHits(index.search(String(input.query), 6)) || 'No results.';
     case 'list_files': { const pre = String(input.prefix || ''); return index.files.filter((f) => !f.startsWith('spec:') && f.startsWith(pre)).join('\n') || 'No files.'; }
@@ -332,7 +333,7 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   const r = p.runs.find((x) => x.id === rid)!;
   const gate = canApprove(r);
   if (!gate.ok) throw new Error(gate.why);
-  const token = store.get().settings.githubToken;
+  const token = tokenFor(getP(pid));
   step(pid, rid, 'approval', 'Approved by human reviewer', store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
   if (r.proposal) {
     const pi = r.proposal.idea;
@@ -458,7 +459,7 @@ _Opened by the Compass coding agent (${r.mode}). Trace id: ${r.id}._`;
 // ---------------- framework & spec sync ----------------
 export async function installFramework(pid: string, opts: { starter: boolean; direct: boolean }) {
   const p = getP(pid);
-  const token = store.get().settings.githubToken;
+  const token = tokenFor(getP(pid));
   if (!token || !p.repo) throw new Error('Connect GitHub first');
   const files = frameworkFiles(p, opts);
   const existing = new Set((await github.tree(token, p.repo)).map((f) => f.path));
@@ -484,7 +485,7 @@ export async function installFramework(pid: string, opts: { starter: boolean; di
 
 export async function commitSpec(pid: string) {
   const p = getP(pid);
-  const token = store.get().settings.githubToken;
+  const token = tokenFor(getP(pid));
   if (!token || !p.repo) throw new Error('Connect GitHub first');
   const snapshot = JSON.stringify(p.spec);
   const c = await github.commit(token, p.repo, p.repo.defaultBranch, `docs(compass): update spec — ${p.spec.requirements.length} requirements, ${p.spec.tests.length} tests`, specFiles(p));
@@ -495,7 +496,7 @@ export async function commitSpec(pid: string) {
 
 export async function pullSpec(pid: string) {
   const p = getP(pid);
-  const token = store.get().settings.githubToken;
+  const token = tokenFor(getP(pid));
   if (!token || !p.repo) throw new Error('Connect GitHub first');
   const f = await github.file(token, p.repo, 'compass/spec.json');
   if (!f) throw new Error('No compass/spec.json in this repo yet');
@@ -510,8 +511,7 @@ export function nextVersion(tags: string[]) {
 
 export async function release(pid: string, runIds: string[], onStep: (s: string) => void) {
   const p = getP(pid);
-  const settings = store.get().settings;
-  const live = !p.demo && !!settings.githubToken && !!p.repo;
+  const live = !p.demo && !!tokenFor(p) && !!p.repo;
   const runs = p.runs.filter((r) => runIds.includes(r.id) && (!live || r.prNumber));
   if (live && !runs.length) throw new Error('No pull requests to release. Demo-mode changes are never pushed to GitHub — build with a live agent or merge your own PRs.');
   const reqIds = [...new Set(runs.flatMap((r) => r.reqIds || []))];
@@ -520,7 +520,7 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
   for (const id of reqIds) { const r = p.spec.requirements.find((x) => x.id === id); const k = r?.featureId || '—'; byFeature.set(k, [...(byFeature.get(k) || []), `- **${id}** ${r?.title || ''}`]); }
   const notes = `## ${tag}\n\n${[...byFeature].map(([fid, lines]) => `### ${fid} ${featureOf(p, fid)?.name || ''}\n${lines.join('\n')}`).join('\n\n')}\n\nReleased with Compass.`;
 
-  if (p.demo || !settings.githubToken || !p.repo) {
+  if (p.demo || !tokenFor(p) || !p.repo) {
     for (const r of runs) { onStep(`Merge ${r.prNumber ? '#' + r.prNumber : r.goal} (simulated)`); await sleep(300); }
     onStep(`Tag ${tag} and deploy (simulated)`); await sleep(300);
     store.update(pid, (x) => ({
@@ -530,7 +530,7 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
     }));
     return tag;
   }
-  const t = settings.githubToken, repo = p.repo;
+  const t = tokenFor(p)!, repo = p.repo;
   for (const r of runs.filter((r) => r.prNumber)) {
     onStep(`Checking CI for #${r.prNumber}`);
     const pr = await github.getPR(t, repo, r.prNumber!);

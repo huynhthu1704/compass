@@ -2,7 +2,8 @@
 // The super admin creates a project's first team (with its approval baseline); Admins add people with one or more
 // roles, change roles and remove people. The project GitHub token card (REQ-034) comes with the next step.
 import { useEffect, useState } from 'react';
-import { changeTeam, loadTeam, projectKey, reloadAccess, useSession } from '../firebase';
+import { changeTeam, loadProjectToken, loadTeam, projectKey, reloadAccess, saveProjectToken, useProjectToken, useSession } from '../firebase';
+import { github } from '../github';
 import { baselineFrom, LAST_ADMIN, TEAM_ROLES, type Member, type TeamOp, type TeamRole } from '../team';
 import type { Project } from '../types';
 import { Badge, Button, PageHead } from '../ui';
@@ -37,10 +38,12 @@ export function TeamPage({ p }: { p: Project }) {
   const [removed, setRemoved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [refused, setRefused] = useState(false);
 
   useEffect(() => {
     if (!key || session.status !== 'signed-in') { setLoading(false); return; }
     let on = true;
+    setLoading(true);
     loadTeam(key).then((t) => { if (!on) return; setTeam(t?.members || []); setExists(!!t); setLoadFailed(false); })
       .catch((e) => { if (on) { setLoadFailed(true); setMsg({ tone: 'danger', text: `Could not load the team: ${(e as Error).message}. Reload the page to try again.` }); } })
       .finally(() => on && setLoading(false));
@@ -49,7 +52,7 @@ export function TeamPage({ p }: { p: Project }) {
 
   if (session.status !== 'signed-in') return <PageHead over={`${p.name} · Team`} title="Team" sub="Sign in with Google to manage the team." />;
   if (!p.repo) return <PageHead over={`${p.name} · Team`} title="Team" sub="A team needs a GitHub repository. Local and demo projects have no team." />;
-  if (!canManage) return <PageHead over={`${p.name} · Team`} title="Team" sub="Only Admins of this project and the super admin can manage its team." />;
+  if (!canManage) return <PageHead over={`${p.name} · Team`} title="Team" sub={`${refused ? 'Your last change was not saved: you can no longer change this team. ' : ''}Only Admins of this project and the super admin can manage its team.`} />;
 
   /** Applies one change to the team as it is in the database now (never a stale copy); the first change (super admin
    *  only) creates the team with its approval baseline. The page then shows the saved team. */
@@ -62,7 +65,7 @@ export function TeamPage({ p }: { p: Project }) {
       return true;
     } catch (e) {
       const denied = (e as { code?: string }).code === 'permission-denied';
-      if (denied) void reloadAccess().catch(() => undefined);
+      if (denied) { setRefused(true); void reloadAccess().catch(() => undefined); }
       setMsg({ tone: 'danger', text: denied ? 'Not saved: you can no longer change this team (your Admin role may have been removed). Reload the page.' : `Not saved: ${(e as Error).message}` });
       return false;
     } finally { setBusy(false); }
@@ -125,6 +128,62 @@ export function TeamPage({ p }: { p: Project }) {
           );
         })}
       </section>
+
+      <TokenCard projectKey={key} />
     </div>
+  );
+}
+
+/** SCR-3 token card (REQ-034, ADR-011): Admins save one GitHub token for the project; members use it. Only the last
+ *  4 characters are shown. "Test" checks the token with GitHub before it is saved. */
+function TokenCard({ projectKey: key }: { projectKey: string }) {
+  const token = useProjectToken(key);
+  const [value, setValue] = useState('');
+  const [replacing, setReplacing] = useState(false);
+  const [state, setState] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (token === undefined) loadProjectToken(key).catch((e) => setState({ tone: 'danger', text: `Could not load the token: ${(e as Error).message}` })); }, [key, token]);
+
+  const test = async (t: string) => {
+    try { const me = await github.me(t); return { ok: true as const, text: `Works · GitHub account @${me.login}` }; }
+    catch (e) { return { ok: false as const, text: (e as Error).message }; }
+  };
+  const save = async () => {
+    setBusy(true); setState(null);
+    const r = await test(value.trim());
+    if (!r.ok) { setState({ tone: 'danger', text: `Not saved: ${r.text}` }); setBusy(false); return; }
+    try { await saveProjectToken(key, value.trim()); setValue(''); setReplacing(false); setState({ tone: 'success', text: `Saved. ${r.text}` }); }
+    catch (e) { setState({ tone: 'danger', text: `Not saved: ${(e as Error).message}` }); }
+    finally { setBusy(false); }
+  };
+  const check = async () => { setBusy(true); const r = await test(token || ''); setState({ tone: r.ok ? 'success' : 'danger', text: r.text }); setBusy(false); };
+
+  return (
+    <section className="card pad-xl stack gap-md" aria-labelledby="project-token">
+      <div className="row gap-sm wrap" style={{ alignItems: 'center' }}>
+        <h2 id="project-token" className="h3">Project GitHub token</h2>
+        {token ? <Badge tone="success">Saved</Badge> : token === null ? <Badge tone="warning">Missing</Badge> : null}
+      </div>
+      <p className="body t-secondary">Members use this token for this project's GitHub work, so they do not need their own. Only Admins see this card.</p>
+      {token && !replacing && (
+        <div className="row gap-sm wrap" style={{ alignItems: 'center' }}>
+          <span className="mono" style={{ padding: '10px 12px', background: 'var(--color-bg-subtle)', borderRadius: 8 }}>{`••••••••••••${token.slice(-4)}`}</span>
+          <Button variant="secondary" disabled={busy} onClick={check}>Test</Button>
+          <Button variant="accent" disabled={busy} onClick={() => setReplacing(true)}>Replace token</Button>
+        </div>
+      )}
+      {(!token || replacing) && token !== undefined && (
+        <div className="row gap-sm wrap" style={{ alignItems: 'flex-end' }}>
+          <label className="stack gap-xs" style={{ flex: '1 1 320px' }}>
+            <span className="body-sm" style={{ fontWeight: 500 }}>{token ? 'New token' : 'Token'}</span>
+            <input className="input mono" type="password" value={value} onChange={(e) => setValue(e.target.value)} placeholder="github_pat_…" autoComplete="off" />
+          </label>
+          <Button variant="accent" disabled={busy || !value.trim()} onClick={save}>{busy ? 'Testing…' : 'Test & save'}</Button>
+          {replacing && <Button variant="secondary" disabled={busy} onClick={() => { setReplacing(false); setValue(''); }}>Cancel</Button>}
+        </div>
+      )}
+      <p className="body-sm t-secondary">Use a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">fine-grained token</a> for this repository only, with <strong>Contents, Pull requests and Issues: Read &amp; write</strong>, and an expiry date. Every member's browser can read it (ADR-011), so replace it after removing someone.</p>
+      {state && <p className={`body-sm ${state.tone === 'danger' ? 't-danger' : 't-success'}`} role={state.tone === 'danger' ? 'alert' : 'status'}>{state.text}</p>}
+    </section>
   );
 }

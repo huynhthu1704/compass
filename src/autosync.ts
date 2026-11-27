@@ -7,6 +7,7 @@ import { useSyncExternalStore } from 'react';
 import { github } from './github';
 import { commitSpec } from './harness';
 import { store } from './store';
+import { tokenFor } from './token';
 
 export type SyncState = { status: 'idle' | 'pending' | 'saving' | 'saved' | 'waiting-framework' | 'error'; at?: string; message?: string };
 
@@ -21,7 +22,8 @@ const set = (id: string, s: SyncState) => { states.set(id, s); emit(); };
 
 async function sync(id: string) {
   const p = store.get().projects.find((x) => x.id === id);
-  const { githubToken: token, autoSync } = store.get().settings;
+  const { autoSync } = store.get().settings;
+  const token = tokenFor(p);
   if (!p || !p.dirty || !p.repo || p.demo || !token || !autoSync) return;
   try {
     if (!ready.has(id)) {
@@ -47,12 +49,12 @@ function schedule(id: string) {
 let last = new Map<string, string>();
 export function startAutoSync() {
   const check = () => {
-    const { githubToken, autoSync } = store.get().settings;
+    const { autoSync } = store.get().settings;
     const next = new Map<string, string>();
     for (const p of store.get().projects) {
       const sig = JSON.stringify(p.spec);
       next.set(p.id, sig);
-      if (!autoSync || !githubToken || !p.repo || p.demo || !p.dirty) continue;
+      if (!autoSync || !tokenFor(p) || !p.repo || p.demo || !p.dirty) continue;
       if (last.get(p.id) !== sig) schedule(p.id);
     }
     last = next;

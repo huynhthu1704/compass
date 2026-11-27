@@ -20,7 +20,9 @@ async function gh<T = unknown>(token: string, path: string, init: RequestInit = 
   if (!res.ok) {
     let msg = res.statusText;
     try { const j = await res.json(); msg = j.message || msg; } catch { /* no body */ }
-    const hint = res.status === 403 && /personal access token/i.test(msg)
+    const hint = res.status === 401
+      ? " — the GitHub token is missing or expired. With team access, the project's GitHub token is missing or expired — ask an Admin of the project to replace it on the Team page."
+      : res.status === 403 && /personal access token/i.test(msg)
       ? ' — your token lacks a permission for this repo. Edit the token on GitHub: include this repo in Repository access and set Contents, Pull requests, Issues, Workflows (and Actions, Pages) to Read & write.'
       : '';
     throw new GitHubError(res.status, `GitHub ${res.status}: ${msg}${hint}`);

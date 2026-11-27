@@ -9,6 +9,7 @@ import { activeReply, addDelta, canAsk, canRevise, canSend, changedItems, revisa
 import { github } from './github';
 import { rag } from './rag';
 import { now, store, uid } from './store';
+import { tokenFor } from './token';
 import type { AgentId, ConvTurn, FileChange, Idea, Quote, Run } from './types';
 
 const REVISE_TOOLS: Partial<Record<AgentId, ToolDef>> = {
@@ -34,7 +35,7 @@ async function liveRevise(pid: string, rid: string, a: AgentDef, run: Run, promp
   const tools = [own, TOOLS.find((t) => t.name === 'finish')!];
   const messages: Msg[] = [{ role: 'user', content: prompt }];
   const paths = run.changes.map((c) => c.path);
-  const p = getP(pid), token = store.get().settings.githubToken;
+  const p = getP(pid), token = tokenFor(p);
   /** The file as it is in the repository (indexed copy first, then GitHub), so an existing file is never taken as new. */
   const repoFile = async (path: string) => rag.repoDocs(pid).find((d) => d.path === path)?.content ?? (token && p.repo ? (await github.file(token, p.repo, path))?.content : undefined);
   let delta: Delta = {};
