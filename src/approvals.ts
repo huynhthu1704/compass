@@ -1,12 +1,12 @@
 // F-015 Gates follow my roles (REQ-033) and every approval is recorded in Firebase first (REQ-036, REQ-037; ADR-012).
 // With sign-in off, or for demo and local projects, nothing changes: gates are open and no record is written.
 import { useEffect, useState } from 'react';
-import { getSession, loadApprovalEvidence, projectKey, useSession, writeApprovalRecord } from './firebase';
-import { approvalBy, baselineFrom, canPass, checksApprovals, gateHint, unconfirmedApprovals, type BaselineApproval, type Gate } from './team';
+import { firebaseEnabled, getSession, loadApprovalEvidence, projectKey, useSession, writeApprovalRecord } from './firebase';
+import { approvalBy, baselineFrom, canPass, checksApprovals, gatesApply, gateHint, unconfirmedApprovals, type BaselineApproval, type Gate } from './team';
 import type { Project } from './types';
 
-/** Gates apply to signed-in people on real (GitHub) projects. */
-const gated = (p: Pick<Project, 'repo' | 'demo'>) => !!p.repo && !p.demo && getSession().status === 'signed-in';
+/** Gates apply on real (GitHub) projects whenever sign-in is on, and fail closed until the person is signed in (REQ-033). */
+const gated = (p: Pick<Project, 'repo' | 'demo'>) => gatesApply({ firebase: firebaseEnabled, status: getSession().status, hasRepo: !!p.repo, demoProject: !!p.demo });
 
 function rolesFor(p: Pick<Project, 'repo'>) {
   const s = getSession();

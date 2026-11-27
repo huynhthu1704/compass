@@ -3174,7 +3174,7 @@
       "title": "The demo never touches Firebase, GitHub or real projects",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a signed-in person in the demo with role QA\nWhen the portal lists projects and saves an approval\nThen only demo projects are listed, the approval is saved locally with approvedBy \"QA\", and no Firestore or GitHub call is made"
+      "gherkin": "Given a signed-in person in the demo (even the super admin), a team member outside the demo, and sign-in off\nWhen the portal decides which projects to list\nThen in the demo only sample projects are listed, never a real or local project; the member sees their real project and no sample; with sign-in off every project is listed as before"
     },
     {
       "id": "TC-077",

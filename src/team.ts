@@ -234,6 +234,24 @@ export function unconfirmedApprovals(spec: ApprovalSpec, ev: ApprovalEvidence): 
   });
 }
 
+/** Whether approval gates apply to a project (REQ-033). They fail closed: with Firebase configured, a real (non-demo) GitHub
+ *  project is gated even while the person is signing in or loading, so no gate is passed without a signed-in owner role. */
+export function gatesApply(x: { firebase: boolean; status: string; hasRepo: boolean; demoProject: boolean }): boolean {
+  return x.hasRepo && !x.demoProject && (x.firebase || x.status === 'signed-in');
+}
+
+type RepoName = { owner: string; name: string };
+/** Why a shared project cannot be opened from its team entry (REQ-034): the project's token cannot reach the repository
+ *  (GitHub answers 404 for a repo the token cannot see), or GitHub reports it under another owner/name (renamed or moved),
+ *  which would no longer match the team. Null when it can be opened. */
+export function sharedOpenProblem(expected: RepoName, got: RepoName | null, status?: number): string | null {
+  const full = `${expected.owner}/${expected.name}`;
+  if (status === 404 || !got) return `The project's GitHub token cannot reach ${full} — ask an Admin of the project to check the token on the Team page.`;
+  if (got.owner.toLowerCase() !== expected.owner.toLowerCase() || got.name.toLowerCase() !== expected.name.toLowerCase())
+    return `${full} is now ${got.owner}/${got.name} on GitHub (renamed or moved) — ask an Admin of the project to update its team.`;
+  return null;
+}
+
 /** Whether the portal checks a project's approvals against Firebase (REQ-038 AC4): only for a signed-in person outside
  *  the demo, on a real (non-demo) GitHub project that has a team. Nothing is flagged otherwise. */
 export function checksApprovals(x: { signedIn: boolean; demoSession: boolean; demoProject: boolean; hasRepo: boolean; hasTeam: boolean }): boolean {
