@@ -31,6 +31,8 @@ test('TC-039 (REQ-020): groups, link order, icons, Knowledge tooltip and the pro
   assert.match(src, /\{p && <ProjectGroup /);
   assert.match(src, /className="sidebar-footer"/);
   assert.match(src, /onClick=\{\(\) => go\('\/'\)\}[^>]*>\s*<span className="side-avatar"/, 'the project card opens the project list');
+  assert.match(src, /<span className="side-avatar" aria-hidden>\{p\.name\.slice\(0, 1\)\.toUpperCase\(\)\}<\/span>/, 'the card shows the first letter');
+  assert.match(src, /<span className="side-name">\{p\.name\}<\/span>/, 'the card shows the project name');
   const app = read('src/App.tsx');
   assert.match(app, /<Sidebar parts=\{parts\} p=\{p\}/, 'App renders the Sidebar component');
   assert.doesNotMatch(app, /Knowledge \(RAG\)/, 'the old sidebar markup is gone from App');
