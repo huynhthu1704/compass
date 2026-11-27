@@ -8,7 +8,7 @@
 | REQ-004 | F-008 | The installed scripts never drift from the portal's copies | Must | In build | TC-004 |
 | REQ-101 | F-001 | Idea: business need revised into a business intent | Must | Done | TC-101 |
 | REQ-102 | F-002 | Requirements: generate and approve | Must | Done | TC-102 |
-| REQ-103 | F-003 | Design: design tool, screens and approval gate | Must | Done | TC-103 |
+| REQ-103 | F-003 | Design: design tool, screens and approval gate | Must | Done | TC-103, TC-310 |
 | REQ-104 | F-004 | Test cases: one or more per requirement | Must | Done | TC-104 |
 | REQ-105 | F-005 | Build: coding agent, plan file and pull request | Must | Done | TC-105 |
 | REQ-106 | F-006 | Release: merge, tag and deploy | Must | Done | TC-106 |
@@ -30,13 +30,20 @@
 | REQ-015 | F-011 | Pages use up to 1600 px on large screens and stay responsive | Should | Approved | TC-027, TC-028 |
 | REQ-020 | F-001 | The Ideation agent writes "Done when" and never invents a baseline or target | Must | Approved | TC-039, TC-040, TC-041 |
 | REQ-021 | F-001 | The Idea page and briefs say "Done when" instead of "Outcome metric" | Should | Approved | TC-042 |
-| REQ-060 | F-009 | Each waiting item says what it is and how long it has waited | Must | Approved | TC-300, TC-301, TC-306 |
-| REQ-061 | F-009 | The approval desk stays compact, with a link to all waiting runs | Must | Approved | TC-302, TC-303, TC-307 |
-| REQ-062 | F-009 | Details of a waiting item open in a side panel | Should | Approved | TC-304, TC-305, TC-308, TC-309 |
+| REQ-060 | F-009 | Each waiting item says what it is and how long it has waited | Must | In build | TC-300, TC-301, TC-306 |
+| REQ-061 | F-009 | The approval desk stays compact, with a link to all waiting runs | Must | In build | TC-302, TC-303, TC-307 |
+| REQ-062 | F-009 | Details of a waiting item open in a side panel | Should | In build | TC-304, TC-305, TC-308, TC-309 |
 | REQ-070 | F-013 | The sidebar is grouped, has icons and shows the open project as a card | Must | Approved | TC-400, TC-401, TC-405 |
 | REQ-071 | F-013 | The approval count shows once, on Team floor | Must | Approved | TC-402 |
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
+| REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
+| REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216 |
+| REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214 |
+| REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
+| REQ-053 | F-020 | Proposal versions and compare | Should | Approved | TC-209, TC-210, TC-211, TC-216 |
+| REQ-054 | F-020 | The conversation is kept with the run, safely | Should | Approved | TC-212, TC-213 |
+| REQ-063 | F-009 | Handoffs are shown on phones too | Should | In build | TC-311, TC-312, TC-313, TC-314, TC-315 |
 | REQ-045 | F-017 | The agent trace can be folded and unfolded | Should | Approved | TC-090, TC-091 |
 
 ## REQ-001 · The Compass repo has the Compass Framework
@@ -700,7 +707,7 @@ Then the heading reads "Done when" instead of "Outcome metric" or "Success measu
 ## REQ-060 · Each waiting item says what it is and how long it has waited
 As the product owner, I want each waiting item on the Team floor to say what it is about and how long it has waited, so that I can tell them apart without opening them.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
@@ -728,7 +735,7 @@ Then the item is marked "blocked", and its side panel shows "Open run · blocked
 ## REQ-061 · The approval desk stays compact, with a link to all waiting runs
 As the product owner, I want the approval desk to stay the same size however many runs wait, so that the floor keeps its shape.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
@@ -756,7 +763,7 @@ Then all of them are listed and there is no "+N more" link
 ## REQ-062 · Details of a waiting item open in a side panel
 As the product owner, I want to read the details of a waiting item without leaving the Team floor, so that I decide quickly what to approve first.
 
-**Priority:** Should · **Status:** Approved
+**Priority:** Should · **Status:** In build
 
 **Acceptance criteria**
 
@@ -891,6 +898,272 @@ _AC3_
 Given a phone (below 900 px)
 When I open the Menu
 Then the sidebar shows the same groups, card and footer
+```
+
+## REQ-074 · The portal shows no "AI dev portal" tagline
+As the Product Owner, I want the portal to present itself as "Compass" only, so that the "AI dev portal" tagline is not shown anywhere in the product.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given any page of the portal
+When I look at the sidebar brand
+Then it shows the logo and "Compass" with no "AI dev portal" line under it
+```
+
+_AC2_
+```gherkin
+Given the onboarding page
+When I look at the overline above the title
+Then it reads "Compass" and no screen of the portal shows the text "AI dev portal"
+```
+
+## REQ-050 · Quote any part of an agent run
+As the product owner, I want to quote part of an agent's answer, so that I can point at exactly what I want explained or changed.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given an agent run with an answer (idea brief, requirements, design, test cases, summary or a file of the change set)
+When I select text inside the answer
+Then a "Quote" button appears next to the selection
+```
+
+_AC2_
+```gherkin
+Given a selection
+When I click "Quote"
+Then a quote block with the selected text and its source (e.g. "REQ-051 · acceptance criteria", "SCR-2 · states", "src/app.ts") is added to the reply box under the run, and the reply box gets the focus
+```
+
+_AC3_
+```gherkin
+Given a requirement, screen, test case or file in the answer
+When I click its "Quote" icon
+Then the whole item is added as one quote block, without selecting text
+```
+
+_AC4_
+```gherkin
+Given a reply with several quote blocks
+When I click the × of one quote
+Then only that quote is removed
+```
+
+_AC5_
+```gherkin
+Given the trace, text outside the answer, or a run that is still working
+When I select text there
+Then no "Quote" button appears
+```
+
+_AC6_
+```gherkin
+Given a phone (390 px) or the keyboard only
+When I long-press to select text, or Tab to an item's "Quote" icon and press Enter
+Then the quote is added the same way
+```
+
+## REQ-051 · Ask the agent about the quoted text
+As the product owner, I want to ask the agent for more details about what I quoted, so that I understand its answer before I approve it.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a reply with at least one quote or a message
+When I click "Ask"
+Then my message with its quotes appears in the run's conversation and the agent's answer appears under it
+```
+
+_AC2_
+```gherkin
+Given the agent answered a question
+When I look at the proposal
+Then it is unchanged and the run keeps its status (e.g. awaiting approval)
+```
+
+_AC3_
+```gherkin
+Given a live run
+When the agent answers
+Then the follow-up sends the run's goal, its proposal, the conversation so far, the quotes and my message — not a new repository index — and the answer shows its token count
+```
+
+_AC4_
+```gherkin
+Given a project in demo mode (no API key)
+When I click "Ask"
+Then a predictable demo answer that repeats the quoted sources appears
+```
+
+_AC5_
+```gherkin
+Given an empty reply (no quote and no message)
+When I look at the reply box
+Then "Ask" and "Revise" are disabled
+```
+
+## REQ-052 · Revise the proposal from the quoted text
+As the product owner, I want the agent to revise only what I quoted, so that I keep the good parts of its proposal.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a run awaiting approval and a reply with quotes
+When I click "Revise"
+Then the agent produces a new version of the proposal that changes the quoted items as the message asks and keeps every other item unchanged
+```
+
+_AC2_
+```gherkin
+Given a revision of requirements, test cases or design screens
+When it is saved
+Then existing ids are kept (REQ-xxx, TC-xxx, SCR-x) and only new items get new ids
+```
+
+_AC3_
+```gherkin
+Given a coding agent run
+When I revise with a quote from one file
+Then only the quoted files are proposed again and the other files of the change set stay as they were
+```
+
+_AC4_
+```gherkin
+Given a revision
+When it is saved
+Then the guardrails and evaluations run again on the new version and the run is awaiting approval
+```
+
+_AC5_
+```gherkin
+Given a rejected run
+When I revise it
+Then the run is awaiting approval again with the new version
+```
+
+_AC6_
+```gherkin
+Given an approved run
+When I look at the reply box
+Then "Revise" is disabled with the hint "Already applied — start a new run" and "Ask" still works
+```
+
+## REQ-053 · Proposal versions and compare
+As the product owner, I want to see what changed between proposal versions, so that I can check a revision quickly.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a revision
+When it is saved
+Then the conversation shows a marker "Proposal v2 — changed: …" naming the changed items (e.g. "REQ-051 · AC 2", "src/app.ts")
+```
+
+_AC2_
+```gherkin
+Given a run with two or more versions
+When I click "Compare with v1"
+Then the changed items are shown as a diff with the previous version (removed lines red, added lines mint), and unchanged items are folded
+```
+
+_AC3_
+```gherkin
+Given a run with several versions
+When I pick an earlier version
+Then I can read it, and the run marks which version is the latest
+```
+
+_AC4_
+```gherkin
+Given a run with several versions
+When I click Approve
+Then the latest version is applied (spec merge or pull request), never an earlier one
+```
+
+## REQ-054 · The conversation is kept with the run, safely
+As a team member, I want the conversation with an agent to stay with its run, so that anyone can see why the proposal changed.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a run with a conversation
+When I reload the portal or open the run from the Runs page or the Team floor
+Then the conversation, its quotes and all proposal versions are still there
+```
+
+_AC2_
+```gherkin
+Given quoted text or a message that contains instructions (e.g. "ignore previous instructions")
+When it is sent to the agent
+Then it is wrapped as data, the prompt-injection guardrail runs on it and a warning is shown in the trace
+```
+
+_AC3_
+```gherkin
+Given a run is deleted
+When it is removed
+Then its conversation and versions are removed with it
+```
+
+## REQ-063 · Handoffs are shown on phones too
+As the product owner, I want to see work move between agents on my phone, so that I can follow the team away from my desk.
+
+**Priority:** Should · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a screen narrower than 720 px
+When a run is handed to the next agent within the last 4 seconds
+Then a strip inside the floor, above the desks, shows "<from agent> [card with the feature or REQ ids] → <to agent>" and the sentence "Handed to the <to agent name> — it starts now" (for example "Handed to the Requirements agent — it starts now"), in honey, and the receiving desk is marked with a honey ring
+```
+
+_AC2_
+```gherkin
+Given a screen narrower than 720 px
+When a review sends a change set back within the last 4 seconds
+Then the strip shows "Coding ← [↩ <findings>] Review" and "The review sent the work back to the Coding agent", in coral, and the Coding desk is marked with a coral ring
+```
+
+_AC3_
+```gherkin
+Given reduced motion or Pause motion
+When a handoff is shown on a phone
+Then nothing slides: the strip simply appears and disappears after 4 seconds
+```
+
+_AC4_
+```gherkin
+Given several handoffs within the same 4 seconds
+When the strip is shown on a phone
+Then it lists each of them, newest first, one line per handoff (at most 3)
+```
+
+_AC5_
+```gherkin
+Given no handoff in the last 4 seconds, or a screen 720 px or wider
+When the Team floor is shown
+Then there is no strip (desktop keeps the corridor as today)
 ```
 
 ## REQ-045 · The agent trace can be folded and unfolded

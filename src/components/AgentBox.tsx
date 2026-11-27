@@ -31,7 +31,7 @@ export function AgentBox({ p, agentId, featureId, defaultGoal, placeholder, reqI
       <div className="mono-sm t-tertiary">Tools: {a.tools.filter((t) => t !== 'finish').join(' · ') || '—'} · Gate: {a.gate}{!live && ' · add an Anthropic key in Connections for live runs'}</div>
       {disabled && <div className="body-sm t-accent">{disabled}</div>}
       {hint && !disabled && <div className="body-sm t-secondary">{hint}</div>}
-      {latest && (latest.status === 'running' || latest.status === 'awaiting-approval' || latest.status === 'failed') && <div className="card"><RunView p={p} r={latest} compact /></div>}
+      {latest && (latest.status === 'running' || latest.status === 'awaiting-approval' || latest.status === 'failed') && <div className="card"><RunView key={latest.id} p={p} r={latest} compact /></div>}
     </section>
   );
 }
