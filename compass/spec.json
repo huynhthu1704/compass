@@ -580,7 +580,7 @@
       }
     },
     {
-      "id": "F-013",
+      "id": "F-015",
       "name": "Team access: Google sign-in, project teams and roles",
       "createdAt": "2026-11-27T00:00:00.000Z",
       "idea": {
@@ -608,7 +608,7 @@
           "Per-feature or per-requirement permissions"
         ],
         "risks": [
-          "Any member can copy the shared GitHub token from the browser; removing a member does not revoke a copy (ADR-006)",
+          "Any member can copy the shared GitHub token from the browser; removing a member does not revoke a copy (ADR-011)",
           "New dependency: firebase (needs the human-approved label)",
           "The Product Owner must create the Firebase project and publish the rules once",
           "Free Spark plan limits (50k reads/day) — far above a small team"
@@ -947,8 +947,8 @@
       ]
     },
     {
-      "id": "REQ-020",
-      "featureId": "F-013",
+      "id": "REQ-030",
+      "featureId": "F-015",
       "title": "An admin adds a person to a project by email with one or more roles",
       "priority": "Must",
       "status": "Approved",
@@ -964,8 +964,8 @@
       "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
-      "id": "REQ-021",
-      "featureId": "F-013",
+      "id": "REQ-031",
+      "featureId": "F-015",
       "title": "An admin changes a person's roles or removes them from the project",
       "priority": "Should",
       "status": "Approved",
@@ -981,8 +981,8 @@
       "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
-      "id": "REQ-022",
-      "featureId": "F-013",
+      "id": "REQ-032",
+      "featureId": "F-015",
       "title": "People sign in with Google and see only the projects whose team lists their email",
       "priority": "Must",
       "status": "Approved",
@@ -999,8 +999,8 @@
       "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
-      "id": "REQ-023",
-      "featureId": "F-013",
+      "id": "REQ-033",
+      "featureId": "F-015",
       "title": "Each approval gate can be passed only by a person with the role that owns it",
       "priority": "Must",
       "status": "Approved",
@@ -1016,8 +1016,8 @@
       "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
-      "id": "REQ-024",
-      "featureId": "F-013",
+      "id": "REQ-034",
+      "featureId": "F-015",
       "title": "A project Admin stores one GitHub token that the project's members use",
       "priority": "Must",
       "status": "Approved",
@@ -1033,8 +1033,8 @@
       "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
-      "id": "REQ-025",
-      "featureId": "F-013",
+      "id": "REQ-035",
+      "featureId": "F-015",
       "title": "The super admin sees every project and can make someone a project Admin",
       "priority": "Should",
       "status": "Approved",
@@ -1049,8 +1049,8 @@
       "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
-      "id": "REQ-026",
-      "featureId": "F-013",
+      "id": "REQ-036",
+      "featureId": "F-015",
       "title": "Every approval records the email and role of the person who gave it",
       "priority": "Should",
       "status": "Approved",
@@ -1496,9 +1496,9 @@
       "gherkin": "Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues \"REQ-002: …\" and \"REQ-001: …\"\nWhen the delete dialog's list is computed\nThen it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue \"REQ-002: …\""
     },
     {
-      "id": "TC-039",
+      "id": "TC-060",
       "reqIds": [
-        "REQ-020"
+        "REQ-030"
       ],
       "title": "Adding a person normalises the email and keeps several roles",
       "type": "Automated",
@@ -1506,9 +1506,9 @@
       "gherkin": "Given an empty team\nWhen \"Ba@Example.com \" is added with BA and QA\nThen the team has one entry ba@example.com with roles [BA, QA]"
     },
     {
-      "id": "TC-040",
+      "id": "TC-061",
       "reqIds": [
-        "REQ-020"
+        "REQ-030"
       ],
       "title": "Adding a person is refused for a bad email, no role or a duplicate",
       "type": "Automated",
@@ -1516,9 +1516,9 @@
       "gherkin": "Given a team with ba@example.com\nWhen \"not-an-email\", \"dev@example.com\" with no role, or \"BA@example.com\" is added\nThen each is refused with its reason and the team is unchanged"
     },
     {
-      "id": "TC-041",
+      "id": "TC-062",
       "reqIds": [
-        "REQ-021"
+        "REQ-031"
       ],
       "title": "The last Admin cannot be removed or lose the Admin role",
       "type": "Automated",
@@ -1526,9 +1526,9 @@
       "gherkin": "Given a team whose only Admin is po@example.com\nWhen po@example.com is removed, or their Admin role is unticked\nThen both are refused with \"A project needs at least one Admin\"; with a second Admin both are allowed"
     },
     {
-      "id": "TC-042",
+      "id": "TC-063",
       "reqIds": [
-        "REQ-021"
+        "REQ-031"
       ],
       "title": "Changing roles and removing a person update the team",
       "type": "Automated",
@@ -1536,9 +1536,9 @@
       "gherkin": "Given a team with ba@example.com (BA)\nWhen the roles are changed to BA and QA and then the person is removed\nThen the team first shows BA and QA, then no longer lists ba@example.com, and the result asks to replace the token"
     },
     {
-      "id": "TC-043",
+      "id": "TC-064",
       "reqIds": [
-        "REQ-022"
+        "REQ-032"
       ],
       "title": "Email matching picks the projects of a signed-in person",
       "type": "Automated",
@@ -1546,9 +1546,9 @@
       "gherkin": "Given projects A (ba@example.com: BA), B (BA@EXAMPLE.COM: QA) and C (dev@example.com: Dev)\nWhen ba@example.com signs in with a verified email\nThen projects A and B are visible with roles BA and QA; with an unverified email, or as x@example.com, no project is visible"
     },
     {
-      "id": "TC-044",
+      "id": "TC-065",
       "reqIds": [
-        "REQ-022"
+        "REQ-032"
       ],
       "title": "Sign-in screen, no-access screen and demo mode",
       "type": "Manual",
@@ -1556,9 +1556,9 @@
       "gherkin": "Given a configured Firebase project\nWhen I open the portal signed out, then sign in with an account on no team, then use a build without Firebase config\nThen I see the Sign in with Google screen, then \"You have no access yet — ask your admin\", then the portal as today without sign-in"
     },
     {
-      "id": "TC-045",
+      "id": "TC-066",
       "reqIds": [
-        "REQ-023"
+        "REQ-033"
       ],
       "title": "Role → gate rules, including several roles and the super admin",
       "type": "Automated",
@@ -1566,12 +1566,12 @@
       "gherkin": "Given the gate rules\nWhen canPass is asked for each gate with roles [BA, QA], [UX], [DM], [] and as the super admin\nThen BA+QA may pass requirements and test cases only, UX may pass design only, DM may pass release only, no roles pass nothing, and the super admin passes every gate"
     },
     {
-      "id": "TC-046",
+      "id": "TC-067",
       "reqIds": [
-        "REQ-023",
-        "REQ-020",
-        "REQ-024",
-        "REQ-025"
+        "REQ-033",
+        "REQ-030",
+        "REQ-034",
+        "REQ-035"
       ],
       "title": "Firestore rules refuse writes and reads the roles do not allow",
       "type": "Automated",
@@ -1579,9 +1579,9 @@
       "gherkin": "Given the Firestore security rules in the emulator\nWhen a BA writes a design approval, a non-Admin changes the team or reads the token, a person on no team reads a project, and a non-super-admin changes the super admin setting\nThen every one is refused, and the same writes by the owning role, an Admin or the super admin are allowed"
     },
     {
-      "id": "TC-047",
+      "id": "TC-068",
       "reqIds": [
-        "REQ-024"
+        "REQ-034"
       ],
       "title": "GitHub calls use the project token for members",
       "type": "Automated",
@@ -1589,9 +1589,9 @@
       "gherkin": "Given a project with a saved token and a member with no own token\nWhen the portal chooses the token for a GitHub call on that project\nThen it uses the project token; with no project token it reports \"The project's GitHub token is missing or expired — ask an Admin\""
     },
     {
-      "id": "TC-048",
+      "id": "TC-069",
       "reqIds": [
-        "REQ-024"
+        "REQ-034"
       ],
       "title": "The token is hidden from members who are not Admins",
       "type": "Manual",
@@ -1599,9 +1599,9 @@
       "gherkin": "Given a project with a saved token\nWhen a BA opens the Team page and the Admin opens it\nThen the BA sees no token field and no value; the Admin sees the masked token with Test and Replace"
     },
     {
-      "id": "TC-049",
+      "id": "TC-070",
       "reqIds": [
-        "REQ-025"
+        "REQ-035"
       ],
       "title": "The super admin sees every project and can name a project Admin",
       "type": "Manual",
@@ -1609,9 +1609,9 @@
       "gherkin": "Given the super admin and two projects\nWhen the super admin signs in and makes ba@example.com Admin of project A\nThen both projects are visible to the super admin, and ba@example.com can manage the team of A but not of B"
     },
     {
-      "id": "TC-050",
+      "id": "TC-071",
       "reqIds": [
-        "REQ-026"
+        "REQ-036"
       ],
       "title": "approvedBy names the person and role",
       "type": "Automated",
@@ -1675,28 +1675,28 @@
       ]
     },
     {
-      "id": "ADR-005",
+      "id": "ADR-010",
       "date": "2026-11-27",
       "title": "Team access uses Firebase on the free Spark plan",
       "status": "Accepted",
       "reqIds": [
-        "REQ-020",
-        "REQ-022",
-        "REQ-023",
-        "REQ-025"
+        "REQ-030",
+        "REQ-032",
+        "REQ-033",
+        "REQ-035"
       ],
       "context": "Compass is a browser-only app without a server. Team lists and role checks must be shared between people and cannot be trusted if they live only in each browser.",
       "decision": "The Product Owner chose Firebase Auth (Google sign-in) and Firestore on the free Spark plan, with Firestore security rules as the real gate, over a team.json file in each repo or browser-only storage.",
       "consequences": "New dependency firebase and a firestore rules file (both need the human-approved label); the Product Owner creates the Firebase project and publishes the rules once; ideas, runs and other data stay where they are."
     },
     {
-      "id": "ADR-006",
+      "id": "ADR-011",
       "date": "2026-11-27",
       "title": "Members use a shared GitHub token per project",
       "status": "Accepted",
       "reqIds": [
-        "REQ-024",
-        "REQ-021"
+        "REQ-034",
+        "REQ-031"
       ],
       "context": "GitHub writes need a token. Team members who sign in with Google may have no GitHub account or token.",
       "decision": "The Product Owner chose one GitHub token per project, stored by its Admins and readable by its members, over each member connecting their own token.",

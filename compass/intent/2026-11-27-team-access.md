@@ -71,11 +71,11 @@ that is not on any team sees no project. Unit tests cover email matching, multip
 - Per-requirement or per-feature permissions.
 
 ## Requirements
-Feature F-013 · Team access: Google sign-in, project teams and roles (decisions ADR-005, ADR-006)
-- REQ-020 — An admin adds a person to a project by email with one or more roles (#39)
-- REQ-021 — An admin changes a person's roles or removes them from the project (#40)
-- REQ-022 — People sign in with Google and see only the projects whose team lists their email (#41)
-- REQ-023 — Each approval gate can be passed only by a person with the role that owns it (#42)
-- REQ-024 — A project Admin stores one GitHub token that the project's members use (#43)
-- REQ-025 — The super admin sees every project and can make someone a project Admin (#44)
-- REQ-026 — Every approval records the email and role of the person who gave it (#45)
+Feature F-015 · Team access: Google sign-in, project teams and roles (decisions ADR-010, ADR-011)
+- REQ-030 — An admin adds a person to a project by email with one or more roles (#39)
+- REQ-031 — An admin changes a person's roles or removes them from the project (#40)
+- REQ-032 — People sign in with Google and see only the projects whose team lists their email (#41)
+- REQ-033 — Each approval gate can be passed only by a person with the role that owns it (#42)
+- REQ-034 — A project Admin stores one GitHub token that the project's members use (#43)
+- REQ-035 — The super admin sees every project and can make someone a project Admin (#44)
+- REQ-036 — Every approval records the email and role of the person who gave it (#45)
