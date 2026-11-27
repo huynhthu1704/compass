@@ -1214,7 +1214,7 @@ _AC1_
 ```gherkin
 Given a project with a Figma link, a Miro link or both
 When I open any feature's Design page
-Then there is no design-files card on the page: one row above the preview holds the preview switch, an "Open in <tool> ↗" button for the tool shown and a "Design files" button with the number of linked files
+Then there is no design-files card on the page: a "Design files" button with the number of linked files sits at the top right, next to the page title, and the preview takes the full width of the page
 ```
 
 _AC2_
