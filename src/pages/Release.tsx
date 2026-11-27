@@ -2,22 +2,24 @@ import { useEffect, useState } from 'react';
 import { github } from '../github';
 import { nextVersion, release } from '../harness';
 import { store, useStore } from '../store';
+import { missingToken, tokenFor } from '../token';
 import type { Project } from '../types';
 import { ago, Badge, Button, PageHead, useAction } from '../ui';
 
 type WF = Awaited<ReturnType<typeof github.workflowRuns>>;
 
 export function ReleasePage({ p }: { p: Project }) {
-  const { settings } = useStore();
+  useStore(); // re-render on store changes
   const ready = p.runs.filter((r) => r.agent === 'coder' && r.status === 'approved');
   const [sel, setSel] = useState<string[]>(ready.map((r) => r.id));
   const [log, setLog] = useState<string[]>([]);
   const [wf, setWf] = useState<WF | null>(null);
   const { busy, run } = useAction();
-  const live = !!settings.githubToken && !!p.repo && !p.demo;
+  const token = tokenFor(p); // F-015 REQ-034: the project token for signed-in members
+  const live = !!token && !!p.repo && !p.demo;
   const tag = nextVersion(p.releases.map((r) => r.tag));
 
-  useEffect(() => { if (live) github.workflowRuns(settings.githubToken!, p.repo!).then(setWf).catch(() => setWf([])); }, [live, p.releases.length, settings.githubToken, p.repo]);
+  useEffect(() => { if (live) github.workflowRuns(token!, p.repo!).then(setWf).catch(() => setWf([])); }, [live, p.releases.length, token, p.repo]);
 
   const ship = () => run(async () => {
     setLog([]);
@@ -31,7 +33,7 @@ export function ReleasePage({ p }: { p: Project }) {
       <PageHead over="Stage 6 · Release · owner: Delivery Manager / PO" title="Release" sub="Release several features together. One click: verify CI on each agent PR, squash-merge, mark requirements Done, update the spec & handover, tag a GitHub release — the deploy workflow publishes to GitHub Pages."
         right={<>
           {p.repo?.pagesUrl && <a className="btn secondary sm" href={p.repo.pagesUrl} target="_blank" rel="noreferrer">Live site ↗</a>}
-          {live && !p.repo?.pagesUrl && <Button size="sm" variant="secondary" disabled={busy} onClick={() => run(async () => { const pg = await github.enablePages(settings.githubToken!, p.repo!); store.update(p.id, (x) => ({ ...x, repo: x.repo && { ...x.repo, pagesUrl: pg.html_url } })); return 'GitHub Pages enabled'; })}>Enable GitHub Pages</Button>}
+          {live && !p.repo?.pagesUrl && <Button size="sm" variant="secondary" disabled={busy} onClick={() => run(async () => { const pg = await github.enablePages(token!, p.repo!); store.update(p.id, (x) => ({ ...x, repo: x.repo && { ...x.repo, pagesUrl: pg.html_url } })); return 'GitHub Pages enabled'; })}>Enable GitHub Pages</Button>}
         </>} />
 
       <section className="card pad-xl stack gap-md">
@@ -45,8 +47,8 @@ export function ReleasePage({ p }: { p: Project }) {
           </label>
         ))}
         <div className="row gap-sm">
-          <Button variant="accent" disabled={busy || !sel.length} onClick={() => confirm(`Release ${tag} with ${sel.length} change(s)? This merges the PRs into ${p.repo?.defaultBranch || 'main'}.`) && ship()}>{busy ? 'Releasing…' : `Release ${tag}`}</Button>
-          {!live && <span className="body-sm t-tertiary">{p.demo ? 'Demo — merge, tag and deploy are simulated.' : 'Connect GitHub to release for real.'}</span>}
+          <Button variant="accent" disabled={busy || !sel.length || !!missingToken(p)} onClick={() => confirm(`Release ${tag} with ${sel.length} change(s)? This merges the PRs into ${p.repo?.defaultBranch || 'main'}.`) && ship()}>{busy ? 'Releasing…' : `Release ${tag}`}</Button>
+          {!live && <span className="body-sm t-tertiary">{p.demo ? 'Demo — merge, tag and deploy are simulated.' : missingToken(p) || 'Connect GitHub to release for real.'}</span>}
         </div>
         {log.length > 0 && <div className="panel mono-sm stack gap-xs">{log.map((l, i) => <span key={i}>› {l}</span>)}</div>}
       </section>

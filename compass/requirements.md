@@ -39,6 +39,7 @@
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
+| REQ-075 | F-013 | The sidebar has no Knowledge link for any role | Should | Approved | TC-407 |
 | REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216, TC-217 |
 | REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214, TC-217 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
@@ -50,7 +51,7 @@
 | REQ-031 | F-015 | An admin changes a person's roles or removes them from the project | Should | In build | TC-062, TC-063 |
 | REQ-032 | F-015 | People sign in with Google and see only the projects whose team lists their email | Must | In build | TC-064, TC-065 |
 | REQ-033 | F-015 | Each approval gate can be passed only by a person with the role that owns it | Must | In build | TC-066, TC-067 |
-| REQ-034 | F-015 | A project Admin stores one GitHub token that the project's members use | Must | Approved | TC-067, TC-068, TC-069 |
+| REQ-034 | F-015 | A project Admin stores one GitHub token that the project's members use | Must | In build | TC-067, TC-068, TC-069 |
 | REQ-035 | F-015 | The super admin sees every project and can make someone a project Admin | Should | In build | TC-067, TC-070 |
 | REQ-036 | F-015 | Every approval records the email and role of the person who gave it | Should | In build | TC-067, TC-071 |
 | REQ-037 | F-015 | Each approval is recorded in Firebase, whose rules accept it only from the owning role | Must | In build | TC-067, TC-072 |
@@ -856,7 +857,7 @@ _AC3_
 ```gherkin
 Given a project is open
 When I look under the project card
-Then the links are, in order, Feature board, Team floor, Agent runs, Release, Knowledge and Project settings (ADR-015), and Knowledge has the tooltip "Project knowledge the agents search (RAG)"
+Then the links are, in order, Feature board, Team floor, Agent runs, Release and Project settings (REQ-075: no Knowledge link; ADR-015: Project settings last, after the Admin-only Team link once Team access adds it)
 ```
 
 _AC4_
@@ -962,6 +963,27 @@ _AC2_
 Given the onboarding page
 When I look at the overline above the title
 Then it reads "Compass" and no screen of the portal shows the text "AI dev portal"
+```
+
+## REQ-075 · The sidebar has no Knowledge link for any role
+As any portal user, I want the sidebar to show only the pages of the delivery flow, so that the technical Knowledge (RAG) page does not distract me.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a project is open, in any role (PO, BA, DM, UX, Dev, QA, Ops)
+When I look under the project card
+Then the links are, in order, Feature board, Team floor, Agent runs, Release and Project settings (ADR-015), and there is no Knowledge link
+```
+
+_AC2_
+```gherkin
+Given the address /p/<project>/knowledge
+When I open it directly
+Then the Knowledge page still opens, and agent runs keep indexing and searching the repository as before
 ```
 
 ## REQ-050 · Quote any part of an agent run
@@ -1401,7 +1423,7 @@ Then it is enabled
 ## REQ-034 · A project Admin stores one GitHub token that the project's members use
 As a project admin, I want to save one GitHub token for the project, so that members without their own GitHub account can save their work to the repo.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
@@ -1640,12 +1662,12 @@ _AC1_
 ```gherkin
 Given a project is open
 When I look at the sidebar
-Then the project group has a "Project settings" link with a gear icon after Knowledge, for every role, and it opens the Project settings page
+Then the project group ends with a "Project settings" link with a gear icon, for every role: after Release, and after the Admin-only Team link once Team access adds it (ADR-015); it opens the Project settings page
 ```
 
 _AC2_
 ```gherkin
-Given I am the project admin (the PO role until Team access, F-015, is merged)
+Given I am the project admin: with sign-in on, the project's Admin or the super admin; with sign-in off (demo or local use), the PO role picked in the sidebar
 When I open Project settings
 Then a "Design files" card shows a Figma file field and a Miro board field, both optional, and I can save, change or clear each one; the saved links are written to compass/spec.json → designTool
 ```
@@ -1659,7 +1681,7 @@ Then the field shows an error naming the link expected and nothing is saved
 
 _AC4_
 ```gherkin
-Given my role is not the admin role
+Given I am not the project admin (with sign-in on: not the project's Admin nor the super admin; with sign-in off: a role other than PO)
 When I open Project settings
 Then the "Design files" card shows the linked files with an "Open ↗" button each, no edit fields, and the hint "Only the project admin can change the design files"
 ```

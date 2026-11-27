@@ -92,3 +92,77 @@ export function approvedBy(email: string, roles: TeamRole[], gate: Gate, superAd
   const role = GATE_ROLES[gate].find((r) => roles.includes(r)) || (superAdmin ? 'super admin' : null);
   return role ? `${normalizeEmail(email)} (${role})` : null;
 }
+
+// ---- Firestore team documents (F-015 Team page; same shape as firestore.rules → validProject) -----------------------
+
+export interface TeamDoc { name: string; repo: { owner: string; name: string }; members: string[]; admins: string[]; team: Record<string, TeamRole[]> }
+
+/** Team → Firestore document. Admin lives only in `admins` (one source of truth); role lists never hold 'Admin'. */
+export function teamDoc(name: string, repo: { owner: string; name: string }, team: Member[]): TeamDoc {
+  const members = team.map((m) => normalizeEmail(m.email));
+  return {
+    name,
+    repo: { owner: repo.owner, name: repo.name },
+    members,
+    admins: team.filter((m) => m.roles.includes('Admin')).map((m) => normalizeEmail(m.email)),
+    team: Object.fromEntries(team.map((m) => [normalizeEmail(m.email), cleanRoles(m.roles).filter((r) => r !== 'Admin')])),
+  };
+}
+
+/** Firestore document → team, in member order. Admin comes from `admins` only; an 'Admin' in a role list is ignored. */
+export function membersFromDoc(d: Partial<Pick<TeamDoc, 'members' | 'admins' | 'team'>>): Member[] {
+  const admins = (d.admins || []).map(normalizeEmail);
+  const team = d.team || {};
+  const emails = d.members?.length ? d.members : Object.keys(team);
+  return emails.map((e) => {
+    const roles = (team[e] || []).filter((r) => r !== 'Admin');
+    return { email: normalizeEmail(e), roles: cleanRoles([...roles, ...(admins.includes(normalizeEmail(e)) ? ['Admin' as const] : [])]) };
+  });
+}
+
+export interface BaselineApproval { item: string; gate: Gate; approvedBy: string }
+
+/** The approvals already in spec.json when a project's first team is created (REQ-038 AC1): approved designs and
+ *  requirements past Draft. Stored once in Firebase; approvals not in it and without a record are flagged later. */
+export function baselineFrom(spec: { features: { id: string; design?: { status: string; approvedBy?: string } }[]; requirements: { id: string; status: string; approvedBy?: string }[] }): BaselineApproval[] {
+  return [
+    ...spec.features.filter((f) => f.design?.status === 'Approved').map((f) => ({ item: f.id, gate: 'design' as const, approvedBy: f.design?.approvedBy || '' })),
+    ...spec.requirements.filter((r) => r.status !== 'Draft').map((r) => ({ item: r.id, gate: 'requirements' as const, approvedBy: r.approvedBy || '' })),
+  ];
+}
+
+/** One change to a team, applied to the team as it is in the database at save time (never to a stale copy). */
+export type TeamOp = { kind: 'add'; email: string; roles: TeamRole[] } | { kind: 'set'; email: string; roles: TeamRole[] } | { kind: 'remove'; email: string };
+
+/** Applies one change to the current team (REQ-030, REQ-031). A first team must name an Admin. */
+export function applyTeamOp(current: Member[], op: TeamOp, isNew = false): TeamResult {
+  const r = op.kind === 'add' ? addMember(current, op.email, op.roles) : op.kind === 'set' ? setRoles(current, op.email, op.roles) : removeMember(current, op.email);
+  if (r.ok && !r.team.some((m) => m.roles.includes('Admin'))) return { ok: false, team: current, error: isNew ? 'Tick Admin for at least one person: a new team needs an Admin.' : LAST_ADMIN };
+  return r;
+}
+
+/** The GitHub token to use for a project (REQ-034, ADR-011): with sign-in on, the project's shared token wins over the
+ *  person's own device token; without sign-in (or no project token yet) the device token is used, as before. */
+export function pickToken(own: string | undefined, projectToken: string | null | undefined, signedIn: boolean): string | undefined {
+  return (signedIn && projectToken) || own || undefined;
+}
+
+/** What a person sees when no GitHub token is available for a project (REQ-034 AC4). With team access the fix is the
+ *  project's shared token, so they are told to ask an Admin; without sign-in, to connect their own account. */
+export function missingTokenMessage(signedIn: boolean): string {
+  return signedIn ? "The project's GitHub token is missing or expired — ask an Admin" : 'Connect GitHub first';
+}
+
+/** A copy of the spec with these requirements In build; never changes the input. approveRun applies it to the store only
+ *  after GitHub accepted the commit and the pull request (REQ-034 AC4: nothing half-written on an expired token). */
+export function withReqsInBuild<S extends { requirements: { id: string; status: string }[] }>(spec: S, reqIds: string[] = []): S {
+  return { ...spec, requirements: spec.requirements.map((q) => (reqIds.includes(q.id) ? { ...q, status: 'In build' } : q)) };
+}
+
+/** Shared projects to offer on this device (REQ-032 AC2): those the signed-in person may open whose repo is not a local
+ *  project yet. Repos are compared case-insensitively, like GitHub. */
+export function sharedToOpen<A extends { id: string; repo?: { owner: string; name: string } }>(access: A[], localRepos: ({ owner: string; name: string } | null | undefined)[]): A[] {
+  const key = (r: { owner: string; name: string }) => `${r.owner}/${r.name}`.toLowerCase();
+  const local = new Set(localRepos.filter((r): r is { owner: string; name: string } => !!r).map(key));
+  return access.filter((a) => a.repo && !local.has(key(a.repo)));
+}

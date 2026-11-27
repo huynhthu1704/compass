@@ -10,6 +10,7 @@ import { Onboarding } from './pages/Onboarding';
 import { OverviewPage } from './pages/Overview';
 import { ProjectsPage } from './pages/Projects';
 import { ReleasePage } from './pages/Release';
+import { TeamPage } from './pages/Team';
 import { DesignPage } from './pages/Design';
 import { RequirementsPage } from './pages/Requirements';
 import { RunPage, RunsPage } from './pages/Runs';
@@ -20,7 +21,8 @@ import { FeaturePage } from './pages/Feature';
 import { useStore } from './store';
 import { Toaster } from './ui';
 import { Sidebar } from './components/Sidebar';
-import { canSeeProject, firebaseEnabled, startSession, useSession } from './firebase';
+import { canSeeProject, firebaseEnabled, loadProjectToken, projectKey, startSession, useProjectToken, useSession } from './firebase';
+import { tokenFor } from './token';
 import { NoAccessPage, SignInPage } from './pages/SignIn';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
@@ -45,6 +47,11 @@ export default function App() {
   useEffect(() => setMenu(false), [parts.join('/')]);
   useEffect(() => { void startSession(); }, []);
   const session = useSession();
+  // F-015 REQ-034: when a signed-in person opens a project, load its shared GitHub token (members may read it).
+  const openRepo = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1])?.repo : undefined;
+  const openKey = openRepo && session.status === 'signed-in' ? projectKey(openRepo) : '';
+  useEffect(() => { if (openKey) loadProjectToken(openKey).catch(() => undefined); }, [openKey]);
+  useProjectToken(openKey); // re-render when the project token arrives, so the sync label and GitHub actions use it
 
   const routeProject = parts[0] === 'p' ? parts[1] : undefined;
   const sync = useSync(routeProject); // hooks must run before any early return
@@ -67,11 +74,11 @@ export default function App() {
     page = fs === 'idea' ? <IdeaPage p={p} fid={fid} /> : fs === 'requirements' ? <RequirementsPage p={p} fid={fid} /> : fs === 'design' ? <DesignPage p={p} fid={fid} /> : fs === 'tests' ? <TestsPage p={p} fid={fid} />
       : fs === 'build' ? <BuildPage p={p} fid={fid} /> : <FeaturePage p={p} fid={fid} />;
   } else if (p) {
-    page = sub === 'floor' ? <TeamFloorPage p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
+    page = sub === 'floor' ? <TeamFloorPage p={p} /> : sub === 'team' ? <TeamPage key={p.id} p={p} /> : sub === 'release' ? <ReleasePage p={p} /> : sub === 'knowledge' ? <KnowledgePage p={p} />
       : sub === 'runs' && parts[3] ? <RunPage p={p} rid={parts[3]} /> : sub === 'runs' ? <RunsPage p={p} /> : <OverviewPage p={p} />;
   } else page = <ProjectsPage />;
 
-  const sl = p && p.repo && !p.demo && settings.githubToken ? syncLabel(sync, p.dirty) : null;
+  const sl = p && p.repo && !p.demo && tokenFor(p) ? syncLabel(sync, p.dirty) : null;
 
   return (
     <>

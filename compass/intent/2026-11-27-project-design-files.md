@@ -8,9 +8,12 @@ Requested: 2026-11-27 by the Product Owner, in chat
 
 Answers given in chat (2026-11-27):
 - A project holds **both** links, each optional: one Figma file and one Miro board.
-- **Admin = the PO role for now.** It becomes the project Admin / super admin once Team access (F-015) is merged.
-- The links are set on a new **Project settings** page (a sidebar link under Knowledge), not on the Feature board
-  (the Product Owner's choice on 2026-11-27, ADR-015). Each feature's Design page shows them read-only.
+- **Who is the admin:** with sign-in on (Team access, F-015), the project's Admin or the super admin; with sign-in off
+  (demo, local use), the PO role picked in the sidebar. (First answered "the PO role until Team access is merged";
+  restated in chat on 2026-11-27 once Team access reached main, ADR-015.)
+- The links are set on a new **Project settings** page, not on the Feature board. It is the last sidebar link: after
+  Release, and after Team access's Admin-only Team link, which stays a separate item (the Product Owner's choices on
+  2026-11-27, ADR-015). Each feature's Design page shows them read-only.
 
 ## What we want
 A project admin can set, on the project's Project settings page in the portal, which Figma file and/or Miro board a project's design work lives in. Everyone
@@ -33,8 +36,9 @@ nothing stops a link from being changed by mistake.
 
 ## Constraints
 - Browser-only, no server, no paid service, no new dependency (Figma and Miro embeds are plain iframes).
-- "Admin" means the project Admin / super admin from Team access (F-015, intent `2026-11-27-team-access.md`). Until
-  that is merged, the portal has no sign-in, so the edit control is limited to the PO role picked in the sidebar.
+- "Admin" means the project Admin or the super admin from Team access (F-015, intent `2026-11-27-team-access.md`)
+  when sign-in is on; with sign-in off (demo, local use) the PO role picked in the sidebar edits. This is a portal
+  check: `compass/spec.json` lives in the repository, so anyone with GitHub write access can still change it there.
 - Existing projects with a single `designTool` keep working with no change on their side.
 - Honey design system, works on a phone and with the keyboard; UI text in English.
 
@@ -44,7 +48,7 @@ Number of projects with a Figma or Miro link set (no target).
 ## Out of scope
 - Reading or writing Figma or Miro content through their APIs (no tokens).
 - Per-feature links. Each feature's "This feature in …" frame link stays as it is.
-- Other tools (Penpot, Sketch) beyond keeping the existing "Other" link.
+- New tools beyond Figma and Miro. An existing Penpot, Sketch or Other link is kept and shown as it is (REQ-082).
 
 ## Requirements
 - REQ-080 — The admin links the project's Figma file and Miro board on a Project settings page

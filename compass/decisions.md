@@ -128,6 +128,6 @@ _2026-11-27 · Accepted · REQ-080, REQ-081, REQ-082_
 
 **Context:** The first design put the project's Figma and Miro links on the Feature board; the Product Owner found that page unsuitable for them.
 
-**Decision:** The Product Owner chose in chat on 2026-11-27: a "Project settings" link with a gear icon is added to the sidebar's project group after Knowledge, for every role. Its page holds the "Design files" card; only the admin edits it, others see the links with Open ↗.
+**Decision:** The Product Owner chose in chat on 2026-11-27: a "Project settings" link with a gear icon is added to the sidebar's project group, for every role. Its page holds the "Design files" card; only the project admin edits it, others see the links with Open ↗. Follow-up decisions in chat, after Team access (F-015) and REQ-075 reached main: (1) the admin is the project's Admin or the super admin when sign-in is on, and the PO role from the role picker when sign-in is off (demo, local use); (2) Project settings is the last link: after Release, and after Team access's Admin-only Team link, which stays a separate item.
 
-**Consequences:** The sidebar gets one more link (REQ-070 lists the links up to Knowledge). Team access (F-015) can put its team list and project GitHub token on the same page instead of a separate Team item.
+**Consequences:** REQ-070, REQ-075 and their tests list Project settings as the last project link. The Admin check is a portal check only: compass/spec.json → designTool lives in the repository, so anyone with GitHub write access can still change it there (Firestore rules never see GitHub commits).

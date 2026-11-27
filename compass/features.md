@@ -16,8 +16,9 @@ Each feature is one business intent moving through Idea → Requirements → Tes
 | [F-010 Honey brand: Compass shares the Bee There look](features/F-010.md) | Release | [Approved](design/F-010.md) | 3 | 9 |
 | [F-011 Readability follow-ups: status labels and phone stage strip](features/F-011.md) | Build | [Approved](design/F-011.md) | 3 | 6 |
 | [F-012 Delete a feature and close its GitHub issues](features/F-012.md) | Build | [Approved](design/F-012.md) | 4 | 10 |
-| [F-013 Sidebar navigation: grouped, scannable and keyboard friendly](features/F-013.md) | Build | [Approved](design/F-013.md) | 5 | 7 |
+| [F-013 Sidebar navigation: grouped, scannable and keyboard friendly](features/F-013.md) | Build | [Approved](design/F-013.md) | 6 | 8 |
 | [F-020 Quote an agent answer and ask for details or a revision](features/F-020.md) | Build | [Approved](design/F-020.md) | 5 | 18 |
 | [F-017 Collapsible agent trace](features/F-017.md) | Build | [Approved](design/F-017.md) | 1 | 2 |
+| [F-015 Team access: Google sign-in, project teams and roles](features/F-015.md) | Build | [Approved](design/F-015.md) | 11 | 18 |
 
 **Tech stack:** React 19 + TypeScript + Vite single-page app (runs in the browser, no server); GitHub REST API and the Claude API; node:test for the checking scripts; GitHub Pages deploy

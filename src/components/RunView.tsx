@@ -5,6 +5,7 @@ import { agent, approveRun, rejectRun } from '../harness';
 import { blocked, pct } from '../guardrails';
 import { traceOpen, traceSummary, traceToggleLabel } from '../trace';
 import { store, uid, useStore } from '../store';
+import { missingToken, tokenFor } from '../token';
 import type { Project, Run, StepKind } from '../types';
 import { ago, Badge, Button, Diff, useAction } from '../ui';
 import { AskBox, CompareView, ConversationThread, QuotePill, ReplyCard, VersionPicker, type Card } from './RunConversation';
@@ -224,8 +225,9 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
               <div className="body-sm t-secondary">
                 {vs.length > 1 ? `Approving applies Proposal v${latestN} (latest). Earlier versions stay readable in this run. ` : ''}
                 {r.proposal ? 'Approving merges this proposal into the project spec (compass/spec.json). Commit the spec to GitHub afterwards.'
-                  : p.repo && settings.githubToken && !p.demo ? `Approving commits ${r.changes.length} file(s) to a new branch and opens a pull request on ${p.repo.owner}/${p.repo.name}. CI runs automatically.`
-                  : 'Approving marks this change ready. Connect a GitHub repo to open a real pull request.'}
+                  : r.mode === 'demo' && p.repo && !p.demo && (tokenFor(p) || missingToken(p)) ? 'Approving marks this demo change ready. Its placeholder code is NOT pushed to the repository.'
+                  : p.repo && tokenFor(p) && !p.demo ? `Approving commits ${r.changes.length} file(s) to a new branch and opens a pull request on ${p.repo.owner}/${p.repo.name}. CI runs automatically.`
+                  : missingToken(p) || 'Approving marks this change ready. Connect a GitHub repo to open a real pull request.'}
               </div>
               <div className="row gap-sm">
                 <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying || !gate.ok} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
