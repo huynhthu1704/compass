@@ -16,11 +16,10 @@ import { RunPage, RunsPage } from './pages/Runs';
 import { TestsPage } from './pages/Tests';
 import { TeamFloorPage } from './pages/TeamFloor';
 import { syncLabel, useSync } from './autosync';
-import { featureStage, stageStatus } from './progress';
 import { FeaturePage } from './pages/Feature';
-import { store, useStore } from './store';
-import { STAGES, type Stage } from './types';
-import { STAGE_INFO, Toaster } from './ui';
+import { useStore } from './store';
+import { Toaster } from './ui';
+import { Sidebar } from './components/Sidebar';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -63,12 +62,6 @@ export default function App() {
       : sub === 'runs' && parts[3] ? <RunPage p={p} rid={parts[3]} /> : sub === 'runs' ? <RunsPage p={p} /> : <OverviewPage p={p} />;
   } else page = <ProjectsPage />;
 
-  const nav = (path: string, label: React.ReactNode, current: boolean, extra?: React.ReactNode) => (
-    <button aria-current={current ? 'page' : undefined} onClick={() => go(path)}>{label}{extra}</button>
-  );
-  const fidRoute = sub === 'f' ? parts[3] : undefined;
-  const fsub = parts[4] || '';
-  const waiting = p ? p.runs.filter((r) => r.status === 'awaiting-approval').length : 0;
   const sl = p && p.repo && !p.demo && settings.githubToken ? syncLabel(sync, p.dirty) : null;
 
   return (
@@ -76,53 +69,7 @@ export default function App() {
       <div className="mobile-top"><div className="brand"><Logo />Compass</div><button className="btn secondary sm" onClick={() => setMenu(!menu)} aria-expanded={menu}>Menu</button></div>
       <div className="app">
         <aside className={`sidebar ${menu ? 'open' : ''}`}>
-          <div className="brand"><Logo />Compass <span className="badge tone-brand" style={{ fontSize: 10 }}>AI dev portal</span></div>
-          <nav className="nav">
-            {nav('/', 'Projects', !p && !['connect', 'architecture'].includes(parts[0]))}
-            {nav('/architecture', 'Agent architecture', parts[0] === 'architecture')}
-          </nav>
-          {p && (
-            <div className="nav-group">
-              <div className="overline t-tertiary" style={{ padding: '0 12px' }}>{p.name}{p.demo ? ' · demo' : ''}</div>
-              {sl && <div style={{ padding: '0 12px' }}><span className={`badge tone-${sl.tone}`} title={sync?.message} style={{ fontSize: 11 }}>{sl.text}</span></div>}
-              <nav className="nav">
-                {nav(`/p/${p.id}`, 'Feature board', sub === '')}
-                {nav(`/p/${p.id}/floor`, 'Team floor', sub === 'floor', waiting ? <span className="badge tone-accent" style={{ marginLeft: 'auto' }}>{waiting}</span> : null)}
-                {nav(`/p/${p.id}/release`, 'Release', sub === 'release')}
-                {nav(`/p/${p.id}/runs`, 'Agent runs', sub === 'runs', waiting ? <span className="badge tone-accent" style={{ marginLeft: 'auto' }}>{waiting}</span> : null)}
-                {nav(`/p/${p.id}/knowledge`, 'Knowledge (RAG)', sub === 'knowledge')}
-              </nav>
-              {p.spec.features.some((f) => !f.archived) && <div className="overline t-tertiary" style={{ padding: '8px 12px 0' }}>Features</div>}
-              <nav className="nav">
-                {p.spec.features.filter((f) => !f.archived || f.id === fidRoute).map((f) => {
-                  const fst = featureStage(p, f.id);
-                  const st = stageStatus(p, f.id);
-                  return (
-                    <div key={f.id} className="stack">
-                      {nav(`/p/${p.id}/f/${f.id}`, <><span className={`chip ${fst === 'done' ? 'tone-success' : STAGE_INFO[fst].cls}`} style={{ padding: '0 6px', fontSize: 10 }}>{f.id.replace('F-0', 'F')}</span><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span></>, fidRoute === f.id && fsub === '')}
-                      {fidRoute === f.id && (
-                        <nav className="nav" style={{ paddingLeft: 12, borderLeft: '1px solid var(--color-border-subtle)', marginLeft: 14 }}>
-                          {(['idea', 'requirements', 'design', 'tests', 'build'] as Stage[]).map((s) => nav(`/p/${p.id}/f/${f.id}/${s}`, <><span className={`chip ${STAGE_INFO[s].cls}`} style={{ padding: '0 6px', minWidth: 18, justifyContent: 'center' }}>{st[s].done ? '✓' : STAGES.indexOf(s) + 1}</span>{STAGE_INFO[s].name}</>, fsub === s))}
-                        </nav>
-                      )}
-                    </div>
-                  );
-                })}
-              </nav>
-            </div>
-          )}
-          <nav className="nav" style={{ marginTop: 'auto' }}>
-            {nav('/connect', <>Connections {settings.githubUser ? <span className="badge tone-success" style={{ marginLeft: 'auto' }}>@{settings.githubUser}</span> : <span className="badge tone-warning" style={{ marginLeft: 'auto' }}>demo</span>}</>, parts[0] === 'connect')}
-          </nav>
-          <div className="row gap-sm between">
-            <select className="select" style={{ width: 'auto', padding: '2px 6px', fontSize: 12 }} value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label="Your role">
-              {[['PO', 'Product Owner'], ['BA', 'Business Analyst'], ['DM', 'Delivery Manager'], ['UX', 'Designer'], ['Dev', 'Developer'], ['QA', 'QA'], ['Ops', 'Ops']].map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
-            <div className="seg" role="group" aria-label="Theme">
-              <button aria-pressed={settings.theme === 'light'} onClick={() => store.setSettings({ theme: 'light' })}>Light</button>
-              <button aria-pressed={settings.theme === 'dark'} onClick={() => store.setSettings({ theme: 'dark' })}>Dark</button>
-            </div>
-          </div>
+          <Sidebar parts={parts} p={p} sync={sl ? { ...sl, title: sync?.message } : null} logo={<Logo />} />
         </aside>
         <main className="main">{page}</main>
       </div>
