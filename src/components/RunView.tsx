@@ -105,9 +105,9 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
             <div className="trace-head">
               <span className="t-tertiary" aria-hidden="true">{traceIsOpen ? '▾' : '▸'}</span>
               <span className="overline t-tertiary">Trace · harness → RAG → tools → guardrails & evals</span>
-              <span className="mono-sm t-tertiary">{trace.steps} step{trace.steps === 1 ? '' : 's'}</span>
+              <span className="mono-sm t-tertiary">{trace.text.split(' · ')[0]}</span>
               {trace.failed > 0 && <Badge tone="danger">{trace.failed} failed</Badge>}
-              <button type="button" className="btn secondary sm" aria-expanded={traceIsOpen} aria-controls={traceId} onClick={() => setTraceManual({ id: r.id, open: !traceIsOpen })}>{traceToggleLabel(traceIsOpen)} {traceIsOpen ? '▴' : '▾'}</button>
+              <button type="button" className="btn secondary sm" aria-expanded={traceIsOpen} aria-controls={traceId} onClick={() => setTraceManual({ id: r.id, open: !traceIsOpen })}>{traceToggleLabel(traceIsOpen)} <span aria-hidden="true">{traceIsOpen ? '▴' : '▾'}</span></button>
             </div>
             {traceIsOpen && <div id={traceId} className="timeline">
               {r.steps.map((s, i) => {

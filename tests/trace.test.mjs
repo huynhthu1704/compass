@@ -17,6 +17,8 @@ test('TC-090 (REQ-045): the folded header counts steps and failed steps', () => 
   assert.deepEqual(traceSummary(steps), { steps: 15, failed: 2, text: '15 steps · 2 failed' });
   assert.deepEqual(traceSummary([step(), step({ ok: true })]), { steps: 2, failed: 0, text: '2 steps' });
   assert.equal(traceSummary([step()]).text, '1 step');
+  // an error step marked ok shows green in RunView, so it is not counted as failed
+  assert.equal(traceSummary([step({ kind: 'error', ok: true })]).failed, 0);
 });
 
 test('TC-090 (REQ-045): the toggle flips the trace and her choice survives a status change', () => {
@@ -39,4 +41,5 @@ test('TC-091 (REQ-045): the toggle is an accessible button and step details stil
   assert.match(src, /<button[^>]*aria-expanded=\{traceIsOpen\}[^>]*aria-controls=\{traceId\}/);
   assert.match(src, /\{traceIsOpen && <div id=\{traceId\} className="timeline"/);
   assert.match(src, /<details>/, 'each step keeps its own details');
+  assert.match(src, /<span aria-hidden="true">\{traceIsOpen \? '▴' : '▾'\}<\/span><\/button>/, 'the arrow is not part of the button name');
 });

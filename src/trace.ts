@@ -12,9 +12,9 @@ export function traceOpen(status: Run['status'], manual: boolean | null): boolea
   return manual ?? traceDefaultOpen(status);
 }
 
-/** A failed step is one marked not ok, or an error step (both show the red icon). */
+/** A failed step is one RunView paints red: marked not ok, or an error step not marked ok. */
 export function traceSummary(steps: TraceStep[]) {
-  const failed = steps.filter((s) => s.ok === false || s.kind === 'error').length;
+  const failed = steps.filter((s) => s.ok === false || (s.kind === 'error' && s.ok !== true)).length;
   const count = `${steps.length} step${steps.length === 1 ? '' : 's'}`;
   return { steps: steps.length, failed, text: failed ? `${count} · ${failed} failed` : count };
 }
