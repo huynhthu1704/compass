@@ -7,9 +7,10 @@ export type Lang = 'en' | 'vi';
 export type Stage = 'idea' | 'requirements' | 'design' | 'tests' | 'build' | 'release';
 export const STAGES: Stage[] = ['idea', 'requirements', 'design', 'tests', 'build', 'release'];
 
-/** The one design tool a project is connected to (e.g. its Figma project or file). */
-export type DesignToolKind = 'figma' | 'penpot' | 'sketch' | 'other';
-export interface DesignTool { kind: DesignToolKind; url: string }
+/** The project's design files (REQ-080 … REQ-082): `kind` + `url` hold the main link (Figma, an older Penpot/Sketch/Other
+ *  link, or Miro when it is the only one); `miroUrl` holds the Miro board next to another link. See src/designLinks.ts. */
+export type DesignToolKind = 'figma' | 'miro' | 'penpot' | 'sketch' | 'other';
+export interface DesignTool { kind: DesignToolKind; url: string; miroUrl?: string }
 
 export interface RepoRef {
   owner: string;

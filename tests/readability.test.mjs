@@ -1,4 +1,4 @@
-// F-011 readability follow-ups — TC-023, TC-024 (REQ-013). TC-025/026 (REQ-014) are checked with screenshots.
+// F-011 readability follow-ups — TC-023, TC-024 (REQ-013). TC-025/026 (REQ-014) are checked with screenshots. TC-508 (REQ-108).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -67,4 +67,18 @@ test('TC-027 (REQ-015): pages use up to 1600 px with fluid side padding; the pho
   assert.match(css, /\.option:has\(> \.grow\) > \.grow \{ flex-basis: 8rem; \}/, 'their text keeps at least 8rem and moves to its own line instead of being squeezed');
   assert.match(css, /\.option > \.mono \{ min-width: 0; overflow-wrap: anywhere; \}/, 'long file paths in option rows can break');
   assert.doesNotMatch(css.match(/^\.option \{[^}]*\}/m)[0], /flex-wrap/, 'other option rows (role picker, run lists) keep one line');
+});
+
+test('TC-508 (REQ-108): acceptance criteria and test steps are 13 px on the run page, other small mono text stays 11 px', () => {
+  const css = read('src/index.css');
+  const rule = (sel) => { const m = css.match(new RegExp(`^${sel.replace('.', '\\.')} \\{([^}]*)\\}`, 'm')); assert.ok(m, `${sel} rule exists`); return { body: m[1], at: m.index }; };
+  const ac = rule('.ac-line'), mono = rule('.mono-sm');
+  assert.match(ac.body, /font-size:\s*13px/, '.ac-line is 13px');
+  assert.match(ac.body, /line-height:\s*20px/, '.ac-line has a 20px line height');
+  assert.match(ac.body, /white-space:\s*pre-line/, '.ac-line keeps line breaks');
+  assert.ok(ac.at > mono.at, '.ac-line comes after .mono-sm so it wins');
+  assert.match(mono.body, /font-size:\s*11px;\s*line-height:\s*16px/, '.mono-sm is unchanged');
+  const run = read('src/components/RunView.tsx');
+  assert.match(run, /className="[^"]*\bac-line\b[^"]*" data-quote-source=\{`\$\{q\.id\} · AC \$\{i \+ 1\}`\}/, 'AC lines use ac-line');
+  assert.match(run, /className="[^"]*\bac-line\b[^"]*" data-quote-source=\{`\$\{t\.id\} · gherkin`\}/, 'test steps use ac-line');
 });

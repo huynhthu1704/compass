@@ -2035,6 +2035,23 @@
         "Given a project with a Figma file and a Miro board linked\nWhen the design agent runs or the portal generates AGENTS.md\nThen both tools and their links are named in the agent's prompt and in AGENTS.md"
       ],
       "design": "compass/design/2026-11-27-project-design-files.md"
+    },
+    {
+      "id": "REQ-108",
+      "featureId": "F-011",
+      "title": "Acceptance criteria and test steps are readable on the agent run page",
+      "priority": "Should",
+      "status": "Done",
+      "intent": "compass/intent/2026-11-27-larger-ac-text.md",
+      "design": "none: text size only — the run page keeps its approved layout",
+      "story": "As the Product Owner, I want the acceptance criteria and test steps an agent proposes to be easy to read, so that I can check them before I approve without zooming in.",
+      "ac": [
+        "Given an agent run that proposes requirements\nWhen its acceptance criteria (Given / When / Then lines) are shown on the run page\nThen they are 13 px with 20 px line height, the same size as the story text above them, and keep their line breaks",
+        "Given an agent run that proposes test cases\nWhen their steps are shown on the run page\nThen they use the same 13 px size and keep their line breaks",
+        "Given any other small monospace text in the portal (ids, file paths, times, design elements)\nWhen it is shown\nThen its size is unchanged (11 px)"
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     }
   ],
   "tests": [
@@ -3251,6 +3268,16 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given designTool {kind: 'penpot' | 'sketch' | 'other', url} from an older project\nWhen the project's design files are read for Project settings and the Design page\nThen the link is listed once, named after its tool (\"Penpot link\", \"Sketch link\", \"Other link\") with Open ↗, it gets no preview, and saving only a Miro link keeps kind and url unchanged"
+    },
+    {
+      "id": "TC-508",
+      "reqIds": [
+        "REQ-108"
+      ],
+      "title": "Acceptance criteria and test steps are 13 px, other small mono text stays 11 px",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given src/index.css and src/components/RunView.tsx\nWhen the test reads the .ac-line and .mono-sm rules and the run page markup\nThen .ac-line sets font-size 13px, line-height 20px and white-space pre-line, and comes after .mono-sm\nAnd .mono-sm is still 11px / 16px\nAnd both the acceptance-criteria lines and the test-case steps on the run page use the ac-line class"
     }
   ],
   "decisions": [
