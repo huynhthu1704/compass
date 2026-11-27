@@ -28,7 +28,10 @@ With 6 waiting runs the desk is no taller than with 3, and every waiting run can
 Approving directly in the side panel; the other Team floor phone gaps (#26).
 
 ## Requirements
+Ids REQ-060 … REQ-062 and TC-300 … TC-309: REQ-020 … REQ-054 and TC-039 … TC-213 are used by other open branches.
+These requirements amend REQ-008 (AC1) and REQ-009 (AC2) of the Team floor: the desk lists at most 3 items that open their details.
+
 Feature F-009 · Team floor (follow-up, issue #38)
-- REQ-020 — Each waiting item says what it is and how long it has waited
-- REQ-021 — The approval desk stays compact, with a link to all waiting runs
-- REQ-022 — Details of a waiting item open in a side panel
+- REQ-060 — Each waiting item says what it is and how long it has waited
+- REQ-061 — The approval desk stays compact, with a link to all waiting runs
+- REQ-062 — Details of a waiting item open in a side panel
