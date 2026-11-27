@@ -56,6 +56,11 @@ Intent: compass/intent/2026-11-27-quote-and-ask-agent.md · Design: compass/desi
   read-only snapshots (TC-210).
 - **Token cost:** a follow-up sends the run's goal, proposal, change set (quoted files in full, others by path) and the
   conversation — no new repository index; tokens are shown per answer.
+- **A revision overwriting an unquoted repository file by calling it new:** `liveRevise` looks every file outside the
+  change set up in the repository (indexed copy, then GitHub) like `execTool`; an existing file counts as existing whatever
+  action the agent claims, so it is refused unless quoted, and accepted files keep `before` for the diff and the
+  dependency guardrail G7 (TC-207, third review of #69). The CLAUDE.md lesson for this repeated finding goes into the
+  follow-up spec PR with the ADR and statuses (this PR is at the 12-file limit).
 - **A revised version approved before its checks ran:** `canApprove` refuses a revised version without guardrail
   results (the page closed while they ran); the button and `approveRun` both check it, and revising again re-runs them
   (TC-208, second review of #69).
