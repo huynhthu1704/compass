@@ -72,6 +72,8 @@ export interface Requirement {
   status: 'Draft' | 'Approved' | 'In build' | 'Done';
   intent?: string;         // compass/intent/<file>.md — explicit intent (else the feature's compass/intent/F-xxx.md)
   design?: string;         // compass/design/<file>.md — explicit design file, or "none: <reason>" for a change without UI
+  approvedBy?: string;     // F-015 REQ-036: "<email> (<role>)" when approved by a signed-in person
+  approvedAt?: string;
 }
 
 export interface TestCase {

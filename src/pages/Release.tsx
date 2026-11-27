@@ -3,6 +3,7 @@ import { github } from '../github';
 import { nextVersion, release } from '../harness';
 import { store, useStore } from '../store';
 import { missingToken, tokenFor } from '../token';
+import { useGate } from '../approvals';
 import type { Project } from '../types';
 import { ago, Badge, Button, PageHead, useAction } from '../ui';
 
@@ -17,6 +18,7 @@ export function ReleasePage({ p }: { p: Project }) {
   const { busy, run } = useAction();
   const token = tokenFor(p); // F-015 REQ-034: the project token for signed-in members
   const live = !!token && !!p.repo && !p.demo;
+  const releaseGate = useGate(p, 'release'); // F-015 REQ-033: DM or PO release
   const tag = nextVersion(p.releases.map((r) => r.tag));
 
   useEffect(() => { if (live) github.workflowRuns(token!, p.repo!).then(setWf).catch(() => setWf([])); }, [live, p.releases.length, token, p.repo]);
@@ -47,7 +49,8 @@ export function ReleasePage({ p }: { p: Project }) {
           </label>
         ))}
         <div className="row gap-sm">
-          <Button variant="accent" disabled={busy || !sel.length || !!missingToken(p)} onClick={() => confirm(`Release ${tag} with ${sel.length} change(s)? This merges the PRs into ${p.repo?.defaultBranch || 'main'}.`) && ship()}>{busy ? 'Releasing…' : `Release ${tag}`}</Button>
+          {!releaseGate.allowed && <span id="release-gate-hint" className="body-sm t-tertiary">{releaseGate.hint}</span>}
+          <Button variant="accent" disabled={busy || !sel.length || !!missingToken(p) || !releaseGate.allowed} aria-describedby={releaseGate.allowed ? undefined : 'release-gate-hint'} onClick={() => confirm(`Release ${tag} with ${sel.length} change(s)? This merges the PRs into ${p.repo?.defaultBranch || 'main'}.`) && ship()}>{busy ? 'Releasing…' : `Release ${tag}`}</Button>
           {!live && <span className="body-sm t-tertiary">{p.demo ? 'Demo — merge, tag and deploy are simulated.' : missingToken(p) || 'Connect GitHub to release for real.'}</span>}
         </div>
         {log.length > 0 && <div className="panel mono-sm stack gap-xs">{log.map((l, i) => <span key={i}>› {l}</span>)}</div>}
