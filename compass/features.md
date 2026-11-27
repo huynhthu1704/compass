@@ -18,5 +18,6 @@ Each feature is one business intent moving through Idea → Requirements → Tes
 | [F-012 Delete a feature and close its GitHub issues](features/F-012.md) | Build | [Approved](design/F-012.md) | 4 | 10 |
 | [F-013 Sidebar navigation: grouped, scannable and keyboard friendly](features/F-013.md) | Build | [Approved](design/F-013.md) | 5 | 7 |
 | [F-020 Quote an agent answer and ask for details or a revision](features/F-020.md) | Build | [Approved](design/F-020.md) | 5 | 17 |
+| [F-017 Collapsible agent trace](features/F-017.md) | Build | [Approved](design/F-017.md) | 1 | 2 |
 
 **Tech stack:** React 19 + TypeScript + Vite single-page app (runs in the browser, no server); GitHub REST API and the Claude API; node:test for the checking scripts; GitHub Pages deploy

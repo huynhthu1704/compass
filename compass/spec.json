@@ -911,6 +911,65 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-27T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-017",
+      "name": "Collapsible agent trace",
+      "createdAt": "2026-11-27T00:00:00.000Z",
+      "idea": {
+        "need": "allow user to collapse the detailed steps inside (the trace box of an agent run)",
+        "intent": "The Product Owner reaches an agent's proposal and the approval buttons without scrolling past its step-by-step trace (today: the full trace of ~15–40 lines always sits above the proposal).",
+        "problem": "Every agent run shows its whole trace (model turns, tool calls, results) above the proposal, so reviewing a run means scrolling through technical steps first.",
+        "users": [
+          "Product Owner",
+          "Everyone approving agent runs"
+        ],
+        "outcomeMetric": "Lines of trace shown above the proposal of an awaiting-approval run: all steps → one summary line (test + screenshot).",
+        "scopeIn": [
+          "The trace card of an agent run on the stage pages, Build and Agent runs"
+        ],
+        "scopeOut": [
+          "Remembering the choice between visits",
+          "Folding other cards (guardrails, change set)"
+        ],
+        "risks": [
+          "Nothing hidden for good: one click shows the full trace",
+          "Keyboard and screen-reader friendly",
+          "Honey tokens only; no new libraries"
+        ]
+      },
+      "design": {
+        "status": "Approved",
+        "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-609",
+        "summary": "The trace card of an agent run gets a header row: a ▸/▾ chevron, the overline, the step count, a red \"N failed\" chip when steps failed, and a \"Show steps\" / \"Hide steps\" button. The card starts folded (header only) when the run is awaiting approval, approved, rejected, failed or done, so the proposal and approval buttons sit right below it; it starts open while the agent is running. The Product Owner's own toggle is kept when the status changes. Each step still expands its own details.",
+        "screens": [
+          {
+            "id": "SCR-1",
+            "name": "Agent run · trace folded and open",
+            "purpose": "The trace card folded by default once the run stops working, and open while running or after Show steps.",
+            "reqIds": [
+              "REQ-045"
+            ],
+            "elements": [
+              "Chevron ▸/▾",
+              "Overline \"Trace · harness → RAG → tools → guardrails & evals\" (unchanged text; truncates on narrow screens)",
+              "Step count (mono)",
+              "\"N failed\" chip (danger, only when steps failed)",
+              "Show steps / Hide steps button (aria-expanded, aria-controls)",
+              "Timeline of steps (unchanged)"
+            ],
+            "states": [
+              "Folded: awaiting approval, approved, rejected, failed, done",
+              "Open: running (with \"working…\")",
+              "Open after Show steps; folded after Hide steps; choice kept on status change"
+            ],
+            "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-609"
+          }
+        ],
+        "notes": "Honey tokens only (bg/surface, border/subtle, bg/danger-subtle + text/danger). No new library. Not remembered between visits (out of scope).",
+        "approvedBy": "Product Owner",
+        "approvedAt": "2026-11-27T00:00:00.000Z"
+      }
     }
   ],
   "requirements": [
@@ -1492,6 +1551,21 @@
         "Given reduced motion or Pause motion\nWhen a handoff is shown on a phone\nThen nothing slides: the strip simply appears and disappears after 4 seconds",
         "Given several handoffs within the same 4 seconds\nWhen the strip is shown on a phone\nThen it lists each of them, newest first, one line per handoff (at most 3)",
         "Given no handoff in the last 4 seconds, or a screen 720 px or wider\nWhen the Team floor is shown\nThen there is no strip (desktop keeps the corridor as today)"
+      ]
+    },
+    {
+      "id": "REQ-045",
+      "featureId": "F-017",
+      "title": "The agent trace can be folded and unfolded",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-collapsible-agent-trace.md",
+      "story": "As the product owner, I want to fold the step-by-step trace of an agent run, so that I reach the proposal and the approval buttons without scrolling past every tool call.",
+      "ac": [
+        "Given an agent run that is awaiting approval, approved, rejected, failed or done\nWhen its run view opens\nThen the trace is folded to its header, which shows the number of steps (and how many failed, if any) and a \"Show steps\" toggle",
+        "Given an agent run that is still running\nWhen its run view opens\nThen the trace is open, as today",
+        "Given a run view\nWhen the Product Owner clicks the trace toggle (or presses Enter/Space on it)\nThen the trace opens or folds, the toggle reads \"Show steps\" or \"Hide steps\" and reports aria-expanded, and each step's own details still expand as before",
+        "Given a run that moves from running to awaiting approval while it is shown\nWhen the status changes and the Product Owner has not used the toggle\nThen the trace folds; once the toggle was used, her choice is kept"
       ]
     }
   ],
@@ -2388,6 +2462,26 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given a quote in the reply box of a run shown in the agent box\nWhen a new run is started from the same box (or another run is opened)\nThen the new run's reply box is empty and it shows its own latest version"
+    },
+    {
+      "id": "TC-090",
+      "reqIds": [
+        "REQ-045"
+      ],
+      "title": "Trace folded by default once the run stops working; toggle switches it",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given runs with status running, awaiting-approval, approved, rejected, done and failed (one with 2 failed steps of 15)\nWhen the trace's default state and header are computed\nThen running is open and the others are folded, the header reads \"15 steps · 2 failed\", and toggling flips open/folded with the label \"Show steps\"/\"Hide steps\"; after a manual toggle a status change no longer changes it"
+    },
+    {
+      "id": "TC-091",
+      "reqIds": [
+        "REQ-045"
+      ],
+      "title": "The trace toggle is an accessible button; step details still expand",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the run view of an awaiting-approval run\nWhen the trace header is rendered\nThen the toggle is a native <button> (Enter/Space work) whose aria-expanded matches the open state and whose aria-controls points at the timeline's id, the timeline is rendered only when open, and each step with details still renders its own <details> element"
     }
   ],
   "decisions": [
