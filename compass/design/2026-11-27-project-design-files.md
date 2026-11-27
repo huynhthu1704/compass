@@ -14,7 +14,8 @@ feature's frame link, else the project file) or the Miro live embed. A **Design 
 the page title, opens the links in a side panel (a bottom sheet on a phone); above the preview there is only the
 switch, when both tools are linked.
 Storage: `compass/spec.json → designTool` keeps `kind` + `url` (so older portals and `check-spec` still read it) and
-gains an optional `miroUrl`. A project with only a Miro board stores `{ kind: "miro", url }`.
+gains an optional `miroUrl`. A project with only a Miro board stores `{ kind: "miro", url }`. An older portal shows that link under an unknown tool name but keeps it (it
+only reads and writes `kind` and `url`); the Figma rule accepts https links on figma.com and www.figma.com.
 
 ## Screens
 ### SCR-0 · Sidebar · Project settings link — REQ-080

@@ -1416,7 +1416,7 @@
       "ac": [
         "Given any page of the portal on a desktop screen\nWhen I look at the sidebar\nThen it shows three groups separated by a line — workspace (Projects, Agent architecture), the open project (only when one is open) and an account footer at the bottom — and every page link starts with an icon",
         "Given a project is open\nWhen I look at the project group\nThen a card shows the project's first letter, its name and its state (\"Demo project\", the GitHub sync state such as \"Synced with GitHub\" or \"Sync failed\", or \"Local project\" when it is not on GitHub), and clicking it opens the project list",
-        "Given a project is open\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs, Release and Knowledge, and Knowledge has the tooltip \"Project knowledge the agents search (RAG)\"",
+        "Given a project is open\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs, Release, Knowledge and Project settings (ADR-015), and Knowledge has the tooltip \"Project knowledge the agents search (RAG)\"",
         "Given I use the keyboard\nWhen I press Tab through the sidebar in light or dark mode\nThen every link, card and button shows a visible focus ring"
       ]
     },
@@ -1595,7 +1595,7 @@
       "ac": [
         "Given a project is open\nWhen I look at the sidebar\nThen the project group has a \"Project settings\" link with a gear icon after Knowledge, for every role, and it opens the Project settings page",
         "Given I am the project admin (the PO role until Team access, F-015, is merged)\nWhen I open Project settings\nThen a \"Design files\" card shows a Figma file field and a Miro board field, both optional, and I can save, change or clear each one; the saved links are written to compass/spec.json → designTool",
-        "Given I enter a Figma link that is not an https://www.figma.com/ design, file, proto or board link, or a Miro link that is not an https://miro.com/app/board/ link\nWhen I save\nThen the field shows an error naming the link expected and nothing is saved",
+        "Given I enter a Figma link that is not an https link on figma.com or www.figma.com to a design, file, proto or board, or a Miro link that is not an https://miro.com/app/board/ link\nWhen I save\nThen the field shows an error naming the link expected and nothing is saved",
         "Given my role is not the admin role\nWhen I open Project settings\nThen the \"Design files\" card shows the linked files with an \"Open ↗\" button each, no edit fields, and the hint \"Only the project admin can change the design files\""
       ],
       "design": "compass/design/2026-11-27-project-design-files.md"
@@ -1610,7 +1610,7 @@
       "story": "As anyone working on a feature's design, I want the Design page to focus on the preview and keep the project's Figma and Miro links one click away, so that I can open the right file without clutter.",
       "ac": [
         "Given a project with a Figma link, a Miro link or both\nWhen I open any feature's Design page\nThen there is no design-files card on the page: a \"Design files\" button with the number of linked files sits at the top right, next to the page title, and the preview takes the full width of the page",
-        "Given I am on the Design page\nWhen I press \"Design files\"\nThen a side panel (a bottom sheet on a phone) lists each linked tool with an \"Open ↗\" button and no edit fields, plus \"Change in Project settings →\" for the admin only; Esc, ✕ or a click outside closes it and focus returns to the button",
+        "Given I am on the Design page\nWhen I press \"Design files\" (labelled \"Files\" on a phone)\nThen a side panel (a bottom sheet on a phone) lists each linked tool with an \"Open ↗\" button and no edit fields, plus \"Change in Project settings →\" for the admin only; Esc, ✕ or a click outside closes it and focus returns to the button",
         "Given a Miro board is linked\nWhen I open the Design page\nThen the board is previewed with Miro's live embed; a Figma file or the feature's Figma frame link is previewed with the Figma embed as today; the switch shows only when both are linked; on a phone the preview fits the screen width",
         "Given no design file is linked\nWhen I open the Design page\nThen the button reads \"Design files · none\", the preview area says \"No design files linked yet\", and the admin also sees a link to Project settings"
       ],
@@ -2235,12 +2235,13 @@
     {
       "id": "TC-400",
       "reqIds": [
-        "REQ-070"
+        "REQ-070",
+        "REQ-080"
       ],
       "title": "Sidebar groups, icons, project card and link order",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed, a project not on GitHub, and no open project\nWhen the sidebar sections are computed\nThen the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs, Release and Knowledge (only when a project is open), each with its own icon, Knowledge has the RAG tooltip, the project card state is \"Demo project\", \"Synced with GitHub\", \"Sync failed\" or \"Local project\", and clicking the project card opens the project list"
+      "gherkin": "Given the sidebar model for an open demo project, a project synced with GitHub, a project whose sync failed, a project not on GitHub, and no open project\nWhen the sidebar sections are computed\nThen the workspace links are Projects and Agent architecture, the project links are Feature board, Team floor, Agent runs, Release, Knowledge and Project settings (only when a project is open), each with its own icon, Knowledge has the RAG tooltip, the project card state is \"Demo project\", \"Synced with GitHub\", \"Sync failed\" or \"Local project\", and clicking the project card opens the project list"
     },
     {
       "id": "TC-401",
@@ -2585,7 +2586,7 @@
       "title": "Saving design links writes designTool and keeps old projects working",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a spec with designTool {kind: 'figma', url} and another with {kind: 'penpot', url}\nWhen a Miro link is saved, then cleared, and the Figma link is cleared\nThen designTool keeps kind and url while they are set, holds the Miro link next to them, and designTool is removed only when no link is left"
+      "gherkin": "Given a spec with designTool {kind: 'figma', url} and another with {kind: 'penpot', url}\nWhen a Miro link is saved, then cleared, and the Figma link is cleared\nThen designTool keeps kind and url while they are set, holds the Miro link next to them, a project with only a Miro board is stored as {kind: 'miro', url}, and designTool is removed only when no link is left"
     },
     {
       "id": "TC-502",
@@ -2627,6 +2628,26 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given a 390 px wide screen and a project with both links\nWhen I open Project settings from the sidebar menu and a feature's Design page\nThen the Design files card, the bottom sheet opened by \"Files\" and both previews fit the screen width with no sideways scrolling, and every button is reachable with the keyboard with a visible focus ring"
+    },
+    {
+      "id": "TC-506",
+      "reqIds": [
+        "REQ-081"
+      ],
+      "title": "Design page: preview in focus, Design files button, panel and empty state",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a project with a Figma file and a Miro board linked, and a second project with no design file\nWhen I open a feature's Design page as PO and as BA, press \"Design files\", then close the panel with Esc, with ✕ and with a click outside, and repeat on the second project and with only one tool linked\nThen there is no design-files card; \"Design files\" with the count 2 sits at the top right next to the title; the preview takes the full width; the Figma/Miro switch shows only when both are linked; the panel lists both files with Open ↗ and no edit fields, \"Change in Project settings →\" shows for PO only; every way of closing it returns focus to the button; on the second project the button reads \"Design files · none\", the preview area says \"No design files linked yet\" and PO also sees a link to Project settings"
+    },
+    {
+      "id": "TC-507",
+      "reqIds": [
+        "REQ-082"
+      ],
+      "title": "An old Penpot, Sketch or Other link is shown under its tool",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given designTool {kind: 'penpot' | 'sketch' | 'other', url} from an older project\nWhen the project's design files are read for Project settings and the Design page\nThen the link is listed once, named after its tool (\"Penpot link\", \"Sketch link\", \"Other link\") with Open ↗, it gets no preview, and saving only a Miro link keeps kind and url unchanged"
     }
   ],
   "decisions": [
