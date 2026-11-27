@@ -1513,15 +1513,16 @@
     {
       "id": "REQ-081",
       "featureId": "F-003",
-      "title": "Every Design page shows the project's design files read-only, with a preview",
+      "title": "Every Design page keeps the preview in focus and shows the design files behind a button",
       "priority": "Must",
       "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-design-files.md",
-      "story": "As anyone working on a feature's design, I want to see and preview the project's Figma file and Miro board on the Design page, so that I can open the right file without asking.",
+      "story": "As anyone working on a feature's design, I want the Design page to focus on the preview and keep the project's Figma and Miro links one click away, so that I can open the right file without clutter.",
       "ac": [
-        "Given a project with a Figma link, a Miro link or both\nWhen I open any feature's Design page\nThen the \"Project design files\" card shows a badge and an \"Open ↗\" button for each linked tool, no edit fields, and for the admin a \"Change in Project settings\" link",
-        "Given a Miro board is linked\nWhen I open the Design page\nThen the board is previewed with Miro's live embed; a Figma file or the feature's Figma frame link is previewed with the Figma embed as today; on a phone each preview fits the screen width",
-        "Given no design file is linked\nWhen I open the Design page\nThen the card says \"No design files linked yet\", and the admin also sees a link to Project settings"
+        "Given a project with a Figma link, a Miro link or both\nWhen I open any feature's Design page\nThen there is no design-files card on the page: one row above the preview holds the preview switch, an \"Open in <tool> ↗\" button for the tool shown and a \"Design files\" button with the number of linked files",
+        "Given I am on the Design page\nWhen I press \"Design files\"\nThen a side panel (a bottom sheet on a phone) lists each linked tool with an \"Open ↗\" button and no edit fields, plus \"Change in Project settings →\" for the admin only; Esc, ✕ or a click outside closes it and focus returns to the button",
+        "Given a Miro board is linked\nWhen I open the Design page\nThen the board is previewed with Miro's live embed; a Figma file or the feature's Figma frame link is previewed with the Figma embed as today; the switch shows only when both are linked; on a phone the preview fits the screen width",
+        "Given no design file is linked\nWhen I open the Design page\nThen the button reads \"Design files · none\", the preview area says \"No design files linked yet\", and the admin also sees a link to Project settings"
       ],
       "design": "compass/design/2026-11-27-project-design-files.md"
     },
@@ -2464,7 +2465,7 @@
       "title": "Only the admin role can edit the design files",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given a project with a Figma file and a Miro board linked\nWhen I pick the PO role and open Project settings from the sidebar, then pick the BA role and open it again and open a feature's Design page\nThen the sidebar shows \"Project settings\" after Knowledge for both roles; as PO the Design files card has edit fields and Save; as BA it shows both links with Open ↗, no fields and the hint \"Only the project admin can change the design files\"; the Design page has no edit fields for either role"
+      "gherkin": "Given a project with a Figma file and a Miro board linked\nWhen I pick the PO role and open Project settings from the sidebar, then pick the BA role and open it again and open a feature's Design page\nThen the sidebar shows \"Project settings\" after Knowledge for both roles; as PO the Design files card has edit fields and Save; as BA it shows both links with Open ↗, no fields and the hint \"Only the project admin can change the design files\"; on the Design page the \"Design files\" panel has no edit fields for either role and shows \"Change in Project settings →\" for PO only"
     },
     {
       "id": "TC-503",
@@ -2494,7 +2495,7 @@
       "title": "Design files on a phone",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given a 390 px wide screen and a project with both links\nWhen I open Project settings from the sidebar menu and a feature's Design page\nThen the Design files cards and both previews fit the screen width with no sideways scrolling, and every button is reachable with the keyboard with a visible focus ring"
+      "gherkin": "Given a 390 px wide screen and a project with both links\nWhen I open Project settings from the sidebar menu and a feature's Design page\nThen the Design files card, the bottom sheet opened by \"Files\" and both previews fit the screen width with no sideways scrolling, and every button is reachable with the keyboard with a visible focus ring"
     }
   ],
   "decisions": [

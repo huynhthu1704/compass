@@ -45,7 +45,7 @@
 | REQ-054 | F-020 | The conversation is kept with the run, safely | Should | Approved | TC-212, TC-213 |
 | REQ-063 | F-009 | Handoffs are shown on phones too | Should | Approved | TC-311, TC-312, TC-313, TC-314, TC-315 |
 | REQ-080 | F-003 | The admin links the project's Figma file and Miro board on a Project settings page | Must | Approved | TC-500, TC-501, TC-502 |
-| REQ-081 | F-003 | Every Design page shows the project's design files read-only, with a preview | Must | Approved | TC-502, TC-503, TC-505 |
+| REQ-081 | F-003 | Every Design page keeps the preview in focus and shows the design files behind a button | Must | Approved | TC-502, TC-503, TC-505 |
 | REQ-082 | F-003 | Projects with the old single design link keep working, and agents name both files | Must | Approved | TC-501, TC-504 |
 
 ## REQ-001 · The Compass repo has the Compass Framework
@@ -1203,8 +1203,8 @@ When I open Project settings
 Then the "Design files" card shows the linked files with an "Open ↗" button each, no edit fields, and the hint "Only the project admin can change the design files"
 ```
 
-## REQ-081 · Every Design page shows the project's design files read-only, with a preview
-As anyone working on a feature's design, I want to see and preview the project's Figma file and Miro board on the Design page, so that I can open the right file without asking.
+## REQ-081 · Every Design page keeps the preview in focus and shows the design files behind a button
+As anyone working on a feature's design, I want the Design page to focus on the preview and keep the project's Figma and Miro links one click away, so that I can open the right file without clutter.
 
 **Priority:** Must · **Status:** Approved
 
@@ -1214,21 +1214,28 @@ _AC1_
 ```gherkin
 Given a project with a Figma link, a Miro link or both
 When I open any feature's Design page
-Then the "Project design files" card shows a badge and an "Open ↗" button for each linked tool, no edit fields, and for the admin a "Change in Project settings" link
+Then there is no design-files card on the page: one row above the preview holds the preview switch, an "Open in <tool> ↗" button for the tool shown and a "Design files" button with the number of linked files
 ```
 
 _AC2_
 ```gherkin
-Given a Miro board is linked
-When I open the Design page
-Then the board is previewed with Miro's live embed; a Figma file or the feature's Figma frame link is previewed with the Figma embed as today; on a phone each preview fits the screen width
+Given I am on the Design page
+When I press "Design files"
+Then a side panel (a bottom sheet on a phone) lists each linked tool with an "Open ↗" button and no edit fields, plus "Change in Project settings →" for the admin only; Esc, ✕ or a click outside closes it and focus returns to the button
 ```
 
 _AC3_
 ```gherkin
+Given a Miro board is linked
+When I open the Design page
+Then the board is previewed with Miro's live embed; a Figma file or the feature's Figma frame link is previewed with the Figma embed as today; the switch shows only when both are linked; on a phone the preview fits the screen width
+```
+
+_AC4_
+```gherkin
 Given no design file is linked
 When I open the Design page
-Then the card says "No design files linked yet", and the admin also sees a link to Project settings
+Then the button reads "Design files · none", the preview area says "No design files linked yet", and the admin also sees a link to Project settings
 ```
 
 ## REQ-082 · Projects with the old single design link keep working, and agents name both files

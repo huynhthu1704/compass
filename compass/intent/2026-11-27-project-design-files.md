@@ -21,7 +21,8 @@ and the generated framework files point to them.
 - On a new Project settings page (sidebar → Project settings → "Design files" card), an admin adds, changes or removes the project's Figma file link and its Miro board link
   without editing `compass/spec.json` by hand. The portal checks that each link is a real figma.com or miro.com link.
 - People who are not admins see the links and can open them, but cannot change them.
-- The Design page shows the linked file (Figma embed or Miro board embed) and an "Open ↗" button for each tool.
+- The Design page focuses on the preview (Figma embed or Miro board embed); the links and their "Open ↗" buttons
+  sit in a panel behind a "Design files" button.
 - The links are saved to `compass/spec.json → designTool` (still readable by older portal versions and by
   `check-spec`), and the design agent's prompt and `AGENTS.md` name both tools.
 
@@ -47,5 +48,5 @@ Number of projects with a Figma or Miro link set (no target).
 
 ## Requirements
 - REQ-080 — The admin links the project's Figma file and Miro board on a Project settings page
-- REQ-081 — Every Design page shows the project's design files read-only, with a preview
+- REQ-081 — Every Design page keeps the preview in focus and shows the design files behind a button
 - REQ-082 — Projects with the old single design link keep working, and agents name both files
