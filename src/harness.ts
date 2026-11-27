@@ -15,7 +15,8 @@ import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
-import type { AgentId, Design, DesignScreen, FileChange, Idea, Project, Requirement, Role, Run, Stage, StepKind, TestCase } from './types';
+import { canApprove } from './conversation';
+import type { AgentId, Design, DesignScreen, FileChange, GuardrailResult, Idea, Project, Requirement, Role, Run, Stage, StepKind, TestCase } from './types';
 
 export interface AgentDef { id: AgentId; name: string; stage: Stage; mirrors: Role; purpose: string; tools: string[]; output: string; gate: string; system: string }
 
@@ -41,7 +42,7 @@ export const AGENTS: AgentDef[] = [
 ];
 export const agent = (id: AgentId) => AGENTS.find((a) => a.id === id)!;
 
-const TOOLS: ToolDef[] = [
+export const TOOLS: ToolDef[] = [
   { name: 'search_knowledge', description: 'Semantic/keyword search over the repository files and the project spec. Returns ranked chunks labelled [S1]...', input_schema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } },
   { name: 'list_files', description: 'List repository file paths, optionally under a prefix.', input_schema: { type: 'object', properties: { prefix: { type: 'string' } } } },
   { name: 'read_file', description: 'Read a repository file (full text).', input_schema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
@@ -55,9 +56,9 @@ const TOOLS: ToolDef[] = [
 
 // ---------------- run bookkeeping ----------------
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const getP = (id: string) => store.get().projects.find((p) => p.id === id)!;
-function patchRun(pid: string, rid: string, fn: (r: Run) => Run) { store.update(pid, (p) => ({ ...p, runs: p.runs.map((r) => (r.id === rid ? fn(r) : r)) })); }
-function step(pid: string, rid: string, kind: StepKind, title: string, detail?: string, extra: { ok?: boolean; tokens?: number } = {}) {
+export const getP = (id: string) => store.get().projects.find((p) => p.id === id)!;
+export function patchRun(pid: string, rid: string, fn: (r: Run) => Run) { store.update(pid, (p) => ({ ...p, runs: p.runs.map((r) => (r.id === rid ? fn(r) : r)) })); }
+export function step(pid: string, rid: string, kind: StepKind, title: string, detail?: string, extra: { ok?: boolean; tokens?: number } = {}) {
   patchRun(pid, rid, (r) => ({ ...r, steps: [...r.steps, { t: now(), kind, title, detail, ...extra }] }));
 }
 export const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
@@ -90,27 +91,31 @@ export async function startRun(projectId: string, agentId: AgentId, goal: string
     if (live) await liveLoop(pid, rid, a, goal, fmtHits(hits), index, opts.reqIds || [], opts.featureId);
     else await demoRun(pid, rid, a, goal, opts.reqIds || [], opts.featureId);
 
-    // ---- evaluation & guardrails ----
-    const r = getP(pid).runs.find((x) => x.id === rid)!;
-    const spec = getP(pid).spec;
-    let evals = r.evals, guards = [g0, ...r.guardrails];
-    if (r.proposal?.requirements) evals = [...evals, ...evalRequirements(r.proposal.requirements)];
-    if (r.proposal?.tests) evals = [...evals, ...evalTests({ ...spec, tests: [...spec.tests, ...r.proposal.tests] })];
-    if (r.changes.length) {
-      guards = [...guards, ...checkChanges(r.changes, spec, undefined, r.reqIds || [])];
-      evals = [...evals, ...evalChanges(r.changes, r.reqIds || [])];
-      if (live) evals = [...evals, ...(await judge(pid, rid, r))];
-    }
-    for (const g of guards.slice(1)) step(pid, rid, 'guardrail', `${g.id} ${g.name}: ${g.level.toUpperCase()}`, g.message, { ok: g.level !== 'block' });
-    if (evals.length) step(pid, rid, 'eval', `Evaluation: ${evals.map((e) => `${e.name} ${e.score}/${e.max}`).join(' · ')}`);
-    const needsApproval = !!(r.proposal || r.changes.length);
-    patchRun(pid, rid, (x) => ({ ...x, guardrails: guards, evals, status: needsApproval ? 'awaiting-approval' : 'done', finishedAt: now() }));
-    if (needsApproval) step(pid, rid, 'approval', `Waiting for human approval — ${a.gate}`);
+    await evaluate(pid, rid, a, g0, live);
   } catch (e) {
     step(pid, rid, 'error', 'Run failed', (e as Error).message, { ok: false });
     patchRun(pid, rid, (x) => ({ ...x, status: 'failed', finishedAt: now() }));
   }
   return rid;
+}
+
+/** Guardrails and evals on the run's proposal / change set, then the approval gate — after a run and after every revision (REQ-052). */
+export async function evaluate(pid: string, rid: string, a: AgentDef, g0: GuardrailResult, live: boolean) {
+  const r = getP(pid).runs.find((x) => x.id === rid)!;
+  const spec = getP(pid).spec;
+  let evals = r.evals, guards = [g0, ...r.guardrails];
+  if (r.proposal?.requirements) evals = [...evals, ...evalRequirements(r.proposal.requirements)];
+  if (r.proposal?.tests) evals = [...evals, ...evalTests({ ...spec, tests: [...spec.tests, ...r.proposal.tests] })];
+  if (r.changes.length) {
+    guards = [...guards, ...checkChanges(r.changes, spec, undefined, r.reqIds || [])];
+    evals = [...evals, ...evalChanges(r.changes, r.reqIds || [])];
+    if (live) evals = [...evals, ...(await judge(pid, rid, r))];
+  }
+  for (const g of guards.slice(1)) step(pid, rid, 'guardrail', `${g.id} ${g.name}: ${g.level.toUpperCase()}`, g.message, { ok: g.level !== 'block' });
+  if (evals.length) step(pid, rid, 'eval', `Evaluation: ${evals.map((e) => `${e.name} ${e.score}/${e.max}`).join(' · ')}`);
+  const needsApproval = !!(r.proposal || r.changes.length);
+  patchRun(pid, rid, (x) => ({ ...x, guardrails: guards, evals, status: needsApproval ? 'awaiting-approval' : 'done', finishedAt: now() }));
+  if (needsApproval) step(pid, rid, 'approval', `Waiting for human approval — ${a.gate}`);
 }
 
 // ---------------- live: Claude tool-calling loop ----------------
@@ -156,7 +161,7 @@ GOAL: ${goal}`;
     messages.push({ role: 'user', content: results });
   }
 }
-const preview = (o: Record<string, unknown>) => Object.entries(o).map(([k, v]) => `${k}: ${typeof v === 'string' ? (v.length > 40 ? JSON.stringify(v.slice(0, 40) + '…') : JSON.stringify(v)) : Array.isArray(v) ? `[${v.length}]` : JSON.stringify(v)}`).join(', ');
+export const preview = (o: Record<string, unknown>) => Object.entries(o).map(([k, v]) => `${k}: ${typeof v === 'string' ? (v.length > 40 ? JSON.stringify(v.slice(0, 40) + '…') : JSON.stringify(v)) : Array.isArray(v) ? `[${v.length}]` : JSON.stringify(v)}`).join(', ');
 
 async function execTool(pid: string, rid: string, name: string, input: Record<string, unknown>, index: Index): Promise<string> {
   const p = getP(pid);
@@ -325,6 +330,8 @@ function demoCode(p: Project, reqIds: string[]): FileChange[] {
 export async function approveRun(pid: string, rid: string): Promise<string> {
   const p = getP(pid);
   const r = p.runs.find((x) => x.id === rid)!;
+  const gate = canApprove(r);
+  if (!gate.ok) throw new Error(gate.why);
   const token = store.get().settings.githubToken;
   step(pid, rid, 'approval', 'Approved by human reviewer', store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
   if (r.proposal) {

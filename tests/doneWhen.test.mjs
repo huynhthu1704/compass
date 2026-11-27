@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { demoBrief, demoIdea } from '../src/ideaDraft.ts';
+import { ideaLabel } from '../src/conversation.ts';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const INVENTED = /\[baseline|\[target|baseline → target|\d+\s*%/i;
@@ -59,7 +60,9 @@ test('TC-042 (REQ-021): the Idea page, run brief and generated files say "Done w
   assert.match(idea, /<Field label="Done when \(and optional signal to watch\)" help="What will be true when it is done\./);
   assert.match(idea, /<Field label="Business intent" help="Who, what changes — not the solution\.">/);
   assert.match(idea, /into a business intent \(who, what changes\) and what will be true when it is done/);
-  assert.match(read('src/components/RunView.tsx'), /\*\*Done when:\*\* \$\{prop\.idea\.outcomeMetric\}/);
+  // The run brief labels each idea field through ideaLabel (F-020 made every field quotable): outcomeMetric reads "Done when".
+  assert.equal(ideaLabel('outcomeMetric'), 'done when');
+  assert.match(read('src/components/RunView.tsx'), /ideaLabel\(k\)/);
   const fw = read('src/framework.ts');
   assert.equal(fw.match(/## Done when\n\$\{i\.outcomeMetric/g)?.length, 2, 'features/F-xxx.md and intent/F-xxx.md');
   assert.match(read('src/rag.ts'), /\\nDone when: \$\{f\.idea\.outcomeMetric\}/);
