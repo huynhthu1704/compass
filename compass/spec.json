@@ -235,7 +235,7 @@
               "7 agent desks (component \"Agent desk\")",
               "Corridor paths",
               "Handoff card",
-              "Your approval desk with Review & approve",
+              "Your approval desk (since SCR-5: up to 3 items with goal and waiting time, \"+N more\", details panel)",
               "Live activity list"
             ],
             "states": [
@@ -824,7 +824,7 @@
       "intent": "compass/intent/2026-11-26-agent-team-floor.md",
       "story": "As the product owner, I want to approve or reject waiting work straight from the Team floor, so that nothing waits on me longer than needed.",
       "ac": [
-        "Given runs awaiting approval\nWhen I look at the Your approval desk\nThen it lists the waiting runs (the 3 oldest and \"+N more\", REQ-061); each item opens its details with \"Open run to approve\" (REQ-062), and the desk says \"Nothing waiting\" when there is none",
+        "Given runs awaiting approval\nWhen I look at the Your approval desk\nThen it lists the waiting runs (the 3 that have waited longest and \"+N more\", REQ-061); each item opens its details with \"Open run to approve\" (REQ-062), and the desk says \"Nothing waiting\" when there is none",
         "Given a waiting run\nWhen I open it from the Team floor (approval desk or the agent's desk) and approve or reject it\nThen the result is exactly the same as approving or rejecting it from Agent runs"
       ]
     },
@@ -1578,7 +1578,7 @@
       "title": "At most 3 items plus \"+N more\"",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given 6 runs awaiting approval\nWhen the Team floor state is computed\nThen the desk shows the 3 that have waited longest and \"+3 more\", whose link is /p/<id>/runs?status=awaiting-approval; with 3 waiting runs it shows all 3 and no link"
+      "gherkin": "Given 6 runs awaiting approval whose start order differs from their waiting order:\nA started 5 h ago and began waiting 1 min ago; B started 4 h ago, waiting 3 h; C started 3 h ago, waiting 2 h;\nD started 2 h ago, waiting 90 min; E started 1 h ago, waiting 4 h; F started 30 min ago, waiting 10 min\nWhen the Team floor state is computed\nThen the desk shows E, B and C (waited longest, in that order) and \"+3 more\" linking to /p/<id>/runs?status=awaiting-approval\nAnd with only 3 waiting runs it shows all 3 and no link"
     },
     {
       "id": "TC-303",
@@ -1598,7 +1598,7 @@
       "title": "Side panel content and no approve in the panel",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given a waiting item\nWhen I click it\nThen the panel shows agent, feature, waiting time, full goal, proposal summary and checks, and its only actions are \"Open run to approve\" and Close"
+      "gherkin": "Given a waiting Requirements run that proposes 5 requirements, and a waiting Coding run with 2 changed files\nWhen I click each item\nThen the panel shows agent, feature, waiting time, the full goal, the proposal summary (\"5 requirements\" and \"2 files changed: src/share.js, tests/share.test.js\") and the checks, and its only actions are \"Open run to approve\" and Close"
     },
     {
       "id": "TC-305",
@@ -1628,7 +1628,7 @@
       "title": "Phone banner lists 3 items and \"+N more\"",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given 6 runs awaiting approval on a 390 px screen\nWhen I open the Team floor\nThen the approval banner lists the 3 oldest with goal and waiting time and \"+3 more → Agent runs\""
+      "gherkin": "Given 6 runs awaiting approval on a 390 px screen\nWhen I open the Team floor\nThen the approval banner lists the 3 that have waited longest with goal and waiting time and \"+3 more → Agent runs\""
     },
     {
       "id": "TC-308",

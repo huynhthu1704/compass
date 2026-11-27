@@ -297,7 +297,7 @@ _AC1_
 ```gherkin
 Given runs awaiting approval
 When I look at the Your approval desk
-Then it lists the waiting runs (the 3 oldest and "+N more", REQ-061); each item opens its details with "Open run to approve" (REQ-062), and the desk says "Nothing waiting" when there is none
+Then it lists the waiting runs (the 3 that have waited longest and "+N more", REQ-061); each item opens its details with "Open run to approve" (REQ-062), and the desk says "Nothing waiting" when there is none
 ```
 
 _AC2_

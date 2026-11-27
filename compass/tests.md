@@ -457,9 +457,12 @@ Then the goal takes one line and ends with …, and the full goal is in the side
 ## TC-302 · At most 3 items plus "+N more"
 Covers: REQ-061 · Type: Automated · Status: Not run
 ```gherkin
-Given 6 runs awaiting approval
+Given 6 runs awaiting approval whose start order differs from their waiting order:
+A started 5 h ago and began waiting 1 min ago; B started 4 h ago, waiting 3 h; C started 3 h ago, waiting 2 h;
+D started 2 h ago, waiting 90 min; E started 1 h ago, waiting 4 h; F started 30 min ago, waiting 10 min
 When the Team floor state is computed
-Then the desk shows the 3 that have waited longest and "+3 more", whose link is /p/<id>/runs?status=awaiting-approval; with 3 waiting runs it shows all 3 and no link
+Then the desk shows E, B and C (waited longest, in that order) and "+3 more" linking to /p/<id>/runs?status=awaiting-approval
+And with only 3 waiting runs it shows all 3 and no link
 ```
 
 ## TC-303 · Agent runs filter for waiting runs
@@ -473,9 +476,9 @@ Then only runs awaiting approval are listed and "Show all runs" clears the filte
 ## TC-304 · Side panel content and no approve in the panel
 Covers: REQ-062 · Type: Manual · Status: Not run
 ```gherkin
-Given a waiting item
-When I click it
-Then the panel shows agent, feature, waiting time, full goal, proposal summary and checks, and its only actions are "Open run to approve" and Close
+Given a waiting Requirements run that proposes 5 requirements, and a waiting Coding run with 2 changed files
+When I click each item
+Then the panel shows agent, feature, waiting time, the full goal, the proposal summary ("5 requirements" and "2 files changed: src/share.js, tests/share.test.js") and the checks, and its only actions are "Open run to approve" and Close
 ```
 
 ## TC-305 · Side panel closes with Escape, outside click or Close and returns focus
@@ -499,7 +502,7 @@ Covers: REQ-061 · Type: Manual · Status: Not run
 ```gherkin
 Given 6 runs awaiting approval on a 390 px screen
 When I open the Team floor
-Then the approval banner lists the 3 oldest with goal and waiting time and "+3 more → Agent runs"
+Then the approval banner lists the 3 that have waited longest with goal and waiting time and "+3 more → Agent runs"
 ```
 
 ## TC-308 · Phone details open full screen
