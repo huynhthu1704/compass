@@ -5,16 +5,15 @@
  *  - Evals: quality scores for spec artefacts and change sets.
  */
 import { DEFAULT_GUARDRAILS } from './framework';
+import { findInjection } from './injection';
 import type { EvalResult, FileChange, GuardrailResult, Requirement, Spec, TestCase } from './types';
 
 export type GuardrailConfig = typeof DEFAULT_GUARDRAILS;
 
-const INJECTION = /(ignore (all )?(previous|prior|above) instructions|disregard (the )?(system|previous)|you are now|reveal (your )?(system prompt|api key)|exfiltrate|send (the )?(token|key) to)/i;
-
 export function scanInjection(texts: string[]): GuardrailResult {
-  const hit = texts.find((t) => INJECTION.test(t));
+  const hit = findInjection(texts);
   return hit
-    ? { id: 'G0', name: 'Prompt-injection scan (retrieved context)', level: 'warn', message: `Suspicious instruction found in retrieved content: "${hit.match(INJECTION)?.[0]}". Treated as data, not instructions.` }
+    ? { id: 'G0', name: 'Prompt-injection scan (retrieved context)', level: 'warn', message: `Suspicious instruction found in retrieved content: "${hit}". Treated as data, not instructions.` }
     : { id: 'G0', name: 'Prompt-injection scan (retrieved context)', level: 'pass', message: 'No instruction-like text in retrieved context.' };
 }
 
