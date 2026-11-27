@@ -948,9 +948,9 @@
         ]
       },
       "design": {
-        "status": "Approved",
+        "status": "Draft",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-704",
-        "summary": "People sign in on a single centred card (\"Sign in to Compass\" + \"Sign in with Google\"); a Google account on no team lands on \"You have no access yet\" with its email, Reload and Sign out, and no project data. Inside a project, Admins and the super admin get a new \"Team\" item in the sidebar (below Knowledge). The Team page has three cards: Add person (email + role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin; several can be ticked), the team list (email, role chips, Edit roles, Remove; the only Admin cannot be removed) and the project GitHub token (masked, Test, Replace, fine-grained token help, and a reminder to replace it after removing someone). Each gate card on a feature page shows its button enabled for the signed-in person's roles and greyed out with \"Needs the <role> role\" otherwise; approvals show \"Approved by <email> (<role>)\". The sidebar account card shows the Google email and the role picker shows \"My roles: …\". On phones the Team page stacks the cards, role checkboxes wrap, and Edit roles / Remove move into a ⋮ menu per row.",
+        "summary": "People sign in on a single centred card (\"Sign in to Compass\" + \"Sign in with Google\"); a Google account on no team lands on \"You have no access yet\" with its email, Reload and Sign out, and no project data. Inside a project, Admins and the super admin get a new \"Team\" item in the sidebar (below Knowledge). The Team page has three cards: Add person (email + role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin; several can be ticked), the team list (email, role chips, Edit roles, Remove; the only Admin cannot be removed) and the project GitHub token (masked, Test, Replace, fine-grained token help, and a reminder to replace it after removing someone). Each gate card on a feature page shows its button enabled for the signed-in person's roles and greyed out with \"Needs the <role> role\" otherwise; approvals show \"Approved by <email> (<role>)\"; an approval that Firebase does not confirm shows a red \"Unconfirmed\" badge. The sidebar account card shows the Google email (its menu has Sign out) and the role picker shows \"My roles: …\". On phones the Team page stacks the cards, role checkboxes wrap, and Edit roles / Remove move into a ⋮ menu per row.",
         "screens": [
           {
             "id": "SCR-1",
@@ -1004,7 +1004,7 @@
               "REQ-035"
             ],
             "elements": [
-              "Sidebar from the approved sidebar design with a new \"Team\" item; account card with the Google email; \"My roles: …\"",
+              "Sidebar from the approved sidebar design with a new \"Team\" item; account card with the Google email (its menu has Sign out); \"My roles: …\"",
               "Card Add person: Google account email, role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin, Add person button and rules hint",
               "Card Team (n): rows with email, role chips, Edit roles, Remove",
               "Only Admin row: \"Only Admin — cannot be removed\", Remove disabled",
@@ -1026,7 +1026,9 @@
             "purpose": "A feature page for a person with roles BA and QA: the gates their roles own are enabled, the others greyed out with the role needed.",
             "reqIds": [
               "REQ-033",
-              "REQ-036"
+              "REQ-036",
+              "REQ-037",
+              "REQ-038"
             ],
             "elements": [
               "\"Signed in as <email>\" with role chips",
@@ -1034,12 +1036,15 @@
               "Enabled button (honey) with \"Your <role> role can approve…\"",
               "Disabled button (grey) with \"Needs the <role> role\"",
               "Approved gate: badge and \"Approved by <email> (<role>) · date\"",
-              "Red notice \"Not allowed for your roles\" when Firestore refuses"
+              "Red notice \"Not allowed for your roles\" when Firestore refuses",
+              "Red \"Unconfirmed\" badge on an approval with no Firebase record, naming who it claims",
+              "Notice on the Feature board listing unconfirmed approvals with links"
             ],
             "states": [
               "Super admin → every gate enabled",
               "Demo mode → gates as today, approvedBy unchanged",
-              "Firestore refuses → red notice, nothing saved"
+              "Firestore refuses the approval record → red notice, nothing committed",
+              "Approval made outside the portal (no Firebase record) → Unconfirmed badge"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=138-2633"
           },
@@ -1083,9 +1088,7 @@
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=143-672"
           }
         ],
-        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change.",
-        "approvedBy": "the Product Owner (in chat)",
-        "approvedAt": "2026-11-27T00:00:00.000Z"
+        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change."
       }
     }
   ],
@@ -1714,7 +1717,7 @@
       "story": "As a team member, I want to sign in with my Google account, so that Compass knows which projects and roles are mine.",
       "ac": [
         "Given Firebase is configured and I am not signed in\nWhen I open the portal\nThen I see a \"Sign in with Google\" screen and no project data",
-        "Given I sign in with a Google account whose verified email matches a team entry (case-insensitive)\nWhen sign-in completes\nThen the Projects page shows only the projects whose team lists my email, and the header shows my email and Sign out",
+        "Given I sign in with a Google account whose verified email matches a team entry (case-insensitive)\nWhen sign-in completes\nThen the Projects page shows only the projects whose team lists my email, and the sidebar account card shows my email; its menu has Sign out",
         "Given I sign in with a Google account that is on no team and is not the super admin\nWhen sign-in completes\nThen I see \"You have no access yet — ask your admin\" with my email and Sign out, and no project data",
         "Given a Google account whose email is not verified\nWhen it signs in\nThen it is treated as having no access",
         "Given Firebase is not configured (demo mode)\nWhen I open the portal\nThen it works as today without sign-in"
@@ -1733,7 +1736,7 @@
       "ac": [
         "Given the gate rules: intent and requirements → PO (BA may also approve requirements); design → UX or PO; test cases → QA; start a build → Dev; merge and release → DM or PO; team and token → Admin\nWhen a signed-in person opens a gate whose role they do not have\nThen its button is disabled with the hint \"Needs the <role> role\"",
         "Given a person with several roles (e.g. BA and QA)\nWhen they open the requirements and test-case gates\nThen both are enabled, and the design and release gates are disabled",
-        "Given a person changes the page in the browser to enable a disabled gate\nWhen the approval is saved\nThen the Firestore security rules refuse it and the portal shows \"Not allowed for your roles\"",
+        "Given a person changes the page in the browser to enable a disabled gate\nWhen the approval is saved\nThen the Firestore rules refuse its approval record (REQ-037), the portal shows \"Not allowed for your roles\" and nothing is committed to GitHub",
         "Given the super admin\nWhen they open any gate\nThen it is enabled"
       ],
       "approvedBy": "the Product Owner (in chat)",
@@ -1750,7 +1753,7 @@
       "ac": [
         "Given I am an Admin of the project\nWhen I open Team → GitHub token\nThen I can paste a token, test it and save it; the help asks for a fine-grained token for this repo only, with Contents, Pull requests and Issues: Read & write and an expiry date",
         "Given a saved project token and a signed-in member without their own token\nWhen they approve requirements and the portal commits\nThen the commit is made with the project token and approvedBy names the member",
-        "Given a member who is not an Admin\nWhen they open the Team page or read the project's settings\nThen they do not see the token value or the replace button",
+        "Given a member who is not an Admin\nWhen they open the Team page\nThen the page shows no token value and no Test or Replace button (their browser can still read the token to make GitHub writes — ADR-011)",
         "Given the token is missing, expired or refused by GitHub\nWhen a member tries a GitHub action\nThen the portal says \"The project's GitHub token is missing or expired — ask an Admin\" and nothing is half-written"
       ],
       "approvedBy": "the Product Owner (in chat)",
@@ -1765,9 +1768,9 @@
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the super admin, I want to see every project and name its Admins, so that each project can manage its own team.",
       "ac": [
-        "Given the super admin email is set once in the Firebase settings (the Product Owner's Google account)\nWhen that account signs in\nThen it sees every project and can open every Team page",
+        "Given the super admin emails are stored in the Firestore document config/access, which no browser can write (the Product Owner sets it once in the Firebase console)\nWhen a super admin account signs in\nThen it sees every project and can open every Team page",
         "Given I am the super admin on a project's Team page\nWhen I tick Admin for a person\nThen that person can manage this project's team and token, and no other project's",
-        "Given a person who is not the super admin\nWhen they try to change the super admin setting\nThen Firestore refuses it"
+        "Given any signed-in person, including a super admin\nWhen the portal tries to write config/access\nThen Firestore refuses it"
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-27T00:00:00.000Z"
@@ -1786,6 +1789,35 @@
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-27T00:00:00.000Z"
+    },
+    {
+      "id": "REQ-037",
+      "featureId": "F-015",
+      "title": "Each approval is recorded in Firebase, whose rules accept it only from the owning role",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-27-team-access.md",
+      "story": "As the product owner, I want every approval checked by Firebase before it is saved, so that a role check cannot be skipped by changing the page.",
+      "ac": [
+        "Given a signed-in person passes a gate (intent, requirements, design, test cases, build or release)\nWhen the portal saves the approval\nThen it first writes an approval record to Firestore (project, item ids, gate, email, role, time) and commits to GitHub only after Firestore accepts it",
+        "Given a person without a role that owns the gate, who is not the super admin\nWhen an approval record is written for that gate\nThen the Firestore rules refuse it, the portal shows \"Not allowed for your roles\" and nothing is committed",
+        "Given an approval record exists\nWhen anyone tries to change or delete it\nThen the Firestore rules refuse it",
+        "Given Firestore accepted the record but the GitHub commit fails\nWhen the portal reports the error\nThen the approval is shown as not saved and retrying reuses the same record"
+      ]
+    },
+    {
+      "id": "REQ-038",
+      "featureId": "F-015",
+      "title": "Approvals in the repo that Firebase does not confirm are flagged",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-27-team-access.md",
+      "story": "As the product owner, I want approvals made outside the portal to stand out, so that a forged approvedBy is noticed.",
+      "ac": [
+        "Given the project has a team (team access is on) and spec.json on GitHub has an approval made after that date\nWhen the portal loads the project\nThen an approval with no matching Firebase record (same item, gate and email) shows a red \"Unconfirmed\" badge naming who it claims",
+        "Given unconfirmed approvals exist\nWhen a person opens the project's Feature board\nThen a notice lists them with links, so a person with the owning role can approve again",
+        "Given demo mode, or approvals made before the project's team was created\nWhen the project loads\nThen they are not flagged"
+      ]
     }
   ],
   "tests": [
@@ -2719,7 +2751,7 @@
       "title": "Role → gate rules, including several roles and the super admin",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the gate rules\nWhen canPass is asked for each gate with roles [BA, QA], [UX], [DM], [] and as the super admin\nThen BA+QA may pass requirements and test cases only, UX may pass design only, DM may pass release only, no roles pass nothing, and the super admin passes every gate"
+      "gherkin": "Given the gate rules\nWhen canPass is asked for each gate with roles [BA, QA], [UX], [DM], [PO], [Dev], [Admin], [] and as the super admin\nThen BA+QA may pass requirements and test cases only; UX design only; DM release only; PO intent, requirements, design and release; Dev build only; Admin team and token only; no roles pass nothing; the super admin passes every gate"
     },
     {
       "id": "TC-067",
@@ -2727,12 +2759,13 @@
         "REQ-033",
         "REQ-030",
         "REQ-034",
-        "REQ-035"
+        "REQ-035",
+        "REQ-037"
       ],
       "title": "Firestore rules refuse writes and reads the roles do not allow",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the Firestore security rules in the emulator\nWhen a BA writes a design approval, a non-Admin changes the team or reads the token, a person on no team reads a project, and a non-super-admin changes the super admin setting\nThen every one is refused, and the same writes by the owning role, an Admin or the super admin are allowed"
+      "gherkin": "Given the Firestore security rules in the emulator\nWhen a person on no team reads a project or its token document, a member who is not an Admin writes the team or the token, a BA writes a design approval record, anyone changes or deletes an approval record, and anyone writes config/access\nThen every one is refused; and a member can read the project and its token document, an Admin or the super admin can write the team and the token, and a BA can write a requirements approval record"
     },
     {
       "id": "TC-068",
@@ -2772,7 +2805,37 @@
       "title": "approvedBy names the person and role",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given ba@example.com with roles BA and QA approves a requirement, and the demo user approves one\nWhen the approvals are recorded\nThen approvedBy is \"ba@example.com (BA)\" for the first and today's value for the second"
+      "gherkin": "Given ba@example.com with roles BA and QA approves a requirement and then a test case, and the super admin without a team role approves a design\nWhen the approvals are recorded\nThen approvedBy is \"ba@example.com (BA)\", then \"ba@example.com (QA)\", then \"<email> (super admin)\"; in demo mode approvedBy keeps today's value"
+    },
+    {
+      "id": "TC-072",
+      "reqIds": [
+        "REQ-037"
+      ],
+      "title": "The approval record is written before the commit; a refusal commits nothing",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a stubbed Firestore and GitHub\nWhen a BA approves requirements, then a BA approves a design (Firestore refuses), then the GitHub commit fails after an accepted record\nThen the first writes the record and then commits; the second commits nothing and shows \"Not allowed for your roles\"; the third reports not saved and a retry reuses the record id"
+    },
+    {
+      "id": "TC-073",
+      "reqIds": [
+        "REQ-038"
+      ],
+      "title": "Approvals without a Firebase record are listed as unconfirmed",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a team created on 2026-12-01, approvals in spec.json by ba@example.com (requirements, 2026-12-02, with a record), ux@example.com (design, 2026-12-03, no record) and po@example.com (intent, 2026-11-20, no record)\nWhen unconfirmed approvals are computed\nThen only the design approval by ux@example.com is unconfirmed"
+    },
+    {
+      "id": "TC-074",
+      "reqIds": [
+        "REQ-038"
+      ],
+      "title": "Unconfirmed badge and notice",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a project with one unconfirmed approval\nWhen I open its feature page and the Feature board\nThen the approval shows a red \"Unconfirmed\" badge naming the claimed person, and the board shows a notice with a link to it"
     }
   ],
   "decisions": [
@@ -2869,7 +2932,22 @@
       ],
       "context": "GitHub writes need a token. Team members who sign in with Google may have no GitHub account or token.",
       "decision": "The Product Owner chose one GitHub token per project, stored by its Admins and readable by its members, over each member connecting their own token.",
-      "consequences": "Every member's browser holds the token, so a member could copy it and removing them does not revoke that copy. Mitigation: the portal asks for a fine-grained token for that repo only (Contents, Pull requests, Issues) with an expiry date, and reminds Admins to replace it after removing someone."
+      "consequences": "Every member's browser can read the token (the Team page only hides it from non-Admins), so a member could copy it and could also commit to the repo without the portal's role checks (see ADR-012); removing them does not revoke that copy. Mitigation: the portal asks for a fine-grained token for that repo only (Contents, Pull requests, Issues) with an expiry date, and reminds Admins to replace it after removing someone."
+    },
+    {
+      "id": "ADR-012",
+      "date": "2026-11-27",
+      "title": "Approvals are recorded in Firebase and unconfirmed ones are flagged",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-033",
+        "REQ-036",
+        "REQ-037",
+        "REQ-038"
+      ],
+      "context": "The independent review of PR #74 found that approvals are commits of spec.json made with the shared project token, so Firestore rules never see them: any member could commit an approval for a gate their role does not own, or forge approvedBy.",
+      "decision": "The Product Owner chose to write every approval to Firestore first (the rules accept it only from the owning role, and records cannot be changed or deleted), commit to GitHub only after that, and flag approvals in spec.json without a matching record — over accepting screen-only checks or going back to personal tokens.",
+      "consequences": "Two more requirements (REQ-037, REQ-038). A member with the token can still edit spec.json directly, but such approvals show as Unconfirmed. The design of F-015 is back to Draft until the Unconfirmed badge is approved."
     }
   ]
 }

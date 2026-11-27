@@ -15,6 +15,11 @@ Answers given in chat (2026-11-27):
 - **Two admin levels:** the Product Owner is the portal-wide **super admin**; a super admin can make someone **Admin**
   of a single project.
 
+Decision after the independent review of PR #74 (2026-11-27): approvals are saved to GitHub with the shared token, so
+Firestore rules alone cannot stop a member from committing an approval their role does not own. The Product Owner chose
+to **record every approval in Firebase**, where the rules check the role, and to have the portal **flag any approval in
+the repo that Firebase does not confirm** (ADR-012).
+
 ## What we want
 1. **A team list per project.** On a project's new *Team* page, an admin adds a person by email address and ticks one
    or more roles: PO, BA, UX, QA, Dev, DM, Ops (the roles Compass already uses), plus **Admin**. The admin can change
@@ -29,12 +34,18 @@ Answers given in chat (2026-11-27):
    requirements and releases; UX approves designs; QA approves test cases; Dev starts builds; DM/PO confirm releases.
    Buttons a person's roles do not allow are hidden or disabled with a hint naming the role needed. Admin manages the
    team and the project's GitHub token.
-   Target: 0 gates can be passed from the portal by someone without the owning role.
+   Target: 0 gates can be passed from the portal by someone without the owning role; an approval committed outside the
+   portal (with the shared token) is flagged as unconfirmed.
 4. **One GitHub token per project.** The project Admin saves a GitHub token for the project once; members who sign in
-   use it for that project's GitHub writes without connecting their own. Only Admins can see or replace it.
+   use it for that project's GitHub writes without connecting their own. Only Admins can replace it; the portal does
+   not display it to others, but every member's browser can read it (ADR-011).
    Target: a BA with no GitHub account can approve requirements and the portal commits them to the repo.
 5. **Every approval shows who gave it.** `approvedBy` records the signed-in person's email and role, so the audit
    trail in `spec.json` names a real person instead of "the Product Owner".
+6. **Approvals are confirmed by Firebase.** Each approval is first written to Firestore, where the rules accept it only
+   from a person with the owning role; only then is it committed to GitHub. Approvals in `spec.json` that Firebase does
+   not confirm are shown with an "Unconfirmed" badge.
+   Target: every approval made after team access is switched on is either confirmed by Firebase or visibly flagged.
 
 ## Why
 Today Compass has no idea who is using it: whoever opens the portal on a device with a GitHub token can approve any
@@ -45,8 +56,10 @@ BA, QA or designer means handing them the whole portal.
 - Compass stays a browser-only app with no server code and no Cloud Functions. Firebase **Spark (free) plan only**;
   the Product Owner creates the Firebase project once and its web config is added to the build (the config is not a
   secret; the security rules are what protect the data).
-- **Firestore security rules are the real gate:** only members of a project can read it; only its Admins or a super
-  admin can change its team or token; the role → gate rules are checked in the rules for every approval write.
+- **Firestore security rules are the gate for Firebase data:** only members of a project can read it; only its Admins
+  or a super admin can change its team or token; approval records are accepted only from the role that owns the gate
+  and can never be changed or deleted. GitHub writes are not seen by Firestore: they use the shared token, so the
+  portal checks roles before committing and flags approvals that have no Firebase record (ADR-012).
 - New dependency: the `firebase` library (approved in chat with this choice; the PR still gets the `human-approved`
   label for the dependency change). The rules file and any CI change need the Product Owner's approval.
 - **Shared token risk (accepted by choosing it):** the browser of every member must hold the token to call GitHub, so
@@ -71,7 +84,7 @@ that is not on any team sees no project. Unit tests cover email matching, multip
 - Per-requirement or per-feature permissions.
 
 ## Requirements
-Feature F-015 · Team access: Google sign-in, project teams and roles (decisions ADR-010, ADR-011)
+Feature F-015 · Team access: Google sign-in, project teams and roles (decisions ADR-010, ADR-011, ADR-012)
 - REQ-030 — An admin adds a person to a project by email with one or more roles (#39)
 - REQ-031 — An admin changes a person's roles or removes them from the project (#40)
 - REQ-032 — People sign in with Google and see only the projects whose team lists their email (#41)
@@ -79,3 +92,5 @@ Feature F-015 · Team access: Google sign-in, project teams and roles (decisions
 - REQ-034 — A project Admin stores one GitHub token that the project's members use (#43)
 - REQ-035 — The super admin sees every project and can make someone a project Admin (#44)
 - REQ-036 — Every approval records the email and role of the person who gave it (#45)
+- REQ-037 — Each approval is recorded in Firebase, whose rules accept it only from the owning role
+- REQ-038 — Approvals in the repo that Firebase does not confirm are flagged
