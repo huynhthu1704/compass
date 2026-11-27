@@ -2041,7 +2041,7 @@
       "featureId": "F-011",
       "title": "Acceptance criteria and test steps are readable on the agent run page",
       "priority": "Should",
-      "status": "Approved",
+      "status": "Done",
       "intent": "compass/intent/2026-11-27-larger-ac-text.md",
       "design": "none: text size only — the run page keeps its approved layout",
       "story": "As the Product Owner, I want the acceptance criteria and test steps an agent proposes to be easy to read, so that I can check them before I approve without zooming in.",
@@ -3276,7 +3276,7 @@
       ],
       "title": "Acceptance criteria and test steps are 13 px, other small mono text stays 11 px",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given src/index.css and src/components/RunView.tsx\nWhen the test reads the .ac-line and .mono-sm rules and the run page markup\nThen .ac-line sets font-size 13px, line-height 20px and white-space pre-line, and comes after .mono-sm\nAnd .mono-sm is still 11px / 16px\nAnd both the acceptance-criteria lines and the test-case steps on the run page use the ac-line class"
     }
   ],
