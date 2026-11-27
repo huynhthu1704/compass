@@ -21,11 +21,25 @@ export interface Desk {
 }
 export interface Handoff { id: string; from: AgentId; to: AgentId; kind: 'forward' | 'back'; label: string; at: number }
 export interface Activity { id: string; t: string; agentName: string; title: string; runId: string }
-export interface Approval { runId: string; agent: AgentId; agentName: string; featureId?: string; goal: string; blocked: boolean }
+export interface Approval {
+  runId: string; agent: AgentId; agentName: string; featureId?: string; goal: string; blocked: boolean;
+  /** when the run began waiting (REQ-060): the harness sets finishedAt when it hands the run to a human */
+  waitingSince: string;
+  /** "now", "6m", "2h", "2d" — rounded down */
+  wait: string;
+  /** short summary of what waits for approval (REQ-062) */
+  proposal: string;
+  /** guardrail and evaluation results (REQ-062) */
+  checks: string[];
+}
 export interface Floor {
   desks: Desk[];
   summary: { working: number; waiting: number; featuresInFlight: string[] };
   approvals: Approval[];
+  /** the 3 that have waited longest (REQ-061) */
+  approvalsShown: Approval[];
+  /** how many more are waiting beyond approvalsShown */
+  approvalsMore: number;
   activity: Activity[];
   handoffs: Handoff[];
 }
@@ -48,6 +62,28 @@ const nameOf = (a: AgentId) => PIPELINE.find((x) => x.agent === a)?.name ?? a;
 const last = (r: Run): TraceStep | undefined => r.steps[r.steps.length - 1];
 const time = (s: string) => Date.parse(s);
 const blocked = (r: Run) => r.guardrails.some((g) => g.level === 'block');
+/** How many approval items the desk and the phone banner show (REQ-061). */
+export const APPROVALS_SHOWN = 3;
+
+/** Waiting time as shown on the floor: "now" under a minute, then whole minutes, hours or days, rounded down. */
+export function formatWait(ms: number): string {
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
+}
+
+/** What waits for approval, in a few words (REQ-062). */
+function proposalOf(r: Run): string {
+  const p = r.proposal;
+  if (r.changes.length) return `${r.changes.length} file${r.changes.length === 1 ? '' : 's'} changed: ${r.changes.slice(0, 3).map((c) => c.path).join(', ')}${r.changes.length > 3 ? ', …' : ''}`;
+  if (p?.requirements?.length) return `${p.requirements.length} requirement${p.requirements.length === 1 ? '' : 's'}`;
+  if (p?.design) return `Design: ${p.design.screens.length} screen${p.design.screens.length === 1 ? '' : 's'}`;
+  if (p?.tests?.length) return `${p.tests.length} test case${p.tests.length === 1 ? '' : 's'}`;
+  if (p?.idea) return 'Idea brief';
+  return 'No proposal recorded';
+}
 /** A guardrail/eval step of the review of a change set ("G2 Traceability: BLOCK", "Evaluation: …"), not the
  *  prompt-injection scan that starts every run. */
 const reviewStep = (s?: TraceStep) => !!s && (s.kind === 'eval' || (s.kind === 'guardrail' && /^G\d+ .*: (PASS|WARN|BLOCK)$/.test(s.title)));
@@ -105,7 +141,9 @@ export function computeFloor(p: Pick<Project, 'runs' | 'releases'>, featureFilte
     return { ...base, state, featureId: r?.featureId, bubble: bubbleOf(r, state), runId: r?.id };
   });
 
-  const waitingRuns = runs.filter((r) => r.status === 'awaiting-approval').sort((x, y) => time(x.startedAt) - time(y.startedAt));
+  const since = (r: Run) => r.finishedAt || r.startedAt;
+  // Longest-waiting first (REQ-061): ordered by when each run began waiting, not when it started.
+  const waitingRuns = runs.filter((r) => r.status === 'awaiting-approval').sort((x, y) => time(since(x)) - time(since(y)));
   const inFlight = [...new Set(runs.filter((r) => r.status === 'running' || r.status === 'awaiting-approval').map((r) => r.featureId).filter((x): x is string => !!x))].sort();
 
   const activity: Activity[] = runs
@@ -128,10 +166,18 @@ export function computeFloor(p: Pick<Project, 'runs' | 'releases'>, featureFilte
     }
   }
 
+  const approvals: Approval[] = waitingRuns.map((r) => ({
+    runId: r.id, agent: r.agent, agentName: nameOf(r.agent), featureId: r.featureId, goal: r.goal, blocked: blocked(r),
+    waitingSince: since(r), wait: formatWait(now - time(since(r))), proposal: proposalOf(r),
+    checks: [...r.guardrails.map((g) => `${g.id} ${g.name}: ${g.level}`), ...r.evals.map((e) => `${e.name} ${e.score}/${e.max}`)],
+  }));
+
   return {
     desks,
     summary: { working: desks.filter((d) => d.state === 'working').length, waiting: waitingRuns.length, featuresInFlight: inFlight },
-    approvals: waitingRuns.map((r) => ({ runId: r.id, agent: r.agent, agentName: nameOf(r.agent), featureId: r.featureId, goal: r.goal, blocked: blocked(r) })),
+    approvals,
+    approvalsShown: approvals.slice(0, APPROVALS_SHOWN),
+    approvalsMore: Math.max(0, approvals.length - APPROVALS_SHOWN),
     activity,
     handoffs,
   };
