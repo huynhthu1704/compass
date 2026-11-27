@@ -9,7 +9,7 @@
 | REQ-004 The installed scripts never drift from the portal's copies | TC-004 (Pass) |
 | REQ-101 Idea: business need revised into a business intent | TC-101 (Pass) |
 | REQ-102 Requirements: generate and approve | TC-102 (Pass) |
-| REQ-103 Design: design tool, screens and approval gate | TC-103 (Pass) |
+| REQ-103 Design: design tool, screens and approval gate | TC-103 (Pass), TC-310 (Not run) |
 | REQ-104 Test cases: one or more per requirement | TC-104 (Pass) |
 | REQ-105 Build: coding agent, plan file and pull request | TC-105 (Pass) |
 | REQ-106 Release: merge, tag and deploy | TC-106 (Pass) |
@@ -688,4 +688,13 @@ Covers: REQ-054 · Type: Manual · Status: Not run
 Given a run with a question, an answer and a v2
 When I reload the portal and open the run from the Runs page and the Team floor, and then delete the run
 Then the conversation and versions were shown in both places, and after deleting nothing of the run is left in the project
+```
+
+## TC-310 · Design coverage does not list requirements that need no screen (bug #31)
+Covers: REQ-103 · Type: Automated · Status: Not run
+```gherkin
+Given a feature design whose screens deliver REQ-A, and approved requirements REQ-A, REQ-B (no design field) and REQ-C with design "none: width only"
+When the coverage is computed for compass/design/F-xxx.md
+Then REQ-B is listed as not covered by any screen
+And REQ-C is listed as needing no screen, with its reason, and not as not covered
 ```
