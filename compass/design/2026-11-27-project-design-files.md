@@ -1,6 +1,6 @@
 # Design: Project design files — the admin links a Figma file and a Miro board
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-27, in chat: "approve")
 Requirements: REQ-080 (#78), REQ-081 (#79), REQ-082 (#80)
 Design tool: Figma — section "REQ-080–REQ-082 · Project design files (F-003)" on the page "📐 Feature designs":
 https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=170-978
