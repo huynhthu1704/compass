@@ -22,9 +22,10 @@ test('TC-090 (REQ-045): the folded header counts steps and failed steps', () => 
 test('TC-090 (REQ-045): the toggle flips the trace and her choice survives a status change', () => {
   assert.equal(traceToggleLabel(false), 'Show steps');
   assert.equal(traceToggleLabel(true), 'Hide steps');
-  // no manual choice: follows the status (running → awaiting-approval folds)
-  assert.equal(traceOpen('running', null), true);
-  assert.equal(traceOpen('awaiting-approval', null), false);
+  // no manual choice: follows the status — a run shown while running folds on its own when it starts waiting
+  let manual = null;
+  assert.equal(traceOpen('running', manual), true);
+  assert.equal(traceOpen('awaiting-approval', manual), false);
   // she opened it while it was awaiting approval, then it finished: stays open
   assert.equal(traceOpen('awaiting-approval', true), true);
   assert.equal(traceOpen('done', true), true);
