@@ -14,7 +14,9 @@ The cosmetic notes left by the approving review of #106, which the Product Owner
   - On a phone it stays next to the title ("Files"), as SCR-4 shows. Only one of the two is displayed at a time.
   - Focus goes back to whichever button is visible when the panel closes.
   - With no design yet, no empty right-hand column is rendered, so nothing pushes the button in from the edge.
-- src/index.css: `.files-btn-desktop` / `.files-btn-phone` show one button per screen width (700 px, like the bottom sheet)
+- src/index.css: `.files-btn-desktop` / `.files-btn-phone` show one button per screen width (700 px, like the bottom sheet); if the head
+  wraps, its buttons stay on the right (`margin-left: auto`), and on phones they take their own line so the title row
+  keeps the full width (review of #108: checked every 10 px from 360 to 1400 px)
 - tests/designLinks.test.mjs: TC-506 source checks for the two placements and the focus return
 - compass/plans/REQ-081-082-design-page-preview.md: the Risks line says Esc is handled at document level (it no
   longer matches the code)

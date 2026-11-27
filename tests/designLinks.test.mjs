@@ -140,7 +140,8 @@ test('TC-506 (REQ-081, source part): the Design page has a Design files button a
   assert.match(panel, /document\.addEventListener\('focusin', onFocus\)/, 'focus cannot leave the panel');
   assert.match(panel, /\/\^https:\\\/\\\/\/i\.test\(url\)/, 'only https links are opened');
   assert.match(src, /titleRight=\{filesButton\('phone'\)\}/, 'on a phone the button stays next to the title (SCR-4)');
-  assert.match(src, /\{filesButton\('desktop'\)\}<\/>\}/, 'on desktop it is last in the right slot, in the top-right corner (SCR-3)');
+  assert.match(src, /right=\{[\s\S]*\{filesButton\('desktop'\)\}\s*<\/>\s*\}/, 'on desktop it is last in the right slot, in the top-right corner (SCR-3)');
+  assert.match(read('src/index.css'), /:has\(> \.files-btn-desktop\) \{ margin-left: auto;/, 'if the head wraps, the button stays on the right');
   assert.match(src, /offsetParent !== null/, 'focus returns to the button that is shown');
   assert.match(read('src/index.css'), /\.files-btn-phone \{ display: none; \}/);
   assert.match(src, /ArrowRight/, 'the preview switch follows the arrow keys');
