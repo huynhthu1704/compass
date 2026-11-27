@@ -2056,43 +2056,43 @@
     {
       "id": "REQ-041",
       "featureId": "F-015",
-      "title": "GitHub work on a team project uses the person's own GitHub token; the Anthropic key is the super admin's only",
+      "title": "The super admin's GitHub token and Anthropic key are used for everyone; only the super admin sets them",
       "priority": "Must",
       "status": "Draft",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
-      "story": "As the product owner, I want every GitHub change made through Compass to show the person who made it, so that GitHub's history is a clear audit trail.",
+      "story": "As the super admin, I want everyone to work through my GitHub and Anthropic accounts in phase 1, and nobody else to configure them, so that I control all access and cost.",
       "ac": [
-        "Given sign-in is on and a team member has connected their own GitHub token on Connections\nWhen they save to GitHub, approve an agent change or release on a team project\nThen Compass uses their own token, so GitHub shows them as the author of the commit or pull request; another person's token is never used",
-        "Given sign-in is on and a team member has no GitHub token connected\nWhen they open a team project\nThen they can view everything, every GitHub action is disabled with \"Connect your GitHub account to make changes\", and the link opens Connections with a short checklist: a GitHub account, an invitation from the repository owner, and a fine-grained token limited to the repository",
-        "Given a member's token cannot reach the project's repository (GitHub answers 403 or 404)\nWhen they try a GitHub action\nThen nothing is written and Compass says \"Your GitHub account cannot reach <owner>/<name> — ask the repository owner to add you as a collaborator\"",
-        "Given sign-in is on\nWhen a person who is not the super admin opens Connections or runs an agent\nThen the Anthropic key box is not shown, no key saved on that device is used, and agents run in demo mode; the super admin sees and uses the key as today",
-        "Given sign-in is off, or the demo is open\nWhen anyone uses Compass\nThen tokens and keys work as today"
+        "Given sign-in is on and the super admin saved a GitHub token and an Anthropic key on Connections\nWhen any team member saves to GitHub, approves, releases or runs an agent on a team project\nThen Compass uses the super admin's token and key; a token or key saved on the member's own device is never used for a team project",
+        "Given sign-in is on\nWhen a person who is not the super admin opens Connections\nThen no GitHub token or Anthropic key box is shown, only whether each is set (\"Set by the super admin\" or \"Not set yet — ask the super admin\"); the Firestore rules let only the super admin write or replace them, and let only signed-in team members and the super admin read them",
+        "Given the super admin has not set a GitHub token (or an Anthropic key)\nWhen a member tries a GitHub action (or a live agent run)\nThen nothing is written, the GitHub action says \"No GitHub token yet — ask the super admin\", and agents run in demo mode",
+        "Given the super admin replaces or removes the token or key\nWhen members next act\nThen the new value is used, or the actions above are disabled",
+        "Given sign-in is off, or the demo is open\nWhen anyone uses Compass\nThen tokens and keys work as today, per device"
       ]
     },
     {
       "id": "REQ-042",
       "featureId": "F-015",
-      "title": "The team shows each member's GitHub username",
-      "priority": "Should",
+      "title": "Every commit and pull request says who did it in Compass",
+      "priority": "Must",
       "status": "Draft",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
-      "story": "As a project Admin, I want to see which GitHub account belongs to each team member, so that I can match commits on GitHub to people in Compass.",
+      "story": "As the super admin, I want every GitHub change made with my token to name the person who did it, so that GitHub's history stays a clear audit trail.",
       "ac": [
-        "Given a signed-in team member connects a GitHub token\nWhen Compass checks the token with GitHub\nThen it saves their GitHub username on their own entry in each of their project teams; the Firestore rules let a person write only their own username",
-        "Given the Team page\nWhen an Admin or the super admin opens it\nThen each member shows their GitHub username next to their email, or \"GitHub not connected\""
+        "Given sign-in is on\nWhen Compass commits or opens a pull request for a person on a team project\nThen the commit message and the pull request description end with \"Made in Compass by <email> (<role>)\", with the role that passed the gate (or the person's roles when no gate applies)",
+        "Given sign-in is off, or the demo is open\nWhen Compass commits\nThen messages are as today"
       ]
     },
     {
       "id": "REQ-043",
       "featureId": "F-015",
-      "title": "The shared project token is retired",
+      "title": "Project tokens set by project Admins are retired",
       "priority": "Must",
       "status": "Draft",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
-      "story": "As the product owner, I want no GitHub token shared between people, so that nobody acts with someone else's access and nothing needs rotating when someone leaves.",
+      "story": "As the super admin, I want no other GitHub tokens in Compass besides mine, so that I alone control GitHub access in phase 1.",
       "ac": [
-        "Given this change is released\nWhen anyone opens a project's Team page\nThen there is no project token card, and Compass never reads or uses a project token",
-        "Given project tokens were stored before\nWhen the release is deployed\nThen the Firestore rules refuse every read and write of a project's stored token, the super admin's Users screen offers \"Delete old project tokens\", which deletes them, and the release notes tell the token owner to revoke those tokens on GitHub"
+        "Given this change is released\nWhen an Admin opens a project's Team page\nThen there is no project token card, and Compass never reads or uses a project token",
+        "Given project tokens were stored before\nWhen the release is deployed\nThen the Firestore rules refuse every read and write of a project's stored token except the super admin's delete, the super admin's Users screen offers \"Delete old project tokens\", which deletes them, and the release notes say to revoke those tokens on GitHub"
       ]
     },
     {
@@ -2106,7 +2106,7 @@
       "ac": [
         "Given sign-in is on\nWhen a person who is neither the super admin nor marked \"Can create projects\" opens Projects\nThen \"Import from GitHub\" and \"+ New project\" are not shown, and the page says \"Ask the super admin to add a project\"",
         "Given the super admin is signed in\nWhen they open the new Users screen (in the sidebar, shown only to the super admin)\nThen they see every person on any team with their projects, a \"Can create projects\" switch per person, and the \"GitHub account or organization for new projects\" field; the Firestore rules accept changes to these only from the super admin",
-        "Given a person marked \"Can create projects\"\nWhen they create a new project or import a repository\nThen only the configured account or organization is offered, any other owner is refused before any GitHub call, the repository is created or read with their own token, and the project's first team is saved with them as Admin together with the approval baseline; the Firestore rules accept a first team only from the super admin or from a permitted person who lists themselves as Admin",
+        "Given a person marked \"Can create projects\"\nWhen they create a new project or import a repository\nThen only the configured account or organization is offered, any other owner is refused before any GitHub call, the repository is created or read with the super admin's token, and the project's first team is saved with them as Admin together with the approval baseline; the Firestore rules accept a first team only from the super admin or from a permitted person who lists themselves as Admin",
         "Given the super admin removes a person's \"Can create projects\"\nWhen that person opens Projects\nThen Import and New project are gone; projects they created stay, with their teams"
       ]
     }
@@ -3341,40 +3341,40 @@
       "reqIds": [
         "REQ-041"
       ],
-      "title": "A team project uses only the person's own GitHub token",
+      "title": "Team projects use only the super admin's GitHub token and Anthropic key",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given sign-in on, a team project and a person with or without their own token\nWhen Compass picks the token for a GitHub action\nThen it is the person's own token, or none (the action is disabled with \"Connect your GitHub account to make changes\"); with sign-in off or in the demo the device token is used as before"
+      "gherkin": "Given sign-in on, the super admin's token and key, and a member with a token and key saved on their own device\nWhen Compass picks the token and key for the member's GitHub action and agent run\nThen it uses the super admin's; with none set, the GitHub action is refused with \"No GitHub token yet — ask the super admin\" and agents run in demo mode; with sign-in off or in the demo, the device token and key are used as before"
     },
     {
       "id": "TC-079",
       "reqIds": [
         "REQ-041"
       ],
-      "title": "A token that cannot reach the repository writes nothing",
+      "title": "Only the super admin writes the token and key; team members read them",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a member's token and a stubbed GitHub that answers 404, then 403\nWhen they save to GitHub\nThen nothing is written and the message says \"Your GitHub account cannot reach <owner>/<name> — ask the repository owner to add you as a collaborator\""
+      "gherkin": "Given the Firestore emulator\nWhen a member, a project Admin, then the super admin write the GitHub token and Anthropic key; then a member, a non-member and the super admin read them\nThen only the super admin's writes are accepted; the member's and the super admin's reads are accepted and the non-member's refused"
     },
     {
       "id": "TC-080",
       "reqIds": [
         "REQ-041"
       ],
-      "title": "The Anthropic key is the super admin's only",
+      "title": "Connections shows no token or key box to anyone but the super admin",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given sign-in on, a key saved on the device, and a team member who is not the super admin\nWhen they open Connections and run an agent\nThen no key box is shown, the saved key is not used and the agent runs in demo mode; the super admin's agents run live; with sign-in off, as today"
+      "gherkin": "Given sign-in on\nWhen a member and the super admin open Connections\nThen the member sees \"Set by the super admin\" (or \"Not set yet — ask the super admin\") and no input; the super admin sees the token and key boxes"
     },
     {
       "id": "TC-081",
       "reqIds": [
         "REQ-042"
       ],
-      "title": "A member saves only their own GitHub username",
+      "title": "Commits and pull requests name the person who did it",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the Firestore emulator and a team with two members\nWhen member A saves their GitHub username, then tries to change member B's\nThen the first is accepted and the second refused; the Team page shows A's username and \"GitHub not connected\" for B"
+      "gherkin": "Given sign-in on and ba@example.com with roles BA and QA\nWhen Compass builds the commit message for an approved requirement and the pull request body for a build run\nThen both end with \"Made in Compass by ba@example.com (BA)\" (the gate's role); with sign-in off they are unchanged"
     },
     {
       "id": "TC-082",
@@ -3426,7 +3426,7 @@
       "title": "End to end: a permitted member creates a project and commits as themselves",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given the live site, the super admin and a member invited as a collaborator in the configured organization\nWhen the super admin marks the member \"Can create projects\", the member connects their token, creates a project and approves a requirement\nThen the repository is in the organization, the member is its Admin, the Team page shows their GitHub username, and the commit on GitHub shows the member as author"
+      "gherkin": "Given the live site, the super admin's token and key set, and a member with no token of their own\nWhen the super admin marks the member \"Can create projects\", the member creates a project and approves a requirement\nThen the repository is in the configured account, the member is its Admin, and the commit on GitHub names the member (\"Made in Compass by …\")"
     }
   ],
   "decisions": [
@@ -3610,28 +3610,28 @@
     {
       "id": "ADR-016",
       "date": "2026-11-27",
-      "title": "Each person works with their own GitHub token; the shared project token is retired",
+      "title": "Phase 1: everyone works through the super admin's GitHub token; project tokens are retired",
       "status": "Accepted",
       "reqIds": [
         "REQ-041",
         "REQ-042",
         "REQ-043"
       ],
-      "context": "With a shared project token (ADR-011) every commit made through Compass shows the token owner, the token is readable by every member's browser, and it must be replaced when someone leaves.",
-      "decision": "The Product Owner chose in chat on 2026-11-27 (\"should we ask the user to connect with their github account to use their own token so the system can have a clear audit trace\"; then \"Start update for shared project token\"): team members use their own fine-grained token for all GitHub work on a team project; the shared project token is retired. Supersedes ADR-011. A \"Connect with GitHub\" (OAuth) button is on the backlog (#111).",
-      "consequences": "GitHub shows the real author; no shared secret. Each member needs a GitHub account and a collaborator invitation from the repository owner."
+      "context": "Project Admins could set their own project token (ADR-011), and members could use their own tokens to import repositories. The Product Owner wants to control all GitHub access in phase 1.",
+      "decision": "The Product Owner decided in chat on 2026-11-27: \"the intention is that everyone will use my personal token for action and changes in the first phase. So the github and anthropic token should only be configured by me\". With sign-in on, Compass uses the super admin's GitHub token for every team member on team projects; only the super admin sets it; project tokens are retired. Every commit and pull request names the person who did it. Supersedes ADR-011. Phase 2 (each person's own token or a \"Connect with GitHub\" button) is on the backlog, #111.",
+      "consequences": "GitHub shows the super admin's account on every change; who did it is in the commit/pull request text and in Compass's approval records. Every member's browser can read the token, so it must be fine-grained, limited to the project repositories, with an expiry, and replaced when someone leaves."
     },
     {
       "id": "ADR-017",
       "date": "2026-11-27",
-      "title": "The Anthropic key is the super admin's only, while sign-in is on",
+      "title": "Phase 1: everyone's live agents use the super admin's Anthropic key",
       "status": "Accepted",
       "reqIds": [
         "REQ-041"
       ],
       "context": "Live agent runs cost money on the key owner's Anthropic account.",
-      "decision": "The Product Owner chose option B in chat on 2026-11-27: with sign-in on, only the super admin sees and uses the Anthropic key; for everyone else agents run in demo mode. A per-project key may be decided later.",
-      "consequences": "Only the super admin runs live agents for now."
+      "decision": "The Product Owner decided in chat on 2026-11-27 (same message as ADR-016): with sign-in on, only the super admin sets the Anthropic key, and Compass uses it for every team member's live agent runs on team projects; a key saved on a member's device is not used.",
+      "consequences": "All agent cost is on the super admin's account; every member's browser can read the key, so it gets its own spending limit and is replaced when someone leaves."
     }
   ]
 }
