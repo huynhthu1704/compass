@@ -92,10 +92,9 @@ test('TC-404 (REQ-073): account card and one theme button', () => {
 test('TC-406 (REQ-074): no "AI dev portal" tagline in the UI', async () => {
   const { readdirSync } = await import('node:fs');
   const files = readdirSync(new URL('../src/', import.meta.url), { recursive: true }).filter((f) => /\.(tsx?|css|html)$/.test(f));
-  for (const f of files) {
-    if (f === 'types.ts') continue; // a code comment, not shown in the UI
-    assert.doesNotMatch(read(`src/${f}`), /AI dev portal/i, `src/${f} shows the tagline`);
-  }
+  // Code comments are not shown in the UI (src/types.ts starts with one), so they are stripped before the search.
+  const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const f of files) assert.doesNotMatch(noComments(read(`src/${f}`)), /AI dev portal/i, `src/${f} shows the tagline`);
   assert.match(read('src/components/Sidebar.tsx'), /<div className="brand-text">Compass<\/div>/, 'the brand is "Compass" only');
   assert.match(read('src/pages/Onboarding.tsx'), /<div className="overline t-brand">Compass<\/div>/, 'the overline is "Compass"');
 });

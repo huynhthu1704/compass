@@ -9,8 +9,9 @@ Intent: compass/intent/2026-11-27-remove-portal-tagline.md · Design: compass/de
 - compass/spec.json — REQ-074 and TC-406 in F-013; the SCR-1 brand element reads "logo, \"Compass\"" and lists REQ-074
 - compass/design/F-013.md, compass/requirements.md, compass/tests.md — the matching view lines
 - src/components/Sidebar.tsx — the brand shows the logo and "Compass" only
+- src/index.css — drop the `.brand-text span` rule and the column layout that only served the tagline line
 - src/pages/Onboarding.tsx — the overline reads "Compass" instead of "Compass · AI dev portal"
-- tests/sidebar.test.mjs — TC-406: no "AI dev portal" text in any file under src/
+- tests/sidebar.test.mjs — TC-406: no "AI dev portal" text in any file under src/ (code comments stripped, not shown in the UI)
 
 ## Steps
 1. Commit this plan.
@@ -19,8 +20,8 @@ Intent: compass/intent/2026-11-27-remove-portal-tagline.md · Design: compass/de
 4. `npm test`, `npm run build`, `node compass/check-spec.mjs`, `node compass/check-guardrails.mjs origin/main`.
 
 ## Risks
-- **Brand layout shifts** once the second line is gone: the `.brand-text span` rule simply has nothing to style; the
-  logo and name stay aligned (flex row). Checked with a screenshot of the sidebar.
+- **Brand layout shifts** once the second line is gone: the unused `.brand-text span` rule and column layout are removed;
+  the logo and name stay aligned (the `.brand` flex row). Checked with a build and a screenshot.
 - **Docs still say "AI dev portal"** (README, AGENTS.md, types.ts comment): out of scope — the request is about the UI only.
 
 ## Proof
