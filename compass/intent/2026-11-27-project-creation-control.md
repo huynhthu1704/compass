@@ -54,7 +54,7 @@ control away.
 - Project Admins granting "Can create projects".
 
 ## Requirements
-- REQ-041 — The super admin's GitHub token and Anthropic key are used for everyone; only the super admin sets them (#112)
+- REQ-041 — The super admins' GitHub token and Anthropic key are used for everyone; only super admins set them (#112)
 - REQ-042 — Every commit and pull request says who did it in Compass (#113)
 - REQ-043 — Project tokens set by project Admins are retired (#114)
 - REQ-044 — Only the super admin and people they permit create projects, only in the configured GitHub account (#115)
