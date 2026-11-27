@@ -36,7 +36,7 @@ const score = (p: string) => (/^(AGENTS|CLAUDE|README)\.md$/i.test(p) ? 0 : p.st
 
 export function specDocs(p: Project): Doc[] {
   const s = p.spec;
-  const docs: Doc[] = s.features.map((f) => ({ path: `spec:${f.id}`, content: `# ${f.id} ${f.name}\nIntent: ${f.idea.intent}\nProblem: ${f.idea.problem}\nUsers: ${f.idea.users.join(', ')}\nOutcome metric: ${f.idea.outcomeMetric}\nIn scope: ${f.idea.scopeIn.join('; ')}\nOut of scope: ${f.idea.scopeOut.join('; ')}\nRisks: ${f.idea.risks.join('; ')}` }));
+  const docs: Doc[] = s.features.map((f) => ({ path: `spec:${f.id}`, content: `# ${f.id} ${f.name}\nIntent: ${f.idea.intent}\nProblem: ${f.idea.problem}\nUsers: ${f.idea.users.join(', ')}\nDone when: ${f.idea.outcomeMetric}\nIn scope: ${f.idea.scopeIn.join('; ')}\nOut of scope: ${f.idea.scopeOut.join('; ')}\nRisks: ${f.idea.risks.join('; ')}` }));
   docs.push({ path: 'spec:stack', content: `# Tech stack\n${s.stack}` });
   for (const f of s.features) if (f.design) docs.push({ path: `spec:${f.id}-design`, content: `# ${f.id} design (${f.design.status})\n${f.design.summary}\n${f.design.screens.map((x) => `## ${x.id} ${x.name} (${x.reqIds.join(', ')})\n${x.purpose}\nElements: ${x.elements.join('; ')}\nStates: ${x.states.join('; ')}`).join('\n')}` });
   for (const r of s.requirements) docs.push({ path: `spec:${r.id}`, content: `# ${r.id} ${r.title} (${r.featureId || ''})\n${r.story}\nPriority ${r.priority}, status ${r.status}\n${r.ac.join('\n')}` });

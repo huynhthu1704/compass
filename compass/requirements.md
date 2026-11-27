@@ -30,6 +30,9 @@
 | REQ-015 | F-011 | Pages use up to 1600 px on large screens and stay responsive | Should | Approved | TC-027, TC-028 |
 | REQ-020 | F-001 | The Ideation agent writes "Done when" and never invents a baseline or target | Must | Approved | TC-039, TC-040, TC-041 |
 | REQ-021 | F-001 | The Idea page and briefs say "Done when" instead of "Outcome metric" | Should | Approved | TC-042 |
+| REQ-060 | F-009 | Each waiting item says what it is and how long it has waited | Must | Approved | TC-300, TC-301, TC-306 |
+| REQ-061 | F-009 | The approval desk stays compact, with a link to all waiting runs | Must | Approved | TC-302, TC-303, TC-307 |
+| REQ-062 | F-009 | Details of a waiting item open in a side panel | Should | Approved | TC-304, TC-305, TC-308, TC-309 |
 | REQ-070 | F-013 | The sidebar is grouped, has icons and shows the open project as a card | Must | Approved | TC-400, TC-401, TC-405 |
 | REQ-071 | F-013 | The approval count shows once, on Team floor | Must | Approved | TC-402 |
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
@@ -298,7 +301,7 @@ _AC1_
 ```gherkin
 Given runs awaiting approval
 When I look at the Your approval desk
-Then it lists each waiting run (agent and feature) with a "Review & approve" button, and the desk says "Nothing waiting" when there is none
+Then it lists the waiting runs (the 3 that have waited longest and "+N more", REQ-061); each item opens its details with "Open run to approve" (REQ-062), and the desk says "Nothing waiting" when there is none
 ```
 
 _AC2_
@@ -326,7 +329,7 @@ _AC2_
 ```gherkin
 Given a phone-sized screen (below 720 px)
 When I open the Team floor
-Then an approval banner is on top, the desks are in a 2-column grid in pipeline order and the activity list is collapsed
+Then an approval banner is on top listing the waiting runs like the desk (REQ-060, REQ-061), the desks are in a 2-column grid in pipeline order and the activity list is collapsed
 ```
 
 _AC3_
@@ -691,6 +694,90 @@ _AC2_
 Given an Ideation agent run brief and the generated compass/features/F-xxx.md and compass/intent/F-xxx.md
 When they show the brief
 Then the heading reads "Done when" instead of "Outcome metric" or "Success measure"
+```
+
+## REQ-060 · Each waiting item says what it is and how long it has waited
+As the product owner, I want each waiting item on the Team floor to say what it is about and how long it has waited, so that I can tell them apart without opening them.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a run waiting for approval
+When it is listed on the Your approval desk (or the phone banner)
+Then the item shows the agent, the feature, one line of the run's goal (cut with … when longer) and how long it has waited since it started waiting ("now" under a minute, then "6m", "2h", "2d")
+```
+
+_AC2_
+```gherkin
+Given two waiting runs of the same agent and feature
+When they are listed
+Then their goals tell them apart
+```
+
+_AC3_
+```gherkin
+Given a waiting run blocked by a guardrail
+When it is listed
+Then the item is marked "blocked", and its side panel shows "Open run · blocked" instead of "Open run to approve"
+```
+
+## REQ-061 · The approval desk stays compact, with a link to all waiting runs
+As the product owner, I want the approval desk to stay the same size however many runs wait, so that the floor keeps its shape.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given more than 3 runs waiting for approval
+When the Team floor is shown
+Then the desk (and the phone banner) lists the 3 that have waited longest (by the time they started waiting) and a "+N more → Agent runs" link
+```
+
+_AC2_
+```gherkin
+Given the "+N more" link
+When I click it
+Then Agent runs opens showing only the runs awaiting approval, with a way to show all runs again
+```
+
+_AC3_
+```gherkin
+Given 3 or fewer runs waiting
+When the desk is shown
+Then all of them are listed and there is no "+N more" link
+```
+
+## REQ-062 · Details of a waiting item open in a side panel
+As the product owner, I want to read the details of a waiting item without leaving the Team floor, so that I decide quickly what to approve first.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a waiting item on the desk or the phone banner
+When I click it
+Then a side panel opens (full screen on a phone) with the agent and feature, the waiting time, the full goal, a short summary of the proposal (idea brief, number of requirements, design screens or test cases, or number of changed files, from the run's proposal and change set) and the guardrail and evaluation results
+```
+
+_AC2_
+```gherkin
+Given the side panel
+When I choose "Open run to approve" ("Open run · blocked" for a blocked run, REQ-060)
+Then the run page opens, where approving or rejecting works exactly as from Agent runs; the panel itself has no Approve button
+```
+
+_AC3_
+```gherkin
+Given the side panel is open
+When I press Escape, click outside it or choose Close
+Then it closes and keyboard focus returns to the item I opened it from
 ```
 
 ## REQ-070 · The sidebar is grouped, has icons and shows the open project as a card
