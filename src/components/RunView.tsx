@@ -225,6 +225,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
               <div className="body-sm t-secondary">
                 {vs.length > 1 ? `Approving applies Proposal v${latestN} (latest). Earlier versions stay readable in this run. ` : ''}
                 {r.proposal ? 'Approving merges this proposal into the project spec (compass/spec.json). Commit the spec to GitHub afterwards.'
+                  : r.mode === 'demo' && p.repo && !p.demo && (tokenFor(p) || missingToken(p)) ? 'Approving marks this demo change ready. Its placeholder code is NOT pushed to the repository.'
                   : p.repo && tokenFor(p) && !p.demo ? `Approving commits ${r.changes.length} file(s) to a new branch and opens a pull request on ${p.repo.owner}/${p.repo.name}. CI runs automatically.`
                   : missingToken(p) || 'Approving marks this change ready. Connect a GitHub repo to open a real pull request.'}
               </div>

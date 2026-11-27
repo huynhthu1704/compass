@@ -22,7 +22,7 @@ export const firebaseEnabled = !!CONFIG;
 /** Firestore document id of a project: its GitHub repo, e.g. "huynhthu1704__compass". */
 export const projectKey = (repo: Pick<RepoRef, 'owner' | 'name'>) => `${repo.owner}__${repo.name}`.toLowerCase();
 
-export interface ProjectAccess { id: string; roles: TeamRole[] }
+export interface ProjectAccess { id: string; roles: TeamRole[]; name?: string; repo?: { owner: string; name: string } }
 export interface Session {
   status: 'off' | 'loading' | 'signed-out' | 'signed-in';
   email?: string;
@@ -101,10 +101,12 @@ async function loadAccess(rawEmail: string, verified: boolean) {
     const q = superAdmin ? fs.collection(db, 'projects') : fs.query(fs.collection(db, 'projects'), fs.where('members', 'array-contains', email));
     const docs = (await fs.getDocs(q)).docs.map((d) => {
       // Admin comes only from `admins` (one source of truth, as in firestore.rules); 'Admin' in a role list is ignored.
-      return { id: d.id, team: membersFromDoc(d.data() as Partial<TeamDoc>) };
+      const data = d.data() as Partial<TeamDoc>;
+      return { id: d.id, name: data.name, repo: data.repo, team: membersFromDoc(data) };
     });
     if (!stillSignedIn(email)) return; // signed out (or switched account) while loading
-    set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins), error: undefined });
+    const info = new Map(docs.map((d) => [d.id, { name: d.name, repo: d.repo }]));
+    set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins).map((a) => ({ ...a, ...info.get(a.id) })), error: undefined });
   } catch (e) {
     if (stillSignedIn(email)) set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` });
   }
@@ -172,7 +174,11 @@ const tokenChanged = () => tokenListeners.forEach((l) => l());
 /** The cached project token: a string, null when the project has none, undefined when not loaded yet. */
 export const projectTokenOf = (key: string) => tokens.get(key);
 /** Forget every cached project token (sign-out, or another account signs in in this tab). */
-export function clearProjectTokens() { if (tokens.size) { tokens.clear(); tokenChanged(); } }
+export function clearProjectTokens() { tokenGeneration++; failedTokens.clear(); if (tokens.size) { tokens.clear(); tokenChanged(); } }
+const failedTokens = new Set<string>();
+/** True when the last load of this project's token was refused or failed (REQ-034 AC4: say so, not "Loading…"). */
+export const projectTokenFailed = (key: string) => failedTokens.has(key);
+let tokenGeneration = 0;
 /** Called whenever a project token is loaded, replaced or forgotten (autosync re-checks dirty projects). */
 export function onProjectTokenChange(l: () => void) { tokenListeners.add(l); return () => { tokenListeners.delete(l); }; }
 export const useProjectToken = (key: string) => useSyncExternalStore((l) => { tokenListeners.add(l); return () => tokenListeners.delete(l); }, () => tokens.get(key));
@@ -180,10 +186,13 @@ export const useProjectToken = (key: string) => useSyncExternalStore((l) => { to
 /** Loads the project token (members and the super admin may read it). */
 export async function loadProjectToken(key: string) {
   const { fs, db } = await load();
+  const gen = tokenGeneration;
   try {
     const snap = await fs.getDoc(fs.doc(db, 'projects', key, 'secrets', 'token'));
+    if (gen !== tokenGeneration) return; // signed out or switched account while loading: drop the old result
     tokens.set(key, snap.exists() ? String(snap.data().token || '') || null : null);
-  } catch (e) { tokens.delete(key); tokenChanged(); throw e; } // refused (e.g. removed from the team): forget it
+    failedTokens.delete(key);
+  } catch (e) { if (gen === tokenGeneration) { tokens.delete(key); failedTokens.add(key); tokenChanged(); } throw e; } // refused: forget it, remember the failure
   tokenChanged();
 }
 
