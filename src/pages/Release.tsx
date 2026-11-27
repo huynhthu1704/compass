@@ -49,8 +49,8 @@ export function ReleasePage({ p }: { p: Project }) {
           </label>
         ))}
         <div className="row gap-sm">
-          {!releaseGate.allowed && <span className="body-sm t-tertiary">{releaseGate.hint}</span>}
-          <Button variant="accent" disabled={busy || !sel.length || !!missingToken(p) || !releaseGate.allowed} title={releaseGate.hint} onClick={() => confirm(`Release ${tag} with ${sel.length} change(s)? This merges the PRs into ${p.repo?.defaultBranch || 'main'}.`) && ship()}>{busy ? 'Releasing…' : `Release ${tag}`}</Button>
+          {!releaseGate.allowed && <span id="release-gate-hint" className="body-sm t-tertiary">{releaseGate.hint}</span>}
+          <Button variant="accent" disabled={busy || !sel.length || !!missingToken(p) || !releaseGate.allowed} aria-describedby={releaseGate.allowed ? undefined : 'release-gate-hint'} onClick={() => confirm(`Release ${tag} with ${sel.length} change(s)? This merges the PRs into ${p.repo?.defaultBranch || 'main'}.`) && ship()}>{busy ? 'Releasing…' : `Release ${tag}`}</Button>
           {!live && <span className="body-sm t-tertiary">{p.demo ? 'Demo — merge, tag and deploy are simulated.' : missingToken(p) || 'Connect GitHub to release for real.'}</span>}
         </div>
         {log.length > 0 && <div className="panel mono-sm stack gap-xs">{log.map((l, i) => <span key={i}>› {l}</span>)}</div>}

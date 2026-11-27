@@ -20,19 +20,29 @@ export function RequirementsPage({ p, fid }: { p: Project; fid: string }) {
   const drafts = reqs.filter((r) => r.status === 'Draft');
   // F-015 REQ-033/036/037: PO or BA approve requirements; the approval is recorded in Firebase first.
   const gate = useGate(p, 'requirements');
-  const approve = async (ids: string[]) => {
+  const [approving, setApproving] = useState(false);
+  const approve = async (ids: string[], then?: Requirement['status']) => {
+    if (approving) return;
+    setApproving(true);
     try {
       const by = await recordApproval(p, 'requirements', ids);
       store.spec(p.id, (s) => ({ ...s, requirements: s.requirements.map((r) => (ids.includes(r.id) && r.status === 'Draft' ? { ...r, status: 'Approved', ...(by ? { approvedBy: by, approvedAt: now() } : {}) } : r)) }));
+      if (then && then !== 'Approved') set(ids[0], { status: then });
       advance();
-    } catch (e) { toast((e as Error).message); }
+    } catch (e) { toast((e as Error).message); } finally { setApproving(false); }
+  };
+  /** The Status field: leaving Draft is an approval (gated and recorded); going back to Draft clears approvedBy. */
+  const changeStatus = (r: Requirement, next: Requirement['status']) => {
+    if (next === r.status) return;
+    if (r.status === 'Draft') { void approve([r.id], next); return; }
+    set(r.id, next === 'Draft' ? { status: 'Draft', approvedBy: undefined, approvedAt: undefined } : { status: next });
   };
   const add = () => { const id = nextId('REQ', p.spec.requirements.map((r) => r.id)); store.spec(p.id, (s) => ({ ...s, requirements: [...s.requirements, { id, featureId: fid, title: 'New requirement', story: 'As a …, I want …, so that …', ac: ['Given …\nWhen …\nThen …'], priority: 'Should', status: 'Draft' }] })); setOpen(id); };
 
   return (
     <div className="stack gap-xl">
       <PageHead over={`${f?.id} ${f?.name} · Stage 2 · Requirements · owner: BA / PO`} title="Requirements" sub="User stories with Given/When/Then acceptance criteria. Once every requirement is approved, the Design agent drafts the screens — coding waits for the approved design."
-        right={<>{drafts.length > 0 && <Button variant="secondary" disabled={!gate.allowed} title={gate.hint} onClick={() => void approve(drafts.map((r) => r.id))}>Approve all drafts ({drafts.length})</Button>}<Button variant="ghost" onClick={add}>+ Add manually</Button></>} />
+        right={<>{drafts.length > 0 && !gate.allowed && <span id="req-gate-hint" className="body-sm t-tertiary">{gate.hint}</span>}{drafts.length > 0 && <Button variant="secondary" disabled={!gate.allowed || approving} aria-describedby={gate.allowed ? undefined : 'req-gate-hint'} onClick={() => void approve(drafts.map((r) => r.id))}>Approve all drafts ({drafts.length})</Button>}<Button variant="ghost" onClick={add}>+ Add manually</Button></>} />
       <AgentBox p={p} agentId="requirements" featureId={fid} cta="Generate requirements" defaultGoal={`Write requirements for: ${f?.idea.scopeIn.join('; ') || f?.idea.intent || ''}`} disabled={!f?.idea.intent ? 'Set the business intent in the Idea stage first.' : undefined} />
 
       {reqs.length > 0 && (
@@ -55,8 +65,8 @@ export function RequirementsPage({ p, fid }: { p: Project; fid: string }) {
                   <Badge>{r.priority}</Badge>
                   <Badge tone={tcs.length ? 'info' : 'danger'}>{tcs.length ? tcs.map((t) => t.id).join(', ') : 'no tests'}</Badge>
                   <span className="grow" />
-                  {r.status === 'Draft' && <Button size="sm" variant="secondary" disabled={!gate.allowed} title={gate.hint} aria-label={`Approve ${r.id}`} onClick={() => void approve([r.id])}>Approve</Button>}
-                  {r.status === 'Draft' && !gate.allowed && <span className="body-sm t-tertiary">{gate.hint}</span>}
+                  {r.status === 'Draft' && <Button size="sm" variant="secondary" disabled={!gate.allowed || approving} aria-describedby={gate.allowed ? undefined : `hint-${r.id}`} aria-label={`Approve ${r.id}`} onClick={() => void approve([r.id])}>Approve</Button>}
+                  {r.status === 'Draft' && !gate.allowed && <span id={`hint-${r.id}`} className="body-sm t-tertiary">{gate.hint}</span>}
                   {r.approvedBy && <span className="body-sm t-tertiary">Approved by {r.approvedBy}</span>}
                   <Button size="sm" variant="ghost" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? 'Close' : 'Edit'}</Button>
                 </div>
@@ -65,7 +75,7 @@ export function RequirementsPage({ p, fid }: { p: Project; fid: string }) {
                     <div className="grid-2" style={{ gridTemplateColumns: '2fr 1fr 1fr' }}>
                       <Field label="Title"><input className="input" value={r.title} onChange={(e) => set(r.id, { title: e.target.value })} /></Field>
                       <Field label="Priority"><select className="select" value={r.priority} onChange={(e) => set(r.id, { priority: e.target.value as Requirement['priority'] })}><option>Must</option><option>Should</option><option>Could</option></select></Field>
-                      <Field label="Status"><select className="select" value={r.status} onChange={(e) => set(r.id, { status: e.target.value as Requirement['status'] })}><option>Draft</option><option>Approved</option><option>In build</option><option>Done</option></select></Field>
+                      <Field label="Status"><select className="select" value={r.status} disabled={!gate.allowed || approving} aria-describedby={gate.allowed ? undefined : `hint-${r.id}`} onChange={(e) => changeStatus(r, e.target.value as Requirement['status'])}><option>Draft</option><option>Approved</option><option>In build</option><option>Done</option></select></Field>
                     </div>
                     <Field label="User story"><textarea className="textarea" style={{ minHeight: 60 }} value={r.story} onChange={(e) => set(r.id, { story: e.target.value })} /></Field>
                     {r.ac.map((a, i) => (

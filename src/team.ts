@@ -89,8 +89,14 @@ export const gateHint = (gate: Gate) => `Needs the ${GATE_ROLES[gate].join(' or 
 /** approvedBy text for an approval (REQ-036): "<email> (<role>)", naming the person's role that owns the gate.
  *  Returns null when the person may not pass the gate, so no misleading audit entry can be written. */
 export function approvedBy(email: string, roles: TeamRole[], gate: Gate, superAdmin = false): string | null {
+  return approvalBy(email, roles, gate, superAdmin)?.text ?? null;
+}
+
+/** The role an approval is signed with (the first of the person's roles that owns the gate, else "super admin") and the
+ *  approvedBy text; null when the person may not pass the gate. The Firestore record uses `role` (REQ-037 AC3). */
+export function approvalBy(email: string, roles: TeamRole[], gate: Gate, superAdmin = false): { role: string; text: string } | null {
   const role = GATE_ROLES[gate].find((r) => roles.includes(r)) || (superAdmin ? 'super admin' : null);
-  return role ? `${normalizeEmail(email)} (${role})` : null;
+  return role ? { role, text: `${normalizeEmail(email)} (${role})` } : null;
 }
 
 // ---- Firestore team documents (F-015 Team page; same shape as firestore.rules → validProject) -----------------------

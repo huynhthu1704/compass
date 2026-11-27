@@ -1,7 +1,7 @@
 // F-015 Gates follow my roles (REQ-033) and every approval is recorded in Firebase first (REQ-036, REQ-037; ADR-012).
 // With sign-in off, or for demo and local projects, nothing changes: gates are open and no record is written.
 import { getSession, projectKey, useSession, writeApprovalRecord } from './firebase';
-import { approvedBy, canPass, gateHint, type Gate } from './team';
+import { approvalBy, canPass, gateHint, type Gate } from './team';
 import type { Project } from './types';
 
 /** Gates apply to signed-in people on real (GitHub) projects. */
@@ -30,10 +30,9 @@ export const NOT_ALLOWED = 'Not allowed for your roles';
 export async function recordApproval(p: Pick<Project, 'repo' | 'demo'>, gate: Gate, items: string[]): Promise<string | null> {
   if (!gated(p)) return null;
   const { roles, superAdmin, email } = rolesFor(p);
-  const by = canPass(gate, roles, superAdmin) ? approvedBy(email, roles, gate, superAdmin) : null;
+  const by = canPass(gate, roles, superAdmin) ? approvalBy(email, roles, gate, superAdmin) : null;
   if (!by) throw new Error(NOT_ALLOWED);
-  const role = by.slice(by.lastIndexOf('(') + 1, -1);
-  try { await writeApprovalRecord(projectKey(p.repo!), { items: items.length ? items : ['(none)'], gate, email, role }); }
+  try { await writeApprovalRecord(projectKey(p.repo!), { items: items.length ? items : ['(none)'], gate, email, role: by.role }); }
   catch (e) { throw new Error((e as { code?: string }).code === 'permission-denied' ? NOT_ALLOWED : `Approval not recorded: ${(e as Error).message}`); }
-  return by;
+  return by.text;
 }

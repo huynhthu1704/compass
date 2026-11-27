@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, gateForAgent, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, gateForAgent, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -151,4 +151,11 @@ test('TC-064 (REQ-032 AC2): shared projects not on this device are offered to op
 
 test('TC-066 (REQ-033): approving an agent run passes the gate of its stage', () => {
   assert.deepEqual(['ideation', 'requirements', 'designer', 'testdesign', 'coder', 'reviewer', 'release'].map(gateForAgent), ['intent', 'requirements', 'design', 'tests', 'build', 'build', 'release']);
+});
+
+test('TC-071 (REQ-036, REQ-037 AC3): the record role is the role that owns the gate, or "super admin"', () => {
+  assert.deepEqual(approvalBy('Ba@Example.com', ['QA', 'BA'], 'requirements'), { role: 'BA', text: 'ba@example.com (BA)' });
+  assert.deepEqual(approvalBy('ba@example.com', ['QA', 'BA'], 'tests'), { role: 'QA', text: 'ba@example.com (QA)' });
+  assert.deepEqual(approvalBy('po@example.com', ['PO'], 'build', true), { role: 'super admin', text: 'po@example.com (super admin)' });
+  assert.equal(approvalBy('dev@example.com', ['Dev'], 'design'), null);
 });

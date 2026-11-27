@@ -233,8 +233,8 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
                   : missingToken(p) || 'Approving marks this change ready. Connect a GitHub repo to open a real pull request.'}
               </div>
               <div className="row gap-sm">
-                {!roleGate.allowed && <span className="body-sm t-tertiary">{roleGate.hint}</span>}
-                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying || !gate.ok || !roleGate.allowed} title={roleGate.hint} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
+                {!roleGate.allowed && <span id={`gate-hint-${r.id}`} className="body-sm t-tertiary">{roleGate.hint}</span>}
+                <Button variant="accent" disabled={busy || isBlocked || (needsProt && !protOk) || !!replying || !gate.ok || !roleGate.allowed} aria-describedby={roleGate.allowed ? undefined : `gate-hint-${r.id}`} onClick={() => run(() => approveRun(p.id, r.id))}>{busy ? 'Working…' : `${r.changes.length && p.repo && !p.demo ? 'Approve & open PR' : 'Approve'}${vs.length > 1 ? ` v${latestN}` : ''}`}</Button>
                 <Button variant="secondary" disabled={busy || !!replying} onClick={() => { const why = prompt('Why reject? (recorded in the trace)') || 'No reason given'; rejectRun(p.id, r.id, why); }}>Reject</Button>
               </div>
             </section>

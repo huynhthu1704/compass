@@ -16,6 +16,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const { settings } = useStore();
   const f = featureOf(p, fid);
   const [editTool, setEditTool] = useState(!p.spec.designTool);
+  const [approving, setApproving] = useState(false);
   const [tool, setTool] = useState<DesignTool>(p.spec.designTool || { kind: 'figma', url: '' });
   if (!f) return <div className="empty">Feature not found.</div>;
   const d = f.design;
@@ -29,17 +30,19 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   // F-015 REQ-033/036/037: UX or PO approve a design; the approval is recorded in Firebase first.
   const gate = gateState(p, 'design'); // not a hook: this page returns early above; App re-renders on session changes
   const approve = async () => {
+    if (approving) return;
+    setApproving(true);
     try {
       const by = await recordApproval(p, 'design', [fid]);
       setD({ status: 'Approved', approvedBy: by || (settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO'), approvedAt: now() });
-    } catch (e) { toast((e as Error).message); }
+    } catch (e) { toast((e as Error).message); } finally { setApproving(false); }
   };
   const embed = figmaEmbed(d?.url || p.spec.designTool?.url);
 
   return (
     <div className="stack gap-xl">
       <PageHead over={`${f.id} ${f.name} · Stage 3 · Design · owner: UX / PO`} title="Design" sub={`Screens traced to the approved requirements. Coding is locked until the design is approved. Saved to compass/spec.json and compass/design/${f.id}.md.`}
-        right={d && d.status === 'Draft' ? <>{!gate.allowed && <span className="body-sm t-tertiary">{gate.hint}</span>}<Button variant="accent" disabled={uncovered.length > 0 || !gate.allowed} title={uncovered.length ? 'Every approved requirement needs a screen' : gate.hint} onClick={() => void approve()}>Approve design</Button></>
+        right={d && d.status === 'Draft' ? <>{!gate.allowed && <span id="design-gate-hint" className="body-sm t-tertiary">{gate.hint}</span>}<Button variant="accent" disabled={uncovered.length > 0 || !gate.allowed || approving} title={uncovered.length ? 'Every approved requirement needs a screen' : undefined} aria-describedby={gate.allowed ? undefined : 'design-gate-hint'} onClick={() => void approve()}>Approve design</Button></>
           : d ? <Button variant="ghost" onClick={() => setD({ status: 'Draft', approvedBy: undefined, approvedAt: undefined })}>Reopen as draft</Button> : undefined} />
 
       <section className="card pad-xl stack gap-md">
