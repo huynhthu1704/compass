@@ -1,0 +1,104 @@
+rules_version = '2';
+// Compass team access (F-015, REQ-030 … REQ-040, ADR-010 … ADR-014).
+// Publish: Firebase console → Firestore Database → Rules → paste this file → Publish.
+// Tests: npm run test:rules (Firestore emulator). Keep gateRoles() equal to GATE_ROLES in src/team.ts.
+// These rules guard Firestore data only. GitHub commits use the shared project token and are not seen here;
+// approvals without a matching record are flagged by the portal instead (ADR-012).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- who is asking -------------------------------------------------------------------------------------------
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function me() { return request.auth.token.email.lower(); }
+
+    // SHA-256 of the super admin's lower-case Google email (ADR-013); the email itself is not in the repo.
+    function superAdminHash() { return '937a5a56a92ff8e4b58a73b9110d6132d6e0f3fb75dc8ef4aa434664e4895677'; }
+    function access() { return /databases/$(database)/documents/config/access; }
+    function isSuperAdmin() { return signedIn() && exists(access()) && me() in get(access()).data.superAdmins; }
+
+    // ---- projects --------------------------------------------------------------------------------------------------
+    function projectPath(pid) { return /databases/$(database)/documents/projects/$(pid); }
+    function baselinePath(pid) { return /databases/$(database)/documents/projects/$(pid)/baseline/initial; }
+    function project(pid) { return get(projectPath(pid)).data; }
+    function isMember(pid) { return signedIn() && exists(projectPath(pid)) && me() in project(pid).members; }
+    function isAdmin(pid) { return isMember(pid) && me() in project(pid).admins; }
+    function rolesOf(pid) { return project(pid).team.get(me(), []); }
+
+    // Which roles may pass each gate (REQ-033). Must equal GATE_ROLES in src/team.ts.
+    function gateRoles() {
+      return {
+        'intent': ['PO'],
+        'requirements': ['PO', 'BA'],
+        'design': ['UX', 'PO'],
+        'tests': ['QA'],
+        'build': ['Dev'],
+        'release': ['DM', 'PO'],
+        'team': ['Admin']
+      };
+    }
+
+    // A team document: members, at least one Admin (REQ-031), every member has roles.
+    function validProject(d) {
+      return d.keys().hasOnly(['name', 'repo', 'members', 'admins', 'team'])
+        && d.members is list && d.admins is list && d.team is map
+        && d.admins.size() > 0
+        && d.members.hasAll(d.admins)
+        && d.team.keys().hasOnly(d.members) && d.members.hasOnly(d.team.keys());
+    }
+
+    match /config/access {
+      allow read: if signedIn();
+      // Created once, by the super admin's own verified account (REQ-035, ADR-013); never changed from a browser.
+      allow create: if signedIn()
+        && hashing.sha256(me()).toHexString().lower() == superAdminHash()
+        && request.resource.data.keys().hasOnly(['superAdmins'])
+        && request.resource.data.superAdmins == [me()];
+      allow update, delete: if false;
+    }
+
+    match /projects/{pid} {
+      allow get: if isMember(pid) || isSuperAdmin();
+      allow list: if isSuperAdmin() || (signedIn() && me() in resource.data.members);
+      // Only the super admin creates a project's first team, together with its approval baseline (REQ-030, REQ-038).
+      allow create: if isSuperAdmin() && validProject(request.resource.data) && existsAfter(baselinePath(pid));
+      // Admins of the project or the super admin manage the team; the repo never changes (REQ-030, REQ-031, REQ-035).
+      allow update: if (isAdmin(pid) || isSuperAdmin())
+        && validProject(request.resource.data)
+        && request.resource.data.repo == resource.data.repo;
+      allow delete: if false;
+
+      // The approvals already in spec.json when the team was created (REQ-038). Written once, never changed.
+      match /baseline/{doc} {
+        allow read: if isMember(pid) || isSuperAdmin();
+        allow create: if doc == 'initial' && isSuperAdmin()
+          && !exists(projectPath(pid)) && existsAfter(projectPath(pid))
+          && request.resource.data.keys().hasOnly(['approvals']) && request.resource.data.approvals is list;
+        allow update, delete: if false;
+      }
+
+      // One record per approval, written before the GitHub commit (REQ-037). Append-only.
+      match /approvals/{rid} {
+        allow read: if isMember(pid) || isSuperAdmin();
+        allow create: if signedIn() && (isMember(pid) || isSuperAdmin())
+          && request.resource.data.keys().hasOnly(['items', 'gate', 'email', 'role', 'at'])
+          && request.resource.data.items is list
+          && request.resource.data.email == me()
+          && request.resource.data.gate in gateRoles().keys()
+          && request.resource.data.at == request.time
+          && (
+            (request.resource.data.role == 'super admin' && isSuperAdmin())
+            || (isMember(pid)
+                && request.resource.data.role in rolesOf(pid)
+                && request.resource.data.role in gateRoles()[request.resource.data.gate])
+          );
+        allow update, delete: if false;
+      }
+
+      // The shared project GitHub token (REQ-034, ADR-011): every member's browser can read it; only Admins write it.
+      match /secrets/{doc} {
+        allow read: if isMember(pid) || isSuperAdmin();
+        allow create, update, delete: if doc == 'token' && (isAdmin(pid) || isSuperAdmin());
+      }
+    }
+  }
+}

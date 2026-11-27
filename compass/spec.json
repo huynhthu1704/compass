@@ -1913,7 +1913,7 @@
       "featureId": "F-015",
       "title": "Each approval is recorded in Firebase, whose rules accept it only from the owning role",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want every approval checked by Firebase before it is saved, so that a role check cannot be skipped by changing the page.",
       "ac": [
@@ -1931,7 +1931,7 @@
       "featureId": "F-015",
       "title": "Approvals in the repo that Firebase does not confirm are flagged",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want approvals made outside the portal to stand out, so that a forged approvedBy is noticed.",
       "ac": [
@@ -2995,7 +2995,7 @@
       ],
       "title": "Firestore rules refuse writes and reads the roles do not allow",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the Firestore security rules in the emulator\nWhen a person on no team reads a project or its token document, a member who is not an Admin writes the team or the token, a BA writes a design approval record, a BA writes a requirements record with email po@example.com or with role PO, a BA writes a record with role \"super admin\", a signed-in person who is not the super admin creates the first team of a project that has none (listing themselves as Admin) together with a baseline, anyone creates a baseline for a project that already has a team, anyone changes or deletes a baseline, a record is written by an account with an unverified email, anyone changes or deletes an approval record, a person whose email does not match the super admin hash creates config/access, anyone changes config/access after it exists, the super admin's account creates config/access with an unverified email, and anyone changes a project's approval baseline after it was created\nThen every one is refused; and a member can read the project and its token document, an Admin or the super admin can write the team and the token, a BA can write a requirements approval record, the super admin can write a design record with role \"super admin\", the super admin can create a project's first team together with its baseline, and the super admin's account can create config/access once"
     },
     {
