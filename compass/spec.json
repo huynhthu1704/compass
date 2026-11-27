@@ -2058,7 +2058,7 @@
       "featureId": "F-015",
       "title": "The super admins' GitHub token and Anthropic key are used for everyone; only super admins set them",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the super admin, I want everyone to work through my GitHub and Anthropic accounts in phase 1, and nobody else to configure them, so that I control all access and cost.",
       "ac": [
@@ -2067,40 +2067,46 @@
         "Given the super admin has not set a GitHub token (or an Anthropic key)\nWhen a member tries a GitHub action (or a live agent run)\nThen nothing is written, the GitHub action says \"No GitHub token yet — ask the super admin\", and agents run in demo mode",
         "Given the super admin replaces or removes the token or key\nWhen members next act\nThen the new value is used, or the actions above are disabled",
         "Given sign-in is off, or the demo is open\nWhen anyone uses Compass\nThen tokens and keys work as today, per device"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
       "id": "REQ-042",
       "featureId": "F-015",
       "title": "Every commit and pull request says who did it in Compass",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the super admin, I want every GitHub change made with my token to name the person who did it, so that GitHub's history stays a clear audit trail.",
       "ac": [
         "Given sign-in is on\nWhen Compass commits or opens a pull request for a person on a team project\nThen the commit message and the pull request description end with \"Made in Compass by <email> (<role>)\", with the role that passed the gate (or the person's roles when no gate applies)",
         "Given sign-in is off, or the demo is open\nWhen Compass commits\nThen messages are as today"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
       "id": "REQ-043",
       "featureId": "F-015",
       "title": "Project tokens set by project Admins are retired",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the super admin, I want no other GitHub tokens in Compass besides mine, so that I alone control GitHub access in phase 1.",
       "ac": [
         "Given this change is released\nWhen an Admin opens a project's Team page\nThen there is no project token card, and Compass never reads or uses a project token",
         "Given project tokens were stored before\nWhen the release is deployed\nThen the Firestore rules refuse every read and write of a project's stored token except the super admin's delete, the super admin's Users screen offers \"Delete old project tokens\", which deletes them, and the release notes say to revoke those tokens on GitHub"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
       "id": "REQ-044",
       "featureId": "F-015",
       "title": "Only the super admin and people they permit create projects, only in the configured GitHub account",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the super admin, I want to decide who can add projects and where their repositories live, so that every project is in our GitHub account and has a known owner.",
       "ac": [
@@ -2108,21 +2114,25 @@
         "Given the super admin is signed in\nWhen they open the new Users screen (in the sidebar, shown only to the super admin)\nThen they see every person on any team with their projects, a \"Can create projects\" switch per person, and the \"GitHub account or organization for new projects\" field; the Firestore rules accept changes to these only from the super admin",
         "Given a person marked \"Can create projects\"\nWhen they create a new project or import a repository\nThen only the configured account or organization is offered, any other owner is refused before any GitHub call, the repository is created or read with the super admin's token, and the project's first team is saved with them as Admin together with the approval baseline; the Firestore rules accept a first team only from the super admin or from a permitted person who lists themselves as Admin",
         "Given the super admin removes a person's \"Can create projects\"\nWhen that person opens Projects\nThen Import and New project are gone; projects they created stay, with their teams"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
       "id": "REQ-046",
       "featureId": "F-015",
       "title": "The owner can make other people super admins",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the owner of Compass, I want to give trusted people super admin rights, so that they can also manage the GitHub token, the Anthropic key, users and projects.",
       "ac": [
         "Given the owner (the account whose hashed email is in the Firestore rules, ADR-013) opens the Users screen\nWhen they switch \"Super admin\" on or off for a person\nThen that person gains or loses super admin rights at their next page load; the Firestore rules accept this change only from the owner, and the owner can never be removed",
         "Given a person who is a super admin but not the owner\nWhen they use Compass\nThen they can do everything the super admin does (see every project, open Connections, set or replace the GitHub token and Anthropic key, grant \"Can create projects\", manage teams), except granting or removing super admin",
         "Given the Users screen\nWhen any super admin opens it\nThen each person shows a \"Super admin\" badge when they are one, and the owner is marked \"Owner\""
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     }
   ],
   "tests": [

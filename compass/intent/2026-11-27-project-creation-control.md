@@ -1,6 +1,6 @@
 # Intent: phase 1 — everyone works through the super admin's GitHub token and Anthropic key; only permitted people create projects
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-27, in chat: "Approve")
 Requested: 2026-11-27 by the Product Owner, in chat. Revised the same day; the last word: "the intention is that everyone
 will use my personal token for action and changes in the first phase. So the github and anthropic token should only be
 configured by me"
@@ -54,8 +54,8 @@ control away.
 - Project Admins granting "Can create projects".
 
 ## Requirements
-- REQ-041 — The super admin's GitHub token and Anthropic key are used for everyone; only the super admin sets them
-- REQ-042 — Every commit and pull request says who did it in Compass
-- REQ-043 — Project tokens set by project Admins are retired
-- REQ-044 — Only the super admin and people they permit create projects, only in the configured GitHub account
-- REQ-046 — The owner can make other people super admins
+- REQ-041 — The super admin's GitHub token and Anthropic key are used for everyone; only the super admin sets them (#112)
+- REQ-042 — Every commit and pull request says who did it in Compass (#113)
+- REQ-043 — Project tokens set by project Admins are retired (#114)
+- REQ-044 — Only the super admin and people they permit create projects, only in the configured GitHub account (#115)
+- REQ-046 — The owner can make other people super admins (#116)
