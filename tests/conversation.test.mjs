@@ -247,3 +247,13 @@ test('TC-201 (REQ-050): a selection across idea fields or design texts is not th
   assert.equal(revisableQuotes([{ source: 'Answer', text: 'x' }]), false);
   assert.deepEqual(scopeDelta({ idea: { intent: 'x' }, design: { summary: 's', notes: 'n' } }, [{ source: 'Idea', text: 'x' }, { source: 'Design', text: 'y' }]).delta, {}, 'a bare Idea / Design quote allows nothing');
 });
+
+test('TC-216 (REQ-050, REQ-053): every RunView is keyed by its run, so quotes never carry over to another run', async () => {
+  const { readFileSync } = await import('node:fs');
+  for (const f of ['src/components/AgentBox.tsx', 'src/pages/Build.tsx', 'src/pages/Runs.tsx']) {
+    const src = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+    const views = src.match(/<RunView\b[^>]*>/g) || [];
+    assert.ok(views.length > 0, f);
+    for (const v of views) assert.match(v, /\bkey=\{[^}]*\.id\}/, `${f}: ${v}`);
+  }
+});
