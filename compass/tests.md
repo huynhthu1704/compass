@@ -28,6 +28,7 @@
 | REQ-017 Deleting a feature removes everything that belongs to it | TC-032 (Not run), TC-033 (Not run), TC-034 (Not run) |
 | REQ-018 The deleted feature's open GitHub issues are closed as not planned | TC-035 (Not run), TC-036 (Not run) |
 | REQ-019 A strong warning before deleting a feature that has code | TC-037 (Not run) |
+| REQ-015 Pages use up to 1600 px on large screens and stay responsive | TC-027 (Not run), TC-028 (Not run) |
 | REQ-020 The Ideation agent writes "Done when" and never invents a baseline or target | TC-039 (Not run), TC-040 (Not run), TC-041 (Not run) |
 | REQ-021 The Idea page and briefs say "Done when" instead of "Outcome metric" | TC-042 (Not run) |
 
@@ -383,6 +384,23 @@ Covers: REQ-016 · Type: Automated · Status: Not run
 Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues "REQ-002: …" and "REQ-001: …"
 When the delete dialog's list is computed
 Then it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue "REQ-002: …"
+```
+
+## TC-027 · Content width up to 1600 px with fluid padding
+Covers: REQ-015 · Type: Automated · Status: Not run
+```gherkin
+Given src/index.css
+When the test reads the .main rule
+Then max-width is 1600px, width is 100% and the side padding uses clamp() between the small and large spacing tokens
+And the below-900 px rule for .main is unchanged
+```
+
+## TC-028 · No sideways scrolling and no text outside its row, from 1920 px down to 390 px
+Covers: REQ-015 · Type: Manual · Status: Not run
+```gherkin
+Given every page in the sidebar (Projects, Agent architecture, Feature board, Team floor, Release, Agent runs, Knowledge, Connections, the feature stages) and New project
+When I open each at 1920, 1600, 1280, 1000, 901 and 390 px wide
+Then the content is 1600 px wide at 1920 px, forms keep their reading width, no page scrolls sideways, and no text in a list row is squeezed to one word per line or drawn outside its row
 ```
 
 ## TC-039 · The Ideation agent instructions ask for "Done when" and forbid invented numbers

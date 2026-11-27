@@ -911,6 +911,22 @@
       ]
     },
     {
+      "id": "REQ-015",
+      "featureId": "F-011",
+      "title": "Pages use up to 1600 px on large screens and stay responsive",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-26-wider-pages.md",
+      "design": "none: width limit and padding only — every page keeps its approved layout",
+      "story": "As the product owner, I want Compass pages to use the width of my large screen, so that wide pages like the Team floor are not squeezed next to an empty band.",
+      "ac": [
+        "Given a screen 1920 px wide\nWhen I open any portal page\nThen the content area is up to 1600 px wide (it was 1240 px)",
+        "Given a screen between 900 px and 1600 px wide\nWhen I open any page\nThen the content fills the available width, side padding shrinks smoothly, and there is no sideways scrolling",
+        "Given a phone or a screen below 900 px\nWhen I open any page\nThen the layout is the same as before",
+        "Given a form page that sets its own reading width (New project, Connections)\nWhen it is shown on a large screen\nThen it keeps that reading width"
+      ]
+    },
+    {
       "id": "REQ-020",
       "featureId": "F-001",
       "title": "The Ideation agent writes \"Done when\" and never invents a baseline or target",
@@ -1370,6 +1386,26 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given feature F-002 with requirements REQ-002 (Approved) and REQ-003 (Draft), its own test cases TC-002 and TC-004, a test case TC-003 shared with another feature, and open issues \"REQ-002: …\" and \"REQ-001: …\"\nWhen the delete dialog's list is computed\nThen it shows REQ-002 and REQ-003 with their status, TC-002 and TC-004 as removed (TC-003 kept for the other feature), the files compass/intent, features and design F-002.md, and only the issue \"REQ-002: …\""
+    },
+    {
+      "id": "TC-027",
+      "reqIds": [
+        "REQ-015"
+      ],
+      "title": "Content width up to 1600 px with fluid padding",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given src/index.css\nWhen the test reads the .main rule\nThen max-width is 1600px, width is 100% and the side padding uses clamp() between the small and large spacing tokens\nAnd the below-900 px rule for .main is unchanged"
+    },
+    {
+      "id": "TC-028",
+      "reqIds": [
+        "REQ-015"
+      ],
+      "title": "No sideways scrolling and no text outside its row, from 1920 px down to 390 px",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given every page in the sidebar (Projects, Agent architecture, Feature board, Team floor, Release, Agent runs, Knowledge, Connections, the feature stages) and New project\nWhen I open each at 1920, 1600, 1280, 1000, 901 and 390 px wide\nThen the content is 1600 px wide at 1920 px, forms keep their reading width, no page scrolls sideways, and no text in a list row is squeezed to one word per line or drawn outside its row"
     },
     {
       "id": "TC-039",

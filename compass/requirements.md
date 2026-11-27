@@ -27,6 +27,7 @@
 | REQ-017 | F-012 | Deleting a feature removes everything that belongs to it | Must | Approved | TC-032, TC-033, TC-034 |
 | REQ-018 | F-012 | The deleted feature's open GitHub issues are closed as not planned | Must | Approved | TC-035, TC-036 |
 | REQ-019 | F-012 | A strong warning before deleting a feature that has code | Should | Approved | TC-037 |
+| REQ-015 | F-011 | Pages use up to 1600 px on large screens and stay responsive | Should | Approved | TC-027, TC-028 |
 | REQ-020 | F-001 | The Ideation agent writes "Done when" and never invents a baseline or target | Must | Approved | TC-039, TC-040, TC-041 |
 | REQ-021 | F-001 | The Idea page and briefs say "Done when" instead of "Outcome metric" | Should | Approved | TC-042 |
 
@@ -602,6 +603,41 @@ _AC3_
 Given a feature whose requirements are all Draft or Approved and that has no open pull request
 When the delete dialog opens
 Then no warning is shown
+```
+
+## REQ-015 · Pages use up to 1600 px on large screens and stay responsive
+As the product owner, I want Compass pages to use the width of my large screen, so that wide pages like the Team floor are not squeezed next to an empty band.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a screen 1920 px wide
+When I open any portal page
+Then the content area is up to 1600 px wide (it was 1240 px)
+```
+
+_AC2_
+```gherkin
+Given a screen between 900 px and 1600 px wide
+When I open any page
+Then the content fills the available width, side padding shrinks smoothly, and there is no sideways scrolling
+```
+
+_AC3_
+```gherkin
+Given a phone or a screen below 900 px
+When I open any page
+Then the layout is the same as before
+```
+
+_AC4_
+```gherkin
+Given a form page that sets its own reading width (New project, Connections)
+When it is shown on a large screen
+Then it keeps that reading width
 ```
 
 ## REQ-020 · The Ideation agent writes "Done when" and never invents a baseline or target
