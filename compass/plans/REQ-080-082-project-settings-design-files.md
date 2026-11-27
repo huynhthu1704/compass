@@ -46,7 +46,8 @@ does the Design page (button, side panel, Miro preview) and names both files in 
 - **Who is the admin.** Team access (F-015) is now on main. With sign-in on, the project's Admin (from the team in
   Firebase) or the super admin edits the links. With sign-in off (demo, local use) the PO role picker stands in, as the
   intent says. It is one function (`isDesignAdmin`, TC-502). It is a UI check: `designTool` lives in the repo's
-  spec.json, which only people with GitHub write access can change anyway.
+  spec.json, which only people with GitHub write access can change anyway. In the demo project (no team) the role picker
+  decides even with sign-in on, as Team access does for the demo (REQ-040).
 - **The Design page still has its old editable box until build 2.** It keeps working on the same `designTool`
   (Figma, Penpot, Sketch, Other). A saved Miro link only appears on Project settings until build 2 lands.
 

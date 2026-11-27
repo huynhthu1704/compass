@@ -60,8 +60,9 @@ export function saveDesignFiles(current: DesignTool | undefined, input: { figma:
 }
 
 /** Who is looking: the role picker, and — when sign-in (Team access, F-015) is on — their roles in this project. */
-export type Viewer = { role?: Role | string; signIn: 'off' | 'loading' | 'signed-out' | 'signed-in'; superAdmin: boolean; projectRoles: string[] };
+export type Viewer = { role?: Role | string; signIn: 'off' | 'loading' | 'signed-out' | 'signed-in'; superAdmin: boolean; projectRoles: string[]; demo?: boolean };
 
 /** REQ-080: who may change the design files. With sign-in on: the project's Admin or the super admin (Team access,
- *  F-015). With sign-in off (demo, local use): the PO role from the role picker, as before Team access. */
-export const isDesignAdmin = (v: Viewer) => (v.signIn === 'off' ? v.role === 'PO' : v.superAdmin || v.projectRoles.includes('Admin'));
+ *  F-015). With sign-in off, or in the demo project (which has no team; REQ-040 lets a signed-in person pick a role
+ *  there): the PO role from the role picker. */
+export const isDesignAdmin = (v: Viewer) => (v.signIn === 'off' || v.demo ? v.role === 'PO' : v.superAdmin || v.projectRoles.includes('Admin'));

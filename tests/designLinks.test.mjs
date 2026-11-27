@@ -17,6 +17,7 @@ test('TC-500 (REQ-080): Figma and Miro links are checked before they are saved',
     assert.equal(checkMiroUrl(ok), null, `${ok} is a Miro board link (or empty)`);
   }
   const badFigma = ['http://www.figma.com/design/abc/x', 'https://evil.com/figma.com/design/x', 'https://figma.com.evil.com/design/x', 'https://www.figma.com/files/recent', MIRO, 'figma.com/design/abc'];
+  badFigma.push('https://www.figma.com/community/file/123');
   for (const bad of badFigma) assert.match(checkFigmaUrl(bad) || '', /figma\.com design, file, proto or board link/, `${bad} is rejected`);
   const badMiro = ['https://miro.com/about', 'http://miro.com/app/board/abc=/', 'https://evil.com/miro.com/app/board/abc=/', 'https://miro.com.evil.com/app/board/abc=/', FIG];
   for (const bad of badMiro) assert.match(checkMiroUrl(bad) || '', /Paste a Miro board link: https:\/\/miro\.com\/app\/board\//, `${bad} is rejected`);
@@ -58,8 +59,10 @@ test('TC-502 (REQ-080): only the admin role edits; the page shows the hint and t
   assert.equal(isDesignAdmin(on([], true)), true, 'sign-in on: the super admin');
   assert.equal(isDesignAdmin(on(['PO'])), false, 'sign-in on: the role picker no longer decides');
   assert.equal(isDesignAdmin({ role: 'PO', signIn: 'signed-out', superAdmin: false, projectRoles: [] }), false);
+  assert.equal(isDesignAdmin({ role: 'PO', signIn: 'signed-in', superAdmin: false, projectRoles: [], demo: true }), true, 'demo with sign-in on: the role picker (REQ-040)');
+  assert.equal(isDesignAdmin({ role: 'BA', signIn: 'signed-in', superAdmin: false, projectRoles: [], demo: true }), false);
   const src = read('src/pages/ProjectSettings.tsx');
-  assert.match(src, /isDesignAdmin\(\{ role: settings\.role, signIn: session\.status, superAdmin: session\.superAdmin, projectRoles \}\)/);
+  assert.match(src, /isDesignAdmin\(\{ role: settings\.role, signIn: session\.status, superAdmin: session\.superAdmin, projectRoles, demo: !!p\.demo \}\)/);
   assert.match(src, /Only the project admin can change the design files\./);
   assert.match(src, /No design files linked yet\./);
   assert.match(src, /saveDesignFiles\(/);
