@@ -39,8 +39,8 @@
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
-| REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216 |
-| REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214 |
+| REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216, TC-217 |
+| REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214, TC-217 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
 | REQ-053 | F-020 | Proposal versions and compare | Should | Approved | TC-209, TC-210, TC-211, TC-216 |
 | REQ-054 | F-020 | The conversation is kept with the run, safely | Should | Approved | TC-212, TC-213 |
@@ -968,21 +968,21 @@ _AC2_
 ```gherkin
 Given a selection
 When I click "Quote"
-Then a quote block with the selected text and its source (e.g. "REQ-051 · acceptance criteria", "SCR-2 · states", "src/app.ts") is added to the reply box under the run, and the reply box gets the focus
+Then a new reply card opens under the run with the selected text and its source (e.g. "REQ-051 · AC 2", "SCR-2 · states", "src/app.ts"), and its message field gets the focus; each quote gets its own card
 ```
 
 _AC3_
 ```gherkin
 Given a requirement, screen, test case or file in the answer
 When I click its "Quote" icon
-Then the whole item is added as one quote block, without selecting text
+Then a reply card opens with the whole item as its quote, without selecting text
 ```
 
 _AC4_
 ```gherkin
-Given a reply with several quote blocks
-When I click the × of one quote
-Then only that quote is removed
+Given several open reply cards
+When I click "Cancel" on one card, or press Esc while the focus is in it
+Then only that card closes, nothing is sent to the agent, and the other cards stay as they were
 ```
 
 _AC5_
@@ -996,7 +996,7 @@ _AC6_
 ```gherkin
 Given a phone (390 px) or the keyboard only
 When I long-press to select text, or Tab to an item's "Quote" icon and press Enter
-Then the quote is added the same way
+Then a reply card opens the same way, in the page under the answer, and scrolls into view
 ```
 
 ## REQ-051 · Ask the agent about the quoted text
@@ -1008,9 +1008,9 @@ As the product owner, I want to ask the agent for more details about what I quot
 
 _AC1_
 ```gherkin
-Given a reply with at least one quote or a message
-When I click "Ask"
-Then my message with its quotes appears in the run's conversation and the agent's answer appears under it
+Given a reply card (its quote and an optional message), or a question typed in the "Ask the agent" box
+When I click "Ask" on it
+Then my message with its quote appears in the run's conversation, the agent's answer appears under it, and that card closes while other cards stay
 ```
 
 _AC2_
@@ -1036,9 +1036,9 @@ Then a predictable demo answer that repeats the quoted sources appears
 
 _AC5_
 ```gherkin
-Given an empty reply (no quote and no message)
-When I look at the reply box
-Then "Ask" and "Revise" are disabled
+Given an empty "Ask the agent" box (no quote and no message)
+When I look at it
+Then its "Ask" button is disabled; a reply card can always be sent, because it has a quote
 ```
 
 ## REQ-052 · Revise the proposal from the quoted text
