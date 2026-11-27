@@ -39,6 +39,7 @@
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
+| REQ-075 | F-013 | The sidebar has no Knowledge link for any role | Should | Approved | TC-407 |
 | REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216, TC-217 |
 | REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214, TC-217 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
@@ -842,7 +843,7 @@ _AC3_
 ```gherkin
 Given a project is open
 When I look under the project card
-Then the links are, in order, Feature board, Team floor, Agent runs, Release and Knowledge, and Knowledge has the tooltip "Project knowledge the agents search (RAG)"
+Then the links are, in order, Feature board, Team floor, Agent runs and Release (REQ-075: no Knowledge link)
 ```
 
 _AC4_
@@ -948,6 +949,27 @@ _AC2_
 Given the onboarding page
 When I look at the overline above the title
 Then it reads "Compass" and no screen of the portal shows the text "AI dev portal"
+```
+
+## REQ-075 · The sidebar has no Knowledge link for any role
+As any portal user, I want the sidebar to show only the pages of the delivery flow, so that the technical Knowledge (RAG) page does not distract me.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a project is open, in any role (PO, BA, DM, UX, Dev, QA, Ops)
+When I look under the project card
+Then the links are, in order, Feature board, Team floor, Agent runs and Release, and there is no Knowledge link
+```
+
+_AC2_
+```gherkin
+Given the address /p/<project>/knowledge
+When I open it directly
+Then the Knowledge page still opens, and agent runs keep indexing and searching the repository as before
 ```
 
 ## REQ-050 · Quote any part of an agent run
