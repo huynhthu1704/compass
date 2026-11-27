@@ -19,6 +19,7 @@
  *   .github/workflows/compass-*.yml→ CI (tests + spec check) and deploy to GitHub Pages
  *   .github/pull_request_template.md, ISSUE_TEMPLATE/ → role-friendly collaboration
  */
+import { designCoverage } from './designCoverage';
 import { featureStage, stageStatus } from './progress';
 import type { Feature, FileChange, Project, Spec } from './types';
 // The scripts and docs below are installed verbatim into each repo
@@ -121,7 +122,7 @@ export function designMd(p: Project, f: Feature) {
   const head = `# Design: ${f.id} ${f.name}\n\n_Generated from \`compass/spec.json → features[${f.id}].design\`. Edit the design in the portal (or spec.json), not this file._\n\n`;
   if (!d) return `${head}Status: Not started\n\nDesign tool: ${tool ? `[${tool.kind}](${tool.url})` : '_(none connected)_'}\n\nThe Design agent drafts the screens once every requirement of this feature is approved.\n`;
   const reqs = p.spec.requirements.filter((r) => r.featureId === f.id && r.status !== 'Draft');
-  const uncovered = reqs.filter((r) => !d.screens.some((s) => s.reqIds.includes(r.id)));
+  const { uncovered, noScreen } = designCoverage(reqs, d.screens);
   return `${head}Status: ${d.status}${d.approvedBy ? ` (by ${d.approvedBy}${d.approvedAt ? `, ${d.approvedAt.slice(0, 10)}` : ''})` : ''}
 Design tool: ${tool ? `[${tool.kind}](${tool.url})` : '_(none connected)_'}${d.url ? ` · this feature: [${d.url}](${d.url})` : ''}
 
@@ -139,7 +140,7 @@ ${d.screens.map((s) => `### ${s.id} · ${s.name}\n**Elements:** ${s.elements.joi
 ${d.notes || '_(none)_'}
 
 ## Coverage
-${uncovered.length ? `⚠ Not covered by any screen: ${uncovered.map((r) => r.id).join(', ')}` : 'Every approved requirement is covered by at least one screen.'}
+${uncovered.length ? `⚠ Not covered by any screen: ${uncovered.map((r) => r.id).join(', ')}` : 'Every approved requirement is covered by at least one screen.'}${noScreen.length ? `\n\nNo screen needed: ${noScreen.map((r) => `${r.id} — ${r.reason}`).join('; ')}` : ''}
 `;
 }
 
