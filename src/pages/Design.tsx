@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { go } from '../App';
 import { AgentBox } from '../components/AgentBox';
-import { saveMainLink, TOOL_NAMES } from '../designLinks';
+import { isDesignAdmin, mainLink, saveMainLink, TOOL_NAMES } from '../designLinks';
+import { projectKey, useSession } from '../firebase';
 import { featureOf } from '../spec';
 import { now, store, useStore } from '../store';
 import type { Design, DesignScreen, DesignTool, DesignToolKind, Project } from '../types';
@@ -16,8 +17,12 @@ const figmaEmbed = (url?: string) => (url && /^https:\/\/([\w-]+\.)?figma\.com\/
 export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const { settings } = useStore();
   const f = featureOf(p, fid);
-  const [editTool, setEditTool] = useState(!p.spec.designTool);
-  const [tool, setTool] = useState<DesignTool>(p.spec.designTool || { kind: 'figma', url: '' });
+  // REQ-080: only the project admin may change the design link here too (the old box stays until build 2, REQ-081).
+  const session = useSession();
+  const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
+  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!p.demo });
+  const [editTool, setEditTool] = useState(!p.spec.designTool && admin);
+  const [tool, setTool] = useState<DesignTool>(() => mainLink(p.spec.designTool));
   if (!f) return <div className="empty">Feature not found.</div>;
   const d = f.design;
   const reqs = p.spec.requirements.filter((r) => r.featureId === fid);
@@ -39,9 +44,9 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
       <section className="card pad-xl stack gap-md">
         <div className="row gap-sm wrap">
           <h2 className="h4 grow">Project design tool</h2>
-          {p.spec.designTool && !editTool && <><Badge tone="brand">{TOOL_NAMES[p.spec.designTool.kind]}</Badge><a className="btn ghost sm" href={p.spec.designTool.url} target="_blank" rel="noreferrer">Open ↗</a><Button size="sm" variant="ghost" onClick={() => setEditTool(true)}>Change</Button></>}
+          {p.spec.designTool && !editTool && <><Badge tone="brand">{TOOL_NAMES[p.spec.designTool.kind]}</Badge><a className="btn ghost sm" href={p.spec.designTool.url} target="_blank" rel="noreferrer">Open ↗</a>{admin && <Button size="sm" variant="ghost" onClick={() => { setTool(mainLink(p.spec.designTool)); setEditTool(true); }}>Change</Button>}</>}
         </div>
-        {editTool ? (
+        {editTool && admin ? (
           <div className="row gap-sm wrap end">
             <Field label="Tool"><select className="select" value={tool.kind} onChange={(e) => setTool({ ...tool, kind: e.target.value as DesignToolKind })}>{Object.entries(TOOLS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
             <div className="grow" style={{ minWidth: 240 }}><Field label="Project or file link" help="One design tool per project, e.g. https://www.figma.com/design/…"><input className="input" value={tool.url} placeholder="https://www.figma.com/design/…" onChange={(e) => setTool({ ...tool, url: e.target.value })} /></Field></div>

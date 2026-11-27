@@ -66,10 +66,10 @@ export function ProjectSettingsPage({ p }: { p: Project }) {
             <p className="body-sm t-secondary">The project's Figma file and Miro board. Every feature's Design page shows them, and the design agent works from them. Both are optional.</p>
             <div className="row gap-lg wrap start">
               <div style={{ flex: '1 1 240px', minWidth: 0 }}><Field label="Figma file" help={files.other ? `${FIGMA_HELP}. Saving one replaces the ${TOOL_NAMES[files.other.kind]} link.` : FIGMA_HELP} error={errors.figma}>
-                <input className="input mono-sm" value={figma} placeholder="https://www.figma.com/design/…" aria-invalid={!!errors.figma} style={errors.figma ? { borderColor: 'var(--color-border-danger)' } : undefined} onChange={(e) => setFigma(e.target.value)} />
+                <input className={`input mono-sm${errors.figma ? ' error' : ''}`} value={figma} placeholder="https://www.figma.com/design/…" aria-invalid={!!errors.figma} aria-label={'Figma file'} onChange={(e) => setFigma(e.target.value)} />
               </Field></div>
               <div style={{ flex: '1 1 240px', minWidth: 0 }}><Field label="Miro board" help={MIRO_HELP} error={errors.miro}>
-                <input className="input mono-sm" value={miro} placeholder="https://miro.com/app/board/…" aria-invalid={!!errors.miro} style={errors.miro ? { borderColor: 'var(--color-border-danger)' } : undefined} onChange={(e) => setMiro(e.target.value)} />
+                <input className={`input mono-sm${errors.miro ? ' error' : ''}`} value={miro} placeholder="https://miro.com/app/board/…" aria-invalid={!!errors.miro} aria-label={'Miro board'} onChange={(e) => setMiro(e.target.value)} />
               </Field></div>
             </div>
             {files.other && <FileRow kind={files.other.kind} url={files.other.url} />}

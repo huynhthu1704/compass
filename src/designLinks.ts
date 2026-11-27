@@ -72,13 +72,21 @@ export function checkDesignInput(current: DesignTool | undefined, input: { figma
 }
 
 /**
- * The old one-link box on the Design page (until build 2 replaces it): changes only the main link and keeps the Miro
- * board. Clearing the main link leaves the Miro board as the one link.
+ * The old one-link box on the Design page (until build 2 replaces it): changes only the main (non-Miro) link and keeps
+ * the Miro board. Clearing the main link leaves the Miro board as the one link. It never writes kind 'miro': the Miro
+ * board is set on Project settings, so a 'miro' kind from the box leaves the files unchanged.
  */
 export function saveMainLink(current: DesignTool | undefined, kind: DesignToolKind, url: string): DesignTool | undefined {
+  if (kind === 'miro') return current;
   const u = url.trim(), miro = designFiles(current).miro;
   if (!u) return miro ? { kind: 'miro', url: miro } : undefined;
-  return miro && kind !== 'miro' ? { kind, url: u, miroUrl: miro } : { kind, url: u };
+  return miro ? { kind, url: u, miroUrl: miro } : { kind, url: u };
+}
+
+/** The old Design-page box starts from the main (non-Miro) link only; a Miro-only project starts empty, as Figma. */
+export function mainLink(tool?: DesignTool): { kind: Exclude<DesignToolKind, 'miro'>; url: string } {
+  const f = designFiles(tool);
+  return f.figma ? { kind: 'figma', url: f.figma } : f.other ? { kind: f.other.kind as Exclude<DesignToolKind, 'miro'>, url: f.other.url } : { kind: 'figma', url: '' };
 }
 
 /** Who is looking: the role picker, and — when sign-in (Team access, F-015) is on — their roles in this project. */

@@ -23,8 +23,9 @@ does the Design page (button, side panel, Miro preview) and names both files in 
 - tests/designLinks.test.mjs (new): TC-500 (link checks) and TC-501 (saving keeps old projects working); the page uses
   the helpers and shows the admin hint (TC-502 source check; the manual run is in the PR)
 - tests/sidebar.test.mjs: TC-400 expects the new link, its own icon, and that it comes after Team
-- src/pages/Design.tsx: one line only. Its tool names come from `TOOL_NAMES`, so the new `miro` kind type-checks.
-  The page itself changes in build 2
+- src/pages/Design.tsx: the old one-link box (replaced in build 2) uses the shared tool names without Miro, starts
+  from the main link, saves through `saveMainLink` (keeps the Miro board, never writes kind 'miro'), and only the
+  admin sees Change or the edit fields
 - The wording of REQ-070's link-order criterion and of TC-400 ("Project settings" last, ADR-015) is changed
   in the spec PR (#87), so this build changes no spec file
 
@@ -52,6 +53,8 @@ does the Design page (button, side panel, Miro preview) and names both files in 
   keeps `miroUrl`, and it no longer offers Miro (set on Project settings). TC-501 covers both.
 - **Old links that predate the checks** (e.g. a Figma project page) would block saving the Miro board. Only a changed
   link is checked (`checkDesignInput`, TC-501). Links with a port or a user name/password are rejected (TC-500).
+- **A Miro-only project edited in the old box** (second review of #102) wrote the Figma link as kind 'miro'. The box
+  now starts from `mainLink` (empty Figma for a Miro-only project) and `saveMainLink` ignores a 'miro' kind (TC-501).
 - **The Design page still has its old editable box until build 2.** It keeps working on the same `designTool`
   (Figma, Penpot, Sketch, Other). A saved Miro link only appears on Project settings until build 2 lands.
 

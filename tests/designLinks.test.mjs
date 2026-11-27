@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkDesignInput, checkFigmaUrl, checkMiroUrl, designFiles, saveMainLink, isDesignAdmin, saveDesignFiles } from '../src/designLinks.ts';
+import { checkDesignInput, checkFigmaUrl, checkMiroUrl, designFiles, mainLink, saveMainLink, isDesignAdmin, saveDesignFiles } from '../src/designLinks.ts';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const FIG = 'https://www.figma.com/design/79331aUkgSOKxR8y54x6fS/Compass';
@@ -57,9 +57,19 @@ test('TC-501 (REQ-080, REQ-082): saving writes designTool and keeps old projects
   assert.deepEqual(saveMainLink(both, 'penpot', 'https://design.penpot.app/x'), { kind: 'penpot', url: 'https://design.penpot.app/x', miroUrl: MIRO });
   assert.deepEqual(saveMainLink(both, 'figma', ''), { kind: 'miro', url: MIRO }, 'clearing the main link keeps the Miro board');
   assert.equal(saveMainLink(fig, 'figma', ''), undefined);
+  // A Miro-only project: the old box starts empty as Figma, adding a Figma link keeps the board, and it never writes kind 'miro'.
+  const miroOnlyTool = { kind: 'miro', url: MIRO };
+  assert.deepEqual(mainLink(miroOnlyTool), { kind: 'figma', url: '' });
+  assert.deepEqual(mainLink(both), { kind: 'figma', url: FIG });
+  assert.deepEqual(mainLink(pen), { kind: 'penpot', url: pen.url });
+  assert.deepEqual(saveMainLink(miroOnlyTool, 'figma', FIG), { kind: 'figma', url: FIG, miroUrl: MIRO });
+  assert.deepEqual(saveMainLink(miroOnlyTool, 'miro', FIG), miroOnlyTool, 'a miro kind from the box changes nothing');
   const design = read('src/pages/Design.tsx');
   assert.match(design, /saveMainLink\(s\.designTool, tool\.kind, tool\.url\)/, 'the old box saves through saveMainLink');
   assert.match(design, /filter\(\(\[k\]\) => k !== 'miro'\)/, 'the old box does not offer Miro');
+  assert.match(design, /useState<DesignTool>\(\(\) => mainLink\(p\.spec\.designTool\)\)/, 'the old box starts from the main link');
+  assert.match(design, /\{admin && <Button size="sm" variant="ghost"/, 'only the admin sees Change');
+  assert.match(design, /\{editTool && admin \?/, 'only the admin gets the edit fields');
   // Spaces around a pasted link are trimmed.
   assert.deepEqual(saveDesignFiles(undefined, { figma: `  ${FIG} `, miro: '' }), { kind: 'figma', url: FIG });
 });
