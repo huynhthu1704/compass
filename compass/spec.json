@@ -2052,6 +2052,23 @@
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-27T00:00:00.000Z"
+    },
+    {
+      "id": "REQ-109",
+      "featureId": "F-015",
+      "title": "The project list keeps only one demo project",
+      "priority": "Should",
+      "status": "In build",
+      "intent": "compass/intent/2026-11-27-one-demo-project.md",
+      "design": "none: no new screen — the Projects page keeps its approved layout",
+      "story": "As the Product Owner, I want only one demo project in my project list, so that the list stays tidy however often I open the demo.",
+      "ac": [
+        "Given the project list already has the demo project\nWhen I click \"Open demo project\" or \"Explore the demo\"\nThen that demo project opens and no second copy is added",
+        "Given the project list has no demo project\nWhen I click \"Open demo project\"\nThen one demo project is added and opened",
+        "Given this browser saved several demo projects before this change\nWhen Compass loads\nThen only the most recently added demo project is kept, and every real project stays"
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     }
   ],
   "tests": [
@@ -3278,6 +3295,16 @@
       "type": "Automated",
       "status": "Pass",
       "gherkin": "Given src/index.css and src/components/RunView.tsx\nWhen the test reads the .ac-line and .mono-sm rules and the run page markup\nThen .ac-line sets font-size 13px, line-height 20px and white-space pre-line, and comes after .mono-sm\nAnd .mono-sm is still 11px / 16px\nAnd both the acceptance-criteria lines and the test-case steps on the run page use the ac-line class"
+    },
+    {
+      "id": "TC-509",
+      "reqIds": [
+        "REQ-109"
+      ],
+      "title": "Opening the demo reuses the demo project; duplicate demo projects are dropped on load",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a project list with a real project and a demo project\nWhen the demo is opened\nThen the existing demo project is returned and the list is unchanged\nAnd given a list with no demo project, a new demo project is created and added once\nAnd given a saved list with two demo projects and two real projects, loading keeps the first (most recent) demo project and both real projects in order"
     }
   ],
   "decisions": [
