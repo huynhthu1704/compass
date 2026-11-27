@@ -1530,6 +1530,21 @@
       ]
     },
     {
+      "id": "REQ-025",
+      "featureId": "F-003",
+      "title": "Figma components on the Components page, one section per feature",
+      "priority": "Should",
+      "status": "Done",
+      "intent": "compass/intent/2026-11-27-figma-components-and-sections.md",
+      "design": "none: rule for the Figma file and framework text, no UI",
+      "story": "As the product owner, I want every Figma component on the \"Components\" page and each feature's screens grouped in one Figma section, so that I review a feature at a glance and find reusable pieces in one place.",
+      "ac": [
+        "Given the project Figma file\nWhen an agent creates or finds a component (component or component set)\nThen it lives on the \"Components\" page, never on a feature, prototype or brand page, and an instance stays where it was shown",
+        "Given a new feature with UI\nWhen an agent draws its screens\nThen all of them sit inside one Figma section named \"<F-xxx / REQ ids> · <topic>\", and the design links that section",
+        "Given the framework text Compass installs (compass/design/README.md) and AGENTS.md\nWhen an agent reads it\nThen it states both rules, the same as travel-map REQ-061"
+      ]
+    },
+    {
       "id": "REQ-060",
       "featureId": "F-009",
       "title": "Each waiting item says what it is and how long it has waited",
@@ -2397,6 +2412,16 @@
       "gherkin": "Given the Idea page, the run brief and the generated feature and intent files\nWhen their labels and headings are read\nThen they say \"Done when\" and none says \"Outcome metric\" or \"baseline → target\""
     },
     {
+      "id": "TC-045",
+      "reqIds": [
+        "REQ-025"
+      ],
+      "title": "The design template, its installed copy and AGENTS.md state the Figma file layout",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given compass/design/README.md, src/framework/design-README.md and AGENTS.md\nWhen they are read\nThen they ask for components only on the \"Components\" page and one Figma section per feature"
+    },
+    {
       "id": "TC-300",
       "reqIds": [
         "REQ-060"
@@ -3059,6 +3084,18 @@
       "context": "F-020 lets the reviewer quote part of an agent answer and Ask or Revise. Two scope questions came up before the requirements were written.",
       "decision": "The Product Owner decided in chat on 2026-11-27: (1) every agent can be quoted and revised, including the coding agent, whose revision re-proposes only the quoted files; (2) a revision creates versions v1, v2… with a compare view, and Approve always applies the latest version. A revision may change only the quoted items; anything else is refused.",
       "consequences": "Runs keep a conversation and their versions. A revised version waits for its guardrails before it can be approved. The Ask and Revise of live runs cost Claude tokens, shown per answer."
+    },
+    {
+      "id": "ADR-007",
+      "date": "2026-11-27",
+      "title": "Figma file layout: one Components page, one section per feature",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-025"
+      ],
+      "context": "Components were spread over the prototype, design-system and feature pages of the \"Compass — Team floor\" Figma file, and feature screens lay loose on the canvas, which made reviews hard to follow.",
+      "decision": "The Product Owner decided in chat on 2026-11-27: every Figma component lives on the \"Components\" page, and each feature gets one Figma section holding all its screens, for this and every future feature. Same rule as travel-map REQ-061 / ADR-022.",
+      "consequences": "Existing components were moved (instances left where they were shown) and existing feature screens grouped; node ids are unchanged, so frame links still work. The design template Compass installs states the rule; CI cannot read Figma, so it is not checked automatically."
     },
     {
       "id": "ADR-010",
