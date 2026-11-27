@@ -186,7 +186,7 @@ export function RunView({ p, r, compact }: { p: Project; r: Run; compact?: boole
             {prop?.tests && <section className="card stack gap-md">{prop.tests.map((t) => (
               <div key={t.id} className="stack gap-xs" data-quote-source={t.id}>
                 <div className="row gap-sm wrap"><span className="mono t-brand">{t.id}</span><strong>{t.title}</strong><Badge tone="info">{t.reqIds.join(', ')}</Badge><Badge>{t.type}</Badge><span className="grow" />{pill(t.id, `${t.id} · whole test`, testText(t))}</div>
-                <div className="mono-sm t-tertiary" style={{ whiteSpace: 'pre-line' }} data-quote-source={`${t.id} · gherkin`}>{t.gherkin}</div>
+                <div className="mono-sm t-tertiary ac-line" data-quote-source={`${t.id} · gherkin`}>{t.gherkin}</div>
               </div>
             ))}</section>}
 
