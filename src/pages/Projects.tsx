@@ -1,11 +1,14 @@
 import { go } from '../App';
 import { demoProject } from '../demo';
 import { featureStage } from '../progress';
+import { canSeeProject, useSession } from '../firebase';
 import { store, useStore } from '../store';
 import { ago, Badge, Button, PageHead, StageChip } from '../ui';
 
 export function ProjectsPage() {
-  const { projects, settings } = useStore();
+  const { projects: all, settings } = useStore();
+  const session = useSession();
+  const projects = all.filter((p) => canSeeProject(p, session)); // F-015 REQ-032: only projects whose team lists me
   const openDemo = () => { const p = demoProject(); store.addProject(p); go(`/p/${p.id}`); };
   return (
     <div className="stack gap-xl">

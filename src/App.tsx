@@ -20,6 +20,8 @@ import { FeaturePage } from './pages/Feature';
 import { useStore } from './store';
 import { Toaster } from './ui';
 import { Sidebar } from './components/Sidebar';
+import { canSeeProject, firebaseEnabled, startSession, useSession } from './firebase';
+import { NoAccessPage, SignInPage } from './pages/SignIn';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -41,12 +43,19 @@ export default function App() {
   const [menu, setMenu] = useState(false);
   useEffect(() => { document.documentElement.dataset.theme = settings.theme; document.documentElement.lang = settings.lang; }, [settings.theme, settings.lang]);
   useEffect(() => setMenu(false), [parts.join('/')]);
+  useEffect(() => { void startSession(); }, []);
+  const session = useSession();
 
   const routeProject = parts[0] === 'p' ? parts[1] : undefined;
   const sync = useSync(routeProject); // hooks must run before any early return
-  if (!settings.role) return <><Onboarding /><Toaster /></>;
+  // F-015: with Firebase configured, people sign in with Google and their roles come from the team (REQ-032).
+  if (firebaseEnabled) {
+    if (session.status === 'loading') return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><span className="body t-secondary">Loading…</span></main>;
+    if (session.status === 'signed-out') return <><SignInPage logo={<Logo />} error={session.error} /><Toaster /></>;
+    if (!session.superAdmin && !session.access.length) return <><NoAccessPage logo={<Logo />} email={session.email} error={session.error} /><Toaster /></>;
+  } else if (!settings.role) return <><Onboarding /><Toaster /></>;
 
-  const p = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1]) : undefined;
+  const p = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1] && canSeeProject(x, session)) : undefined;
   const sub = parts[2] || '';
   let page;
   if (parts[0] === 'connect') page = <ConnectPage />;
