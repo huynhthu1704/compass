@@ -6,11 +6,12 @@ import { github } from '../github';
 import { designApproved } from '../progress';
 import { featureOf } from '../spec';
 import { useStore } from '../store';
+import { tokenFor } from '../token';
 import type { Project } from '../types';
 import { ago, Badge, Button, PageHead, REQ_STATUS_TONE, useAction } from '../ui';
 
 export function BuildPage({ p, fid }: { p: Project; fid: string }) {
-  const { settings } = useStore();
+  useStore(); // re-render on store changes
   const f = featureOf(p, fid);
   const ready = p.spec.requirements.filter((r) => r.featureId === fid && (r.status === 'Approved' || r.status === 'In build'));
   const [sel, setSel] = useState<string[]>(ready.filter((r) => r.status === 'Approved').slice(0, 1).map((r) => r.id));
@@ -51,7 +52,7 @@ export function BuildPage({ p, fid }: { p: Project; fid: string }) {
       {runs.length > 0 && (
         <section className="stack gap-md">
           <h2 className="h3">Agent pull requests</h2>
-          {runs.map((r) => <PrRow key={r.id} p={p} rid={r.id} token={settings.githubToken} />)}
+          {runs.map((r) => <PrRow key={r.id} p={p} rid={r.id} token={tokenFor(p)} />)}
         </section>
       )}
     </div>

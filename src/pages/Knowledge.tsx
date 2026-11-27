@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { loadRepoDocs, rag } from '../rag';
 import { useStore } from '../store';
+import { tokenFor } from '../token';
 import type { Project } from '../types';
 import { Badge, Button, PageHead, useAction } from '../ui';
 
 export function KnowledgePage({ p }: { p: Project }) {
-  const { settings } = useStore();
+  useStore(); // re-render on store changes
   const [q, setQ] = useState('');
   const [asked, setAsked] = useState('');
   const [, force] = useState(0);
@@ -16,7 +17,7 @@ export function KnowledgePage({ p }: { p: Project }) {
   const files = rag.repoDocs(p.id);
 
   const reindex = () => run(async () => {
-    const docs = await loadRepoDocs(settings.githubToken!, p, (n, t) => setProg(`${n}/${t}`));
+    const docs = await loadRepoDocs(tokenFor(p)!, p, (n, t) => setProg(`${n}/${t}`));
     rag.setRepoDocs(p.id, docs); setProg(''); force((x) => x + 1);
     return `Indexed ${docs.length} files`;
   });
@@ -24,7 +25,7 @@ export function KnowledgePage({ p }: { p: Project }) {
   return (
     <div className="stack gap-xl">
       <PageHead over="RAG layer" title="Project knowledge" sub="What the agents can retrieve: repository files (code & docs) plus the spec. Retrieval is BM25 in your browser; every agent run logs which chunks it used."
-        right={settings.githubToken && p.repo && !p.demo ? <Button variant="secondary" disabled={busy} onClick={reindex}>{busy ? `Indexing ${prog}` : 'Re-index repository'}</Button> : undefined} />
+        right={tokenFor(p) && p.repo && !p.demo ? <Button variant="secondary" disabled={busy} onClick={reindex}>{busy ? `Indexing ${prog}` : 'Re-index repository'}</Button> : undefined} />
       <div className="grid-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
         <div className="card kpi"><span className="label-sm t-tertiary">Repository files</span><span className="v">{files.length}</span></div>
         <div className="card kpi"><span className="label-sm t-tertiary">Spec items</span><span className="v">{1 + p.spec.requirements.length + p.spec.tests.length}</span></div>

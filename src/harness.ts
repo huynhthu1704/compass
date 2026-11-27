@@ -13,6 +13,9 @@ import { github } from './github';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
 import { nextId, now, store, uid } from './store';
+import { missingToken, tokenFor } from './token';
+import { recordApproval } from './approvals';
+import { gateForAgent, withReqsInBuild } from './team';
 import { featureName, featureOf, migrateSpec } from './spec';
 import { designApproved } from './progress';
 import { canApprove } from './conversation';
@@ -80,7 +83,7 @@ export async function startRun(projectId: string, agentId: AgentId, goal: string
 
     // ---- RAG ----
     let index: Index;
-    try { index = await rag.ensure(settings.githubToken, p); }
+    try { index = await rag.ensure(tokenFor(p), p); }
     catch (e) { step(pid, rid, 'error', 'Repository indexing failed — continuing with spec only', (e as Error).message, { ok: false }); index = rag.index(p); }
     const reqText = (opts.reqIds || []).map((id) => p.spec.requirements.find((r) => r.id === id)).filter(Boolean).map((r) => `${r!.title} ${r!.story} ${r!.ac.join(' ')}`).join(' ');
     const hits = index.search(`${goal} ${reqText}`, 6);
@@ -165,7 +168,7 @@ export const preview = (o: Record<string, unknown>) => Object.entries(o).map(([k
 
 async function execTool(pid: string, rid: string, name: string, input: Record<string, unknown>, index: Index): Promise<string> {
   const p = getP(pid);
-  const token = store.get().settings.githubToken;
+  const token = tokenFor(getP(pid));
   switch (name) {
     case 'search_knowledge': return fmtHits(index.search(String(input.query), 6)) || 'No results.';
     case 'list_files': { const pre = String(input.prefix || ''); return index.files.filter((f) => !f.startsWith('spec:') && f.startsWith(pre)).join('\n') || 'No files.'; }
@@ -332,8 +335,12 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   const r = p.runs.find((x) => x.id === rid)!;
   const gate = canApprove(r);
   if (!gate.ok) throw new Error(gate.why);
-  const token = store.get().settings.githubToken;
-  step(pid, rid, 'approval', 'Approved by human reviewer', store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
+  const token = tokenFor(getP(pid));
+  // REQ-034 AC4: a code change on a real repo needs a token; stop before anything is written.
+  { const miss = !r.proposal && r.changes.length && r.mode !== 'demo' ? missingToken(getP(pid)) : null; if (miss) throw new Error(miss); }
+  // REQ-037 AC1: the approval is recorded in Firebase (role checked) before anything is written; null with sign-in off.
+  const by = await recordApproval(getP(pid), gateForAgent(r.agent), r.reqIds?.length ? r.reqIds : [r.featureId || r.id]);
+  step(pid, rid, 'approval', 'Approved by human reviewer', by ? `by ${by}` : store.get().settings.githubUser ? `by @${store.get().settings.githubUser}` : undefined, { ok: true });
   if (r.proposal) {
     const pi = r.proposal.idea;
     store.spec(pid, (s) => ({
@@ -350,13 +357,16 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
   if (r.changes.length) {
     if (!token || !p.repo || p.demo || r.mode === 'demo') {
       patchRun(pid, rid, (x) => ({ ...x, status: 'approved' }));
-      if (r.mode === 'demo' && token && p.repo && !p.demo) return 'Approved (demo). Placeholder code is NOT pushed to your repo — add an Anthropic key, or implement this requirement with Claude Code following AGENTS.md.';
+      // A demo-mode run on a real repo never changes the spec — also when the token is missing or still loading
+      // (REQ-034 AC4), so autosync cannot later push In build for a change that will never have a pull request.
+      if (r.mode === 'demo' && p.repo && !p.demo && (token || missingToken(p))) return 'Approved (demo). Placeholder code is NOT pushed to your repo — add an Anthropic key, or implement this requirement with Claude Code following AGENTS.md.';
       store.spec(pid, (s) => ({ ...s, requirements: s.requirements.map((q) => (r.reqIds?.includes(q.id) ? { ...q, status: 'In build' } : q)) }));
       return 'Approved. Connect a GitHub repo to open a pull request automatically.';
     }
     const branch = `compass/${(r.featureId || 'f').toLowerCase()}-${(r.reqIds || ['change']).join('-').toLowerCase()}-${slug(r.goal).slice(0, 20)}`.replace(/-+$/, '');
-    store.spec(pid, (s) => ({ ...s, requirements: s.requirements.map((q) => (r.reqIds?.includes(q.id) ? { ...q, status: 'In build' } : q)) }));
-    const proj = getP(pid);
+    // In build goes into the committed spec, but into the store only once GitHub accepted the commit and the PR, so an
+    // expired or refused token leaves nothing half-written (REQ-034 AC4).
+    const proj = { ...getP(pid), spec: withReqsInBuild(getP(pid).spec, r.reqIds) };
     step(pid, rid, 'github', `Commit ${r.changes.length} files to ${branch}`);
     const plan = planFile(proj, r);
     await github.commit(token, p.repo, branch, `${(r.reqIds || []).join(', ')}: ${r.goal}`.slice(0, 72) + '\n\nGenerated by Compass coding agent.', [plan, ...r.changes, ...specFiles(proj).filter((f) => f.path === 'compass/spec.json' || f.path === 'compass/requirements.md' || f.path === 'compass/handover.md' || f.path === 'compass/features.md' || f.path === `compass/features/${r.featureId}.md`)]);
@@ -364,6 +374,7 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
     const pr = await github.createPR(token, p.repo, `${(r.reqIds || []).join(', ')}: ${r.goal}`.slice(0, 90), branch, body);
     step(pid, rid, 'github', `Opened pull request #${pr.number}`, pr.html_url, { ok: true });
     patchRun(pid, rid, (x) => ({ ...x, status: 'approved', branch, prNumber: pr.number, prUrl: pr.html_url }));
+    store.spec(pid, (s) => withReqsInBuild(s, r.reqIds));
     store.update(pid, (x) => ({ ...x, dirty: false }));
     return `Pull request #${pr.number} opened. CI is running.`;
   }
@@ -458,8 +469,8 @@ _Opened by the Compass coding agent (${r.mode}). Trace id: ${r.id}._`;
 // ---------------- framework & spec sync ----------------
 export async function installFramework(pid: string, opts: { starter: boolean; direct: boolean }) {
   const p = getP(pid);
-  const token = store.get().settings.githubToken;
-  if (!token || !p.repo) throw new Error('Connect GitHub first');
+  const token = tokenFor(getP(pid));
+  if (!token || !p.repo) throw new Error(missingToken(p) || 'Connect GitHub first');
   const files = frameworkFiles(p, opts);
   const existing = new Set((await github.tree(token, p.repo)).map((f) => f.path));
   // On an existing repo, only ADD missing framework files: a repo may have its own, stronger versions of the
@@ -484,8 +495,8 @@ export async function installFramework(pid: string, opts: { starter: boolean; di
 
 export async function commitSpec(pid: string) {
   const p = getP(pid);
-  const token = store.get().settings.githubToken;
-  if (!token || !p.repo) throw new Error('Connect GitHub first');
+  const token = tokenFor(getP(pid));
+  if (!token || !p.repo) throw new Error(missingToken(p) || 'Connect GitHub first');
   const snapshot = JSON.stringify(p.spec);
   const c = await github.commit(token, p.repo, p.repo.defaultBranch, `docs(compass): update spec — ${p.spec.requirements.length} requirements, ${p.spec.tests.length} tests`, specFiles(p));
   // only clear "dirty" if nothing changed while the commit was in flight
@@ -495,8 +506,8 @@ export async function commitSpec(pid: string) {
 
 export async function pullSpec(pid: string) {
   const p = getP(pid);
-  const token = store.get().settings.githubToken;
-  if (!token || !p.repo) throw new Error('Connect GitHub first');
+  const token = tokenFor(getP(pid));
+  if (!token || !p.repo) throw new Error(missingToken(p) || 'Connect GitHub first');
   const f = await github.file(token, p.repo, 'compass/spec.json');
   if (!f) throw new Error('No compass/spec.json in this repo yet');
   store.update(pid, (x) => ({ ...x, spec: migrateSpec(JSON.parse(f.content)), specSha: f.sha, dirty: false, frameworkInstalled: true }));
@@ -510,17 +521,19 @@ export function nextVersion(tags: string[]) {
 
 export async function release(pid: string, runIds: string[], onStep: (s: string) => void) {
   const p = getP(pid);
-  const settings = store.get().settings;
-  const live = !p.demo && !!settings.githubToken && !!p.repo;
+  const miss = missingToken(p); // REQ-034 AC4: never simulate a release of a real repo for lack of a token
+  if (miss) throw new Error(miss);
+  const live = !p.demo && !!tokenFor(p) && !!p.repo;
   const runs = p.runs.filter((r) => runIds.includes(r.id) && (!live || r.prNumber));
   if (live && !runs.length) throw new Error('No pull requests to release. Demo-mode changes are never pushed to GitHub — build with a live agent or merge your own PRs.');
   const reqIds = [...new Set(runs.flatMap((r) => r.reqIds || []))];
+  await recordApproval(p, 'release', reqIds.length ? reqIds : runIds); // REQ-033/037: DM or PO, recorded before any merge
   const tag = nextVersion(p.releases.map((x) => x.tag));
   const byFeature = new Map<string, string[]>();
   for (const id of reqIds) { const r = p.spec.requirements.find((x) => x.id === id); const k = r?.featureId || '—'; byFeature.set(k, [...(byFeature.get(k) || []), `- **${id}** ${r?.title || ''}`]); }
   const notes = `## ${tag}\n\n${[...byFeature].map(([fid, lines]) => `### ${fid} ${featureOf(p, fid)?.name || ''}\n${lines.join('\n')}`).join('\n\n')}\n\nReleased with Compass.`;
 
-  if (p.demo || !settings.githubToken || !p.repo) {
+  if (p.demo || !tokenFor(p) || !p.repo) {
     for (const r of runs) { onStep(`Merge ${r.prNumber ? '#' + r.prNumber : r.goal} (simulated)`); await sleep(300); }
     onStep(`Tag ${tag} and deploy (simulated)`); await sleep(300);
     store.update(pid, (x) => ({
@@ -530,7 +543,7 @@ export async function release(pid: string, runIds: string[], onStep: (s: string)
     }));
     return tag;
   }
-  const t = settings.githubToken, repo = p.repo;
+  const t = tokenFor(p)!, repo = p.repo;
   for (const r of runs.filter((r) => r.prNumber)) {
     onStep(`Checking CI for #${r.prNumber}`);
     const pr = await github.getPR(t, repo, r.prNumber!);

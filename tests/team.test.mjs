@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, approvedBy, canPass, gateHint, isSuperAdmin, removeMember, setRoles } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, gateForAgent, projectVisible, startScreen, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -84,4 +84,100 @@ test('TC-071 (REQ-036): approvedBy names the person and the role that owns the g
   assert.equal(approvedBy('ba@example.com', ['BA', 'QA'], 'tests'), 'ba@example.com (QA)');
   assert.equal(approvedBy('po@example.com', ['Admin'], 'design', true), 'po@example.com (super admin)');
   assert.equal(approvedBy('dev@example.com', ['Dev'], 'requirements'), null, 'no role that owns the gate → no audit text');
+});
+
+test('TC-060, TC-062 (REQ-030, REQ-031): a team becomes a Firestore document with Admin only in admins, and back', () => {
+  const team = [{ email: 'PO@example.com', roles: ['PO', 'Admin'] }, { email: 'ba@example.com', roles: ['QA', 'BA'] }];
+  const d = teamDoc('Travel Journal', { owner: 'o', name: 'r', defaultBranch: 'main' }, team);
+  assert.deepEqual(d, {
+    name: 'Travel Journal', repo: { owner: 'o', name: 'r' },
+    members: ['po@example.com', 'ba@example.com'], admins: ['po@example.com'],
+    team: { 'po@example.com': ['PO'], 'ba@example.com': ['BA', 'QA'] },
+  });
+  assert.deepEqual(membersFromDoc(d), [{ email: 'po@example.com', roles: ['PO', 'Admin'] }, { email: 'ba@example.com', roles: ['BA', 'QA'] }]);
+  assert.deepEqual(membersFromDoc({ ...d, team: { ...d.team, 'ba@example.com': ['BA', 'Admin'] } })[1].roles, ['BA'], "'Admin' in a role list is ignored");
+});
+
+test('TC-073 (REQ-038 AC1): the baseline lists the approvals already in the spec', () => {
+  const spec = {
+    features: [{ id: 'F-001', design: { status: 'Approved', approvedBy: 'PO' } }, { id: 'F-002', design: { status: 'Draft' } }, { id: 'F-003' }],
+    requirements: [{ id: 'REQ-001', status: 'Approved', approvedBy: 'the Product Owner (in chat)' }, { id: 'REQ-002', status: 'Draft' }, { id: 'REQ-003', status: 'Done' }],
+  };
+  assert.deepEqual(baselineFrom(spec), [
+    { item: 'F-001', gate: 'design', approvedBy: 'PO' },
+    { item: 'REQ-001', gate: 'requirements', approvedBy: 'the Product Owner (in chat)' },
+    { item: 'REQ-003', gate: 'requirements', approvedBy: '' },
+  ]);
+});
+
+test('TC-062, TC-063 (REQ-031): a change is applied to the team as saved now, so a stale page cannot bring back a removed person', () => {
+  // A second Admin loaded [po, ba, dev]; meanwhile the super admin removed ba. The second Admin now adds qa.
+  const saved = [{ email: 'po@example.com', roles: ['Admin'] }, { email: 'dev@example.com', roles: ['Dev'] }];
+  const r = applyTeamOp(saved, { kind: 'add', email: 'qa@example.com', roles: ['QA'] });
+  assert.deepEqual(r.team.map((m) => m.email), ['po@example.com', 'dev@example.com', 'qa@example.com'], 'ba stays removed');
+  assert.deepEqual(applyTeamOp(saved, { kind: 'remove', email: 'po@example.com' }), { ok: false, team: saved, error: LAST_ADMIN });
+  assert.equal(applyTeamOp(saved, { kind: 'set', email: 'dev@example.com', roles: ['Dev', 'QA'] }).team[1].roles.join(), 'QA,Dev');
+  const first = applyTeamOp([], { kind: 'add', email: 'ba@example.com', roles: ['BA'] }, true);
+  assert.equal(first.ok, false, 'a new team needs an Admin');
+  assert.match(first.error, /new team needs an Admin/);
+  assert.equal(applyTeamOp([], { kind: 'add', email: 'ba@example.com', roles: ['BA', 'Admin'] }, true).ok, true);
+});
+
+test('TC-068 (REQ-034): GitHub calls use the project token for signed-in members', () => {
+  assert.equal(pickToken(undefined, 'project-token', true), 'project-token', 'a member without their own token uses the project token');
+  assert.equal(pickToken('own-token', 'project-token', true), 'project-token', 'with team access the project token wins');
+  assert.equal(pickToken('own-token', null, true), 'own-token', 'no project token yet → own token');
+  assert.equal(pickToken(undefined, null, true), undefined, 'no token at all → missing (the portal asks for an Admin)');
+  assert.equal(pickToken('own-token', 'project-token', false), 'own-token', 'sign-in off → device token, as before');
+});
+
+test('TC-068 (REQ-034 AC4): with no token, a signed-in member is told to ask an Admin', () => {
+  assert.equal(missingTokenMessage(true), "The project's GitHub token is missing or expired — ask an Admin");
+  assert.equal(missingTokenMessage(false), 'Connect GitHub first', 'sign-in off: as before');
+});
+
+test('TC-068 (REQ-034 AC4): In build is prepared on a copy, so a refused GitHub commit leaves the spec unchanged', () => {
+  const spec = { requirements: [{ id: 'REQ-001', status: 'Approved' }, { id: 'REQ-002', status: 'Approved' }] };
+  const next = withReqsInBuild(spec, ['REQ-002']);
+  assert.deepEqual(next.requirements.map((q) => q.status), ['Approved', 'In build']);
+  assert.deepEqual(spec.requirements.map((q) => q.status), ['Approved', 'Approved'], 'the input (the store copy) is not changed');
+});
+
+test('TC-064 (REQ-032 AC2): shared projects not on this device are offered to open', () => {
+  const access = [{ id: 'a', roles: ['BA'], repo: { owner: 'O', name: 'Travel' } }, { id: 'b', roles: ['QA'], repo: { owner: 'o', name: 'shop' } }, { id: 'c', roles: ['UX'] }];
+  assert.deepEqual(sharedToOpen(access, [{ owner: 'o', name: 'travel' }, null]).map((a) => a.id), ['b'], 'Travel is local (case-insensitive); c has no repo');
+  assert.deepEqual(sharedToOpen(access, []).map((a) => a.id), ['a', 'b']);
+});
+
+test('TC-066 (REQ-033): approving an agent run passes the gate of its stage', () => {
+  assert.deepEqual(['ideation', 'requirements', 'designer', 'testdesign', 'coder', 'reviewer', 'release'].map(gateForAgent), ['intent', 'requirements', 'design', 'tests', 'build', 'build', 'release']);
+});
+
+test('TC-071 (REQ-036, REQ-037 AC3): the record role is the role that owns the gate, or "super admin"', () => {
+  assert.deepEqual(approvalBy('Ba@Example.com', ['QA', 'BA'], 'requirements'), { role: 'BA', text: 'ba@example.com (BA)' });
+  assert.deepEqual(approvalBy('ba@example.com', ['QA', 'BA'], 'tests'), { role: 'QA', text: 'ba@example.com (QA)' });
+  assert.deepEqual(approvalBy('po@example.com', ['PO'], 'build', true), { role: 'super admin', text: 'po@example.com (super admin)' });
+  assert.equal(approvalBy('dev@example.com', ['Dev'], 'design'), null);
+});
+
+test('TC-075 (REQ-039, REQ-040): the role picker is shown only without Firebase or inside the demo, never before sign-in', () => {
+  const on = (o) => startScreen({ firebase: true, status: 'signed-in', demo: false, hasRole: false, hasAccess: true, ...o });
+  assert.equal(on({}), 'app', 'signed in with team roles: no role screen');
+  assert.equal(on({ hasRole: true }), 'app', 'a role picked earlier does not matter');
+  assert.equal(on({ hasAccess: false }), 'no-access');
+  assert.equal(on({ hasAccess: false, demo: true }), 'role-picker', 'Try the demo → pick a role');
+  assert.equal(on({ hasAccess: false, demo: true, hasRole: true }), 'app');
+  assert.equal(on({ status: 'signed-out', demo: true }), 'sign-in', 'no demo before sign-in');
+  assert.equal(on({ status: 'loading' }), 'loading');
+  assert.equal(startScreen({ firebase: false, status: 'off', demo: false, hasRole: false, hasAccess: false }), 'role-picker', 'sign-in off: as today');
+  assert.equal(startScreen({ firebase: false, status: 'off', demo: false, hasRole: true, hasAccess: false }), 'app');
+});
+
+test('TC-076 (REQ-040 AC2/AC3): in the demo only sample projects are visible; never a real project', () => {
+  const real = { repo: { owner: 'O', name: 'Travel' } }, sample = { repo: null, demo: true }, local = { repo: null };
+  const demo = { status: 'signed-in', demo: true, superAdmin: true, accessIds: ['o__travel'] };
+  assert.deepEqual([real, sample, local].map((p) => projectVisible(p, demo)), [false, true, false], 'even the super admin sees only samples in the demo');
+  const member = { status: 'signed-in', demo: false, superAdmin: false, accessIds: ['o__travel'] };
+  assert.deepEqual([real, sample, local].map((p) => projectVisible(p, member)), [true, false, false]);
+  assert.equal(projectVisible(real, { status: 'off', superAdmin: false, accessIds: [] }), true, 'sign-in off: as before');
 });

@@ -39,6 +39,7 @@
 | REQ-072 | F-013 | The feature list is readable | Should | Approved | TC-403, TC-405 |
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
+| REQ-075 | F-013 | The sidebar has no Knowledge link for any role | Should | Approved | TC-407 |
 | REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216, TC-217 |
 | REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214, TC-217 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
@@ -46,6 +47,20 @@
 | REQ-054 | F-020 | The conversation is kept with the run, safely | Should | Approved | TC-212, TC-213 |
 | REQ-063 | F-009 | Handoffs are shown on phones too | Should | In build | TC-311, TC-312, TC-313, TC-314, TC-315 |
 | REQ-045 | F-017 | The agent trace can be folded and unfolded | Should | Approved | TC-090, TC-091 |
+| REQ-030 | F-015 | An admin adds a person to a project by email with one or more roles | Must | In build | TC-060, TC-061, TC-067 |
+| REQ-031 | F-015 | An admin changes a person's roles or removes them from the project | Should | In build | TC-062, TC-063 |
+| REQ-032 | F-015 | People sign in with Google and see only the projects whose team lists their email | Must | In build | TC-064, TC-065 |
+| REQ-033 | F-015 | Each approval gate can be passed only by a person with the role that owns it | Must | In build | TC-066, TC-067 |
+| REQ-034 | F-015 | A project Admin stores one GitHub token that the project's members use | Must | In build | TC-067, TC-068, TC-069 |
+| REQ-035 | F-015 | The super admin sees every project and can make someone a project Admin | Should | In build | TC-067, TC-070 |
+| REQ-036 | F-015 | Every approval records the email and role of the person who gave it | Should | In build | TC-067, TC-071 |
+| REQ-037 | F-015 | Each approval is recorded in Firebase, whose rules accept it only from the owning role | Must | In build | TC-067, TC-072 |
+| REQ-038 | F-015 | Approvals in the repo that Firebase does not confirm are flagged | Should | In build | TC-067, TC-073, TC-074 |
+| REQ-039 | F-015 | With sign-in on, roles come from the team instead of the role picker | Should | Approved | TC-075, TC-077 |
+| REQ-040 | F-015 | A signed-in person can try the demo with a role of their choice | Should | Approved | TC-076, TC-077 |
+| REQ-080 | F-003 | The admin links the project's Figma file and Miro board on a Project settings page | Must | Approved | TC-400, TC-500, TC-501, TC-502 |
+| REQ-081 | F-003 | Every Design page keeps the preview in focus and shows the design files behind a button | Must | Approved | TC-502, TC-503, TC-505, TC-506 |
+| REQ-082 | F-003 | Projects with the old single design link keep working, and agents name both files | Must | Approved | TC-501, TC-504, TC-507 |
 | REQ-108 | F-011 | Acceptance criteria and test steps are readable on the agent run page | Should | Approved | TC-508 |
 
 ## REQ-001 · The Compass repo has the Compass Framework
@@ -843,7 +858,7 @@ _AC3_
 ```gherkin
 Given a project is open
 When I look under the project card
-Then the links are, in order, Feature board, Team floor, Agent runs, Release and Knowledge, and Knowledge has the tooltip "Project knowledge the agents search (RAG)"
+Then the links are, in order, Feature board, Team floor, Agent runs, Release and Project settings (REQ-075: no Knowledge link; ADR-015: Project settings last, after the Admin-only Team link once Team access adds it)
 ```
 
 _AC4_
@@ -949,6 +964,27 @@ _AC2_
 Given the onboarding page
 When I look at the overline above the title
 Then it reads "Compass" and no screen of the portal shows the text "AI dev portal"
+```
+
+## REQ-075 · The sidebar has no Knowledge link for any role
+As any portal user, I want the sidebar to show only the pages of the delivery flow, so that the technical Knowledge (RAG) page does not distract me.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a project is open, in any role (PO, BA, DM, UX, Dev, QA, Ops)
+When I look under the project card
+Then the links are, in order, Feature board, Team floor, Agent runs, Release and Project settings (ADR-015), and there is no Knowledge link
+```
+
+_AC2_
+```gherkin
+Given the address /p/<project>/knowledge
+When I open it directly
+Then the Knowledge page still opens, and agent runs keep indexing and searching the repository as before
 ```
 
 ## REQ-050 · Quote any part of an agent run
@@ -1229,6 +1265,482 @@ _AC4_
 Given a run that moves from running to awaiting approval while it is shown
 When the status changes and the Product Owner has not used the toggle
 Then the trace folds; once the toggle was used, her choice is kept
+```
+
+## REQ-030 · An admin adds a person to a project by email with one or more roles
+As a project admin, I want to add a person to my project by email and give them one or more roles, so that they can work on the project in the roles they have.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given I am an Admin of the project or the super admin
+When I open the project's Team page
+Then I see the team list (email, roles) and an "Add person" form with an email field and role checkboxes PO, BA, UX, QA, Dev, DM, Ops and Admin
+```
+
+_AC2_
+```gherkin
+Given the Add person form
+When I enter "Ba@Example.com " and tick BA and QA and click Add
+Then ba@example.com appears in the list with the roles BA and QA (email stored trimmed and in lower case)
+```
+
+_AC3_
+```gherkin
+Given the Add person form
+When the email is not a valid address, no role is ticked, or the email is already on the team
+Then Add is refused with a message saying why and the list is unchanged
+```
+
+_AC4_
+```gherkin
+Given I am signed in without the Admin role on this project and I am not the super admin
+When I open the project
+Then I do not see the Team page in the menu and Firestore refuses any change to its team
+```
+
+_AC5_
+```gherkin
+Given a project that has no team yet
+When anyone other than the super admin tries to create its team
+Then Firestore refuses it; only the super admin creates a project's first team and names at least one Admin in it
+```
+
+## REQ-031 · An admin changes a person's roles or removes them from the project
+As a project admin, I want to change someone's roles or remove them, so that access follows the person's current job.
+
+**Priority:** Should · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a person on the team
+When I change their role checkboxes and save
+Then the list shows the new roles and their next action in the portal uses them
+```
+
+_AC2_
+```gherkin
+Given a person on the team
+When I click Remove and confirm
+Then they are gone from the list and, at their next page load, no longer see the project
+```
+
+_AC3_
+```gherkin
+Given the project has only one Admin
+When anyone tries to remove that person or untick their Admin role
+Then it is refused with "A project needs at least one Admin"
+```
+
+_AC4_
+```gherkin
+Given I remove a person
+When the removal is saved
+Then the page reminds me to replace the project's GitHub token, because they may have copied it
+```
+
+## REQ-032 · People sign in with Google and see only the projects whose team lists their email
+As a team member, I want to sign in with my Google account, so that Compass knows which projects and roles are mine.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given Firebase is configured and I am not signed in
+When I open the portal
+Then I see a "Sign in with Google" screen and no project data
+```
+
+_AC2_
+```gherkin
+Given I sign in with a Google account whose verified email matches a team entry (case-insensitive)
+When sign-in completes
+Then the Projects page shows only the projects whose team lists my email, and the sidebar account card shows my email; its menu has Sign out
+```
+
+_AC3_
+```gherkin
+Given I sign in with a Google account that is on no team and is not the super admin
+When sign-in completes
+Then I see "You have no access yet — ask your admin" with my email and Sign out, and no project data
+```
+
+_AC4_
+```gherkin
+Given a Google account whose email is not verified
+When it signs in
+Then it is treated as having no access
+```
+
+_AC5_
+```gherkin
+Given Firebase is not configured (demo mode)
+When I open the portal
+Then it works as today without sign-in
+```
+
+## REQ-033 · Each approval gate can be passed only by a person with the role that owns it
+As the product owner, I want each gate tied to its role, so that only the right person can approve each stage.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given the gate rules: intent and requirements → PO (BA may also approve requirements); design → UX or PO; test cases → QA; start a build → Dev; merge and release → DM or PO; team and token → Admin
+When a signed-in person opens a gate whose role they do not have
+Then its button is disabled with the hint "Needs the <role> role"
+```
+
+_AC2_
+```gherkin
+Given a person with several roles (e.g. BA and QA)
+When they open the requirements and test-case gates
+Then both are enabled, and the design and release gates are disabled
+```
+
+_AC3_
+```gherkin
+Given a person changes the page in the browser to enable a disabled gate
+When the approval is saved
+Then the Firestore rules refuse its approval record (REQ-037), the portal shows "Not allowed for your roles" and nothing is committed to GitHub (an approval committed outside the portal without a record is flagged, REQ-038)
+```
+
+_AC4_
+```gherkin
+Given the super admin
+When they open any gate
+Then it is enabled
+```
+
+## REQ-034 · A project Admin stores one GitHub token that the project's members use
+As a project admin, I want to save one GitHub token for the project, so that members without their own GitHub account can save their work to the repo.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given I am an Admin of the project
+When I open Team → GitHub token
+Then I can paste a token, test it and save it; the help asks for a fine-grained token for this repo only, with Contents, Pull requests and Issues: Read & write and an expiry date
+```
+
+_AC2_
+```gherkin
+Given a saved project token and a signed-in member without their own token
+When they approve requirements and the portal commits
+Then the commit is made with the project token and approvedBy names the member
+```
+
+_AC3_
+```gherkin
+Given a member who is not an Admin
+When they open the Team page
+Then the page shows no token value and no Test or Replace button (their browser can still read the token to make GitHub writes — ADR-011)
+```
+
+_AC4_
+```gherkin
+Given the token is missing, expired or refused by GitHub
+When a member tries a GitHub action
+Then the portal says "The project's GitHub token is missing or expired — ask an Admin" and nothing is half-written
+```
+
+## REQ-035 · The super admin sees every project and can make someone a project Admin
+As the super admin, I want to see every project and name its Admins, so that each project can manage its own team.
+
+**Priority:** Should · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given the super admin's Google email is fixed in the Firestore rules as a one-way hash (the plain email is never in the repo)
+When that account, with a verified email, signs in to Compass for the first time
+Then the portal records it in the Firestore document config/access, and it sees every project and can open every Team page
+```
+
+_AC2_
+```gherkin
+Given I am the super admin on a project's Team page
+When I tick Admin for a person
+Then that person can manage this project's team and token, and no other project's
+```
+
+_AC3_
+```gherkin
+Given a signed-in person whose email does not match the super admin hash, or is not verified
+When the portal tries to create or change config/access
+Then Firestore refuses it; once config/access exists, no browser can change it
+```
+
+## REQ-036 · Every approval records the email and role of the person who gave it
+As the product owner, I want every approval to name the person and role, so that the audit trail shows who approved what.
+
+**Priority:** Should · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a signed-in person approves an intent, requirement, design, test case or release
+When the approval is saved to spec.json
+Then approvedBy is "<email> (<role>)", e.g. "ba@example.com (BA)", and approvedAt is the time
+```
+
+_AC2_
+```gherkin
+Given a person with the Dev role (or the super admin) starts a build
+When the build starts
+Then its approval record names them (REQ-037) and the agent run shows "Started by <email> (<role>)"; nothing is written to spec.json for a build
+```
+
+_AC3_
+```gherkin
+Given demo mode without sign-in
+When something is approved
+Then approvedBy keeps today's value
+```
+
+## REQ-037 · Each approval is recorded in Firebase, whose rules accept it only from the owning role
+As the product owner, I want every approval checked by Firebase before it is saved, so that a role check cannot be skipped by changing the page.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a signed-in person passes a gate (intent, requirements, design, test cases, build or release)
+When the portal saves the approval
+Then it first writes an approval record to Firestore (project, item ids, gate, email, role, time) and commits to GitHub, or starts the build, only after Firestore accepts it
+```
+
+_AC2_
+```gherkin
+Given a person without a role that owns the gate, who is not the super admin
+When an approval record is written for that gate
+Then the Firestore rules refuse it, the portal shows "Not allowed for your roles" and nothing is committed
+```
+
+_AC3_
+```gherkin
+Given a signed-in person writes an approval record
+When the record's email is not their own verified sign-in email, or its role is neither one of their roles on that project that owns the gate nor "super admin" written by the account listed in config/access
+Then the Firestore rules refuse it (a BA cannot record "po@example.com (PO)" or "ba@example.com (super admin)"; the super admin can record "<email> (super admin)" for any gate)
+```
+
+_AC4_
+```gherkin
+Given an approval record exists
+When anyone tries to change or delete it
+Then the Firestore rules refuse it
+```
+
+_AC5_
+```gherkin
+Given Firestore accepted the record but the GitHub commit fails
+When the portal reports the error
+Then the approval is shown as not saved and retrying reuses the same record
+```
+
+## REQ-038 · Approvals in the repo that Firebase does not confirm are flagged
+As the product owner, I want approvals made outside the portal to stand out, so that a forged approvedBy is noticed.
+
+**Priority:** Should · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given the super admin saves a project's first team
+When the team is created
+Then the portal stores in Firebase, in the same write as the first team, a baseline of the approvals already in spec.json (item, gate, approvedBy); the Firestore rules accept the baseline only from the super admin, only together with the first team, and refuse any later change or delete
+```
+
+_AC2_
+```gherkin
+Given the project has a team
+When the portal loads the project
+Then every approval in spec.json that is neither in the baseline nor matched by an approval record (same item, gate, email and role) shows a red "Unconfirmed" badge naming who it claims, whatever date it claims; if the project has a team but no baseline, every approval without a matching record is flagged
+```
+
+_AC3_
+```gherkin
+Given unconfirmed approvals exist
+When a person opens the project's Feature board
+Then a notice lists them with links, so a person with the owning role can approve again
+```
+
+_AC4_
+```gherkin
+Given demo mode, or approvals listed in the baseline
+When the project loads
+Then they are not flagged
+```
+
+## REQ-039 · With sign-in on, roles come from the team instead of the role picker
+As the product owner, I want people's roles to come only from the team list, so that nobody can give themselves a role by picking it.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given Firebase is configured and a person signs in
+When the portal opens
+Then the "What's your role?" screen is not shown and their roles on each project come from that project's team
+```
+
+_AC2_
+```gherkin
+Given a signed-in person on a real project
+When they look at the sidebar
+Then it shows "My roles: …" read-only for that project, and nothing in the portal lets them change their own roles
+```
+
+_AC3_
+```gherkin
+Given Firebase is not configured
+When the portal opens
+Then the "What's your role?" screen and the sidebar role picker work as today
+```
+
+## REQ-040 · A signed-in person can try the demo with a role of their choice
+As someone who has signed in but is not on a team yet, I want to try Compass in a role of my choice, so that I can see how it works before my admin adds me.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a signed-in person who is on no team
+When they see "You have no access yet"
+Then the screen also offers "Try the demo"
+```
+
+_AC2_
+```gherkin
+Given a signed-in person clicks "Try the demo" (from the no-access screen, or from the sidebar account menu when they are on a team)
+When the demo opens
+Then they pick a role on the "What's your role?" screen and see only the sample demo projects, with a banner "Demo — sample data, kept in this browser only" and "Leave demo"
+```
+
+_AC3_
+```gherkin
+Given the demo is open
+When the person changes their demo role in the sidebar, approves gates or edits the sample project
+Then it works like demo mode today: nothing is read from or written to Firebase or GitHub, and no real project, team or token is shown
+```
+
+_AC4_
+```gherkin
+Given the demo is open
+When the person clicks "Leave demo"
+Then they return to their projects, or to "You have no access yet" if they are on no team
+```
+
+## REQ-080 · The admin links the project's Figma file and Miro board on a Project settings page
+As the project admin, I want to set the project's Figma file and Miro board once on the project's settings page, so that everyone on the project works from the right design files.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a project is open
+When I look at the sidebar
+Then the project group ends with a "Project settings" link with a gear icon, for every role: after Release, and after the Admin-only Team link once Team access adds it (ADR-015); it opens the Project settings page
+```
+
+_AC2_
+```gherkin
+Given I am the project admin: with sign-in on, the project's Admin or the super admin; with sign-in off (demo or local use), the PO role picked in the sidebar
+When I open Project settings
+Then a "Design files" card shows a Figma file field and a Miro board field, both optional, and I can save, change or clear each one; the saved links are written to compass/spec.json → designTool
+```
+
+_AC3_
+```gherkin
+Given I enter a Figma link that is not an https link on figma.com or www.figma.com to a design, file, proto or board, or a Miro link that is not an https://miro.com/app/board/ link
+When I save
+Then the field shows an error naming the link expected and nothing is saved
+```
+
+_AC4_
+```gherkin
+Given I am not the project admin (with sign-in on: not the project's Admin nor the super admin; with sign-in off: a role other than PO)
+When I open Project settings
+Then the "Design files" card shows the linked files with an "Open ↗" button each, no edit fields, and the hint "Only the project admin can change the design files"
+```
+
+## REQ-081 · Every Design page keeps the preview in focus and shows the design files behind a button
+As anyone working on a feature's design, I want the Design page to focus on the preview and keep the project's Figma and Miro links one click away, so that I can open the right file without clutter.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a project with a Figma link, a Miro link or both
+When I open any feature's Design page
+Then there is no design-files card on the page: a "Design files" button with the number of linked files sits at the top right, next to the page title, and the preview takes the full width of the page
+```
+
+_AC2_
+```gherkin
+Given I am on the Design page
+When I press "Design files" (labelled "Files" on a phone)
+Then a side panel (a bottom sheet on a phone) lists each linked tool with an "Open ↗" button and no edit fields, plus "Change in Project settings →" for the admin only; Esc, ✕ or a click outside closes it and focus returns to the button
+```
+
+_AC3_
+```gherkin
+Given a Miro board is linked
+When I open the Design page
+Then the board is previewed with Miro's live embed; a Figma file or the feature's Figma frame link is previewed with the Figma embed as today; the switch shows only when both are linked; on a phone the preview fits the screen width
+```
+
+_AC4_
+```gherkin
+Given no design file is linked
+When I open the Design page
+Then the button reads "Design files · none", the preview area says "No design files linked yet", and the admin also sees a link to Project settings
+```
+
+## REQ-082 · Projects with the old single design link keep working, and agents name both files
+As a team with an existing project, I want my current design link to keep working and the agents to know both design files, so that nothing has to be fixed by hand.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a compass/spec.json whose designTool has only kind and url (Figma, Penpot, Sketch or Other)
+When the portal opens the project
+Then that link is shown under its tool on Project settings and the Design page, and saving the Miro link keeps designTool.kind and designTool.url unchanged
+```
+
+_AC2_
+```gherkin
+Given a project with a Figma file and a Miro board linked
+When the design agent runs or the portal generates AGENTS.md
+Then both tools and their links are named in the agent's prompt and in AGENTS.md
 ```
 
 ## REQ-108 · Acceptance criteria and test steps are readable on the agent run page

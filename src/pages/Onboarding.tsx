@@ -1,3 +1,5 @@
+import { getSession } from '../firebase';
+import { demoProject } from '../demo';
 import { useState } from 'react';
 import { store } from '../store';
 import type { Role } from '../types';
@@ -38,7 +40,7 @@ export function Onboarding() {
           ))}
         </div>
       </div>
-      <div><Button variant="accent" disabled={!role} onClick={() => { store.setSettings({ role }); window.location.hash = '/connect?welcome=1'; }}>Continue</Button></div>
+      <div><Button variant="accent" disabled={!role} onClick={() => { store.setSettings({ role }); if (getSession().demo) { const d = store.get().projects.find((x) => x.demo) || demoProject(); if (!store.get().projects.includes(d)) store.addProject(d); window.location.hash = `/p/${d.id}`; } else window.location.hash = '/connect?welcome=1'; }}>Continue</Button></div>
     </div>
   );
 }

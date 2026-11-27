@@ -2,7 +2,8 @@
 import type { ReactNode } from 'react';
 import { go } from '../App';
 import { featureStage, stageStatus } from '../progress';
-import { accountCard, featureRows, projectLinks, projectState, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
+import { enterDemo, leaveDemo, projectKey, signOut, useSession } from '../firebase';
+import { accountCard, featureRows, projectLinks, projectState, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
 import { STAGES, type Project, type Stage } from '../types';
 import { STAGE_INFO } from '../ui';
@@ -15,7 +16,7 @@ const PATHS = {
   floor: 'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20c0-3 3-5 6-5s6 2 6 5m0-4.6c.6-.3 1.3-.4 2-.4 3 0 6 2 6 5',
   release: 'M5 15c-1 1-2 4-2 6 2 0 5-1 6-2m-4-4 4 4m-4-4 3-3 4 4-3 3m-4-4c2-6 7-11 15-12-1 8-6 13-12 15',
   runs: 'M5 4l14 8-14 8z',
-  knowledge: 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zm0 0v16M8 7h7',
+  team: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21v-1a6 6 0 0 1 12 0v1m3-11 2 2 4-4',
   chevron: 'M9 6l6 6-6 6',
   sun: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
   moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
@@ -35,7 +36,12 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   const sub = parts[2] || '';
   const openId = sub === 'f' ? parts[3] : undefined;
   const fsub = parts[4] || '';
-  const account = accountCard(settings.githubUser);
+  const session = useSession();
+  const signedIn = session.status === 'signed-in' && !!session.email;
+  const account = signedIn ? signedInCard(session.email!, session.superAdmin) : accountCard(settings.githubUser);
+  // F-015: the Team item for the super admin and Admins of this project (only when sign-in is on).
+  const myRoles = p?.repo ? session.access.find((a) => a.id === projectKey(p.repo!))?.roles || [] : [];
+  const canManageTeam = !!p?.repo && signedIn && (session.superAdmin || !!session.access.find((a) => a.id === projectKey(p.repo!))?.roles.includes('Admin'));
   const theme = themeToggle(settings.theme);
 
   const link = (l: NavLink, current: boolean) => (
@@ -54,7 +60,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
         {link(WORKSPACE_LINKS[1], parts[0] === 'architecture')}
       </nav>
 
-      {p && <ProjectGroup p={p} sync={sync} sub={sub} openId={openId} fsub={fsub} link={link} />}
+      {p && <ProjectGroup p={p} sync={sync} sub={sub} openId={openId} fsub={fsub} link={link} team={canManageTeam} />}
 
       <div className="sidebar-footer">
         <button className="side-card" aria-current={parts[0] === 'connect' ? 'page' : undefined} onClick={() => go('/connect')}>
@@ -65,10 +71,21 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
           </span>
           <Icon name="chevron" size={16} />
         </button>
+        {signedIn && (
+          <div className="row gap-sm wrap">
+            {session.demo
+              ? <button className="btn secondary sm" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</button>
+              : <button className="btn secondary sm" onClick={() => enterDemo()}>Try the demo</button>}
+            <button className="btn secondary sm" onClick={() => void signOut()}>Sign out</button>
+          </div>
+        )}
+        {/* REQ-039: with sign-in on, roles come from the team (read-only); the role picker is only for the demo */}
+        {signedIn && !session.demo && p?.repo && <div className="body-sm t-secondary" data-testid="my-roles">My roles: {myRoles.length ? myRoles.join(' · ') : session.superAdmin ? 'super admin' : '—'}</div>}
         <div className="row gap-sm">
-          <select className="select role-select" value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label="Your role">
+          {signedIn && session.demo && <span className="body-sm t-secondary">Demo role</span>}
+          {(!signedIn || session.demo) && <select className="select role-select" value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label={session.demo ? 'Demo role' : 'Your role'}>
             {ROLES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
+          </select>}
           <button className="icon-btn" onClick={() => store.setSettings({ theme: theme.next })} aria-label={theme.label} title={theme.label}><Icon name={theme.icon} /></button>
         </div>
       </div>
@@ -76,7 +93,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   );
 }
 
-function ProjectGroup({ p, sync, sub, openId, fsub, link }: { p: Project; sync: Props['sync']; sub: string; openId?: string; fsub: string; link: (l: NavLink, current: boolean) => ReactNode }) {
+function ProjectGroup({ p, sync, sub, openId, fsub, link, team }: { p: Project; sync: Props['sync']; sub: string; openId?: string; fsub: string; link: (l: NavLink, current: boolean) => ReactNode; team: boolean }) {
   const state = projectState(p, sync);
   const rows = featureRows(p.spec.features, openId, (id) => featureStage(p, id), stageName);
   return (
@@ -91,6 +108,7 @@ function ProjectGroup({ p, sync, sub, openId, fsub, link }: { p: Project; sync: 
       </button>
       <nav className="nav" aria-label="Project">
         {projectLinks(p.id, p.runs).map((l) => link(l, sub === l.key))}
+        {team && link(teamLink(p.id), sub === 'team')}
       </nav>
       {rows.length > 0 && (
         <>

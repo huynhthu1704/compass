@@ -2,7 +2,9 @@
 // Off unless the build has VITE_FIREBASE_CONFIG (the deploy workflow passes the FIREBASE_CONFIG repository variable).
 // Without it the portal works exactly as before (REQ-032 AC5). The firebase library is only loaded when it is on.
 import { useSyncExternalStore } from 'react';
-import { accessFor, normalizeEmail, type Member, type TeamRole } from './team';
+import { projectVisible } from './team';
+import { store } from './store';
+import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, teamDoc, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
 import type { RepoRef } from './types';
 
 export interface FirebaseWebConfig { apiKey: string; authDomain: string; projectId: string; appId: string; [k: string]: string }
@@ -22,13 +24,15 @@ export const firebaseEnabled = !!CONFIG;
 /** Firestore document id of a project: its GitHub repo, e.g. "huynhthu1704__compass". */
 export const projectKey = (repo: Pick<RepoRef, 'owner' | 'name'>) => `${repo.owner}__${repo.name}`.toLowerCase();
 
-export interface ProjectAccess { id: string; roles: TeamRole[] }
+export interface ProjectAccess { id: string; roles: TeamRole[]; name?: string; repo?: { owner: string; name: string } }
 export interface Session {
   status: 'off' | 'loading' | 'signed-out' | 'signed-in';
   email?: string;
   superAdmin: boolean;
   access: ProjectAccess[];
   error?: string;
+  /** REQ-040: a signed-in person is trying the demo (sample projects only, nothing sent to Firebase or GitHub). */
+  demo?: boolean;
 }
 
 let session: Session = { status: firebaseEnabled ? 'loading' : 'off', superAdmin: false, access: [] };
@@ -44,15 +48,24 @@ function load(): Promise<Fb> {
   fb ||= (async () => {
     const [app, auth, fs] = await Promise.all([import('firebase/app'), import('firebase/auth'), import('firebase/firestore')]);
     const a = app.initializeApp(CONFIG);
-    return { auth, fs, authApp: auth.getAuth(a), db: fs.getFirestore(a) };
+    const authApp = auth.getAuth(a), db = fs.getFirestore(a);
+    // Local testing only (npm run dev with VITE_FIREBASE_EMULATORS=1): use the Auth and Firestore emulators.
+    if (import.meta.env?.DEV && import.meta.env?.VITE_FIREBASE_EMULATORS) {
+      auth.connectAuthEmulator(authApp, 'http://127.0.0.1:9099', { disableWarnings: true });
+      fs.connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      // Test hook: the emulator accepts an unsigned Google credential, so UI tests can sign in without Google's popup
+      // script (apis.google.com). Only exists in local dev builds with the emulators; never in the live build.
+      (window as unknown as Record<string, unknown>).__compassTestSignIn = (email: string) =>
+        auth.signInWithCredential(authApp, auth.GoogleAuthProvider.credential(JSON.stringify({ sub: email, email, email_verified: true })));
+    }
+    return { auth, fs, authApp, db };
   })();
   return fb;
 }
 
 /** May the signed-in person see this local project? Always true when sign-in is off; the super admin sees all. */
-export function canSeeProject(p: { repo: Pick<RepoRef, 'owner' | 'name'> | null }, s: Session = session) {
-  if (s.status === 'off' || s.superAdmin) return true;
-  return !!p.repo && s.access.some((a) => a.id === projectKey(p.repo!));
+export function canSeeProject(p: { repo: Pick<RepoRef, 'owner' | 'name'> | null; demo?: boolean }, s: Session = session) {
+  return projectVisible({ repo: p.repo, demo: p.demo }, { status: s.status, demo: s.demo, superAdmin: s.superAdmin, accessIds: s.access.map((a) => a.id) });
 }
 
 /** Starts listening to the sign-in state; call once at start-up. */
@@ -62,7 +75,8 @@ export async function startSession() {
     const { auth, authApp } = await load();
     currentAuth = authApp;
     auth.onAuthStateChanged(authApp, (user) => {
-      if (!user) { set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined }); return; }
+      if (!user) { clearProjectTokens(); if (session.demo) store.setSettings({ role: undefined }); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false }); return; }
+      if (session.email && normalizeEmail(user.email || '') !== session.email) clearProjectTokens(); // another account in this tab
       void loadAccess(user.email || '', user.emailVerified);
     });
   } catch (e) { set({ status: 'signed-out', error: (e as Error).message }); }
@@ -72,7 +86,8 @@ export async function startSession() {
 async function loadAccess(rawEmail: string, verified: boolean) {
   const email = normalizeEmail(rawEmail);
   if (!verified) { set({ status: 'signed-in', email, superAdmin: false, access: [] }); return; }
-  set({ status: 'loading', email });
+  // A refresh (after a team save or Reload) keeps the current screen; only the first load shows "Loading…".
+  if (session.status !== 'signed-in' || session.email !== email) set({ status: 'loading', email });
   try {
     const { fs, db } = await load();
     const accessRef = fs.doc(db, 'config', 'access');
@@ -89,12 +104,12 @@ async function loadAccess(rawEmail: string, verified: boolean) {
     const q = superAdmin ? fs.collection(db, 'projects') : fs.query(fs.collection(db, 'projects'), fs.where('members', 'array-contains', email));
     const docs = (await fs.getDocs(q)).docs.map((d) => {
       // Admin comes only from `admins` (one source of truth, as in firestore.rules); 'Admin' in a role list is ignored.
-      const team = (d.data().team || {}) as Record<string, TeamRole[]>;
-      const admins = ((d.data().admins || []) as string[]).map(normalizeEmail);
-      return { id: d.id, team: Object.entries(team).map(([e, roles]): Member => ({ email: e, roles: [...roles.filter((r) => r !== 'Admin'), ...(admins.includes(normalizeEmail(e)) ? ['Admin' as const] : [])] })) };
+      const data = d.data() as Partial<TeamDoc>;
+      return { id: d.id, name: data.name, repo: data.repo, team: membersFromDoc(data) };
     });
     if (!stillSignedIn(email)) return; // signed out (or switched account) while loading
-    set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins), error: undefined });
+    const info = new Map(docs.map((d) => [d.id, { name: d.name, repo: d.repo }]));
+    set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins).map((a) => ({ ...a, ...info.get(a.id) })), error: undefined });
   } catch (e) {
     if (stillSignedIn(email)) set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` });
   }
@@ -122,3 +137,88 @@ export async function reloadAccess() {
   const u = authApp.currentUser;
   if (u) await loadAccess(u.email || '', u.emailVerified);
 }
+
+// ---- Team page (SCR-3) ------------------------------------------------------------------------------------------------
+
+/** The project's team, or null when it has no team yet. */
+export async function loadTeam(key: string): Promise<{ name: string; members: Member[] } | null> {
+  const { fs, db } = await load();
+  const snap = await fs.getDoc(fs.doc(db, 'projects', key));
+  if (!snap.exists()) return null;
+  const d = snap.data() as TeamDoc;
+  return { name: d.name, members: membersFromDoc(d) };
+}
+
+/** Applies one change to the team as it is in the database right now, in a transaction, so a tab that loaded the team
+ *  earlier cannot undo another Admin's change (e.g. bring back a removed person). The first change creates the team
+ *  together with its approval baseline (REQ-038 AC1; super admin only, enforced by the rules). */
+export async function changeTeam(key: string, project: { name: string; repo: { owner: string; name: string } }, op: TeamOp, baseline: () => BaselineApproval[]): Promise<TeamResult & { created?: boolean }> {
+  const { fs, db } = await load();
+  const ref = fs.doc(db, 'projects', key);
+  const result = await fs.runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const current = snap.exists() ? membersFromDoc(snap.data() as TeamDoc) : [];
+    const r = applyTeamOp(current, op, !snap.exists());
+    if (!r.ok) return r;
+    tx.set(ref, teamDoc(project.name, project.repo, r.team));
+    if (!snap.exists()) tx.set(fs.doc(db, 'projects', key, 'baseline', 'initial'), { approvals: baseline() });
+    return { ...r, created: !snap.exists() };
+  });
+  if (result.ok) await reloadAccess();
+  return result;
+}
+
+// ---- Project GitHub token (REQ-034, ADR-011) -------------------------------------------------------------------------
+
+const tokens = new Map<string, string | null>();
+const tokenListeners = new Set<() => void>();
+const tokenChanged = () => tokenListeners.forEach((l) => l());
+
+/** The cached project token: a string, null when the project has none, undefined when not loaded yet. */
+export const projectTokenOf = (key: string) => tokens.get(key);
+/** Forget every cached project token (sign-out, or another account signs in in this tab). */
+export function clearProjectTokens() { tokenGeneration++; failedTokens.clear(); if (tokens.size) { tokens.clear(); tokenChanged(); } }
+const failedTokens = new Set<string>();
+/** True when the last load of this project's token was refused or failed (REQ-034 AC4: say so, not "Loading…"). */
+export const projectTokenFailed = (key: string) => failedTokens.has(key);
+let tokenGeneration = 0;
+/** Called whenever a project token is loaded, replaced or forgotten (autosync re-checks dirty projects). */
+export function onProjectTokenChange(l: () => void) { tokenListeners.add(l); return () => { tokenListeners.delete(l); }; }
+export const useProjectToken = (key: string) => useSyncExternalStore((l) => { tokenListeners.add(l); return () => tokenListeners.delete(l); }, () => tokens.get(key));
+
+/** Loads the project token (members and the super admin may read it). */
+export async function loadProjectToken(key: string) {
+  const { fs, db } = await load();
+  const gen = tokenGeneration;
+  try {
+    const snap = await fs.getDoc(fs.doc(db, 'projects', key, 'secrets', 'token'));
+    if (gen !== tokenGeneration) return; // signed out or switched account while loading: drop the old result
+    tokens.set(key, snap.exists() ? String(snap.data().token || '') || null : null);
+    failedTokens.delete(key);
+  } catch (e) { if (gen === tokenGeneration) { tokens.delete(key); failedTokens.add(key); tokenChanged(); } throw e; } // refused: forget it, remember the failure
+  tokenChanged();
+}
+
+/** Saves the project token (Admins of the project or the super admin; the rules refuse anyone else). */
+export async function saveProjectToken(key: string, token: string) {
+  const { fs, db } = await load();
+  await fs.setDoc(fs.doc(db, 'projects', key, 'secrets', 'token'), { token });
+  tokens.set(key, token);
+  tokenChanged();
+}
+
+// ---- Approval records (REQ-037, ADR-012) -------------------------------------------------------------------------------
+
+/** Writes one approval record; the rules accept it only from the signer's own verified email and a role that owns the
+ *  gate (or "super admin"), with the server's time. Records are never changed or deleted. */
+export async function writeApprovalRecord(key: string, rec: { items: string[]; gate: string; email: string; role: string }) {
+  const { fs, db } = await load();
+  await fs.addDoc(fs.collection(db, 'projects', key, 'approvals'), { ...rec, at: fs.serverTimestamp() });
+}
+
+// ---- Demo after sign-in (REQ-040, ADR-014) ------------------------------------------------------------------------------
+
+/** Opens the demo for a signed-in person: sample projects only, a demo role of their choice. */
+export function enterDemo() { if (session.status !== 'signed-in') return; store.setSettings({ role: undefined }); set({ demo: true }); } // always pick a demo role (REQ-040 AC2)
+/** Leaves the demo; the demo role is forgotten by the caller so it never leaks into real work. */
+export function leaveDemo() { store.setSettings({ role: undefined }); set({ demo: false }); } // the demo role never leaks into real work

@@ -1,4 +1,5 @@
 /** F-012 · Delete a feature: the dialog (design SCR-1, SCR-2, SCR-3) and the notice on the feature board afterwards. */
+import { missingToken, tokenFor } from '../token';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { go } from '../App';
 import { canConfirmDelete, deleteFeature, deleteSummary, removeFeature, type DeleteGitHub, type DeleteResult, type IssueRef } from '../deleteFeature';
@@ -54,10 +55,11 @@ export function DeleteNotice({ pid }: { pid: string }) {
 
 // ---- the dialog ----
 export function DeleteFeatureDialog({ p, fid, onClose }: { p: Project; fid: string; onClose: () => void }) {
-  const { settings } = useStore();
+  useStore(); // re-render on store changes
   const f = p.spec.features.find((x) => x.id === fid);
-  const live = !p.demo && !!p.repo && !!settings.githubToken;
-  const needsGitHub = !p.demo && !!p.repo && !settings.githubToken;
+  const token = tokenFor(p); // F-015 REQ-034: the project token for signed-in members
+  const live = !p.demo && !!p.repo && !!token;
+  const needsGitHub = !p.demo && !!p.repo && !token;
   const [typed, setTyped] = useState('');
   const [issues, setIssues] = useState<IssueRef[] | null>(live ? null : []);
   const [issueErr, setIssueErr] = useState('');
@@ -88,11 +90,11 @@ export function DeleteFeatureDialog({ p, fid, onClose }: { p: Project; fid: stri
     return () => { document.removeEventListener('keydown', onKey, true); document.removeEventListener('focusin', onFocus); };
   }, []);
   useEffect(() => {
-    if (!live || !p.repo || !settings.githubToken) return;
+    if (!live || !p.repo || !token) return;
     let on = true;
-    github.openIssues(settings.githubToken, p.repo).then((x) => on && setIssues(x)).catch((e) => { if (on) { setIssues([]); setIssueErr((e as Error).message); } });
+    github.openIssues(token, p.repo).then((x) => on && setIssues(x)).catch((e) => { if (on) { setIssues([]); setIssueErr((e as Error).message); } });
     return () => { on = false; };
-  }, [live, p.repo, settings.githubToken]);
+  }, [live, p.repo, token]);
 
   if (!f) return null;
   const s = deleteSummary(p, fid, issues || []);
@@ -103,7 +105,7 @@ export function DeleteFeatureDialog({ p, fid, onClose }: { p: Project; fid: stri
     setBusy(true); setError('');
     try {
       const result = await deleteFeature(p, fid, {
-        token: settings.githubToken, github: deleteGitHub, specFiles,
+        token, github: deleteGitHub, specFiles,
         // Re-apply on the current project so edits made while the commit ran are kept (and left to auto-sync).
         apply: (spec, _runs, sha) => store.update(p.id, (x) => {
           const now = removeFeature(x.spec, x.runs, fid);
@@ -156,7 +158,7 @@ export function DeleteFeatureDialog({ p, fid, onClose }: { p: Project; fid: stri
           </section>
           <section className="stack gap-xs">
             <strong className="body-sm">Open GitHub issues{issues ? ` (${s.issues.length})` : ''} · closed as "not planned" with a comment</strong>
-            {!live ? <span className="body-sm t-tertiary">{p.demo || !p.repo ? 'Demo or local project: nothing is sent to GitHub.' : 'Connect GitHub to see and close its issues.'}</span>
+            {!live ? <span className="body-sm t-tertiary">{p.demo || !p.repo ? 'Demo or local project: nothing is sent to GitHub.' : missingToken(p) || 'Connect GitHub to see and close its issues.'}</span>
               : issues === null ? <span className="body-sm t-tertiary">Looking up open issues…</span>
               : issueErr ? <span className="body-sm t-danger">Could not read the issues: {issueErr}</span>
               : s.issues.length ? <ul className="stack gap-xs body-sm">{s.issues.map((i) => <li key={i.number} className="row gap-sm"><a className="mono-sm" href={i.html_url} target="_blank" rel="noreferrer">#{i.number}</a><span className="grow">{i.title}</span></li>)}</ul>
@@ -167,7 +169,7 @@ export function DeleteFeatureDialog({ p, fid, onClose }: { p: Project; fid: stri
         <div className="field">
           <label htmlFor="delete-confirm">Type {fid} to confirm</label>
           <input id="delete-confirm" ref={input} className="input" autoComplete="off" spellCheck={false} value={typed} onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') confirm(); }} />
-          {needsGitHub && <div className="help error">Connect GitHub first (Connections), so the feature's files and issues are removed too.</div>}
+          {needsGitHub && <div className="help error">{missingToken(p) ? `${missingToken(p)} The feature's files and issues are removed only with a token.` : "Connect GitHub first (Connections), so the feature's files and issues are removed too."}</div>}
           {!canConfirmDelete(typed, fid) && <div className="help">Delete stays off until the text is exactly {fid}.</div>}
           {error && <div className="help error" role="alert">{error}</div>}
         </div>
