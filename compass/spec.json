@@ -948,7 +948,7 @@
         ]
       },
       "design": {
-        "status": "Draft",
+        "status": "Approved",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-704",
         "summary": "People sign in on a single centred card (\"Sign in to Compass\" + \"Sign in with Google\"); a Google account on no team lands on \"You have no access yet\" with its email, Reload and Sign out, and no project data. Inside a project, Admins and the super admin get a new \"Team\" item in the sidebar (below Knowledge). The Team page has three cards: Add person (email + role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin; several can be ticked), the team list (email, role chips, Edit roles, Remove; the only Admin cannot be removed) and the project GitHub token (masked, Test, Replace, fine-grained token help, and a reminder to replace it after removing someone). Each gate card on a feature page shows its button enabled for the signed-in person's roles and greyed out with \"Needs the <role> role\" otherwise; approvals show \"Approved by <email> (<role>)\"; an approval that Firebase does not confirm shows a red \"Unconfirmed\" badge. The sidebar account card shows the Google email (its menu has Sign out) and the role picker shows \"My roles: …\". On phones the Team page stacks the cards, role checkboxes wrap, and Edit roles / Remove move into a ⋮ menu per row.",
         "screens": [
@@ -1088,7 +1088,9 @@
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=143-672"
           }
         ],
-        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change."
+        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change.",
+        "approvedBy": "the Product Owner (in chat)",
+        "approvedAt": "2026-11-27T00:00:00.000Z"
       }
     }
   ],
@@ -1795,7 +1797,7 @@
       "featureId": "F-015",
       "title": "Each approval is recorded in Firebase, whose rules accept it only from the owning role",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want every approval checked by Firebase before it is saved, so that a role check cannot be skipped by changing the page.",
       "ac": [
@@ -1803,21 +1805,25 @@
         "Given a person without a role that owns the gate, who is not the super admin\nWhen an approval record is written for that gate\nThen the Firestore rules refuse it, the portal shows \"Not allowed for your roles\" and nothing is committed",
         "Given an approval record exists\nWhen anyone tries to change or delete it\nThen the Firestore rules refuse it",
         "Given Firestore accepted the record but the GitHub commit fails\nWhen the portal reports the error\nThen the approval is shown as not saved and retrying reuses the same record"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
       "id": "REQ-038",
       "featureId": "F-015",
       "title": "Approvals in the repo that Firebase does not confirm are flagged",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want approvals made outside the portal to stand out, so that a forged approvedBy is noticed.",
       "ac": [
         "Given the project has a team (team access is on) and spec.json on GitHub has an approval made after that date\nWhen the portal loads the project\nThen an approval with no matching Firebase record (same item, gate and email) shows a red \"Unconfirmed\" badge naming who it claims",
         "Given unconfirmed approvals exist\nWhen a person opens the project's Feature board\nThen a notice lists them with links, so a person with the owning role can approve again",
         "Given demo mode, or approvals made before the project's team was created\nWhen the project loads\nThen they are not flagged"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-27T00:00:00.000Z"
     }
   ],
   "tests": [
@@ -2947,7 +2953,7 @@
       ],
       "context": "The independent review of PR #74 found that approvals are commits of spec.json made with the shared project token, so Firestore rules never see them: any member could commit an approval for a gate their role does not own, or forge approvedBy.",
       "decision": "The Product Owner chose to write every approval to Firestore first (the rules accept it only from the owning role, and records cannot be changed or deleted), commit to GitHub only after that, and flag approvals in spec.json without a matching record — over accepting screen-only checks or going back to personal tokens.",
-      "consequences": "Two more requirements (REQ-037, REQ-038). A member with the token can still edit spec.json directly, but such approvals show as Unconfirmed. The design of F-015 is back to Draft until the Unconfirmed badge is approved."
+      "consequences": "Two more requirements (REQ-037, REQ-038). A member with the token can still edit spec.json directly, but such approvals show as Unconfirmed. The updated design (Unconfirmed badge) was approved on 2026-11-27."
     }
   ]
 }
