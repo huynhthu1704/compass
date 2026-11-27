@@ -7,7 +7,9 @@ Intent: compass/intent/2026-11-27-figma-components-and-sections.md · Design: no
 - `compass/design/README.md` and its installed copy `src/framework/design-README.md` (kept identical, TC-004) — Flow
   step 2 states the Figma file layout; the template links the feature's section
 - `AGENTS.md` — step 1b names the rule
-- `tests/figmaLayout.test.mjs` — TC-045: the three texts state both rules
+- `src/framework.ts` — `agentsMd` (which writes AGENTS.md here and in every project Compass installs into) gets the
+  same step 1b text, so a regenerated AGENTS.md keeps the rule (review finding on PR #85)
+- `tests/figmaLayout.test.mjs` — TC-045: the four texts (both READMEs, AGENTS.md, the agentsMd generator) state both rules
 - `compass/intent/2026-11-27-figma-components-and-sections.md`, `compass/spec.json` (REQ-025, TC-045, ADR-007) and the
   views generated with `src/framework.ts` (requirements.md, tests.md, decisions.md, features/F-003.md)
 

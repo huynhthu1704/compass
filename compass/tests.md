@@ -3,7 +3,6 @@
 ## Traceability matrix
 | Requirement | Test cases |
 |---|---|
-| REQ-025 Figma components on the Components page, one section per feature | TC-045 (Pass) |
 | REQ-001 The Compass repo has the Compass Framework | TC-001 (Not run) |
 | REQ-002 Every pull request is checked by CI | TC-002 (Not run) |
 | REQ-003 The checking scripts have unit tests | TC-003 (Pass) |
@@ -32,6 +31,7 @@
 | REQ-015 Pages use up to 1600 px on large screens and stay responsive | TC-027 (Not run), TC-028 (Not run) |
 | REQ-020 The Ideation agent writes "Done when" and never invents a baseline or target | TC-039 (Not run), TC-040 (Not run), TC-041 (Not run) |
 | REQ-021 The Idea page and briefs say "Done when" instead of "Outcome metric" | TC-042 (Not run) |
+| REQ-025 Figma components on the Components page, one section per feature | TC-045 (Pass) |
 | REQ-060 Each waiting item says what it is and how long it has waited | TC-300 (Not run), TC-301 (Not run), TC-306 (Not run) |
 | REQ-061 The approval desk stays compact, with a link to all waiting runs | TC-302 (Not run), TC-303 (Not run), TC-307 (Not run) |
 | REQ-062 Details of a waiting item open in a side panel | TC-304 (Not run), TC-305 (Not run), TC-308 (Not run), TC-309 (Not run) |
