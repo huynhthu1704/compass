@@ -61,18 +61,31 @@ function ApprovalItem({ a, onOpen }: { a: Approval; onOpen: (a: Approval, el: HT
 /** Details of a waiting item (REQ-062). It only navigates to the run page — approving stays there (REQ-008). */
 function ApprovalPanel({ a, onClose, open }: { a: Approval; onClose: () => void; open: (runId: string) => void }) {
   const head = useRef<HTMLHeadingElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
-  close.current = onClose;
+  useEffect(() => { close.current = onClose; });
+  // Modal dialog: focus starts on the heading, Tab stays inside, Escape closes (same pattern as DeleteFeatureDialog, REQ-016).
   useEffect(() => {
     head.current?.focus();
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') close.current(); };
-    window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
+    const focusables = () => (box.current ? [...box.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]')].filter((el) => el.offsetParent !== null) : []);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); close.current(); return; }
+      if (e.key !== 'Tab') return;
+      const items = focusables();
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1], at = items.indexOf(document.activeElement as HTMLElement);
+      if (e.shiftKey && at <= 0) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (at === -1 || at === items.length - 1)) { e.preventDefault(); first.focus(); }
+    };
+    const onFocus = (e: FocusEvent) => { if (box.current && !box.current.contains(e.target as Node)) head.current?.focus(); };
+    document.addEventListener('keydown', onKey, true);
+    document.addEventListener('focusin', onFocus);
+    return () => { document.removeEventListener('keydown', onKey, true); document.removeEventListener('focusin', onFocus); };
   }, []);
   const sel = a;
   return (
     <div className="drawer-backdrop approval-backdrop" onClick={onClose}>
-      <div className="drawer approval-panel" role="dialog" aria-modal="true" aria-labelledby="approval-title" onClick={(e) => e.stopPropagation()}>
+      <div className="drawer approval-panel" ref={box} role="dialog" aria-modal="true" aria-labelledby="approval-title" onClick={(e) => e.stopPropagation()}>
         <div className="row between gap-sm approval-head">
           <button className="btn ghost sm approval-back" onClick={onClose}>← Back to floor</button>
           <h2 id="approval-title" className="h3" tabIndex={-1} ref={head}>{sel.agentName}{sel.featureId ? ` · ${sel.featureId}` : ''}</h2>
@@ -126,10 +139,17 @@ export function TeamFloorPage({ p }: { p: Project }) {
   }, [anyWaiting]);
   const open = (runId: string) => go(`/p/${p.id}/runs/${runId}`);
   const showDetails = (a: Approval, el: HTMLElement) => { opener.current = el; setSel(a); };
-  const closeDetails = () => { setSel(null); opener.current?.focus(); };
+  // Focus goes back to the item only after the panel has unmounted (its focus guard would pull it back in before that).
+  const restore = useRef(false);
+  const closeDetails = () => { restore.current = true; setSel(null); };
+  useEffect(() => { if (!sel && restore.current) { restore.current = false; opener.current?.focus(); } }, [sel]);
   const current = sel && f.approvals.find((x) => x.runId === sel.runId);
+  // If the open run stops waiting (approved or rejected elsewhere), close the panel properly instead of leaving it selected.
+  const gone = !!sel && !current;
+  useEffect(() => { if (gone) { restore.current = true; setSel(null); } }, [gone]);
+  const moreLink = `/p/${p.id}/runs?status=awaiting-approval${filter !== 'all' ? `&feature=${filter}` : ''}`;
   const more = f.approvalsMore > 0 && (
-    <button className="btn ghost sm" onClick={() => go(`/p/${p.id}/runs?status=awaiting-approval`)}>+{f.approvalsMore} more → Agent runs</button>
+    <button className="btn ghost sm" onClick={() => go(moreLink)}>+{f.approvalsMore} more → Agent runs</button>
   );
   const features = p.spec.features.filter((x) => !x.archived);
   const desk = (a: AgentId) => f.desks.find((d) => d.agent === a)!;

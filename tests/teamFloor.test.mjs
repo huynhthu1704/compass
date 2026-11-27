@@ -176,13 +176,15 @@ test('TC-302 (REQ-061): the 3 that have waited longest, then "+N more"', () => {
   assert.equal(three.approvalsShown.length, 3);
   assert.equal(three.approvalsMore, 0);
   const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
-  assert.match(page, /go\(`\/p\/\$\{p\.id\}\/runs\?status=awaiting-approval`\)/, '"+N more" links to the filtered Agent runs');
+  assert.match(page, /const moreLink = `\/p\/\$\{p\.id\}\/runs\?status=awaiting-approval\$\{filter !== 'all' \? `&feature=\$\{filter\}` : ''\}`/, '"+N more" links to the filtered Agent runs, keeping the feature filter');
+  assert.match(page, /go\(moreLink\)/);
   assert.match(page, /f\.approvalsMore > 0/);
 });
 
 test('TC-303 (REQ-061): Agent runs can show only the runs waiting for approval', () => {
   const runs = readFileSync(new URL('../src/pages/Runs.tsx', import.meta.url), 'utf8');
   assert.match(runs, /query\(\)\.get\('status'\) === 'awaiting-approval'/);
+  assert.match(runs, /query\(\)\.get\('feature'\)/, 'and the Team floor feature filter carries over');
   assert.match(runs, /r\.status === 'awaiting-approval'/);
   assert.match(runs, /Show all runs/);
 });
@@ -212,6 +214,7 @@ test('TC-309 (REQ-062): the panel only opens the run page; it never approves or 
   const page = readFileSync(new URL('../src/pages/TeamFloor.tsx', import.meta.url), 'utf8');
   assert.match(page, /role="dialog"/);
   assert.match(page, /e\.key === 'Escape'/, 'Escape closes the panel');
+  assert.match(page, /e\.key !== 'Tab'/, 'Tab stays inside the panel');
   assert.match(page, /Open run to approve/);
   assert.match(page, /onClick=\{\(\) => open\(sel\.runId\)\}/, 'the panel button goes to /p/<id>/runs/<run id>');
   assert.doesNotMatch(page, /approveRun|rejectRun/);
