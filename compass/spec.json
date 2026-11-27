@@ -780,13 +780,13 @@
       "createdAt": "2026-11-27T00:00:00.000Z",
       "idea": {
         "need": "If I interact with Claude for building a feature inside a chat conversation / Cowork, I can quote its response and ask for more details or revision. Could you please make the same experience inside Compass.",
-        "intent": "The Product Owner improves one part of an agent proposal by quoting it and asking, in under 15 seconds and without losing the rest (today: reject the run and start a new one from scratch).",
+        "intent": "The Product Owner improves one part of an agent proposal by quoting it and asking, without losing the rest (today: reject the run and start a new one from scratch).",
         "problem": "An agent proposal can only be approved, or rejected with a reason that ends the run. Changing one line means a new run from scratch, losing the good parts.",
         "users": [
           "Product Owner",
           "BA / UX / QA / Dev reviewing agent proposals"
         ],
-        "outcomeMetric": "Time from reading an answer to sending a quoted question: copy-paste into a new run → under 15 s; items not quoted that change in a revision: unknown → 0.",
+        "outcomeMetric": "In a run, I can quote part of an agent answer and Ask or Revise without starting a new run; a revision changes only what I quoted, and Approve applies the latest version.",
         "scopeIn": [
           "Quote selected text or a whole item of any agent run",
           "Ask: the agent answers, the proposal is unchanged",
@@ -2203,10 +2203,10 @@
       "reqIds": [
         "REQ-051"
       ],
-      "title": "The follow-up prompt carries goal, proposal, conversation and quotes as data; the answer shows its tokens",
+      "title": "The follow-up prompt carries goal, proposal, conversation and quotes as data",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a run with goal G, a proposal, one earlier question and answer, and a new reply with a quote\nWhen the follow-up prompt is built\nThen it contains G, the proposal as JSON, the earlier turns in order, the quote inside <quoted_text source=\"…\"> markers and the message, and no retrieved repository chunks, and the agent answer saved on the run shows the token count reported by the API"
+      "gherkin": "Given a run with goal G, a proposal, one earlier question and answer, and a new reply with a quote\nWhen the follow-up prompt is built\nThen it contains G, the proposal as JSON, the earlier turns in order, the quote inside <quoted_text source=\"…\"> markers and the message, and no retrieved repository chunks"
     },
     {
       "id": "TC-205",
@@ -2246,7 +2246,7 @@
       "title": "Revision re-runs checks; rejected runs reopen; approved runs cannot be revised but can be asked",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given a run awaiting approval, a rejected run and an approved run\nWhen each is revised\nThen the run awaiting approval and the rejected run both get new guardrail and eval results and status awaiting approval; the approved run is refused with \"Already applied — start a new run\"; Ask still works on the approved run"
+      "gherkin": "Given a run awaiting approval, a rejected run and an approved run\nWhen each is revised\nThen the run awaiting approval and the rejected run both are awaiting approval with their old guardrail and eval results cleared, and a revised version without stored guardrail results cannot be approved; the approved run is refused with \"Already applied — start a new run\"; Ask still works on the approved run"
     },
     {
       "id": "TC-209",
@@ -2357,6 +2357,26 @@
       "type": "Automated",
       "status": "Not run",
       "gherkin": "Given src/index.css and src/pages/TeamFloor.tsx\nWhen the test reads the strip and desk-ring rules\nThen a back strip and the ring on its receiving desk use the danger (coral) tokens, and a forward strip and its ring use the brand (honey) tokens"
+    },
+    {
+      "id": "TC-214",
+      "reqIds": [
+        "REQ-051"
+      ],
+      "title": "A live answer shows the tokens it used",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a live project with an Anthropic API key and a run awaiting approval\nWhen I quote a requirement and click Ask\nThen the agent answer appears in the conversation with the token count reported by the API, and the trace shows the same tokens"
+    },
+    {
+      "id": "TC-215",
+      "reqIds": [
+        "REQ-052"
+      ],
+      "title": "A live revision runs the guardrails and evals again",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given a live project with an Anthropic API key and a coding run awaiting approval\nWhen I quote one file and click Revise\nThen the trace shows the guardrails and evaluation of v2, the approval card shows their new results, and Approve v2 is enabled only after they finished"
     }
   ],
   "decisions": [
@@ -2426,6 +2446,22 @@
         "REQ-020",
         "REQ-021"
       ]
+    },
+    {
+      "id": "ADR-006",
+      "date": "2026-11-27",
+      "title": "Quote and revise: every agent, with versions",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-050",
+        "REQ-051",
+        "REQ-052",
+        "REQ-053",
+        "REQ-054"
+      ],
+      "context": "F-020 lets the reviewer quote part of an agent answer and Ask or Revise. Two scope questions came up before the requirements were written.",
+      "decision": "The Product Owner decided in chat on 2026-11-27: (1) every agent can be quoted and revised, including the coding agent, whose revision re-proposes only the quoted files; (2) a revision creates versions v1, v2… with a compare view, and Approve always applies the latest version. A revision may change only the quoted items; anything else is refused.",
+      "consequences": "Runs keep a conversation and their versions. A revised version waits for its guardrails before it can be approved. The Ask and Revise of live runs cost Claude tokens, shown per answer."
     }
   ]
 }
