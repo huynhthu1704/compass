@@ -390,7 +390,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .account-menu-head { outline: none; display: flex; flex-direction: column; gap: 2px; padding: var(--spacing-sm); margin-bottom: var(--spacing-xs); border-bottom: 1px solid var(--color-border-subtle); font-size: 13px; color: var(--color-text-primary); }
 .account-menu-items { display: flex; flex-direction: column; }
 .account-menu-head span { font-size: 12px; color: var(--color-text-tertiary); overflow-wrap: break-word; }
-.account-menu button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: var(--spacing-sm); padding: 7px var(--spacing-sm); border-radius: var(--radius-sm); font-size: 13px; color: var(--color-text-primary); }
+.account-menu button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-wrap: wrap; row-gap: 0; align-items: center; gap: var(--spacing-sm); padding: 7px var(--spacing-sm); border-radius: var(--radius-sm); font-size: 13px; color: var(--color-text-primary); }
 .account-menu button .icon { flex: none; color: var(--color-text-tertiary); }
 .account-menu button:hover, .account-menu button:focus-visible { background: var(--color-bg-subtle); }
 .account-menu-hint { margin-left: auto; white-space: nowrap; font-size: 12px; color: var(--color-text-tertiary); }
