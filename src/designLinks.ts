@@ -73,13 +73,13 @@ export function checkDesignInput(current: DesignTool | undefined, input: { figma
 }
 
 /** Who is looking: the role picker, and — when sign-in (Team access, F-015) is on — their roles in this project. */
-export type Viewer = { role?: Role | string; signIn: 'off' | 'loading' | 'signed-out' | 'signed-in'; superAdmin: boolean; projectRoles: string[]; demo?: boolean };
+export type Viewer = { role?: Role | string; roles?: (Role | string)[]; signIn: 'off' | 'loading' | 'signed-out' | 'signed-in'; superAdmin: boolean; projectRoles: string[]; demo?: boolean };
 
 /** REQ-080: who may change the design files. With sign-in on: the project's Admin or the super admin (Team access,
  *  F-015). With sign-in off, or in the demo (`session.demo` or a demo project: no team, and REQ-040 lets a signed-in
- *  person pick a demo role): the PO role from the role picker, or the super admin (who can open sample projects
+ *  person pick demo roles): the PO role among the picked roles (REQ-121), or the super admin (who can open sample projects
  *  outside the demo, where the role picker is hidden). */
-export const isDesignAdmin = (v: Viewer) => (v.signIn === 'off' || v.demo ? v.role === 'PO' || v.superAdmin : v.superAdmin || v.projectRoles.includes('Admin'));
+export const isDesignAdmin = (v: Viewer) => (v.signIn === 'off' || v.demo ? v.role === 'PO' || !!v.roles?.includes('PO') || v.superAdmin : v.superAdmin || v.projectRoles.includes('Admin'));
 
 /** REQ-081 / REQ-082: how a linked file is named in rows ("Figma file", "Miro board", "Penpot link"…). */
 export const fileName = (kind: DesignToolKind) => (kind === 'figma' ? 'Figma file' : kind === 'miro' ? 'Miro board' : `${TOOL_NAMES[kind]} link`);

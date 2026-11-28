@@ -6,13 +6,13 @@ Intent: compass/intent/2026-11-28-several-roles.md · Design: compass/design/F-0
 ## Files
 - src/types.ts — `Settings.roles` (the picked roles); `role` stays only to read what older browsers saved; pure helpers `ROLE_ORDER`, `pickedRoles` and `toggleRole`
 - src/pages/Onboarding.tsx — the role cards toggle (aria-pressed per card), Continue needs at least one, saves `roles`
-- src/components/Sidebar.tsx — the single role dropdown becomes a "Demo roles: PO, BA ▾" checkbox menu (`<details>`), the last ticked role cannot be unticked; the demo chip lists every role
+- src/components/Sidebar.tsx — the single role dropdown becomes a "Demo roles: PO, BA ▾" checkbox menu (`<details>` inside the existing `account-role` row, so TC-510 still holds), the last ticked role cannot be unticked; Escape or a click outside closes it; the demo chip lists every role
 - src/App.tsx — `hasRole` reads `pickedRoles`
 - src/firebase.ts — entering, leaving the demo and signing out clear both `roles` and the old `role`
 - src/designLinks.ts — `Viewer.roles`; `isDesignAdmin` is true when PO is among the picked roles
 - src/pages/Design.tsx, src/pages/ProjectSettings.tsx — pass the picked roles; the design approval names the picked role that owns the gate (UX or PO)
 - compass/spec.json — REQ-121, TC-527, ADR-025, SCR-7 elements
-- tests/roles.test.mjs — TC-527
+- tests/designLinks.test.mjs — TC-527 (next to TC-502, whose source check now reads `roles`; one test file keeps the change within 12 files)
 
 ## Steps
 1. Commit the intent, REQ-121, TC-527, ADR-025, the SCR-7 update and this plan.

@@ -2,8 +2,7 @@ import { getSession } from '../firebase';
 import { demoProject } from '../demo';
 import { useState } from 'react';
 import { store } from '../store';
-import type { Role } from '../types';
-import { STAGES } from '../types';
+import { STAGES, toggleRole, type Role } from '../types';
 import { Button, StageChip } from '../ui';
 
 const ROLES: [Role, string, string][] = [
@@ -17,7 +16,7 @@ const ROLES: [Role, string, string][] = [
 ];
 
 export function Onboarding() {
-  const [role, setRole] = useState<Role | undefined>();
+  const [roles, setRoles] = useState<Role[]>([]); // REQ-121: one or more roles
   return (
     <div style={{ maxWidth: 1040, margin: '0 auto', padding: '64px 24px' }} className="stack gap-2xl">
       <div className="stack gap-md">
@@ -30,17 +29,20 @@ export function Onboarding() {
         <div className="rail">{STAGES.map((s) => <StageChip key={s} stage={s} />)}</div>
       </div>
       <div className="stack gap-lg">
-        <h2 className="h2">What's your role?</h2>
+        <div className="stack gap-xs">
+          <h2 className="h2">What's your role?</h2>
+          <p className="body t-secondary">Pick one or more — you can change them later in the sidebar.</p>
+        </div>
         <div className="grid-3">
           {ROLES.map(([k, n, d]) => (
-            <button key={k} className="option" aria-pressed={role === k} onClick={() => setRole(k)}>
+            <button key={k} className="option" aria-pressed={roles.includes(k)} onClick={() => setRoles(toggleRole(roles, k))}>
               <span className="mono t-brand" style={{ minWidth: 40 }}>{k}</span>
               <span className="stack"><span className="h4">{n}</span><span className="body-sm t-secondary">{d}</span></span>
             </button>
           ))}
         </div>
       </div>
-      <div><Button variant="accent" disabled={!role} onClick={() => { store.setSettings({ role }); if (getSession().demo) { const d = store.get().projects.find((x) => x.demo) || demoProject(); if (!store.get().projects.includes(d)) store.addProject(d); window.location.hash = `/p/${d.id}`; } else window.location.hash = '/connect?welcome=1'; }}>Continue</Button></div>
+      <div><Button variant="accent" disabled={!roles.length} onClick={() => { store.setSettings({ roles, role: undefined }); if (getSession().demo) { const d = store.get().projects.find((x) => x.demo) || demoProject(); if (!store.get().projects.includes(d)) store.addProject(d); window.location.hash = `/p/${d.id}`; } else window.location.hash = '/connect?welcome=1'; }}>Continue</Button></div>
     </div>
   );
 }

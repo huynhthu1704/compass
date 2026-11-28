@@ -19,6 +19,7 @@ import { TeamFloorPage } from './pages/TeamFloor';
 import { syncLabel, useSync } from './autosync';
 import { FeaturePage } from './pages/Feature';
 import { useStore } from './store';
+import { pickedRoles } from './types';
 import { Toaster } from './ui';
 import { Sidebar } from './components/Sidebar';
 import { canSeeProject, firebaseEnabled, leaveDemo, startSession, useSession, useWorkspace } from './firebase';
@@ -54,7 +55,7 @@ export default function App() {
   const sync = useSync(routeProject); // hooks must run before any early return
   // F-015: with Firebase configured, people sign in with Google and their roles come from the team (REQ-032).
   // REQ-039/040: with sign-in on, roles come from the team; the role screen appears only inside the demo.
-  const screen = startScreen({ firebase: firebaseEnabled, status: session.status, demo: !!session.demo, hasRole: !!settings.role, hasAccess: session.superAdmin || session.access.length > 0 });
+  const screen = startScreen({ firebase: firebaseEnabled, status: session.status, demo: !!session.demo, hasRole: pickedRoles(settings).length > 0, hasAccess: session.superAdmin || session.access.length > 0 });
   if (screen === 'loading') return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><span className="body t-secondary">Loading…</span></main>;
   if (screen === 'sign-in') return <><SignInPage logo={<Logo />} error={session.error} /><Toaster /></>;
   if (screen === 'no-access') return <><NoAccessPage logo={<Logo />} email={session.email} error={session.error} /><Toaster /></>;
