@@ -134,10 +134,10 @@ _2026-11-27 · Accepted · REQ-080, REQ-081, REQ-082_
 
 ## ADR-019 · "Try the demo" leaves the sidebar; account actions move into an account menu
 
-_2026-11-28 · Accepted · REQ-110, REQ-073, REQ-040_
+_2026-11-28 · Accepted · REQ-110, REQ-073, REQ-039, REQ-040, REQ-032_
 
 **Context:** The sidebar footer had four loose rows (account card, "Try the demo" and "Sign out" buttons, a "My roles" line and a lone theme button). The Product Owner asked to redesign it and reviewed a mockup in chat.
 
 **Decision:** The Product Owner approved the mockup on 2026-11-28 with one change: "Remove try the demo in this section, the rest is fine to proceed". The footer is one account card (initial, name, role chips) that opens a menu with the email, Connections, the theme switch, Leave demo (in the demo) and Sign out.
 
-**Consequences:** REQ-073 AC2 (role picker next to one theme button) is replaced by REQ-110: the theme is a switch in the account menu and the role picker shows only with sign-in off or in the demo. REQ-040 AC2: signed-in people on a team no longer start the demo from the sidebar; "Try the demo" stays on the "You have no access yet" screen.
+**Consequences:** REQ-073: AC1 changes — clicking the account card opens the account menu, and "Connections" is an item in it; AC2 changes — the theme is a "Dark theme" switch in the menu and the role picker shows only with sign-in off or in the demo. REQ-039 AC2: the read-only roles show as chips on the account card instead of a "My roles: …" line (still read-only). REQ-032 AC2: the card shows the part of the email before "@"; the full email is in the card's tooltip and at the top of the account menu. REQ-040 AC2: signed-in people on a team no longer start the demo from the sidebar; "Try the demo" stays on the "You have no access yet" screen. TC-404 checks the theme switch and the Connections item in the menu.

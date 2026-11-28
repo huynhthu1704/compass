@@ -53,6 +53,8 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   const name = signedIn ? accountName(session.email!) : account.name;
   const chips = accountChips({ signedIn, demo: session.demo, superAdmin: session.superAdmin, roles: myRoles, demoRole: settings.role });
   const items = accountMenu({ signedIn, demo: session.demo });
+  // REQ-110 AC3: choosing an item closes the menu and returns focus to the card, then acts.
+  const choose = (act: () => void) => () => { setOpen(false); cardRef.current?.focus(); act(); };
 
   const link = (l: NavLink, current: boolean) => (
     <button key={l.path} aria-current={current ? 'page' : undefined} onClick={() => go(l.path)} title={l.title}>
@@ -80,7 +82,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
           </select>
         </div>}
         <AccountMenu open={open} setOpen={setOpen}>
-          <button ref={cardRef} className="side-card account-card" aria-haspopup="menu" aria-expanded={open} aria-current={parts[0] === 'connect' ? 'page' : undefined} onClick={() => setOpen(!open)} title={signedIn ? session.email : account.name}>
+          <button ref={cardRef} className="side-card account-card" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} title={signedIn ? session.email : account.name}>
             <span className="side-avatar round account-avatar" aria-hidden>{account.initial}</span>
             <span className="side-meta">
               <span className="side-name">{name}</span>
@@ -91,18 +93,18 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
             <Icon name="more" size={18} />
           </button>
           {open && (
-            <div className="account-menu" role="menu" aria-label="Account" onClick={() => { setOpen(false); cardRef.current?.focus(); }} onKeyDown={(e) => {
+            <div className="account-menu" role="menu" aria-label="Account" onKeyDown={(e) => {
               if (e.key === 'Escape') { setOpen(false); cardRef.current?.focus(); }
               else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') moveFocus(e);
             }}>
-              <div className="account-menu-head"><strong>{name}</strong><span>{signedIn ? <>{session.email!.split('@')[0]}@<wbr />{session.email!.split('@').slice(1).join('@')}</> : account.state}</span></div>
+              <div className="account-menu-head" tabIndex={-1}><strong>{name}</strong><span>{signedIn ? <>{session.email!.split('@')[0]}@<wbr />{session.email!.split('@').slice(1).join('@')}</> : account.state}</span></div>
               {items.map((it) => it === 'connections'
-                ? <button key={it} role="menuitem" onClick={() => go('/connect')}><Icon name="link" size={16} />Connections<span className="account-menu-hint">{settings.githubUser ? 'GitHub ✓' : 'Not connected'}</span></button>
+                ? <button key={it} role="menuitem" onClick={choose(() => go('/connect'))}><Icon name="link" size={16} />Connections<span className="account-menu-hint">{settings.githubUser ? 'GitHub ✓' : 'Not connected'}</span></button>
                 : it === 'theme'
-                  ? <button key={it} role="menuitemcheckbox" aria-checked={settings.theme === 'dark'} aria-label={theme.label} onClick={() => store.setSettings({ theme: theme.next })}><Icon name="moon" size={16} />Dark theme<span className="account-switch" aria-hidden /></button>
+                  ? <button key={it} role="menuitemcheckbox" aria-checked={settings.theme === 'dark'} title={theme.label} onClick={choose(() => store.setSettings({ theme: theme.next }))}><Icon name="moon" size={16} />Dark theme<span className="account-switch" aria-hidden /></button>
                   : it === 'leave-demo'
-                    ? <button key={it} role="menuitem" onClick={() => { leaveDemo(); go('/'); }}><Icon name="exit" size={16} />Leave demo</button>
-                    : <button key={it} role="menuitem" className="account-menu-danger" onClick={() => void signOut()}><Icon name="exit" size={16} />Sign out</button>)}
+                    ? <button key={it} role="menuitem" onClick={choose(() => { leaveDemo(); go('/'); })}><Icon name="exit" size={16} />Leave demo</button>
+                    : <button key={it} role="menuitem" className="account-menu-danger" onClick={choose(() => void signOut())}><Icon name="exit" size={16} />Sign out</button>)}
             </div>
           )}
         </AccountMenu>
@@ -173,7 +175,8 @@ function AccountMenu({ open, setOpen, children }: { open: boolean; setOpen: (v: 
     document.addEventListener('pointerdown', close);
     return () => document.removeEventListener('pointerdown', close);
   }, [open, setOpen]);
-  return <div ref={ref} className="account">{children}</div>;
+  // Tab (or any focus move) out of the card and menu closes it; a click outside is the pointerdown above.
+  return <div ref={ref} className="account" onBlur={(e) => { if (open && e.relatedTarget && !ref.current?.contains(e.relatedTarget as Node)) setOpen(false); }}>{children}</div>;
 }
 
 /** REQ-110: arrow keys move between the menu items. */

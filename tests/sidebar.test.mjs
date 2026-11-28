@@ -85,10 +85,10 @@ test('TC-404 (REQ-073): account card and one theme button', () => {
   assert.equal(themeToggle(themeToggle('light').next).next, 'light', 'clicking twice returns to the first theme');
 
   const src = read('src/components/Sidebar.tsx');
-  assert.match(src, /onClick=\{\(\) => go\('\/connect'\)\}/, 'the account card opens Connections');
+  assert.match(src, /onClick=\{choose\(\(\) => go\('\/connect'\)\)\}/, 'Connections (in the account menu, REQ-110 / ADR-019) opens Connections');
   assert.equal((src.match(/store\.setSettings\(\{ theme:/g) || []).length, 1, 'exactly one theme button');
-  assert.match(src, /aria-label=\{theme\.label\}/);
-  assert.match(src, /onClick=\{\(\) => store\.setSettings\(\{ theme: theme\.next \}\)\}/, 'the button switches to the other theme');
+  assert.match(src, /title=\{theme\.label\}/, 'the theme switch names the theme it switches to (REQ-110: a "Dark theme" switch in the menu)');
+  assert.match(src, /onClick=\{choose\(\(\) => store\.setSettings\(\{ theme: theme\.next \}\)\)\}/, 'the switch changes to the other theme');
   assert.match(read('src/index.css'), /\.sidebar button:focus-visible[^{]*\{[^}]*var\(--focus-ring\)/, 'sidebar buttons show the focus ring (TC-401)');
   assert.match(read('src/index.css'), /\.sidebar \.nav button\[aria-current="page"\]:focus-visible \{[^}]*var\(--focus-ring\)/, 'the current page keeps its focus ring next to the brand bar');
 });
@@ -148,5 +148,12 @@ test('TC-510 (REQ-110): the footer is one account card; the account menu lists t
   assert.match(footer, /\{\(!signedIn \|\| session\.demo\) && <div className="row gap-sm account-role"/, 'the role picker only with sign-in off or in the demo');
   const css = read('src/index.css');
   assert.match(css, /\.account-menu \{[^}]*position: absolute[^}]*bottom: 100%/, 'the menu opens upward inside the footer');
-  assert.match(css, /\.account-menu \{[^}]*left: 0; right: 0/, 'the menu stays within the sidebar width (phone menu too)');
+  assert.match(css, /\.account-menu \{[^}]*left: 0; right: 0/, 'on desktop the menu stays within the sidebar width');
+  // AC3: every way of closing the menu
+  assert.match(src, /const choose = \(act: \(\) => void\) => \(\) => \{ setOpen\(false\); cardRef\.current\?\.focus\(\); act\(\); \}/, 'a choice closes the menu and returns focus to the card');
+  for (const act of [/onClick=\{choose\(\(\) => go\('\/connect'\)\)\}/, /onClick=\{choose\(\(\) => void signOut\(\)\)\}/, /onClick=\{choose\(\(\) => \{ leaveDemo\(\); go\('\/'\); \}\)\}/, /onClick=\{choose\(\(\) => store\.setSettings\(\{ theme: theme\.next \}\)\)\}/]) assert.match(footer, act);
+  assert.match(src, /document\.addEventListener\('pointerdown', close\)[\s\S]*?if \(!ref\.current\?\.contains\(e\.target as Node\)\) setOpen\(false\)|if \(!ref\.current\?\.contains\(e\.target as Node\)\) setOpen\(false\)[\s\S]*?document\.addEventListener\('pointerdown', close\)/, 'a click outside closes the menu');
+  assert.match(src, /onBlur=\{\(e\) => \{ if \(open && e\.relatedTarget && !ref\.current\?\.contains\(e\.relatedTarget as Node\)\) setOpen\(false\); \}\}/, 'Tab (focus leaving the card and menu) closes it');
+  // AC5: on phones the menu opens in place above the card, inside the Menu drawer
+  assert.match(css, /@media \(max-width: 900px\) \{ \.account \{ display: flex; flex-direction: column-reverse; \} \.account-menu \{ position: static;/, 'phone: the menu is in the page flow, above the card');
 });

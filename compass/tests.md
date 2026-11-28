@@ -1073,4 +1073,6 @@ And the account menu lists Connections, Dark theme and Sign out, and Leave demo 
 And with sign-in off the menu has no Sign out
 And no state lists "Try the demo"
 And the sidebar footer renders no "Try the demo", no "My roles" line and exactly one theme control inside the menu
+And choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card)
+And below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)
 ```
