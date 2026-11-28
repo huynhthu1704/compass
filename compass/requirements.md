@@ -1831,9 +1831,9 @@ Then the menu closes; "Dark theme" switches the theme, "Connections" opens Conne
 
 _AC4_
 ```gherkin
-Given the account menu is open
+Given the account menu is open and focus is in it
 When I press ArrowDown or ArrowUp
-Then focus moves to the next or previous item and wraps around at the ends; from the name and email at the top of the menu, ArrowDown goes to the first item and ArrowUp to the last
+Then focus moves to the next or previous item and wraps around at the ends; from the header at the top of the menu (my name and email, or the account state with sign-in off), ArrowDown goes to the first item and ArrowUp to the last
 ```
 
 _AC5_
