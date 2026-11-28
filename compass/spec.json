@@ -3520,7 +3520,7 @@
       "title": "Opening the demo reuses the demo project; duplicate demo projects are dropped on load",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a project list with a real project and a demo project\nWhen the demo is opened\nThen the existing demo project is returned and the list is unchanged\nAnd given a list with no demo project, a new demo project is created and added once\nAnd given a saved list with two demo projects and two real projects, loading keeps the first (most recent) demo project and both real projects in order"
+      "gherkin": "Given a project list with a real project and a demo project\nWhen the demo is opened\nThen the existing demo project is returned and the list is unchanged\nAnd given a list with no demo project, a new demo project is created and added once\nAnd given a saved list with two demo projects and two real projects, loading keeps the first (most recent) demo project and both real projects in order\nAnd given a signed-in person outside the demo who is not a super admin, opening the demo starts the demo session first (ADR-022); already in the demo, a super admin, or with sign-in off, it does not"
     },
     {
       "id": "TC-510",
@@ -3904,6 +3904,19 @@
       "context": "Requirement issues were free text (story + Given/When/Then), with no link to the design and no picture, so readers had to open spec.json and Figma to understand them.",
       "decision": "The Product Owner asked in chat on 2026-11-28: \"for each github issue created, especially new requirement, attach the figma link and screenshot and provide a table of detailed requirement as standard template\". .github/ISSUE_TEMPLATE/requirement.md and bug.md hold the standard; agents follow it for every issue they create (AGENTS.md). Screenshots are exported from the Figma frame, committed to compass/design/screens/ and linked by commit SHA.",
       "consequences": "Every requirement issue shows its Figma frame, a screenshot, a Requirement details table and an Acceptance criteria table. A requirement without UI says \"Design: none: <reason>\"."
+    },
+    {
+      "id": "ADR-022",
+      "date": "2026-11-28",
+      "title": "\"Open demo project\" starts the demo session for a signed-in person who cannot see the demo project",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-109",
+        "REQ-040"
+      ],
+      "context": "With sign-in on, a signed-in person outside the demo who is not a super admin sees only projects their team lists (REQ-032). The demo project has no repository, so \"Open demo project\" and \"Explore the demo\" added a hidden project and the page stayed on Projects: the button seemed broken.",
+      "decision": "The Product Owner chose in chat on 2026-11-28: the button enters the demo session (as \"Try the demo\" does, REQ-040) and then opens the demo project. Super admins and sign-in off keep opening it directly.",
+      "consequences": "The person picks a demo role, sees the demo banner and \"Leave demo\", and their real projects are hidden until they leave (REQ-040 AC3). ADR-019 still keeps \"Try the demo\" out of the sidebar."
     }
   ]
 }
