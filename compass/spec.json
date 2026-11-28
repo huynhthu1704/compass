@@ -1011,7 +1011,7 @@
       "design": {
         "status": "Approved",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-704",
-        "summary": "People sign in on a single centred card (\"Sign in to Compass\" + \"Sign in with Google\"); a Google account on no team lands on \"You have no access yet\" with its email, Reload and Sign out, and no project data. Inside a project, Admins and the super admin get a new \"Team\" item in the sidebar (after Release). The Team page has three cards: Add person (email + role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin; several can be ticked), the team list (email, role chips, Edit roles, Remove; the only Admin cannot be removed) and, before phase 1, the project GitHub token (removed by REQ-043, see SCR-9). Each gate card on a feature page shows its button enabled for the signed-in person's roles and greyed out with \"Needs the <role> role\" otherwise; approvals show \"Approved by <email> (<role>)\"; an approval that Firebase does not confirm shows a red \"Unconfirmed\" badge. The sidebar account card shows the Google email; its account menu (REQ-110, ADR-019) has Sign out and, for super admins, Connections and the role picker shows \"My roles: …\". On phones the Team page stacks the cards, role checkboxes wrap, and Edit roles / Remove move into a ⋮ menu per row. With sign-in on, the \"What's your role?\" onboarding screen is not shown: roles come from the team. Someone on no team can \"Try the demo\" from the no-access screen (ADR-019 removed it from the sidebar): they pick a role on the existing role screen and see the sample projects with a honey \"Demo\" banner and a demo role picker in the sidebar. Phase 1 (REQ-041–REQ-046): the project GitHub token card is removed from the Team page on desktop and phone (SCR-9); super admins set a shared work token on Connections (SCR-11).",
+        "summary": "People sign in on a single centred card (\"Sign in to Compass\" + \"Sign in with Google\"); a Google account on no team lands on \"You have no access yet\" with its email, Reload and Sign out, and no project data. Inside a project, Admins and the super admin get a new \"Team\" item in the sidebar (after Release). The Team page has three cards: Add person (email + role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin; several can be ticked), the team list (email, role chips, Edit roles, Remove; the only Admin cannot be removed) and, before phase 1, the project GitHub token (removed by REQ-043, see SCR-9). Each gate card on a feature page shows its button enabled for the signed-in person's roles and greyed out with \"Needs the <role> role\" otherwise; approvals show \"Approved by <email> (<role>)\"; an approval that Firebase does not confirm shows a red \"Unconfirmed\" badge. The sidebar account card shows the Google email; its account menu (REQ-110, ADR-019) has Sign out and, for super admins, Connections and the role picker shows \"My roles: …\". On phones the Team page stacks the cards, role checkboxes wrap, and Edit roles / Remove move into a ⋮ menu per row. With sign-in on, the \"What's your role?\" onboarding screen is not shown: roles come from the team. Someone on no team can \"Try the demo\" from the no-access screen (ADR-019 removed it from the sidebar): they pick one or more roles on the existing role screen and see the sample projects with a honey \"Demo\" banner and a demo roles menu (honey checkboxes) in the sidebar (REQ-121). Phase 1 (REQ-041–REQ-046): the project GitHub token card is removed from the Team page on desktop and phone (SCR-9); super admins set a shared work token on Connections (SCR-11).",
         "screens": [
           {
             "id": "SCR-1",
@@ -1156,7 +1156,7 @@
           {
             "id": "SCR-7",
             "name": "Desktop · Demo after sign-in",
-            "purpose": "The demo opened by a signed-in person: sample projects only, a role of their choice, clearly marked as a demo.",
+            "purpose": "The demo opened by a signed-in person: sample projects only, roles of their choice, clearly marked as a demo.",
             "reqIds": [
               "REQ-040",
               "REQ-039",
@@ -2221,6 +2221,7 @@
       "priority": "Must",
       "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
+      "design": "none: no screen — commit and pull request messages only (\"Made in Compass by <email> (<role>)\")",
       "story": "As the super admin, I want every GitHub change made with my token to name the person who did it, so that GitHub's history stays a clear audit trail.",
       "ac": [
         "Given sign-in is on\nWhen Compass commits or opens a pull request for a person on a team project\nThen the commit message and the pull request description end with \"Made in Compass by <email> (<role>)\", with the role that passed the gate (or the person's roles when no gate applies); the line is written by Compass in the member's browser and helps people read GitHub's history, while Compass's approval record in Firebase stays the proof of an approval",
