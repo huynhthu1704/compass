@@ -24,6 +24,8 @@ popover (surface, border, elevation-2, radius-md) that opens upward inside the s
 - Elements (top to bottom): header with the name and the full email (wraps, never cut off); "Connections" with
   "GitHub ✓" or "Not connected" on the right; "Dark theme" with an on/off switch; a line; "Sign out" in the danger colour.
   In the demo, "Leave demo" sits above the line. **No "Try the demo"** (Product Owner, 2026-11-28).
+  With sign-in on, "Connections" is shown only to super admins; a member's menu has the header, "Dark theme" and
+  "Sign out" (REQ-041 phase 1, ADR-020).
 - States: opens on click, Enter or Space; arrow keys move between items; Escape, a click outside or a choice closes it
   and returns focus to the card.
 
