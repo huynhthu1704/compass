@@ -928,16 +928,16 @@ As any portal user, I want my GitHub connection, my role and the theme together 
 
 _AC1_
 ```gherkin
-Given GitHub is connected as @user
+Given GitHub is connected as @user and sign-in is off
 When I look at the bottom of the sidebar
-Then an account card shows the initial, "@user" and "GitHub connected"; without a connection it shows "Not connected" and "Demo mode · connect"; clicking the card opens Connections
+Then an account card shows the initial, "@user" and "GitHub connected"; without a connection it shows "Not connected" and "Demo mode · connect"; clicking the card opens the account menu, whose "Connections" item opens Connections (REQ-110, ADR-019)
 ```
 
 _AC2_
 ```gherkin
 Given the footer
-When I look under the account card
-Then the role picker fills the row next to one theme button labelled "Switch to dark theme" (or "Switch to light theme"), and clicking it switches the theme
+When I open the account menu
+Then it has one theme control, a "Dark theme" switch titled "Switch to dark theme" (or "Switch to light theme"), and choosing it switches the theme; the role picker sits above the card only with sign-in off or in the demo (REQ-110, ADR-019)
 ```
 
 _AC3_
@@ -1609,7 +1609,7 @@ _AC2_
 ```gherkin
 Given a signed-in person on a real project
 When they look at the sidebar
-Then it shows "My roles: …" read-only for that project, and nothing in the portal lets them change their own roles
+Then the account card shows their roles on that project read-only, as chips (ADR-019), and nothing in the portal lets them change their own roles
 ```
 
 _AC3_
@@ -1635,7 +1635,7 @@ Then the screen also offers "Try the demo"
 
 _AC2_
 ```gherkin
-Given a signed-in person clicks "Try the demo" (from the no-access screen, or from the sidebar account menu when they are on a team)
+Given a signed-in person clicks "Try the demo" on the no-access screen (the sidebar has no "Try the demo", ADR-019)
 When the demo opens
 Then they pick a role on the "What's your role?" screen and see only the sample demo projects, with a banner "Demo — sample data, kept in this browser only" and "Leave demo"
 ```

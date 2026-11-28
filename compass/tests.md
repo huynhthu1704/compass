@@ -596,8 +596,8 @@ Then the heading count is 2 and F-003 is not listed; with F-003 open the count i
 Covers: REQ-073 · Type: Automated · Status: Not run
 ```gherkin
 Given GitHub connected as @alice, and no connection, in light and in dark mode
-When the account card and the theme button are computed
-Then the card shows "A", "@alice", "GitHub connected" (or "?", "Not connected", "Demo mode · connect") and opens Connections; there is exactly one theme button, labelled "Switch to dark theme" in light mode and "Switch to light theme" in dark mode, and clicking it sets the theme to the other one
+When the account card and the theme control are computed
+Then the card shows "A", "@alice", "GitHub connected" (or "?", "Not connected", "Demo mode · connect"); the account menu's "Connections" item opens Connections; there is exactly one theme control, the "Dark theme" switch titled "Switch to dark theme" in light mode and "Switch to light theme" in dark mode, and choosing it sets the theme to the other one
 ```
 
 ## TC-405 · Sidebar on desktop and phone, light and dark
@@ -1073,6 +1073,8 @@ And the account menu lists Connections, Dark theme and Sign out, and Leave demo 
 And with sign-in off the menu has no Sign out
 And no state lists "Try the demo"
 And the sidebar footer renders no "Try the demo", no "My roles" line and exactly one theme control inside the menu
-And choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card)
+And choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)
 And below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)
+And the email header sits beside the role="menu" list, not inside it
+And the arrow keys move between the items, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)
 ```

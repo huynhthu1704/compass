@@ -388,6 +388,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .account-role { align-items: center; padding: 0 var(--spacing-xs); }
 .account-menu { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: var(--spacing-xs); z-index: 20; display: flex; flex-direction: column; padding: var(--spacing-xs); border-radius: var(--radius-md); border: 1px solid var(--color-border-default); background: var(--color-bg-surface); box-shadow: var(--elevation-2); }
 .account-menu-head { outline: none; display: flex; flex-direction: column; gap: 2px; padding: var(--spacing-sm); margin-bottom: var(--spacing-xs); border-bottom: 1px solid var(--color-border-subtle); font-size: 13px; color: var(--color-text-primary); }
+.account-menu-items { display: flex; flex-direction: column; }
 .account-menu-head span { font-size: 12px; color: var(--color-text-tertiary); overflow-wrap: break-word; }
 .account-menu button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: var(--spacing-sm); padding: 7px var(--spacing-sm); border-radius: var(--radius-sm); font-size: 13px; color: var(--color-text-primary); }
 .account-menu button .icon { flex: none; color: var(--color-text-tertiary); }
