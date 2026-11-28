@@ -95,10 +95,19 @@ export function miroEmbed(url?: string): string | null {
 
 export type Preview = { kind: 'figma' | 'miro'; label: string; src: string };
 
-/** REQ-081: the previews a Design page shows — Figma (the feature's frame link first, else the project file), then Miro. */
+/** The made-up Figma file of older demo projects (`figma.com/design/demo/…`), still saved in some browsers. */
+const DEMO_FIGMA = /^\/(?:design|file|proto|board)\/demo(?:\/|$)/;
+
+/** TC-530: a Figma link to the old made-up demo file, which Figma answers with "Invalid URL". */
+export const isDemoFigmaLink = (url?: string) => { const u = url ? parse(url.trim()) : null; return !!u && DEMO_FIGMA.test(u.pathname); };
+
+/**
+ * REQ-081: the previews a Design page shows — Figma (the feature's frame link first, else the project file), then
+ * Miro. The old made-up demo frame link is skipped, so the file set in Project settings shows instead (TC-530).
+ */
 export function designPreviews(files: DesignFiles, featureUrl?: string): Preview[] {
   const out: Preview[] = [];
-  const fig = figmaEmbed(featureUrl) || figmaEmbed(files.figma);
+  const fig = (isDemoFigmaLink(featureUrl) ? null : figmaEmbed(featureUrl)) || figmaEmbed(files.figma);
   if (fig) out.push({ kind: 'figma', label: 'Figma preview', src: fig });
   const miro = miroEmbed(files.miro);
   if (miro) out.push({ kind: 'miro', label: 'Miro preview', src: miro });

@@ -194,3 +194,18 @@ test('TC-527 (REQ-121 AC1–AC3, AC5): the role screen and the sidebar pick seve
   assert.equal((fb.match(/store\.setSettings\(NO_ROLES\)/g) || []).length, 3, 'entering, leaving the demo and signing out from it forget the roles');
   assert.doesNotMatch(fb, /setSettings\(\{ role: undefined \}\)/);
 });
+
+test("TC-530 (REQ-081): the old made-up demo frame link never hides the project's Figma file", () => {
+  const files = designFiles({ kind: 'figma', url: FIG });
+  // Older demo projects saved in a browser have F-001's frame on a made-up file ("demo"): Project settings' file is previewed.
+  const demoFrame = 'https://www.figma.com/design/demo/Travel-Journal?node-id=1-2';
+  assert.equal(designPreviews(files, demoFrame)[0].src, figmaEmbed(FIG));
+  assert.deepEqual(designPreviews({}, demoFrame), [], 'no project file: the made-up link is not previewed either');
+  // A real frame link always wins, also when it is in another Figma file (Owner decision, 2026-11-28).
+  const otherFile = 'https://www.figma.com/design/Zz9OtherFileKey12345/Other?node-id=1-2';
+  assert.equal(designPreviews(files, otherFile)[0].src, figmaEmbed(otherFile));
+  assert.equal(designPreviews(files, `${FIG}?node-id=1-2`)[0].src, figmaEmbed(`${FIG}?node-id=1-2`));
+  assert.equal(designPreviews(files, 'https://www.figma.com/design/demo-board-x1/Real')[0].src, figmaEmbed('https://www.figma.com/design/demo-board-x1/Real'), 'only the exact "demo" key is skipped');
+  // New demo projects carry no made-up Figma link.
+  assert.doesNotMatch(read('src/demo.ts'), /figma\.com\/design\/demo\//);
+});

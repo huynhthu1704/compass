@@ -3564,6 +3564,16 @@
       "gherkin": "Given a signed-in person clicked \"Open demo project\", so the demo is opened on /p/<demo id> with no role yet\nWhen the route becomes /p/<demo id>\nThen they stay in the demo\nAnd when the route becomes any other route before a role is picked (the browser Back button)\nThen the demo is left\nAnd once a demo role is picked, or outside the demo, a route change never leaves the demo\nAnd every \"Leave demo\" (the demo banner, the account menu and the demo role screen) calls the one shared exitDemo(), which leaves the demo and goes to /; no other source file leaves the demo and navigates by hand (source check; the click itself is manual TC-077)"
     },
     {
+      "id": "TC-530",
+      "reqIds": [
+        "REQ-081"
+      ],
+      "title": "The old made-up demo frame link never hides the project's Figma file",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given a project whose Figma file is set in Project settings\nWhen a feature's frame link points to the made-up \"demo\" Figma file of older demo projects\nThen the Design page previews the project's Figma file, and with no project file nothing is previewed\nAnd a real frame link, in any Figma file, is still previewed first\nAnd new demo projects carry no made-up Figma link"
+    },
+    {
       "id": "TC-078",
       "reqIds": [
         "REQ-041"
