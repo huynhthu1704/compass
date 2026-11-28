@@ -1,10 +1,10 @@
-// F-013 Sidebar navigation — TC-400, TC-402, TC-403, TC-404, TC-406, TC-407 (REQ-070 … REQ-075).
+// F-013 Sidebar navigation — TC-400, TC-402, TC-403, TC-404, TC-406, TC-407 (REQ-070 … REQ-075), TC-510 (REQ-110).
 // TC-401 (keyboard focus) and TC-405 (desktop/phone, light/dark) are checked with screenshots.
 // src/sidebar.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { accountCard, approvalCount, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS } from '../src/sidebar.ts';
+import { accountCard, accountChips, accountMenu, accountName, approvalCount, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS } from '../src/sidebar.ts';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const runs = (...statuses) => statuses.map((status) => ({ status }));
@@ -85,10 +85,10 @@ test('TC-404 (REQ-073): account card and one theme button', () => {
   assert.equal(themeToggle(themeToggle('light').next).next, 'light', 'clicking twice returns to the first theme');
 
   const src = read('src/components/Sidebar.tsx');
-  assert.match(src, /onClick=\{\(\) => go\('\/connect'\)\}/, 'the account card opens Connections');
+  assert.match(src, /onClick=\{choose\(\(\) => go\('\/connect'\)\)\}/, 'Connections (in the account menu, REQ-110 / ADR-019) opens Connections');
   assert.equal((src.match(/store\.setSettings\(\{ theme:/g) || []).length, 1, 'exactly one theme button');
-  assert.match(src, /aria-label=\{theme\.label\}/);
-  assert.match(src, /onClick=\{\(\) => store\.setSettings\(\{ theme: theme\.next \}\)\}/, 'the button switches to the other theme');
+  assert.match(src, /title=\{theme\.label\}/, 'the theme switch names the theme it switches to (REQ-110: a "Dark theme" switch in the menu)');
+  assert.match(src, /onClick=\{choose\(\(\) => store\.setSettings\(\{ theme: theme\.next \}\)\)\}/, 'the switch changes to the other theme');
   assert.match(read('src/index.css'), /\.sidebar button:focus-visible[^{]*\{[^}]*var\(--focus-ring\)/, 'sidebar buttons show the focus ring (TC-401)');
   assert.match(read('src/index.css'), /\.sidebar \.nav button\[aria-current="page"\]:focus-visible \{[^}]*var\(--focus-ring\)/, 'the current page keeps its focus ring next to the brand bar');
 });
@@ -122,4 +122,38 @@ test('F-015 (REQ-030, REQ-032): the Team item and the signed-in account card', (
   assert.deepEqual(teamLink('p1'), { key: 'team', label: 'Team', path: '/p/p1/team', icon: 'team', title: 'People on this project and their roles' });
   assert.deepEqual(signedInCard('ba@example.com', false), { initial: 'B', name: 'ba@example.com', state: 'Google sign-in', tone: 'success' });
   assert.equal(signedInCard('po@example.com', true).state, 'Google · super admin');
+});
+
+test('TC-510 (REQ-110): the footer is one account card; the account menu lists the right items for each state', () => {
+  assert.equal(accountName('huynhthingocthu1704@gmail.com'), 'huynhthingocthu1704');
+  assert.deepEqual(accountChips({ signedIn: true, superAdmin: true, roles: ['PO'] }).map((c) => c.label), ['Super admin', 'PO']);
+  assert.deepEqual(accountChips({ signedIn: true, roles: ['BA', 'QA'] }).map((c) => c.label), ['BA', 'QA']);
+  assert.deepEqual(accountChips({ signedIn: true, roles: [] }).map((c) => c.label), ['Google'], 'signed in without a role on this project');
+  assert.deepEqual(accountChips({ signedIn: true, demo: true, superAdmin: true, roles: ['PO'], demoRole: 'BA' }).map((c) => c.label), ['Demo · BA'], 'the demo role replaces the real roles');
+  assert.deepEqual(accountChips({ signedIn: false, roles: [] }), [], 'sign-in off: no chips, the role picker shows the role');
+
+  assert.deepEqual(accountMenu({ signedIn: true }), ['connections', 'theme', 'sign-out']);
+  assert.deepEqual(accountMenu({ signedIn: true, demo: true }), ['connections', 'theme', 'leave-demo', 'sign-out']);
+  assert.deepEqual(accountMenu({ signedIn: false }), ['connections', 'theme'], 'sign-in off: no Sign out');
+
+  const src = read('src/components/Sidebar.tsx');
+  const footer = src.slice(src.indexOf('className="sidebar-footer"'), src.indexOf('function ProjectGroup'));
+  assert.doesNotMatch(footer, /Try the demo|enterDemo/, 'no "Try the demo" in the sidebar (ADR-019)');
+  assert.doesNotMatch(footer, /My roles/, 'the role is shown once, as chips');
+  assert.match(footer, /aria-haspopup="menu"/, 'the account card opens the menu');
+  assert.match(footer, /aria-expanded=\{open\}/);
+  assert.match(footer, /role="menu"/);
+  assert.match(footer, /role="menuitemcheckbox"[^>]*aria-checked=\{settings\.theme === 'dark'\}/, 'the theme is a switch in the menu');
+  assert.match(footer, /e\.key === 'Escape'/, 'Escape closes the menu');
+  assert.match(footer, /\{\(!signedIn \|\| session\.demo\) && <div className="row gap-sm account-role"/, 'the role picker only with sign-in off or in the demo');
+  const css = read('src/index.css');
+  assert.match(css, /\.account-menu \{[^}]*position: absolute[^}]*bottom: 100%/, 'the menu opens upward inside the footer');
+  assert.match(css, /\.account-menu \{[^}]*left: 0; right: 0/, 'on desktop the menu stays within the sidebar width');
+  // AC3: every way of closing the menu
+  assert.match(src, /const choose = \(act: \(\) => void\) => \(\) => \{ setOpen\(false\); cardRef\.current\?\.focus\(\); act\(\); \}/, 'a choice closes the menu and returns focus to the card');
+  for (const act of [/onClick=\{choose\(\(\) => go\('\/connect'\)\)\}/, /onClick=\{choose\(\(\) => void signOut\(\)\)\}/, /onClick=\{choose\(\(\) => \{ leaveDemo\(\); go\('\/'\); \}\)\}/, /onClick=\{choose\(\(\) => store\.setSettings\(\{ theme: theme\.next \}\)\)\}/]) assert.match(footer, act);
+  assert.match(src, /document\.addEventListener\('pointerdown', close\)[\s\S]*?if \(!ref\.current\?\.contains\(e\.target as Node\)\) setOpen\(false\)|if \(!ref\.current\?\.contains\(e\.target as Node\)\) setOpen\(false\)[\s\S]*?document\.addEventListener\('pointerdown', close\)/, 'a click outside closes the menu');
+  assert.match(src, /onBlur=\{\(e\) => \{ if \(open && e\.relatedTarget && !ref\.current\?\.contains\(e\.relatedTarget as Node\)\) setOpen\(false\); \}\}/, 'Tab (focus leaving the card and menu) closes it');
+  // AC5: on phones the menu opens in place above the card, inside the Menu drawer
+  assert.match(css, /@media \(max-width: 900px\) \{ \.account \{ display: flex; flex-direction: column-reverse; \} \.account-menu \{ position: static;/, 'phone: the menu is in the page flow, above the card');
 });

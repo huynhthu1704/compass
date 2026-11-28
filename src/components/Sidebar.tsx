@@ -1,9 +1,10 @@
 // F-013 Sidebar navigation (REQ-070 … REQ-073) — design: compass/design/F-013.md
-import type { ReactNode } from 'react';
+// REQ-110: the footer is one account card with an account menu — design: compass/design/2026-11-28-account-menu.md
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { go } from '../App';
 import { featureStage, stageStatus } from '../progress';
-import { enterDemo, leaveDemo, projectKey, signOut, useSession } from '../firebase';
-import { accountCard, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
+import { leaveDemo, projectKey, signOut, useSession } from '../firebase';
+import { accountCard, accountChips, accountMenu, accountName, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
 import { STAGES, type Project, type Stage } from '../types';
 import { STAGE_INFO } from '../ui';
@@ -19,6 +20,9 @@ const PATHS = {
   team: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21v-1a6 6 0 0 1 12 0v1m3-11 2 2 4-4',
   settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
   chevron: 'M9 6l6 6-6 6',
+  more: 'M5 12h.01M12 12h.01M19 12h.01',
+  link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
+  exit: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11',
   sun: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
   moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
 };
@@ -44,6 +48,13 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   const myRoles = p?.repo ? session.access.find((a) => a.id === projectKey(p.repo!))?.roles || [] : [];
   const canManageTeam = !!p?.repo && signedIn && (session.superAdmin || !!session.access.find((a) => a.id === projectKey(p.repo!))?.roles.includes('Admin'));
   const theme = themeToggle(settings.theme);
+  const [open, setOpen] = useState(false);
+  const cardRef = useRef<HTMLButtonElement>(null);
+  const name = signedIn ? accountName(session.email!) : account.name;
+  const chips = accountChips({ signedIn, demo: session.demo, superAdmin: session.superAdmin, roles: myRoles, demoRole: settings.role });
+  const items = accountMenu({ signedIn, demo: session.demo });
+  // REQ-110 AC3: choosing an item closes the menu and returns focus to the card, then acts.
+  const choose = (act: () => void) => () => { setOpen(false); cardRef.current?.focus(); act(); };
 
   const link = (l: NavLink, current: boolean) => (
     <button key={l.path} aria-current={current ? 'page' : undefined} onClick={() => go(l.path)} title={l.title}>
@@ -64,31 +75,39 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
       {p && <ProjectGroup p={p} sync={sync} sub={sub} openId={openId} fsub={fsub} link={link} team={canManageTeam} />}
 
       <div className="sidebar-footer">
-        <button className="side-card" aria-current={parts[0] === 'connect' ? 'page' : undefined} onClick={() => go('/connect')}>
-          <span className="side-avatar round" aria-hidden>{account.initial}</span>
-          <span className="side-meta">
-            <span className="side-name">{account.name}</span>
-            <span className={`side-state ${toneText(account.tone)}`}><span className="status-dot" aria-hidden />{account.state}</span>
-          </span>
-          <Icon name="chevron" size={16} />
-        </button>
-        {signedIn && (
-          <div className="row gap-sm wrap">
-            {session.demo
-              ? <button className="btn secondary sm" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</button>
-              : <button className="btn secondary sm" onClick={() => enterDemo()}>Try the demo</button>}
-            <button className="btn secondary sm" onClick={() => void signOut()}>Sign out</button>
-          </div>
-        )}
-        {/* REQ-039: with sign-in on, roles come from the team (read-only); the role picker is only for the demo */}
-        {signedIn && !session.demo && p?.repo && <div className="body-sm t-secondary" data-testid="my-roles">My roles: {myRoles.length ? myRoles.join(' · ') : session.superAdmin ? 'super admin' : '—'}</div>}
-        <div className="row gap-sm">
-          {signedIn && session.demo && <span className="body-sm t-secondary">Demo role</span>}
-          {(!signedIn || session.demo) && <select className="select role-select" value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label={session.demo ? 'Demo role' : 'Your role'}>
+        {(!signedIn || session.demo) && <div className="row gap-sm account-role">
+          <span className="body-sm t-secondary">{session.demo ? 'Demo role' : 'Role'}</span>
+          <select className="select role-select" value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label={session.demo ? 'Demo role' : 'Your role'}>
             {ROLES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>}
-          <button className="icon-btn" onClick={() => store.setSettings({ theme: theme.next })} aria-label={theme.label} title={theme.label}><Icon name={theme.icon} /></button>
-        </div>
+          </select>
+        </div>}
+        <AccountMenu open={open} setOpen={setOpen}>
+          <button ref={cardRef} className="side-card account-card" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} title={signedIn ? session.email : account.name}>
+            <span className="side-avatar round account-avatar" aria-hidden>{account.initial}</span>
+            <span className="side-meta">
+              <span className="side-name">{name}</span>
+              {chips.length
+                ? <span className="account-chips">{chips.map((c) => <span key={c.label} className={`account-chip ${c.tone}`}>{c.label}</span>)}</span>
+                : <span className={`side-state ${toneText(account.tone)}`}><span className="status-dot" aria-hidden />{account.state}</span>}
+            </span>
+            <Icon name="more" size={18} />
+          </button>
+          {open && (
+            <div className="account-menu" role="menu" aria-label="Account" onKeyDown={(e) => {
+              if (e.key === 'Escape') { setOpen(false); cardRef.current?.focus(); }
+              else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') moveFocus(e);
+            }}>
+              <div className="account-menu-head" tabIndex={-1}><strong>{name}</strong><span>{signedIn ? <>{session.email!.split('@')[0]}@<wbr />{session.email!.split('@').slice(1).join('@')}</> : account.state}</span></div>
+              {items.map((it) => it === 'connections'
+                ? <button key={it} role="menuitem" onClick={choose(() => go('/connect'))}><Icon name="link" size={16} />Connections<span className="account-menu-hint">{settings.githubUser ? 'GitHub ✓' : 'Not connected'}</span></button>
+                : it === 'theme'
+                  ? <button key={it} role="menuitemcheckbox" aria-checked={settings.theme === 'dark'} title={theme.label} onClick={choose(() => store.setSettings({ theme: theme.next }))}><Icon name="moon" size={16} />Dark theme<span className="account-switch" aria-hidden /></button>
+                  : it === 'leave-demo'
+                    ? <button key={it} role="menuitem" onClick={choose(() => { leaveDemo(); go('/'); })}><Icon name="exit" size={16} />Leave demo</button>
+                    : <button key={it} role="menuitem" className="account-menu-danger" onClick={choose(() => void signOut())}><Icon name="exit" size={16} />Sign out</button>)}
+            </div>
+          )}
+        </AccountMenu>
       </div>
     </>
   );
@@ -144,4 +163,26 @@ function ProjectGroup({ p, sync, sub, openId, fsub, link, team }: { p: Project; 
       )}
     </section>
   );
+}
+
+/** REQ-110: the footer's account card and its menu; a click outside closes the menu, and it opens with focus on the first item. */
+function AccountMenu({ open, setOpen, children }: { open: boolean; setOpen: (v: boolean) => void; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    ref.current?.querySelector<HTMLElement>('[role^="menuitem"]')?.focus();
+    const close = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [open, setOpen]);
+  // Tab (or any focus move) out of the card and menu closes it; a click outside is the pointerdown above.
+  return <div ref={ref} className="account" onBlur={(e) => { if (open && e.relatedTarget && !ref.current?.contains(e.relatedTarget as Node)) setOpen(false); }}>{children}</div>;
+}
+
+/** REQ-110: arrow keys move between the menu items. */
+function moveFocus(e: KeyboardEvent<HTMLDivElement>) {
+  e.preventDefault();
+  const items = [...e.currentTarget.querySelectorAll<HTMLElement>('[role^="menuitem"]')];
+  const i = items.indexOf(document.activeElement as HTMLElement);
+  items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
 }

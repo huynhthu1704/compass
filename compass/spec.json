@@ -2069,6 +2069,25 @@
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-27T00:00:00.000Z"
+    },
+    {
+      "id": "REQ-110",
+      "featureId": "F-013",
+      "title": "The sidebar footer is one account card that opens an account menu",
+      "priority": "Should",
+      "status": "In build",
+      "intent": "compass/intent/2026-11-28-sidebar-account-menu.md",
+      "design": "compass/design/2026-11-28-account-menu.md",
+      "story": "As any portal user, I want one tidy account card at the bottom of the sidebar with my account actions behind it, so that I see who I am and my roles at a glance without a crowded footer.",
+      "ac": [
+        "Given I am signed in with Google\nWhen I look at the bottom of the sidebar\nThen I see one account card with my initial, my name (the part of my email before \"@\") and my roles on the open project as chips (\"Super admin\" for the super admin), and no \"Try the demo\", \"Sign out\", \"My roles\" line or separate theme button",
+        "Given the account card\nWhen I click it (or press Enter or Space on it)\nThen a menu opens with my full email, \"Connections\" with the GitHub state, a \"Dark theme\" switch and \"Sign out\"; in the demo it also has \"Leave demo\"; it never has \"Try the demo\"",
+        "Given the account menu is open\nWhen I choose an item, press Escape or click outside it\nThen the menu closes; \"Dark theme\" switches the theme, \"Connections\" opens Connections and \"Sign out\" signs me out",
+        "Given sign-in is off, or I am in the demo\nWhen I look at the footer\nThen the role picker is shown above the account card, and the menu has no \"Sign out\" when sign-in is off",
+        "Given a phone (below 900 px)\nWhen I open the Menu\nThen the footer and its account menu work the same, within the menu width"
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     }
   ],
   "tests": [
@@ -3305,6 +3324,16 @@
       "type": "Automated",
       "status": "Pass",
       "gherkin": "Given a project list with a real project and a demo project\nWhen the demo is opened\nThen the existing demo project is returned and the list is unchanged\nAnd given a list with no demo project, a new demo project is created and added once\nAnd given a saved list with two demo projects and two real projects, loading keeps the first (most recent) demo project and both real projects in order"
+    },
+    {
+      "id": "TC-510",
+      "reqIds": [
+        "REQ-110"
+      ],
+      "title": "The footer is one account card; the account menu lists the right items for each state",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)"
     }
   ],
   "decisions": [
@@ -3484,6 +3513,22 @@
       "context": "The first design put the project's Figma and Miro links on the Feature board; the Product Owner found that page unsuitable for them.",
       "decision": "The Product Owner chose in chat on 2026-11-27: a \"Project settings\" link with a gear icon is added to the sidebar's project group, for every role. Its page holds the \"Design files\" card; only the project admin edits it, others see the links with Open ↗. Follow-up decisions in chat, after Team access (F-015) and REQ-075 reached main: (1) the admin is the project's Admin or the super admin when sign-in is on, and the PO role from the role picker when sign-in is off (demo, local use); (2) Project settings is the last link: after Release, and after Team access's Admin-only Team link, which stays a separate item.",
       "consequences": "REQ-070, REQ-075 and their tests list Project settings as the last project link. The Admin check is a portal check only: compass/spec.json → designTool lives in the repository, so anyone with GitHub write access can still change it there (Firestore rules never see GitHub commits)."
+    },
+    {
+      "id": "ADR-019",
+      "date": "2026-11-28",
+      "title": "\"Try the demo\" leaves the sidebar; account actions move into an account menu",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-110",
+        "REQ-073",
+        "REQ-039",
+        "REQ-040",
+        "REQ-032"
+      ],
+      "context": "The sidebar footer had four loose rows (account card, \"Try the demo\" and \"Sign out\" buttons, a \"My roles\" line and a lone theme button). The Product Owner asked to redesign it and reviewed a mockup in chat.",
+      "decision": "The Product Owner approved the mockup on 2026-11-28 with one change: \"Remove try the demo in this section, the rest is fine to proceed\". The footer is one account card (initial, name, role chips) that opens a menu with the email, Connections, the theme switch, Leave demo (in the demo) and Sign out.",
+      "consequences": "REQ-073: AC1 changes — clicking the account card opens the account menu, and \"Connections\" is an item in it; AC2 changes — the theme is a \"Dark theme\" switch in the menu and the role picker shows only with sign-in off or in the demo. REQ-039 AC2: the read-only roles show as chips on the account card instead of a \"My roles: …\" line (still read-only). REQ-032 AC2: the card shows the part of the email before \"@\"; the full email is in the card's tooltip and at the top of the account menu. REQ-040 AC2: signed-in people on a team no longer start the demo from the sidebar; \"Try the demo\" stays on the \"You have no access yet\" screen. TC-404 checks the theme switch and the Connections item in the menu."
     }
   ]
 }

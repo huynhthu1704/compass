@@ -72,3 +72,24 @@ export const settingsLink = (projectId: string): NavLink => ({ key: 'settings', 
 export function signedInCard(email: string, superAdmin: boolean): { initial: string; name: string; state: string; tone: Tone } {
   return { initial: (email.slice(0, 1) || '?').toUpperCase(), name: email, state: superAdmin ? 'Google · super admin' : 'Google sign-in', tone: 'success' };
 }
+
+/** REQ-110: the name on the account card — the part of the email before "@" (the full name is not stored). */
+export const accountName = (email: string): string => email.split('@')[0] || email;
+
+export type AccountChip = { label: string; tone: 'brand' | 'success' | 'warning' | 'neutral' };
+
+/** REQ-110: the chips under the name — the demo role in the demo, else "Super admin" and this project's roles. */
+export function accountChips(a: { signedIn: boolean; demo?: boolean; superAdmin?: boolean; roles: string[]; demoRole?: string }): AccountChip[] {
+  if (a.demo) return [{ label: a.demoRole ? `Demo · ${a.demoRole}` : 'Demo', tone: 'warning' }];
+  if (!a.signedIn) return [];
+  const chips: AccountChip[] = a.superAdmin ? [{ label: 'Super admin', tone: 'brand' }] : [];
+  for (const r of a.roles) chips.push({ label: r, tone: 'success' });
+  return chips.length ? chips : [{ label: 'Google', tone: 'neutral' }];
+}
+
+export type AccountMenuItem = 'connections' | 'theme' | 'leave-demo' | 'sign-out';
+
+/** REQ-110 SCR-2: the account menu, top to bottom. "Try the demo" is never in the sidebar (ADR-019). */
+export function accountMenu(a: { signedIn: boolean; demo?: boolean }): AccountMenuItem[] {
+  return ['connections', 'theme', ...(a.demo ? ['leave-demo' as const] : []), ...(a.signedIn ? ['sign-out' as const] : [])];
+}
