@@ -3683,10 +3683,10 @@
       "reqIds": [
         "REQ-113"
       ],
-      "title": "The Ideation agent receives attached images and PDFs as data",
+      "title": "The Ideation agent receives attached images and PDFs as data; no agent reads attachments as repo docs",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a business need with sketch.png, brief.pdf and budget.xlsx attached\nWhen the Ideation agent's first message is built\nThen it holds an image block for sketch.png and a document block for brief.pdf, each labelled as untrusted data\nAnd budget.xlsx is listed by name only\nAnd a need without attachments gives the same text-only message as before"
+      "gherkin": "Given a business need with sketch.png, brief.pdf and budget.xlsx attached\nWhen the Ideation agent's first message is built\nThen it holds an image block for sketch.png and a document block for brief.pdf, each labelled as untrusted data\nAnd budget.xlsx is listed by name only\nAnd a need without attachments gives the same text-only message as before\nAnd an image whose base64 is over 5 MB is passed by name only, and if the API still refuses an attached file the first call is retried once with the files by name\nAnd no agent retrieves, lists or reads files under compass/intent/attachments/ as repo knowledge"
     },
     {
       "id": "TC-515",

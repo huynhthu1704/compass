@@ -10,7 +10,7 @@ import { designToolText } from './designLinks';
 import { checkChanges, evalChanges, evalRequirements, evalTests, scanInjection } from './guardrails';
 import { FRAMEWORK_VERSION, frameworkFiles, specFiles } from './framework';
 import { demoIdea } from './ideaDraft';
-import { firstMessage, ideaForPrompt } from './attachments';
+import { firstMessage, ideaForPrompt, isAttachmentPath } from './attachments';
 import { github } from './github';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
@@ -89,7 +89,7 @@ export async function startRun(projectId: string, agentId: AgentId, goal: string
     try { index = await rag.ensure(tokenFor(p), p); }
     catch (e) { step(pid, rid, 'error', 'Repository indexing failed — continuing with spec only', (e as Error).message, { ok: false }); index = rag.index(p); }
     const reqText = (opts.reqIds || []).map((id) => p.spec.requirements.find((r) => r.id === id)).filter(Boolean).map((r) => `${r!.title} ${r!.story} ${r!.ac.join(' ')}`).join(' ');
-    const hits = index.search(`${goal} ${reqText}`, 6);
+    const hits = index.search(`${goal} ${reqText}`, 12).filter((h) => !isAttachmentPath(h.chunk.path)).slice(0, 6); // REQ-113: attached files are not repo knowledge
     step(pid, rid, 'retrieve', `Retrieved ${hits.length} chunks from ${index.files.length} indexed files + spec`, hits.map((h, i) => `[S${i + 1}] ${h.chunk.path}${h.chunk.section ? ' › ' + h.chunk.section : ''} (score ${h.score.toFixed(2)})`).join('\n'));
     const g0 = scanInjection(hits.map((h) => h.chunk.text));
     step(pid, rid, 'guardrail', g0.name, g0.message, { ok: g0.level === 'pass' });
@@ -149,7 +149,15 @@ GOAL: ${goal}`;
   const messages: Msg[] = [{ role: 'user', content: a.id === 'ideation' && fid ? await withAttachments(pid, rid, fid, user) : user }];
   let done = false;
   for (let turn = 0; turn < 14 && !done; turn++) {
-    const r = await claude(settings, a.system, messages, tools, 8000);
+    let r;
+    try { r = await claude(settings, a.system, messages, tools, 8000); }
+    catch (e) {
+      // REQ-113: if the API refuses an attached file (size, pixels, pages), run once more with the files by name only
+      if (turn > 0 || typeof messages[0].content === 'string' || !/Claude API 400/.test((e as Error).message)) throw e;
+      step(pid, rid, 'error', 'The model refused an attached file — running again with the files by name only', (e as Error).message, { ok: false });
+      messages[0] = { role: 'user', content: firstMessage(user, featureOf(getP(pid), fid!)?.idea.attachments, {}) };
+      r = await claude(settings, a.system, messages, tools, 8000);
+    }
     const text = r.content.filter((b): b is Extract<Block, { type: 'text' }> => b.type === 'text').map((b) => b.text).join('\n').trim();
     step(pid, rid, 'model', `Model turn ${turn + 1}`, text || '(tool calls only)', { tokens: r.tokens });
     messages.push({ role: 'assistant', content: r.content });
@@ -187,10 +195,11 @@ async function execTool(pid: string, rid: string, name: string, input: Record<st
   const p = getP(pid);
   const token = tokenFor(getP(pid));
   switch (name) {
-    case 'search_knowledge': return fmtHits(index.search(String(input.query), 6)) || 'No results.';
-    case 'list_files': { const pre = String(input.prefix || ''); return index.files.filter((f) => !f.startsWith('spec:') && f.startsWith(pre)).join('\n') || 'No files.'; }
+    case 'search_knowledge': return fmtHits(index.search(String(input.query), 12).filter((h) => !isAttachmentPath(h.chunk.path)).slice(0, 6)) || 'No results.';
+    case 'list_files': { const pre = String(input.prefix || ''); return index.files.filter((f) => !f.startsWith('spec:') && !isAttachmentPath(f) && f.startsWith(pre)).join('\n') || 'No files.'; }
     case 'read_file': {
       const path = String(input.path);
+      if (isAttachmentPath(path)) return 'ERROR: attached files are not readable as repo files (REQ-113)';
       const cached = rag.repoDocs(pid).find((d) => d.path === path);
       if (cached) return cached.content;
       if (token && p.repo) { const f = await github.file(token, p.repo, path); return f ? f.content : 'ERROR: file not found'; }

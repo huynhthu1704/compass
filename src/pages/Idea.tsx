@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { AgentBox } from '../components/AgentBox';
-import { ACCEPT, ALLOWED_TEXT, addChange, checkFiles, details, removeChange, typeMark, type Refused } from '../attachments';
+import { ACCEPT, ALLOWED_TEXT, MAX_BYTES, addChange, checkFiles, details, removeChange, typeMark, typeOf, type Refused } from '../attachments';
 import { github } from '../github';
 import { tokenFor } from '../token';
 import { useUnconfirmed } from '../approvals';
@@ -73,7 +73,8 @@ function IdeaAttachments({ p, fid }: { p: Project; fid: string }) {
     setRefused(refused);
     if (!accepted.length) return;
     try {
-      const data = await Promise.all(accepted.map((a) => readBase64(files.find((x) => x.name === a.name)!)));
+      const picked = files.filter((x) => typeOf(x.name) && x.size <= MAX_BYTES); // same order as `accepted`, also for two files with one name
+      const data = await Promise.all(picked.map(readBase64));
       if (local) { setAtts((cur) => [...cur, ...accepted.map((a, i) => ({ ...a, data: data[i] }))]); return; }
       const token = tokenFor(p);
       if (!token || !p.repo) throw new Error('Connect GitHub first (Connections) to attach files to this project.');

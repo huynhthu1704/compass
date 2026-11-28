@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkFiles, removeChange, addChange, firstMessage, ideaForPrompt, details, safeName, MAX_BYTES } from '../src/attachments.ts';
+import { checkFiles, removeChange, addChange, firstMessage, ideaForPrompt, details, safeName, isAttachmentPath, MAX_BYTES, IMAGE_BASE64_LIMIT } from '../src/attachments.ts';
 
 const MB = 1024 * 1024;
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -78,4 +78,25 @@ test('TC-514: without attachments the message is the same plain text; the idea l
   assert.match(harness, /IDEA: \$\{JSON\.stringify\(ideaForPrompt\(/);
   assert.match(harness, /a\.id === 'ideation' && fid \? await withAttachments\(/);
   assert.match(harness, /attachments: f\.idea\.attachments \} \}/, 'an approved brief keeps the attached files');
+});
+
+test('TC-514: an image the API would refuse (base64 over 5 MB) is passed by name; a refused first call retries by name', () => {
+  const [big, pdf] = checkFiles([{ name: 'photo.jpg', size: 4 * MB }, { name: 'brief.pdf', size: 4 * MB }], [], 'F-001').accepted;
+  const blocks = firstMessage('x', [big, pdf], { [big.path]: 'A'.repeat(IMAGE_BASE64_LIMIT + 4), [pdf.path]: 'JVBERi0=' });
+  assert.equal(blocks.filter((b) => b.type === 'image').length, 0);
+  assert.equal(blocks.filter((b) => b.type === 'document').length, 1);
+  assert.ok(blocks.some((b) => b.type === 'text' && b.text.includes('photo.jpg (image/jpeg')));
+  const ok = firstMessage('x', [big], { [big.path]: 'A'.repeat(IMAGE_BASE64_LIMIT) });
+  assert.equal(ok.filter((b) => b.type === 'image').length, 1, 'exactly 5 MB of base64 is still sent');
+  assert.match(read('src/harness.ts'), /Claude API 400[\s\S]{0,400}firstMessage\(user, featureOf\(getP\(pid\), fid!\)\?\.idea\.attachments, \{\}\)/);
+});
+
+test('TC-514: attached files are never retrieved, listed or read as repo knowledge by any agent', () => {
+  assert.ok(isAttachmentPath('compass/intent/attachments/F-001/notes.md'));
+  assert.ok(isAttachmentPath('/Compass/Intent/Attachments/F-001/notes.md'));
+  assert.ok(!isAttachmentPath('compass/intent/F-001.md'));
+  const h = read('src/harness.ts');
+  assert.equal((h.match(/filter\(\(h\) => !isAttachmentPath\(h\.chunk\.path\)\)/g) || []).length, 2, 'first retrieval and search_knowledge');
+  assert.match(h, /!f\.startsWith\('spec:'\) && !isAttachmentPath\(f\)/, 'list_files');
+  assert.match(h, /if \(isAttachmentPath\(path\)\) return 'ERROR: attached files are not readable/, 'read_file');
 });

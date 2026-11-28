@@ -1195,7 +1195,7 @@ And the idea in the spec lists name, path, type and size of each accepted file
 And removing one drops it from the list and yields a delete of its path
 ```
 
-## TC-514 · The Ideation agent receives attached images and PDFs as data
+## TC-514 · The Ideation agent receives attached images and PDFs as data; no agent reads attachments as repo docs
 Covers: REQ-113 · Type: Automated · Status: Pass
 ```gherkin
 Given a business need with sketch.png, brief.pdf and budget.xlsx attached
@@ -1203,6 +1203,8 @@ When the Ideation agent's first message is built
 Then it holds an image block for sketch.png and a document block for brief.pdf, each labelled as untrusted data
 And budget.xlsx is listed by name only
 And a need without attachments gives the same text-only message as before
+And an image whose base64 is over 5 MB is passed by name only, and if the API still refuses an attached file the first call is retried once with the files by name
+And no agent retrieves, lists or reads files under compass/intent/attachments/ as repo knowledge
 ```
 
 ## TC-515 · Attach, open and remove files on the Idea page (desktop, phone, dark, keyboard)
