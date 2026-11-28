@@ -22,7 +22,7 @@ export function demoProject(): Project {
           scopeIn: ['Create a trip with places', 'Share a public trip page', 'Map of visited places'],
           scopeOut: ['Native mobile app', 'Booking and payments'],
           risks: ['Location privacy on public pages', 'Map API cost'] },
-          design: { status: 'Approved', approvedBy: 'PO', approvedAt: '2026-11-08T00:00:00.000Z', url: 'https://www.figma.com/design/demo/Travel-Journal?node-id=1-2',
+          design: { status: 'Approved', approvedBy: 'PO', approvedAt: '2026-11-08T00:00:00.000Z',
             summary: 'Three mobile-first screens reusing the site header and card styles; the trip page doubles as the public page.',
             notes: 'Keyboard order follows visual order; map pins have a text list fallback; contrast ≥ 4.5:1.',
             screens: [

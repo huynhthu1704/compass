@@ -3550,7 +3550,7 @@
       ],
       "title": "The Figma preview shows the project file when the feature frame is in another file",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a project whose Figma file is set in Project settings\nWhen a feature's frame link points to a different Figma file (such as the demo's made-up \"demo\" file)\nThen the Design page previews the project's Figma file\nAnd a frame link in the same file (a branch link included) still wins, and with no project file the frame link is previewed\nAnd the demo project carries no made-up Figma link"
     },
     {

@@ -95,10 +95,24 @@ export function miroEmbed(url?: string): string | null {
 
 export type Preview = { kind: 'figma' | 'miro'; label: string; src: string };
 
-/** REQ-081: the previews a Design page shows — Figma (the feature's frame link first, else the project file), then Miro. */
+/** REQ-081: the Figma file keys a checked link points into: the file key, plus the branch key for a branch link. */
+export function figmaFileKeys(url?: string): string[] {
+  const u = url && !checkFigmaUrl(url) ? parse(url.trim()) : null;
+  const m = u && /^\/(?:design|file|proto|board)\/([\w-]+)(?:\/branch\/([\w-]+))?/.exec(u.pathname);
+  return m ? [m[1], ...(m[2] ? [m[2]] : [])] : [];
+}
+
+/**
+ * REQ-081: the previews a Design page shows — Figma, then Miro. The feature's frame link wins when it is in the
+ * project's Figma file (or the project has none); a frame in another file (e.g. a made-up demo link) never hides the
+ * file set in Project settings (TC-530).
+ */
 export function designPreviews(files: DesignFiles, featureUrl?: string): Preview[] {
   const out: Preview[] = [];
-  const fig = figmaEmbed(featureUrl) || figmaEmbed(files.figma);
+  const project = figmaEmbed(files.figma);
+  const frame = figmaEmbed(featureUrl);
+  const sameFile = !!frame && (!project || figmaFileKeys(featureUrl).some((k) => figmaFileKeys(files.figma).includes(k)));
+  const fig = sameFile ? frame : project || frame;
   if (fig) out.push({ kind: 'figma', label: 'Figma preview', src: fig });
   const miro = miroEmbed(files.miro);
   if (miro) out.push({ kind: 'miro', label: 'Miro preview', src: miro });
