@@ -182,7 +182,7 @@ test('TC-527 (REQ-121 AC1–AC3, AC5): the role screen and the sidebar pick seve
   assert.match(onb, /store\.setSettings\(\{ roles, role: undefined \}\)/, 'saves the roles and drops the old single role');
   const side = read('src/components/Sidebar.tsx');
   assert.match(side, /<RolesPicker label=\{session\.demo \? 'Demo roles' : 'Roles'\} roles=\{roles\} \/>/);
-  assert.match(side, /<input type="checkbox" checked=\{on\} disabled=\{on && roles\.length === 1\} onChange=\{\(\) => store\.setSettings\(\{ roles: toggleRole\(roles, r, true\), role: undefined \}\)\} \/>/, 'one checkbox per role; the last ticked one is disabled');
+  assert.match(side, /<input type="checkbox" style=\{\{ accentColor: 'var\(--color-bg-brand\)' \}\} checked=\{on\} disabled=\{on && roles\.length === 1\} onChange=\{\(\) => store\.setSettings\(\{ roles: toggleRole\(roles, r, true\), role: undefined \}\)\} \/>/, 'one honey checkbox per role; the last ticked one is disabled');
   assert.match(side, /ROLE_ORDER\.map\(\(r\) =>/, 'every role is listed');
   assert.match(side, /demoRole: roles\.join\(', '\) \|\| undefined/, 'the demo chip reads "Demo · PO, BA"');
   assert.match(side, /e\.key === 'Escape' && ref\.current\?\.open/, 'Escape closes the menu');

@@ -2289,8 +2289,8 @@
       "ac": [
         "Given the \"What's your role?\" screen (in the demo, or with sign-in off)\nWhen the person clicks role cards\nThen each click ticks or unticks that role (aria-pressed), several can be ticked, and Continue is enabled only while at least one is ticked",
         "Given the person ticked PO and BA and clicked Continue\nWhen the portal opens\nThen the sidebar shows \"Demo roles: PO, BA\" (\"Roles: PO, BA\" with sign-in off) and, in the demo, the account chip reads \"Demo · PO, BA\"",
-        "Given the sidebar roles control\nWhen the person opens it\nThen it lists every role as a checkbox with the picked ones ticked; ticking or unticking a role saves at once, and the last ticked role cannot be unticked",
-        "Given the person holds several picked roles\nWhen a page asks for a role (the design-files admin is the PO; a design approval without sign-in names the role)\nThen they count as holding every picked role, and a design approval names the picked role that owns the gate (UX, else PO)",
+        "Given the sidebar roles control\nWhen the person opens it\nThen it lists every role as a honey checkbox with the picked ones ticked; ticking or unticking a role saves at once, and the last ticked role cannot be unticked",
+        "Given the person holds several picked roles\nWhen a page asks for a role (the design-files admin is the PO; a design approval without sign-in names the role)\nThen they count as holding every picked role, and a design approval without sign-in names the picked role that owns the gate (UX, else PO), or the first picked role when none of them owns it",
         "Given a browser saved a single role before this change\nWhen Compass loads\nThen that role is kept as the picked role; and entering or leaving the demo, or signing out from it, still forgets the demo roles (REQ-040)"
       ],
       "approvedBy": "the Product Owner (in chat)",
