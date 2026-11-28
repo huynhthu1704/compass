@@ -4,6 +4,15 @@ import { opensDemoSession } from './team.ts'; // pure, so node:test still runs t
 
 type P = Pick<Project, 'id' | 'demo'>;
 
+/** REQ-081 (TC-531): the demo's Figma file, shown to everyone (Owner, 2026-11-28). The demo lives in each browser only,
+ *  so a link saved in Project settings is never seen by anyone else. */
+export const DEMO_FIGMA_FILE = 'https://www.figma.com/design/iT9WxxZFmyiz8HSWpg5E7K/Travel-Map---Demo-Compass?node-id=0-1';
+
+/** TC-531: a demo project saved before the demo had a Figma file gets it; one with its own design files keeps them. */
+export function withDemoDesignFiles<T extends P & { spec: Pick<Project['spec'], 'designTool'> }>(p: T): T {
+  return p.demo && !p.spec.designTool ? { ...p, spec: { ...p.spec, designTool: { kind: 'figma', url: DEMO_FIGMA_FILE } } } : p;
+}
+
 /** The demo project already in the list, or a new one from `create` (REQ-109 AC1, AC2). */
 export function openOrCreateDemo<T extends P>(projects: T[], create: () => T): { project: T; isNew: boolean } {
   const existing = projects.find((p) => p.demo);

@@ -3601,7 +3601,7 @@
       ],
       "title": "Every demo project shows the Travel Map Figma file",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given anyone opens the demo project, in any browser, new or saved there before\nWhen they open Project settings or a feature's Design page\nThen the Figma file is https://www.figma.com/design/iT9WxxZFmyiz8HSWpg5E7K/Travel-Map---Demo-Compass?node-id=0-1\nAnd a demo project that already has its own design files keeps them, and real projects are never changed"
     },
     {

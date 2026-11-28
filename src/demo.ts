@@ -1,4 +1,5 @@
 import { DEMO_FILES } from './demofiles';
+import { DEMO_FIGMA_FILE } from './demoOnce';
 import { rag } from './rag';
 import { newProject, now, uid } from './store';
 import type { Project } from './types';
@@ -13,6 +14,7 @@ export function demoProject(): Project {
     spec: {
       version: 2,
       stack: 'Static web app (HTML/JS modules), node:test, GitHub Pages',
+      designTool: { kind: 'figma', url: DEMO_FIGMA_FILE },
       features: [
         { id: 'F-001', name: 'Publish & share trips', createdAt: '2026-11-01T00:00:00.000Z', idea: {
           intent: 'Increase the number of travellers who publish a trip page within their first week from 10% to 35%',
