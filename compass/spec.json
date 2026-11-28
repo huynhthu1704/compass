@@ -2128,7 +2128,7 @@
       "featureId": "F-022",
       "title": "The sidebar shows the portal's version and build",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-version-history.md",
       "story": "As anyone using the portal, I want to see which version of Compass I am on, so that I know whether a fix or feature has been deployed.",
       "ac": [
@@ -2136,14 +2136,16 @@
         "Given a local build or npm run dev (no GitHub Actions run)\nWhen I look at the bottom of the sidebar\nThen the line reads \"Compass v<release> · dev\"",
         "Given sign-in is off, I am in the demo, or I am signed in\nWhen I look at the bottom of the sidebar\nThen the version line is shown the same way",
         "Given a phone (below 900 px)\nWhen I open the Menu\nThen the version line is shown under the account card, within the menu width"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-112",
       "featureId": "F-022",
       "title": "What's new lists every portal release",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-version-history.md",
       "story": "As anyone using the portal, I want a list of what changed in each version, so that I can see what is new since my last visit.",
       "ac": [
@@ -2152,7 +2154,9 @@
         "Given the newest release is one I have not opened What's new for in this browser\nWhen I look at the version line\nThen it shows a small honey dot (screen readers hear \"new release\"); once I open What's new the dot is gone in this browser until the next release",
         "Given the release history in the code\nWhen the unit tests run\nThen they fail if package.json's version has no entry in the history, if the releases are not newest first, or if a version appears twice",
         "Given the first release\nWhen What's new opens\nThen it lists v1.0.0 dated 28 November 2026, summarising what the portal already does (features F-001 … F-020)"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     }
   ],
   "tests": [

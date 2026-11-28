@@ -20,6 +20,6 @@ Each feature is one business intent moving through Idea → Requirements → Tes
 | [F-020 Quote an agent answer and ask for details or a revision](features/F-020.md) | Build | [Approved](design/F-020.md) | 5 | 18 |
 | [F-017 Collapsible agent trace](features/F-017.md) | Build | [Approved](design/F-017.md) | 1 | 2 |
 | [F-015 Team access: Google sign-in, project teams and roles](features/F-015.md) | Release | [Approved](design/F-015.md) | 12 | 19 |
-| [F-022 Version number and version history](features/F-022.md) | Requirements | [—](design/F-022.md) | 2 | 2 |
+| [F-022 Version number and version history](features/F-022.md) | Design | [—](design/F-022.md) | 2 | 2 |
 
 **Tech stack:** React 19 + TypeScript + Vite single-page app (runs in the browser, no server); GitHub REST API and the Claude API; node:test for the checking scripts; GitHub Pages deploy

@@ -41,5 +41,5 @@ Git tags and GitHub Releases for the portal (AGENTS.md step 8, separate change);
 Vietnamese text; a version history for the projects Compass manages.
 
 ## Requirements
-- REQ-111 — The sidebar shows the portal's version and build
-- REQ-112 — What's new lists every portal release
+- REQ-111 — The sidebar shows the portal's version and build (#133)
+- REQ-112 — What's new lists every portal release (#134)
