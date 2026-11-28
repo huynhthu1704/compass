@@ -9,7 +9,7 @@ Intent: compass/intent/2026-11-28-sidebar-account-menu.md · Design: compass/des
 
 ## Steps
 1. Commit this plan.
-2. Add `flex-wrap: wrap; row-gap: 0` to `.account-menu button`; the hint keeps `white-space: nowrap` and `margin-left: auto`.
+2. Add `flex-wrap: wrap` to `.account-menu button` and set its `gap` to `0 var(--spacing-sm)` (no extra space between the label and a wrapped hint); the hint keeps `white-space: nowrap` and `margin-left: auto`.
 3. Run `npm test`, `npm run build`, `node compass/check-spec.mjs`, `node compass/check-guardrails.mjs origin/main`, and a browser check of the demo account menu at the sidebar width.
 
 ## Risks
