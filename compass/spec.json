@@ -3540,7 +3540,7 @@
       ],
       "title": "The demo can be left from the \"What's your role?\" screen, also with the browser Back button",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a signed-in person clicked \"Open demo project\" and sees \"What's your role?\" on /p/<demo id>\nWhen the route changes to the demo project route\nThen they stay in the demo\nAnd when they press the browser Back button before picking a role (the route becomes another one)\nThen the demo is left and they see their projects, or \"You have no access yet\" if they are on no team\nAnd once a demo role is picked, moving between routes keeps the demo\nAnd the role screen inside the demo shows \"Leave demo\", which returns to their projects"
     },
     {
@@ -3928,6 +3928,18 @@
       "context": "People must sign in to use Compass, including the demo. Signed in outside the demo, a person who is not a super admin sees only projects their team lists (REQ-032); the demo project has no repository, so \"Open demo project\" and \"Explore the demo\" added a hidden project and the page stayed on Projects: the button seemed broken. A super admin saw the demo project next to the real ones.",
       "decision": "The Product Owner chose in chat on 2026-11-28: the button enters the demo session (as \"Try the demo\" does, REQ-040) and then opens the demo project, and people need to sign in to view the demo — super admins go through the demo session too.",
       "consequences": "The person picks a demo role, sees the demo banner and \"Leave demo\", and their real projects are hidden until they leave (REQ-040 AC3). ADR-019 still keeps \"Try the demo\" out of the sidebar. Only a build without Firebase config (no sign-in at all, e.g. local development) opens the demo project directly."
+    },
+    {
+      "id": "ADR-026",
+      "date": "2026-11-28",
+      "title": "The demo role screen can always be left: \"Leave demo\" and the browser Back button",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-040"
+      ],
+      "context": "\"Open demo project\" starts the demo session and clears the role (ADR-022, REQ-040 AC2), so the \"What's your role?\" screen replaces every route until a role is picked. The browser Back button changed the address but showed the same screen, and \"Leave demo\" sits in the demo banner, which that screen hides: people could only pick a role or reload the page.",
+      "decision": "The Product Owner chose in chat on 2026-11-28 (after a screenshot of the trapped role screen): the role screen inside the demo shows \"Leave demo\", and navigating away from the route the demo was opened on before a role is picked (the browser Back button) leaves the demo.",
+      "consequences": "Leaving returns to the person's projects, or to \"You have no access yet\" if they are on no team (REQ-040 AC4). Once a demo role is picked, Back moves inside the demo as before and the demo is left with \"Leave demo\" in the banner or the account menu. Outside the demo the role screen is unchanged."
     }
   ]
 }
