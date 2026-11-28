@@ -2138,7 +2138,8 @@
         "Given a phone (below 900 px)\nWhen I open the Menu\nThen the version line is shown under the account card, within the menu width"
       ],
       "approvedBy": "the Product Owner (in chat)",
-      "approvedAt": "2026-11-28T00:00:00.000Z"
+      "approvedAt": "2026-11-28T00:00:00.000Z",
+      "design": "compass/design/2026-11-28-version-history.md"
     },
     {
       "id": "REQ-112",
@@ -2156,7 +2157,8 @@
         "Given the first release\nWhen What's new opens\nThen it lists v1.0.0 dated 28 November 2026, summarising what the portal already does (features F-001 … F-020)"
       ],
       "approvedBy": "the Product Owner (in chat)",
-      "approvedAt": "2026-11-28T00:00:00.000Z"
+      "approvedAt": "2026-11-28T00:00:00.000Z",
+      "design": "compass/design/2026-11-28-version-history.md"
     }
   ],
   "tests": [
