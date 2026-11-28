@@ -2197,7 +2197,7 @@
       "featureId": "F-015",
       "title": "The super admins' GitHub work token and Anthropic key are used for everyone; only super admins set them",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the super admin, I want everyone to work through my GitHub and Anthropic accounts in phase 1, and nobody else to configure them, so that I control all access and cost.",
       "ac": [
@@ -2232,7 +2232,7 @@
       "featureId": "F-015",
       "title": "Project tokens set by project Admins are retired",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the super admin, I want no other GitHub tokens in Compass besides mine, so that I alone control GitHub access in phase 1.",
       "ac": [
@@ -2247,7 +2247,7 @@
       "featureId": "F-015",
       "title": "Only super admins create or import projects, only in the GitHub account for new projects",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the owner, I want only super admins to add projects, and new repositories only in our GitHub account, so that every project is ours and the shared work token, made as listed on Connections, never needs the rights to create or delete repositories.",
       "ac": [
@@ -2265,7 +2265,7 @@
       "featureId": "F-015",
       "title": "The owner can make other people super admins",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the owner of Compass, I want to give trusted people super admin rights, so that they can also manage the work token, the Anthropic key, users and projects.",
       "ac": [
@@ -3549,7 +3549,7 @@
       ],
       "title": "Only super admins write the work token, key and settings; team members read them",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the Firestore emulator\nWhen a member, a project Admin, then a super admin write the work token, the Anthropic key, the model and sync settings and the GitHub account for new projects; then a member, a person on no team and a super admin read the token and key\nThen only the super admin's writes are accepted; the member's and the super admin's reads are accepted and the other read is refused\nAnd when a project Admin adds a member in a transaction that also writes people/{email}, the member can then read them; a people/{email} entry for a project whose members list does not include the email is refused; and after removal from every team the person can no longer read them"
     },
     {
@@ -3600,7 +3600,7 @@
       ],
       "title": "Only super admins create a first team and set the account for new projects",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the Firestore emulator\nWhen a member saves a first team listing themselves as Admin, a super admin saves a first team with its baseline, and a member then a super admin write the GitHub account for new projects\nThen the member's writes are refused and the super admin's accepted"
     },
     {
@@ -3632,7 +3632,7 @@
       ],
       "title": "Only the owner grants or removes super admin, and the owner stays",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the Firestore emulator, the owner and a member\nWhen the member makes themselves super admin, the owner makes the member super admin, the new super admin then makes a third person super admin, the owner switches the member off again, and the owner tries to remove themselves\nThen the first is refused, the second accepted, the third refused, the fourth accepted (the member can no longer write the work token) and the fifth refused"
     },
     {

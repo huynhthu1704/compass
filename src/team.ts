@@ -149,6 +149,13 @@ export function baselineFrom(spec: ApprovalSpec): BaselineApproval[] {
 /** One change to a team, applied to the team as it is in the database at save time (never to a stale copy). */
 export type TeamOp = { kind: 'add'; email: string; roles: TeamRole[] } | { kind: 'set'; email: string; roles: TeamRole[] } | { kind: 'remove'; email: string };
 
+/** Who joins and who leaves a team between two versions of it (REQ-041 AC3): their people/{email} records gain or lose
+ *  this project in the same write as the team change. Emails are compared in lower case. */
+export function peopleChanges(before: Member[], after: Member[]): { joined: string[]; left: string[] } {
+  const b = new Set(before.map((m) => normalizeEmail(m.email))), a = new Set(after.map((m) => normalizeEmail(m.email)));
+  return { joined: [...a].filter((e) => !b.has(e)), left: [...b].filter((e) => !a.has(e)) };
+}
+
 /** Applies one change to the current team (REQ-030, REQ-031). A first team must name an Admin. */
 export function applyTeamOp(current: Member[], op: TeamOp, isNew = false): TeamResult {
   const r = op.kind === 'add' ? addMember(current, op.email, op.roles) : op.kind === 'set' ? setRoles(current, op.email, op.roles) : removeMember(current, op.email);
