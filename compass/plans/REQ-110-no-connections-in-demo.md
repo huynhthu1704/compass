@@ -7,6 +7,7 @@ Intent: compass/intent/2026-11-28-sidebar-account-menu.md · Design: compass/des
 - compass/plans/REQ-110-no-connections-in-demo.md — this plan
 - compass/spec.json — ADR-027 (the Product Owner's decision); amend REQ-110 AC2, the REQ-041 demo AC, the TC-510 and TC-080 gherkin
 - compass/requirements.md, compass/tests.md, compass/decisions.md — regenerated views
+- compass/design/2026-11-28-account-menu.md — SCR-2 notes that the demo has no Connections (ADR-027); the intent stays as approved, ADR-020 and ADR-027 record the changes
 - src/sidebar.ts — `accountMenu` has no Connections in the demo
 - src/team.ts — `canOpenConnections` is false in the demo, so the menu filter and the `#/connect` address both follow it
 - src/components/AgentBox.tsx — no "add an Anthropic key in Connections for live runs" hint in a demo project (its agents never run live)
