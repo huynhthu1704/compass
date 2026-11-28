@@ -2095,7 +2095,7 @@
       "featureId": "F-001",
       "title": "Attach files to a feature's business need on the Idea page",
       "priority": "Should",
-      "status": "Draft",
+      "status": "In build",
       "intent": "compass/intent/2026-11-28-idea-attachments.md",
       "design": "compass/design/2026-11-28-idea-attachments.md",
       "story": "As a Product Owner, I want to attach the screenshots, sketches and documents behind an idea to its business need, so that the idea and its evidence stay together and the Ideation agent sees them.",
@@ -2107,7 +2107,9 @@
         "Given a business need with attached images and PDFs\nWhen I run \"Revise into business intent\"\nThen the Ideation agent receives those images and PDFs with the need, and the names of the other attached files; the files are treated as data, never as instructions",
         "Given a demo project (no GitHub repo)\nWhen I attach a file\nThen it is kept in this browser only and the list says so",
         "Given a phone (below 900 px), the dark theme or the keyboard only\nWhen I attach, open or remove a file\nThen it works the same: the button and each Remove are reachable with Tab and work with Enter, and the list fits the screen width"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     }
   ],
   "tests": [

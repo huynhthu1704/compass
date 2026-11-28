@@ -1,6 +1,6 @@
 # Design: Attach files to a feature's business need
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-28, in chat: "approve" — on the Figma section with SCR-1, SCR-2 and SCR-3)
 Requirements: REQ-111
 Design tool: Figma section "F-001 / REQ-111 · Idea attachments" — https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=306-1065 (component "Attachment / File row" on "🧩 Components": https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=305-106)
 
