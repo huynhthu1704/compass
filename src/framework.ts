@@ -28,6 +28,7 @@ import CHECK_SPEC from './framework/check-spec.mjs?raw';
 import CHECK_GUARDRAILS from './framework/check-guardrails.mjs?raw';
 import GUARDRAILS_LIB from './framework/guardrails-lib.mjs?raw';
 import GUARD_EDIT from './framework/guard-edit.mjs?raw';
+import FIGMA_SCREENSHOT from './framework/figma-screenshot.mjs?raw';
 import CLAUDE_SETTINGS from './framework/claude-settings.json?raw';
 import REVIEW_MD from './framework/REVIEW.md?raw';
 import INTENT_README from './framework/intent-README.md?raw';
@@ -38,7 +39,7 @@ export const FRAMEWORK_VERSION = '1.1';
 
 export const DEFAULT_GUARDRAILS = {
   version: 1,
-  protectedPaths: ['.github/workflows/', 'compass/guardrails.json', 'compass/check-guardrails.mjs', 'compass/guardrails-lib.mjs', 'compass/hooks/', '.claude/settings.json', '.env', 'CNAME'],
+  protectedPaths: ['.github/workflows/', 'compass/guardrails.json', 'compass/check-guardrails.mjs', 'compass/guardrails-lib.mjs', 'compass/hooks/', 'compass/figma-screenshot.mjs', '.claude/settings.json', '.env', 'CNAME'],
   forbiddenPaths: ['.env', '.env.local', 'secrets/', 'node_modules/', '.claude/approved-paths.local.json'],
   maxFilesPerChange: 12,
   maxLinesPerFile: 600,
@@ -484,6 +485,7 @@ export function frameworkFiles(p: Project, opts: { starter: boolean }): FileChan
     { path: 'compass/check-guardrails.mjs', action: 'create', content: CHECK_GUARDRAILS },
     { path: 'compass/guardrails-lib.mjs', action: 'create', content: GUARDRAILS_LIB },
     { path: 'compass/hooks/guard-edit.mjs', action: 'create', content: GUARD_EDIT },
+    { path: 'compass/figma-screenshot.mjs', action: 'create', content: FIGMA_SCREENSHOT },
     { path: 'compass/REVIEW.md', action: 'create', content: REVIEW_MD },
     { path: 'compass/intent/README.md', action: 'create', content: INTENT_README },
     { path: 'compass/plans/README.md', action: 'create', content: PLANS_README },

@@ -1,8 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl * https://www.figma.com/api/mcp/asset/*)",
-      "Bash(curl * \"https://www.figma.com/api/mcp/asset/*)"
+      "Bash(node compass/figma-screenshot.mjs *)"
     ]
   },
   "hooks": {

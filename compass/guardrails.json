@@ -6,6 +6,7 @@
     "compass/check-guardrails.mjs",
     "compass/guardrails-lib.mjs",
     "compass/hooks/",
+    "compass/figma-screenshot.mjs",
     ".claude/settings.json",
     ".env",
     "CNAME"

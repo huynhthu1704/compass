@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(node compass/figma-screenshot.mjs *)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {

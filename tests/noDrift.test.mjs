@@ -8,6 +8,7 @@ const PAIRS = {
   'compass/check-guardrails.mjs': 'src/framework/check-guardrails.mjs',
   'compass/guardrails-lib.mjs': 'src/framework/guardrails-lib.mjs',
   'compass/hooks/guard-edit.mjs': 'src/framework/guard-edit.mjs',
+  'compass/figma-screenshot.mjs': 'src/framework/figma-screenshot.mjs',
   'compass/REVIEW.md': 'src/framework/REVIEW.md',
   'compass/intent/README.md': 'src/framework/intent-README.md',
   'compass/plans/README.md': 'src/framework/plans-README.md',
