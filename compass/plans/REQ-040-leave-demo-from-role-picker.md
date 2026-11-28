@@ -11,7 +11,7 @@ the same screen comes back, and "Leave demo" lives in the banner that the role p
 picking a role or reloading. REQ-040 AC4 (leave the demo → back to your projects) cannot be reached.
 
 ## Files
-- compass/spec.json — TC-528 for REQ-040, ADR-026 (the Product Owner's choice in chat, 2026-11-28)
+- compass/spec.json — TC-528 (automated: the rule and the entry route), TC-077 (manual: the button, Back and where people land), ADR-026 (the Product Owner's choice in chat, 2026-11-28)
 - src/team.ts — pure `routeOf(hash)` and `leavesDemoOnNavigate(...)`: in the demo, with no role yet, a route other
   than the one the demo was opened on leaves the demo
 - src/firebase.ts — `Session.demoEntry`; `enterDemo(entry)` records the route, `leaveDemo` clears it
@@ -33,5 +33,6 @@ picking a role or reloading. REQ-040 AC4 (leave the demo → back to your projec
 
 ## Proof
 - `npm test` incl. TC-528 (fails before the code change).
+- TC-077 (manual) on a signed-in build: the button, the Back button and where people land.
 - Manual: signed in, Projects → "Open demo project" → role screen → browser Back → Projects, demo left; again →
   "Leave demo" on the role screen → Projects.

@@ -3415,10 +3415,10 @@
         "REQ-040",
         "REQ-039"
       ],
-      "title": "Try the demo from the no-access screen and leave it",
+      "title": "Try the demo from the no-access screen and leave it, also from the role screen",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given a Google account on no team\nWhen I sign in, click \"Try the demo\", pick QA, open the sample project, then click \"Leave demo\"\nThen I see the role screen, then the sample project with the demo banner and a demo role picker, then \"You have no access yet\" again; a team member signing in sees \"My roles: …\" and no role screen"
+      "gherkin": "Given a Google account on no team\nWhen I sign in, click \"Try the demo\", pick QA, open the sample project, then click \"Leave demo\"\nThen I see the role screen, then the sample project with the demo banner and a demo role picker, then \"You have no access yet\" again; a team member signing in sees \"My roles: …\" and no role screen\nAnd given a signed-in person on Projects clicks \"Open demo project\" and sees the role screen\nWhen they press the browser Back button\nThen they see their projects (or \"You have no access yet\") with no demo banner\nAnd when they open the demo again and click \"Leave demo\" on the role screen\nThen they see their projects (or \"You have no access yet\") with no demo banner"
     },
     {
       "id": "TC-500",
@@ -3538,10 +3538,10 @@
       "reqIds": [
         "REQ-040"
       ],
-      "title": "The demo can be left from the \"What's your role?\" screen, also with the browser Back button",
+      "title": "Leaving the \"Open demo project\" route before a demo role is picked leaves the demo",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a signed-in person clicked \"Open demo project\" and sees \"What's your role?\" on /p/<demo id>\nWhen the route changes to the demo project route\nThen they stay in the demo\nAnd when they press the browser Back button before picking a role (the route becomes another one)\nThen the demo is left and they see their projects, or \"You have no access yet\" if they are on no team\nAnd once a demo role is picked, moving between routes keeps the demo\nAnd the role screen inside the demo shows \"Leave demo\", which returns to their projects"
+      "gherkin": "Given a signed-in person clicked \"Open demo project\", so the demo is opened on /p/<demo id> with no role yet\nWhen the route becomes /p/<demo id>\nThen they stay in the demo\nAnd when the route becomes any other route before a role is picked (the browser Back button)\nThen the demo is left\nAnd once a demo role is picked, or outside the demo, a route change never leaves the demo"
     },
     {
       "id": "TC-078",
