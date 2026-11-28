@@ -38,8 +38,8 @@ export function ProjectsPage() {
     } catch (e) { setOpenErr(`${a.name || a.id}: ${(e as Error).message}`); } finally { setOpening(null); }
   };
   const openDemo = () => {
-    // ADR-022: signed in outside the demo, the demo project is hidden (REQ-032), so start the demo session first (REQ-040).
-    if (opensDemoSession({ status: session.status, demo: session.demo, superAdmin: session.superAdmin, accessIds: session.access.map((a) => a.id) })) enterDemo();
+    // ADR-022: signed in, the demo project opens only inside the demo session (REQ-040), super admins included.
+    if (opensDemoSession(session)) enterDemo();
     const { project, isNew } = openOrCreateDemo(store.get().projects, demoProject); if (isNew) store.addProject(project); go(`/p/${project.id}`); }; // one demo project only (REQ-109)
   return (
     <div className="stack gap-xl">

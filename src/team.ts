@@ -236,9 +236,9 @@ export function projectVisible(p: { repo: { owner: string; name: string } | null
   return !!p.repo && s.accessIds.includes(`${p.repo.owner}__${p.repo.name}`.toLowerCase());
 }
 
-/** ADR-022: "Open demo project" must start the demo session first when the demo project would be hidden outside it. */
-export function opensDemoSession(s: { status: string; demo?: boolean; superAdmin: boolean; accessIds: string[] }): boolean {
-  return s.status === 'signed-in' && !s.demo && !projectVisible({ repo: null, demo: true }, s);
+/** ADR-022: a signed-in person, super admins included, opens the demo project only inside the demo session. */
+export function opensDemoSession(s: { status: string; demo?: boolean }): boolean {
+  return s.status === 'signed-in' && !s.demo;
 }
 
 /** "<email> (<role>)" → { email, role }; null for older free-text values such as "PO" or "the Product Owner". */

@@ -10,7 +10,7 @@ found nothing and fell back to the Projects page — the button seemed to do not
 
 ## Files
 - compass/spec.json — ADR-022 (the Product Owner's choice in chat), TC-509 text
-- src/team.ts — pure `opensDemoSession(session)`: true when the demo project would be hidden outside the demo
+- src/team.ts — pure `opensDemoSession(session)`: true for any signed-in person outside the demo (super admins too)
 - src/pages/Projects.tsx — "Open demo project" / "Explore the demo" call `enterDemo()` first when needed, then open the demo project
 - tests/demoOnce.test.mjs — TC-509 cases for `opensDemoSession`
 
@@ -22,7 +22,7 @@ found nothing and fell back to the Projects page — the button seemed to do not
 ## Risks
 - Entering the demo hides real projects until "Leave demo" (REQ-040 AC3) — that is the chosen behaviour (ADR-022).
 - `enterDemo` clears the role, so the "What's your role?" screen shows first; the route `/p/<demo id>` stays, so the demo project opens after the role is picked.
-- Sign-in off and super admins already see the demo project: unchanged.
+- Super admins also go through the demo session (people sign in to view the demo). Only a build without Firebase config opens the demo project directly.
 
 ## Proof
 - `npm test` incl. the new TC-509 cases (fail before the code change).

@@ -32,10 +32,10 @@ test('TC-509 (REQ-109 AC3): loading keeps the most recent demo project and every
 // "Open demo project" for a signed-in person (ADR-022): the demo session starts when the demo project would be hidden.
 import { opensDemoSession } from '../src/team.ts';
 
-test('TC-509 (REQ-109 AC1/AC2, ADR-022): a signed-in team member enters the demo session to open the demo project', () => {
-  const base = { status: 'signed-in', demo: false, superAdmin: false, accessIds: ['acme__shop'] };
-  assert.equal(opensDemoSession(base), true, 'the demo project is hidden outside the demo, so the demo session starts');
+test('TC-509 (REQ-109 AC1/AC2, ADR-022): a signed-in person enters the demo session to open the demo project', () => {
+  const base = { status: 'signed-in', demo: false };
+  assert.equal(opensDemoSession(base), true, 'a team member starts the demo session');
+  assert.equal(opensDemoSession({ ...base, superAdmin: true }), true, 'a super admin too: the demo is never mixed with real projects');
   assert.equal(opensDemoSession({ ...base, demo: true }), false, 'already in the demo');
-  assert.equal(opensDemoSession({ ...base, superAdmin: true }), false, 'super admins already see the demo project');
-  assert.equal(opensDemoSession({ ...base, status: 'off' }), false, 'sign-in off: demo mode as before');
+  assert.equal(opensDemoSession({ status: 'off', demo: false }), false, 'a build without sign-in (no Firebase config) has no demo session');
 });
