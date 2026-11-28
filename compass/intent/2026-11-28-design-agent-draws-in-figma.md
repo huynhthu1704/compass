@@ -109,4 +109,11 @@ Time from "requirements approved" to "design approved" per feature (no target).
 - Turning Figma frames into code (Code Connect). That is the Coding agent's stage.
 
 ## Requirements
-<filled after approval>
+All Draft, waiting for the Product Owner's approval (decision: ADR-023):
+- REQ-114 — The Design agent saves each screen as a layout the Figma plugin can draw
+- REQ-115 — The Compass Figma plugin signs in to Compass, and only UX, PO or Admin can start a drawing run
+- REQ-116 — The plugin's Design agent draws every screen from the file's design system with a fixed set of tools
+- REQ-117 — The agent checks an image of each drawn screen and fixes what it finds
+- REQ-118 — The plugin saves the frame links to compass/spec.json, and the Design page shows them
+- REQ-119 — Running the plugin again after a Redesign redraws only the screens that changed
+- REQ-120 — Approving a design starts the Test design agent

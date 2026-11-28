@@ -2275,6 +2275,104 @@
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "REQ-114",
+      "featureId": "F-003",
+      "title": "The Design agent saves each screen as a layout the Figma plugin can draw",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
+      "story": "As a designer, I want every screen of a drafted design to carry a structured layout, so that the Compass Figma plugin can draw it without me retyping the design.",
+      "ac": [
+        "Given every requirement of a feature is approved\nWhen the Design agent saves its design\nThen each screen has, next to its name, purpose, REQ ids and states, a layout: an ordered list of sections, each with elements of a known kind (heading, text, field, button, badge, list, table, card, image placeholder) with their label or sample content and, where the file has one, the component name to use",
+        "Given a saved design whose layout has an element of an unknown kind, or a screen with no section\nWhen the portal checks the design before saving it\nThen it refuses that screen and names the screen and the element, and the other screens are kept",
+        "Given a design saved before this change, without layouts\nWhen the Design page opens it\nThen it shows as before, says the screens can be drawn by hand or after a Redesign, and the manual path (draw, link, approve) still works"
+      ]
+    },
+    {
+      "id": "REQ-115",
+      "featureId": "F-003",
+      "title": "The Compass Figma plugin signs in to Compass, and only UX, PO or Admin can start a drawing run",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
+      "story": "As a project Admin, I want the plugin to know who is using it, so that only my team can use the shared key and only people who may approve a design can draw one.",
+      "ac": [
+        "Given the Compass plugin open in a Figma file and a person signed in to the Compass portal\nWhen the plugin shows a one-time code and the person confirms that code in the portal within 10 minutes\nThen the plugin is signed in as that person, without a Compass server and without any password or key typed into Figma",
+        "Given a signed-in person\nWhen they pick a project\nThen the plugin lists only projects they are a member of, and the Draw button is enabled only for UX, PO, the project Admin or a super admin; anyone else sees the design but cannot draw",
+        "Given a signed-in plugin\nWhen it reads the project's shared Anthropic key and work token\nThen it keeps them in memory for the session only, never in figma.clientStorage, the Figma file or a log, and signing out or closing the plugin forgets them",
+        "Given a code that was never confirmed, was confirmed by someone else's account or is older than 10 minutes\nWhen the plugin tries to use it\nThen sign-in fails with a message saying why, and nothing is read"
+      ]
+    },
+    {
+      "id": "REQ-116",
+      "featureId": "F-003",
+      "title": "The plugin's Design agent draws every screen from the file's design system with a fixed set of tools",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
+      "story": "As a Product Owner, I want the screens drawn from our components and tokens, so that what I review in Figma is what we will build.",
+      "ac": [
+        "Given a signed-in UX, PO or Admin, a feature whose design has layouts and the project's Figma file open\nWhen they press Draw\nThen the agent draws every screen inside one section on the feature-designs page named \"<F-xxx> / <REQ ids> · <topic>\", one frame per screen named \"SCR-n · <name>\"",
+        "Given the agent drawing\nWhen it needs a colour, spacing, radius, text style or a part that exists in the file\nThen it uses the file's variable, text style or a component instance from the Components page; a raw colour or font is used only when the file has no match, and the run report lists each one",
+        "Given a part that several screens need and the file does not have\nWhen the agent creates it\nThen it creates one component on the Components page, in a section named after the feature, and places instances of it on the screens",
+        "Given the plugin's tools\nWhen the model asks to change or delete a node outside the feature's section and the Components page, or to delete a node the plugin did not create\nThen the tool refuses, tells the model why, and nothing changes; the model has no tool that runs code",
+        "Given a run that fails part-way (network, Claude error, Figma error)\nWhen the plugin stops\nThen the frames already drawn stay, the run says which screens are missing, and the design stays a Draft in Compass"
+      ]
+    },
+    {
+      "id": "REQ-117",
+      "featureId": "F-003",
+      "title": "The agent checks an image of each drawn screen and fixes what it finds",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
+      "story": "As a reviewer, I want obvious layout mistakes fixed before I look, so that I review the design and not clipped text or overlaps.",
+      "ac": [
+        "Given a screen the agent has drawn\nWhen it exports the frame as an image and compares it with the screen's layout\nThen it looks for clipped or overlapping text, placeholder text (\"Button\", \"Label\"), missing sections and elements in the wrong order, and fixes each one it finds",
+        "Given a screen that still has a problem after 3 fix rounds\nWhen the agent stops\nThen it leaves the screen as it is and the run report lists the open problem for that screen, so a person can fix it"
+      ]
+    },
+    {
+      "id": "REQ-118",
+      "featureId": "F-003",
+      "title": "The plugin saves the frame links to compass/spec.json, and the Design page shows them",
+      "priority": "Must",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
+      "story": "As a Product Owner, I want the drawn frames linked in Compass automatically, so that I can review and approve without copying links.",
+      "ac": [
+        "Given a finished drawing run\nWhen the plugin saves\nThen it commits compass/spec.json through the project's shared work token with each drawn screen's frame link and the section link as the feature's design link, and the design stays a Draft",
+        "Given someone changed compass/spec.json on main while the plugin was drawing\nWhen the plugin saves\nThen it reads the latest file and changes only the drawn screens' links (matched by screen id), keeping every other change",
+        "Given the links saved\nWhen anyone opens the feature's Design page in the portal\nThen the preview shows the drawn section, and approval works as before (UX or PO; coding stays locked until then)"
+      ]
+    },
+    {
+      "id": "REQ-119",
+      "featureId": "F-003",
+      "title": "Running the plugin again after a Redesign redraws only the screens that changed",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
+      "story": "As a designer, I want a redraw to leave unchanged screens alone, so that my manual touches on them survive.",
+      "ac": [
+        "Given a feature drawn once and a Redesign in the portal that changed SCR-2 only\nWhen the plugin runs again\nThen it redraws SCR-2 in place (same frame name and position), skips the unchanged screens, adds new screens and asks before removing a screen the design no longer has",
+        "Given a screen whose layout did not change\nWhen the plugin runs again\nThen that frame is not touched, including changes a person made to it by hand"
+      ]
+    },
+    {
+      "id": "REQ-120",
+      "featureId": "F-003",
+      "title": "Approving a design starts the Test design agent",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
+      "story": "As a QA, I want test case design to start as soon as the design is approved, so that the feature moves on without waiting for someone to click.",
+      "ac": [
+        "Given a feature with approved requirements, no test case for some of them and a design that has just been approved\nWhen the approval is saved\nThen the Test design agent starts for the feature's requirements without a test case, and the page says so",
+        "Given the Test design agent already running or waiting for approval for that feature, or every requirement already covered\nWhen the design is approved\nThen no new run starts"
+      ]
     }
   ],
   "tests": [
@@ -3646,6 +3744,116 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the live site, the owner and a person made super admin on the Users screen\nWhen that person reloads, opens Connections, replaces the work token and clicks \"Delete old project tokens\" on Users\nThen Connections is visible to them, the new token is used for every member, the old tokens are gone, and the Users screen marks the owner \"Owner\" and them \"Super admin\" with read-only switches"
+    },
+    {
+      "id": "TC-516",
+      "reqIds": [
+        "REQ-114"
+      ],
+      "title": "Design layouts: known element kinds are kept, unknown kinds are refused by name",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a design with three screens, one of which has an element of kind \"carousel\" and one with no section\nWhen the design is checked before saving\nThen the valid screen is kept and the two others are refused with their screen ids and the reason"
+    },
+    {
+      "id": "TC-517",
+      "reqIds": [
+        "REQ-114"
+      ],
+      "title": "A design without layouts still opens and offers the manual path",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a feature design saved before layouts existed\nWhen the Design page data is built for it\nThen the screens, links and approval are unchanged and the page says the screens can be drawn by hand or after a Redesign"
+    },
+    {
+      "id": "TC-518",
+      "reqIds": [
+        "REQ-115"
+      ],
+      "title": "Plugin sign-in: only members see the project, only UX, PO or Admin may draw",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a project whose team has a UX, a PO, a Dev and an Admin, and a non-member\nWhen each signs in to the plugin\nThen the non-member sees no project, the Dev sees the design with Draw disabled, and the UX, PO and Admin can draw"
+    },
+    {
+      "id": "TC-519",
+      "reqIds": [
+        "REQ-115"
+      ],
+      "title": "Plugin sign-in codes: expired, unconfirmed or someone else's codes are refused",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a code older than 10 minutes, a code never confirmed and a code confirmed by another account\nWhen the plugin uses each\nThen sign-in fails with the reason, and no project, key or token is read"
+    },
+    {
+      "id": "TC-520",
+      "reqIds": [
+        "REQ-115"
+      ],
+      "title": "The plugin never stores the shared key or work token",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the plugin source\nWhen it is scanned\nThen no value from the Anthropic key or the work token is passed to figma.clientStorage, setPluginData, a node, or console output"
+    },
+    {
+      "id": "TC-521",
+      "reqIds": [
+        "REQ-116"
+      ],
+      "title": "Drawing tools refuse to change anything outside the feature section and the Components page",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a fake Figma document with the feature section, the Components page and a frame elsewhere\nWhen the model asks to edit the outside frame, delete a node the plugin did not create, or run code\nThen each tool call is refused with a reason and the document is unchanged"
+    },
+    {
+      "id": "TC-522",
+      "reqIds": [
+        "REQ-116"
+      ],
+      "title": "The plugin redraws the spike screen from the design system",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given F-001 SCR-1 \"Idea brief with Done when\" as a layout and the Compass Figma file\nWhen the plugin draws it\nThen the frame uses the file's colour and size variables, text styles, Badge and Button instances and one \"Idea / Brief field\" component, with no raw colour, and looks as good as the spike frame (node 340:1178)"
+    },
+    {
+      "id": "TC-523",
+      "reqIds": [
+        "REQ-117"
+      ],
+      "title": "The image check stops after 3 fix rounds and reports what is left",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a screen whose image check reports a clipped text every time\nWhen the agent checks and fixes it\nThen it stops after 3 rounds and the run report names the screen and the open problem"
+    },
+    {
+      "id": "TC-524",
+      "reqIds": [
+        "REQ-118"
+      ],
+      "title": "Saving frame links merges into the latest spec.json by screen id",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given spec.json changed on main after the run started (a new requirement and another feature's design)\nWhen the plugin saves the links of SCR-1 and SCR-2\nThen only those two screens' links and the section link change, every other change is kept, and the design is still a Draft"
+    },
+    {
+      "id": "TC-525",
+      "reqIds": [
+        "REQ-119"
+      ],
+      "title": "A redraw touches only changed screens and asks before removing one",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a drawn feature and a new design where SCR-2 changed, SCR-4 is new and SCR-3 is gone\nWhen the plugin plans the redraw\nThen it redraws SCR-2 in place, adds SCR-4, leaves SCR-1 untouched and asks before removing SCR-3"
+    },
+    {
+      "id": "TC-526",
+      "reqIds": [
+        "REQ-120"
+      ],
+      "title": "Approving a design starts the Test design agent once",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a feature with approved requirements and REQ ids without a test case\nWhen its design is approved, and again when a Test design run is already running\nThen one Test design run starts for the uncovered REQ ids the first time and none the second time"
     }
   ],
   "decisions": [
@@ -3904,6 +4112,24 @@
       "context": "Requirement issues were free text (story + Given/When/Then), with no link to the design and no picture, so readers had to open spec.json and Figma to understand them.",
       "decision": "The Product Owner asked in chat on 2026-11-28: \"for each github issue created, especially new requirement, attach the figma link and screenshot and provide a table of detailed requirement as standard template\". .github/ISSUE_TEMPLATE/requirement.md and bug.md hold the standard; agents follow it for every issue they create (AGENTS.md). Screenshots are exported from the Figma frame, committed to compass/design/screens/ and linked by commit SHA.",
       "consequences": "Every requirement issue shows its Figma frame, a screenshot, a Requirement details table and an Acceptance criteria table. A requirement without UI says \"Design: none: <reason>\"."
+    },
+    {
+      "id": "ADR-023",
+      "date": "2026-11-28",
+      "title": "The Design agent draws screens in Figma through a Compass Figma plugin, not Figma's MCP server",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-114",
+        "REQ-115",
+        "REQ-116",
+        "REQ-117",
+        "REQ-118",
+        "REQ-119",
+        "REQ-120"
+      ],
+      "context": "The Product Owner wants the Design stage to produce real Figma screens for review. A spike drew F-001 SCR-1 well through Figma's MCP server from Claude Code, but Figma lets only clients in its MCP catalog connect: registering Compass returned 403, and the Claude API's MCP connector is not in the catalog. Intent 2026-11-27-project-design-files.md had put writing Figma content out of scope.",
+      "decision": "The Product Owner chose in chat on 2026-11-28 (\"go with 2b\"): a Compass Figma plugin, kept in this repository, with the Design agent inside. The plugin calls Claude with the project's shared Anthropic key, draws with a fixed set of drawing tools (no tool runs code), checks images of its screens, and saves the frame links to compass/spec.json through the shared work token. The plugin signs in to Compass, and only UX, PO or Admin can draw. Compass stays browser-only with no server. This replaces \"writing Figma content\" in that intent's Out of scope.",
+      "consequences": "Compass has a second small app (the plugin) with its own build and tests. Everyone who can run the plugin can read the shared Anthropic key on their machine. Firestore rules guard who can read the key and token; they do not see the plugin's GitHub commits (ADR-016) or its Figma edits (Figma file permissions do). A Full Figma seat is needed to draw outside drafts. If Figma later accepts Compass in its MCP catalog, the plugin's tools can be swapped for the MCP server."
     }
   ]
 }
