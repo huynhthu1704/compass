@@ -1,8 +1,8 @@
 rules_version = '2';
-// Compass team access (F-015, REQ-030 … REQ-040, ADR-010 … ADR-014).
+// Compass team access (F-015, REQ-030 … REQ-046, ADR-010 … ADR-020).
 // Publish: Firebase console → Firestore Database → Rules → paste this file → Publish.
 // Tests: npm run test:rules (Firestore emulator). Keep gateRoles() equal to GATE_ROLES in src/team.ts.
-// These rules guard Firestore data only. GitHub commits use the shared project token and are not seen here;
+// These rules guard Firestore data only. GitHub commits use the shared work token (ADR-016) and are not seen here;
 // approvals without a matching record are flagged by the portal instead (ADR-012).
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -15,6 +15,13 @@ service cloud.firestore {
     function superAdminHash() { return '937a5a56a92ff8e4b58a73b9110d6132d6e0f3fb75dc8ef4aa434664e4895677'; }
     function access() { return /databases/$(database)/documents/config/access; }
     function isSuperAdmin() { return signedIn() && exists(access()) && me() in get(access()).data.superAdmins; }
+    // The owner: the account whose hashed email is above (ADR-013). Only the owner changes the super admin list (ADR-018).
+    function isOwner() { return signedIn() && hashing.sha256(me()).toHexString().lower() == superAdminHash(); }
+
+    // ---- people (REQ-041 AC3) --------------------------------------------------------------------------------------
+    // people/{email}.projects lists the projects a person is on; it is written with each team change.
+    function personPath(email) { return /databases/$(database)/documents/people/$(email); }
+    function isPerson() { return signedIn() && exists(personPath(me())) && get(personPath(me())).data.projects.size() > 0; }
 
     // ---- projects --------------------------------------------------------------------------------------------------
     function projectPath(pid) { return /databases/$(database)/documents/projects/$(pid); }
@@ -24,6 +31,20 @@ service cloud.firestore {
     function isAdmin(pid) { return isMember(pid) && me() in project(pid).admins; }
     // Admin lives only in `admins` (one source of truth); an 'Admin' entry in a team role list is ignored.
     function rolesOf(pid) { return project(pid).team.get(me(), []); }
+    function canManage(pid) { return isSuperAdmin() || isAdmin(pid); }
+    // A people/{email} write changes exactly one project: added while the project (after this write) lists the email,
+    // removed once it no longer does, and only by that project's Admin or a super admin.
+    function peopleChangeOk(email, before, after) {
+      let added = after.removeAll(before);
+      let removed = before.removeAll(after);
+      // A write that changes nothing (removing someone whose record never listed the project, re-adding someone whose
+      // record still lists it) is accepted, so a team change never fails on it; it gives no access (isPerson()).
+      return (added.size() == 0 && removed.size() == 0)
+        || (added.size() == 1 && removed.size() == 0 && canManage(added[0])
+                && email in getAfter(projectPath(added[0])).data.members)
+        || (added.size() == 0 && removed.size() == 1 && canManage(removed[0])
+                && !(email in getAfter(projectPath(removed[0])).data.members));
+    }
 
     // Which roles may pass each gate (REQ-033). Must equal GATE_ROLES in src/team.ts.
     function gateRoles() {
@@ -40,6 +61,16 @@ service cloud.firestore {
 
     // A team document: members, at least one Admin (REQ-031), every member has roles. Emails are stored lower-case by
     // the portal (src/team.ts); a mixed-case entry could never match me(), so it would only lock that person out.
+    // A team change adds or removes at most one person, and that person's people/{email} must agree after the write
+    // (REQ-041 AC3), so removing someone always takes away their read access to the work token and key.
+    function peopleAgree(pid, before, after) {
+      let joined = after.removeAll(before);
+      let left = before.removeAll(after);
+      return (joined.size() == 0 && left.size() == 0)
+        || (joined.size() == 1 && left.size() == 0 && pid in getAfter(personPath(joined[0])).data.projects)
+        || (joined.size() == 0 && left.size() == 1 && !(pid in getAfter(personPath(left[0])).data.projects));
+    }
+
     function validProject(d) {
       return d.keys().hasOnly(['name', 'repo', 'members', 'admins', 'team'])
         && d.members is list && d.admins is list && d.team is map
@@ -53,23 +84,56 @@ service cloud.firestore {
       // isSuperAdmin() still works for everyone: get() inside rules is not limited by read rules.
       allow get: if signedIn() && resource != null && me() in resource.data.superAdmins;
       allow list: if false;
-      // Created once, by the super admin's own verified account (REQ-035, ADR-013); never changed from a browser.
-      allow create: if signedIn()
-        && hashing.sha256(me()).toHexString().lower() == superAdminHash()
+      // Created once, by the owner's own verified account (REQ-035, ADR-013). From then on only the owner changes the
+      // list of super admins, and always stays in it (REQ-046, ADR-018).
+      allow create: if isOwner()
         && request.resource.data.keys().hasOnly(['superAdmins'])
         && request.resource.data.superAdmins == [me()];
-      allow update, delete: if false;
+      allow update: if isOwner()
+        && request.resource.data.keys().hasOnly(['superAdmins'])
+        && request.resource.data.superAdmins is list
+        && me() in request.resource.data.superAdmins;
+      allow delete: if false;
+    }
+
+    // The shared work token, Anthropic key and settings (REQ-041, REQ-044, ADR-016, ADR-017). Every reader's browser
+    // can read the token and key: super admins and anyone on a team (people/{email}). Only super admins write them.
+    function validWorkspace(d) {
+      return d.keys().hasOnly(['workToken', 'anthropicKey', 'model', 'autoSync', 'newProjectsAccount'])
+        && (!('workToken' in d) || d.workToken is string)
+        && (!('anthropicKey' in d) || d.anthropicKey is string)
+        && (!('model' in d) || d.model is string)
+        && (!('autoSync' in d) || d.autoSync is bool)
+        && (!('newProjectsAccount' in d) || d.newProjectsAccount is string);
+    }
+    match /config/workspace {
+      allow get: if isSuperAdmin() || isPerson();
+      allow list: if false;
+      allow create, update: if isSuperAdmin() && validWorkspace(request.resource.data);
+      allow delete: if isSuperAdmin();
+    }
+
+    match /people/{email} {
+      allow get: if signedIn() && (me() == email || isSuperAdmin());
+      allow list: if isSuperAdmin();
+      allow create, update: if signedIn() && email == email.lower()
+        && request.resource.data.keys().hasOnly(['projects'])
+        && request.resource.data.projects is list
+        && peopleChangeOk(email, resource == null ? [] : resource.data.projects, request.resource.data.projects);
+      allow delete: if isSuperAdmin();
     }
 
     match /projects/{pid} {
       allow get: if isMember(pid) || isSuperAdmin();
       allow list: if isSuperAdmin() || (signedIn() && me() in resource.data.members);
       // Only the super admin creates a project's first team, together with its approval baseline (REQ-030, REQ-038).
-      allow create: if isSuperAdmin() && validProject(request.resource.data) && existsAfter(baselinePath(pid));
+      allow create: if isSuperAdmin() && validProject(request.resource.data) && existsAfter(baselinePath(pid))
+        && peopleAgree(pid, [], request.resource.data.members);
       // Admins of the project or the super admin manage the team; the repo never changes (REQ-030, REQ-031, REQ-035).
       allow update: if (isAdmin(pid) || isSuperAdmin())
         && validProject(request.resource.data)
-        && request.resource.data.repo == resource.data.repo;
+        && request.resource.data.repo == resource.data.repo
+        && peopleAgree(pid, resource.data.members, request.resource.data.members);
       allow delete: if false;
 
       // The approvals already in spec.json when the team was created (REQ-038). Written once, never changed.
@@ -99,7 +163,8 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
-      // The shared project GitHub token (REQ-034, ADR-011): every member's browser can read it; only Admins write it.
+      // The project GitHub token (REQ-034, ADR-011). Retired by REQ-043: build 3 of phase 1 stops reading it and closes
+      // these rules. Until then they stay as before, so these rules can be published as soon as this build is merged.
       match /secrets/{doc} {
         allow read: if isMember(pid) || isSuperAdmin();
         allow create, update, delete: if doc == 'token' && (isAdmin(pid) || isSuperAdmin());

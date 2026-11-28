@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, peopleChanges, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -258,4 +258,12 @@ test('TC-064 (REQ-032 AC2, REQ-034): a shared project that the token cannot reac
   assert.match(sharedOpenProblem(want, null, 404), /token cannot reach Acme\/Travel — ask an Admin/);
   assert.match(sharedOpenProblem(want, { owner: 'acme', name: 'travel-map' }), /is now acme\/travel-map on GitHub \(renamed or moved\) — ask an Admin/);
   assert.match(sharedOpenProblem(want, { owner: 'other', name: 'Travel' }), /renamed or moved/);
+});
+
+test('TC-079 (part, REQ-041 AC3): a team change lists who joins and who leaves, for their people records', () => {
+  const before = [{ email: 'po@example.com', roles: ['PO'] }, { email: 'ba@example.com', roles: ['BA'] }];
+  assert.deepEqual(peopleChanges([], before), { joined: ['po@example.com', 'ba@example.com'], left: [] }, 'a first team: everyone joins');
+  assert.deepEqual(peopleChanges(before, [...before, { email: 'QA@Example.com', roles: ['QA'] }]), { joined: ['qa@example.com'], left: [] });
+  assert.deepEqual(peopleChanges(before, [before[0]]), { joined: [], left: ['ba@example.com'] });
+  assert.deepEqual(peopleChanges(before, [{ email: 'BA@example.com', roles: ['BA', 'QA'] }, before[0]]), { joined: [], left: [] }, 'changing roles or letter case is no change');
 });
