@@ -1507,7 +1507,7 @@
       "intent": "compass/intent/2026-11-26-honey-brand.md",
       "story": "As the product owner, I want the rebrand to reach every page, so that no screen still looks like the old Compass.",
       "ac": [
-        "Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs, Knowledge)\nWhen I open it in light and dark mode\nThen it uses the honey theme",
+        "Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs)\nWhen I open it in light and dark mode\nThen it uses the honey theme",
         "Given the source code in src/\nWhen the unit tests run\nThen a test fails if any old teal colour (#EDFAF7, #D2F2EA, #6ECDB9, #38B09A, #0E7666, #0D5E52, #0C3A34) or a hard-coded colour outside the design tokens is found"
       ]
     },
@@ -1778,8 +1778,20 @@
       "intent": "compass/intent/2026-11-27-hide-knowledge-link.md",
       "story": "As any portal user, I want the sidebar to show only the pages of the delivery flow, so that the technical Knowledge (RAG) page does not distract me.",
       "ac": [
-        "Given a project is open, in any role (PO, BA, DM, UX, Dev, QA, Ops)\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs, Release and Project settings (ADR-015), and there is no Knowledge link",
-        "Given the address /p/<project>/knowledge\nWhen I open it directly\nThen the Knowledge page still opens, and agent runs keep indexing and searching the repository as before"
+        "Given a project is open, in any role (PO, BA, DM, UX, Dev, QA, Ops)\nWhen I look under the project card\nThen the links are, in order, Feature board, Team floor, Agent runs, Release and Project settings (ADR-015), and there is no Knowledge link"
+      ]
+    },
+    {
+      "id": "REQ-076",
+      "featureId": "F-013",
+      "title": "The portal has no Knowledge page; its address opens the Feature board",
+      "priority": "Should",
+      "status": "Approved",
+      "intent": "compass/intent/2026-11-27-hide-knowledge-link.md",
+      "story": "As the Product Owner, I want the Knowledge (RAG) page gone from the portal, so that no one lands on a technical page that is not part of the delivery flow.",
+      "ac": [
+        "Given a project is open, in any role\nWhen I open the address /p/<project>/knowledge\nThen the project's Feature board opens and no Knowledge page exists in the portal",
+        "Given a project is open or imported\nWhen an agent run starts\nThen the agents still index the repository and search it as before (the index builds on the run's first search, or at import)"
       ]
     },
     {
@@ -2714,7 +2726,7 @@
       "title": "No sideways scrolling and no text outside its row, from 1920 px down to 390 px",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given every page in the sidebar (Projects, Agent architecture, Feature board, Team floor, Release, Agent runs, Knowledge, Connections, the feature stages) and New project\nWhen I open each at 1920, 1600, 1280, 1000, 901 and 390 px wide\nThen the content is 1600 px wide at 1920 px, forms keep their reading width, no page scrolls sideways, and no text in a list row is squeezed to one word per line or drawn outside its row"
+      "gherkin": "Given every page in the sidebar (Projects, Agent architecture, Feature board, Team floor, Release, Agent runs, Connections, the feature stages) and New project\nWhen I open each at 1920, 1600, 1280, 1000, 901 and 390 px wide\nThen the content is 1600 px wide at 1920 px, forms keep their reading width, no page scrolls sideways, and no text in a list row is squeezed to one word per line or drawn outside its row"
     },
     {
       "id": "TC-039",
@@ -2944,10 +2956,20 @@
       "reqIds": [
         "REQ-075"
       ],
-      "title": "No Knowledge link in the sidebar; the page still opens",
+      "title": "No Knowledge link in the sidebar for any role",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the sidebar model for an open project and the sidebar component, which take no role\nWhen the project links are computed and the sources are read\nThen no link points to /knowledge or is labelled Knowledge for any role, the sidebar has no knowledge icon, and App still renders the Knowledge page for the knowledge route"
+      "gherkin": "Given the sidebar model for an open project and the sidebar component, which take no role\nWhen the project links are computed and the sources are read\nThen no link points to /knowledge or is labelled Knowledge for any role and the sidebar has no knowledge icon"
+    },
+    {
+      "id": "TC-408",
+      "reqIds": [
+        "REQ-076"
+      ],
+      "title": "No Knowledge page or route; agents still index",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the portal source\nWhen the routes in App and the pages under src/pages are read\nThen there is no Knowledge page, no knowledge route or import (so /p/<id>/knowledge falls through to the Feature board), the agent harness still builds the index with rag.ensure and searches it, and Import still indexes the repository"
     },
     {
       "id": "TC-200",

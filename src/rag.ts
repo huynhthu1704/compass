@@ -102,7 +102,6 @@ export const rag = {
   setRepoDocs(id: string, docs: Doc[]) { cache.set(id, { docs, at: new Date().toISOString() }); },
   repoDocs: (id: string) => cache.get(id)?.docs || [],
   demoFallback(p: Project) { if (p.demo && !cache.has(p.id)) rag.setRepoDocs(p.id, DEMO_FILES); },
-  indexedAt: (id: string) => cache.get(id)?.at,
   index(p: Project) { rag.demoFallback(p); return new Index([...specDocs(p), ...rag.repoDocs(p.id)]); },
   async ensure(token: string | undefined, p: Project) {
     if (!cache.has(p.id) && token && p.repo) rag.setRepoDocs(p.id, await loadRepoDocs(token, p));
