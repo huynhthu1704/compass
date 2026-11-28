@@ -2075,7 +2075,7 @@
       "featureId": "F-013",
       "title": "The sidebar footer is one account card that opens an account menu",
       "priority": "Should",
-      "status": "In build",
+      "status": "Done",
       "intent": "compass/intent/2026-11-28-sidebar-account-menu.md",
       "design": "compass/design/2026-11-28-account-menu.md",
       "story": "As any portal user, I want one tidy account card at the bottom of the sidebar with my account actions behind it, so that I see who I am and my roles at a glance without a crowded footer.",
