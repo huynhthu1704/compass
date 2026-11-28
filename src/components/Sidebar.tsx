@@ -174,9 +174,10 @@ function RolesPicker({ label, roles }: { label: string; roles: Role[] }) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!open) return;
-    const close = (e: PointerEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) ref.current.open = false; };
-    document.addEventListener('pointerdown', close);
-    return () => document.removeEventListener('pointerdown', close);
+    // On click, not pointerdown: closing first would shift the account card out from under a tap on a phone.
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) ref.current.open = false; };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
   }, [open]);
   const text = roles.join(', ') || 'none';
   return (

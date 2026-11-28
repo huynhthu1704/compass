@@ -186,6 +186,7 @@ test('TC-527 (REQ-121 AC1–AC3, AC5): the role screen and the sidebar pick seve
   assert.match(side, /ROLE_ORDER\.map\(\(r\) =>/, 'every role is listed');
   assert.match(side, /demoRole: roles\.join\(', '\) \|\| undefined/, 'the demo chip reads "Demo · PO, BA"');
   assert.match(side, /e\.key === 'Escape' && ref\.current\?\.open/, 'Escape closes the menu');
+  assert.match(side, /document\.addEventListener\('click', close\)/, 'a click outside closes the roles menu after the tap lands, so the account card does not move first');
   assert.doesNotMatch(side, /settings\.role\b/, 'no reader of the old single role left');
   assert.match(read('src/App.tsx'), /hasRole: pickedRoles\(settings\)\.length > 0/);
   const fb = read('src/firebase.ts');
