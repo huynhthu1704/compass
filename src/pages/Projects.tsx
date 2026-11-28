@@ -1,5 +1,6 @@
 import { go } from '../App';
 import { demoProject } from '../demo';
+import { openOrCreateDemo } from '../demoOnce';
 import { featureStage } from '../progress';
 import { useState } from 'react';
 import { canSeeProject, getSession, loadProjectToken, projectTokenOf, useSession, type ProjectAccess } from '../firebase';
@@ -37,7 +38,7 @@ export function ProjectsPage() {
       go(`/p/${p.id}`);
     } catch (e) { setOpenErr(`${a.name || a.id}: ${(e as Error).message}`); } finally { setOpening(null); }
   };
-  const openDemo = () => { const p = demoProject(); store.addProject(p); go(`/p/${p.id}`); };
+  const openDemo = () => { const { project, isNew } = openOrCreateDemo(store.get().projects, demoProject); if (isNew) store.addProject(project); go(`/p/${project.id}`); }; // one demo project only (REQ-109)
   return (
     <div className="stack gap-xl">
       <PageHead
