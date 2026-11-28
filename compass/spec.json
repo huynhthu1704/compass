@@ -1482,7 +1482,8 @@
       "ac": [
         "Given the design tokens in src/index.css\nWhen I compare them with the Figma page \"🎨 Design system\" (Honey edition v0.2)\nThen the primitive and semantic colours match in light and dark mode, with honey #FFC629 as the brand colour and dark ink text on it",
         "Given any state colour in the portal\nWhen it is shown\nThen honey means brand or \"your turn\", sky means working/info, mint means done/success and coral means rework/error",
-        "Given normal text on its background\nWhen contrast is measured in light and dark mode\nThen it is at least 4.5:1 (WCAG AA)"
+        "Given normal text on its background\nWhen contrast is measured in light and dark mode\nThen it is at least 4.5:1 (WCAG AA)",
+        "Given any checkbox or radio button in the portal\nWhen it is ticked, in light or dark mode\nThen it is filled with the honey brand colour (--color-bg-brand) and the browser draws a dark check mark on it, never the browser's default blue"
       ]
     },
     {
@@ -3686,6 +3687,16 @@
       "type": "Automated",
       "status": "Pass",
       "gherkin": "Given the role helpers\nWhen roles are toggled\nThen they are kept in role order without duplicates, and with keepOne the last role cannot be removed\nAnd a browser that saved a single role gets it back as the picked roles\nAnd isDesignAdmin is true for picked roles that include PO, with sign-in off or in the demo\nAnd the role screen toggles cards with aria-pressed, disables Continue with no role and saves roles\nAnd the sidebar renders a checkbox per role, disables the last ticked one and lists the roles in the demo chip\nAnd App, entering and leaving the demo and signing out read or clear the picked roles"
+    },
+    {
+      "id": "TC-529",
+      "reqIds": [
+        "REQ-010"
+      ],
+      "title": "Checkboxes and radio buttons are honey in light and dark mode",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given src/index.css\nWhen the rule for checkboxes and radio buttons is read\nThen accent-color is var(--color-bg-brand)\nAnd --color-bg-brand is honey in light and dark mode"
     }
   ],
   "decisions": [
