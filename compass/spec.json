@@ -3539,7 +3539,7 @@
       ],
       "title": "Team projects use only the super admin's GitHub token and Anthropic key",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given sign-in on, the shared work token and key, and a member with a token and key saved on their own device\nWhen Compass picks the token and key for the member's GitHub action and agent run\nThen it uses the shared ones; with none set, the GitHub action is refused with \"No GitHub token yet — ask a super admin\" and agents run in demo mode; with sign-in off or in the demo, the device token and key are used as before"
     },
     {

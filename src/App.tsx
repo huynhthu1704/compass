@@ -24,7 +24,7 @@ import { Sidebar } from './components/Sidebar';
 import { canSeeProject, firebaseEnabled, leaveDemo, loadProjectToken, projectKey, startSession, useProjectToken, useSession } from './firebase';
 import { tokenFor } from './token';
 import { NoAccessPage, SignInPage } from './pages/SignIn';
-import { startScreen } from './team';
+import { canOpenConnections, startScreen } from './team';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -69,7 +69,8 @@ export default function App() {
   let page;
   // REQ-040 AC3: the demo never creates or imports real repositories.
   if (session.demo && ['new', 'import'].includes(parts[0])) page = <ProjectsPage />;
-  else if (parts[0] === 'connect') page = <ConnectPage />;
+  // REQ-041 AC2: with sign-in on, Connections is only for super admins; anyone else lands on Projects.
+  else if (parts[0] === 'connect') page = canOpenConnections({ signedIn: session.status === 'signed-in', demo: !!session.demo, superAdmin: session.superAdmin }) ? <ConnectPage /> : <ProjectsPage />;
   else if (parts[0] === 'new') page = <NewProjectPage />;
   else if (parts[0] === 'import') page = <ImportPage />;
   else if (parts[0] === 'architecture') page = <ArchitecturePage />;

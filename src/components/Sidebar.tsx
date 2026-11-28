@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 
 import { go } from '../App';
 import { featureStage, stageStatus } from '../progress';
 import { leaveDemo, projectKey, signOut, useSession } from '../firebase';
+import { canOpenConnections } from '../team';
 import { accountCard, accountChips, accountMenu, accountName, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
 import { STAGES, type Project, type Stage } from '../types';
@@ -52,7 +53,8 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   const cardRef = useRef<HTMLButtonElement>(null);
   const name = signedIn ? accountName(session.email!) : account.name;
   const chips = accountChips({ signedIn, demo: session.demo, superAdmin: session.superAdmin, roles: myRoles, demoRole: settings.role });
-  const items = accountMenu({ signedIn, demo: session.demo });
+  // REQ-110 AC2 as amended by ADR-020: with sign-in on, Connections is only in super admins' menu (REQ-041 AC2).
+  const items = accountMenu({ signedIn, demo: session.demo }).filter((it) => it !== 'connections' || canOpenConnections({ signedIn, demo: !!session.demo, superAdmin: session.superAdmin }));
   // REQ-110 AC3: choosing an item closes the menu and returns focus to the card, then acts.
   const choose = (act: () => void) => () => { setOpen(false); cardRef.current?.focus(); act(); };
 

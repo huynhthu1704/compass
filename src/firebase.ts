@@ -3,7 +3,7 @@
 // Without it the portal works exactly as before (REQ-032 AC5). The firebase library is only loaded when it is on.
 import { useSyncExternalStore } from 'react';
 import { store } from './store';
-import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, peopleChanges, projectVisible, teamDoc, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
+import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, peopleChanges, projectVisible, teamDoc, workspaceSettings, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
 import type { RepoRef } from './types';
 
 export interface FirebaseWebConfig { apiKey: string; authDomain: string; projectId: string; appId: string; [k: string]: string }
@@ -36,7 +36,33 @@ export interface Session {
 
 let session: Session = { status: firebaseEnabled ? 'loading' : 'off', superAdmin: false, access: [] };
 const listeners = new Set<() => void>();
-const set = (patch: Partial<Session>) => { session = { ...session, ...patch }; listeners.forEach((l) => l()); };
+const set = (patch: Partial<Session>) => {
+  session = { ...session, ...patch };
+  if (session.status !== 'signed-in') { workspace = undefined; workspaceFor = ''; }
+  applyWorkspace();
+  listeners.forEach((l) => l());
+};
+
+// ---- Shared work token, Anthropic key and settings (REQ-041, ADR-016, ADR-017) ----------------------------------------
+// Loaded after sign-in for super admins and people on a team; kept in memory only. undefined = not loaded yet.
+let workspace: Workspace | null | undefined;
+let workspaceFor = ''; // the email the cached workspace was loaded for
+/** The device settings are replaced by the shared ones while signed in, outside the demo (store override, never saved). */
+function applyWorkspace() {
+  store.setOverride(workspaceSettings(workspace, { signedIn: session.status === 'signed-in', demo: !!session.demo }));
+}
+/** The shared workspace: an object, null when none is saved or it cannot be read, undefined while loading. */
+export const getWorkspace = () => workspace;
+export const useWorkspace = () => useSyncExternalStore((l) => { tokenListeners.add(l); return () => tokenListeners.delete(l); }, () => workspace);
+/** Loads (or reloads, after a super admin saved it) the workspace for the signed-in person. */
+export async function refreshWorkspace() {
+  const email = session.email || '';
+  if (session.status !== 'signed-in' || !(session.superAdmin || session.access.length)) { workspace = null; workspaceFor = email; applyWorkspace(); tokenChanged(); return; }
+  let ws: Workspace | null;
+  try { ws = await loadWorkspace(); } catch { ws = null; }
+  if (session.status !== 'signed-in' || session.email !== email) return; // signed out or switched account meanwhile
+  workspace = ws; workspaceFor = email; applyWorkspace(); tokenChanged(); // auto-sync and open pages pick up the token
+}
 export const useSession = () => useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => session);
 export const getSession = () => session;
 
@@ -109,6 +135,8 @@ async function loadAccess(rawEmail: string, verified: boolean) {
     if (!stillSignedIn(email)) return; // signed out (or switched account) while loading
     const info = new Map(docs.map((d) => [d.id, { name: d.name, repo: d.repo }]));
     set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins).map((a) => ({ ...a, ...info.get(a.id) })), error: undefined });
+    // Load the workspace once per account, and again when someone with no team (nothing readable) is added to one.
+    if (workspaceFor !== email || (!workspace && (session.superAdmin || session.access.length > 0))) void refreshWorkspace();
     // REQ-041 AC3: a super admin's sign-in backfills people/{email} for teams saved before the index existed (once per tab).
     if (superAdmin && !peopleSynced) { peopleSynced = true; void syncPeopleIndex().catch(() => { peopleSynced = false; }); }
   } catch (e) {
