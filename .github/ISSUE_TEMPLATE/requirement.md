@@ -9,6 +9,12 @@ labels: requirement
 ## Summary
 **As a** … **I want** … **so that** …
 
+## Acceptance criteria
+| # | Given | When | Then | Test case |
+|---|---|---|---|---|
+| AC1 | … | … | … | TC-… |
+| AC2 | … | … | … | TC-… |
+
 ## Design
 | | |
 |---|---|
@@ -37,9 +43,3 @@ labels: requirement
 | Out of scope | <what this requirement does not do> |
 | Dependencies | <REQ-… / #issue / ADR-…, or none> |
 | Test cases | TC-… |
-
-## Acceptance criteria
-| # | Given | When | Then | Test case |
-|---|---|---|---|---|
-| AC1 | … | … | … | TC-… |
-| AC2 | … | … | … | TC-… |
