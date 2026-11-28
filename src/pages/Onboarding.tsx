@@ -1,5 +1,5 @@
-import { go } from '../App';
-import { getSession, leaveDemo, useSession } from '../firebase';
+import { exitDemo } from '../App';
+import { getSession, useSession } from '../firebase';
 import { demoProject } from '../demo';
 import { useState } from 'react';
 import { store } from '../store';
@@ -43,7 +43,7 @@ export function Onboarding() {
         </div>
       </div>
       <div className="row gap-md wrap"><Button variant="accent" disabled={!role} onClick={() => { store.setSettings({ role }); if (getSession().demo) { const d = store.get().projects.find((x) => x.demo) || demoProject(); if (!store.get().projects.includes(d)) store.addProject(d); window.location.hash = `/p/${d.id}`; } else window.location.hash = '/connect?welcome=1'; }}>Continue</Button>
-        {inDemo && <Button variant="secondary" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</Button>}{/* REQ-040 AC4, ADR-026 */}
+        {inDemo && <Button variant="secondary" onClick={exitDemo}>Leave demo</Button>}{/* REQ-040 AC4, ADR-026 */}
       </div>
     </div>
   );

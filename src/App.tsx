@@ -27,6 +27,8 @@ import { NoAccessPage, SignInPage } from './pages/SignIn';
 import { canOpenConnections, leavesDemoOnNavigate, routeOf, startScreen } from './team';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
+/** "Leave demo" everywhere (banner, account menu, demo role screen): back to the person's projects (REQ-040 AC4). */
+export const exitDemo = () => { leaveDemo(); go('/'); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
 
 function useRoute() {
@@ -97,7 +99,7 @@ export default function App() {
           {session.demo && (
             <div className="row gap-md wrap" role="status" style={{ padding: '12px 16px', marginBottom: 16, borderRadius: 12, background: 'var(--color-bg-brand-subtle)', border: '1px solid var(--color-border-brand)', alignItems: 'center' }}>
               <span className="stack grow"><strong className="body-sm">Demo — sample data, kept in this browser only</strong><span className="body-sm t-secondary">Nothing here is saved to GitHub or Firebase. Your real projects are not shown while you are in the demo.</span></span>
-              <button className="btn secondary sm" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</button>
+              <button className="btn secondary sm" onClick={exitDemo}>Leave demo</button>
             </div>
           )}
           {page}
