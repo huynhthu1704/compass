@@ -10,6 +10,7 @@ import { designToolText } from './designLinks';
 import { checkChanges, evalChanges, evalRequirements, evalTests, scanInjection } from './guardrails';
 import { FRAMEWORK_VERSION, frameworkFiles, specFiles } from './framework';
 import { demoIdea } from './ideaDraft';
+import { firstMessage, ideaForPrompt, isAttachmentPath } from './attachments';
 import { github } from './github';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
@@ -88,7 +89,7 @@ export async function startRun(projectId: string, agentId: AgentId, goal: string
     try { index = await rag.ensure(tokenFor(p), p); }
     catch (e) { step(pid, rid, 'error', 'Repository indexing failed — continuing with spec only', (e as Error).message, { ok: false }); index = rag.index(p); }
     const reqText = (opts.reqIds || []).map((id) => p.spec.requirements.find((r) => r.id === id)).filter(Boolean).map((r) => `${r!.title} ${r!.story} ${r!.ac.join(' ')}`).join(' ');
-    const hits = index.search(`${goal} ${reqText}`, 6);
+    const hits = index.search(`${goal} ${reqText}`, 12).filter((h) => !isAttachmentPath(h.chunk.path)).slice(0, 6); // REQ-113: attached files are not repo knowledge
     step(pid, rid, 'retrieve', `Retrieved ${hits.length} chunks from ${index.files.length} indexed files + spec`, hits.map((h, i) => `[S${i + 1}] ${h.chunk.path}${h.chunk.section ? ' › ' + h.chunk.section : ''} (score ${h.score.toFixed(2)})`).join('\n'));
     const g0 = scanInjection(hits.map((h) => h.chunk.text));
     step(pid, rid, 'guardrail', g0.name, g0.message, { ok: g0.level === 'pass' });
@@ -132,7 +133,7 @@ async function liveLoop(pid: string, rid: string, a: AgentDef, goal: string, con
   const user = `PROJECT: ${p.name} — ${p.description}
 REPO: ${p.repo ? `${p.repo.owner}/${p.repo.name}` : '(not connected — spec only)'}
 TECH STACK: ${spec.stack}
-FEATURE: ${fid ? `${fid} ${featureOf(p, fid)?.name}\nIDEA: ${JSON.stringify(featureOf(p, fid)?.idea)}` : '(not specified)'}
+FEATURE: ${fid ? `${fid} ${featureOf(p, fid)?.name}\nIDEA: ${JSON.stringify(ideaForPrompt(featureOf(p, fid)!.idea))}` : '(not specified)'}
 DESIGN TOOL: ${designToolText(p.spec.designTool) || '(none connected)'}
 ${fid && featureOf(p, fid)?.design ? `DESIGN (${featureOf(p, fid)!.design!.status}):\n${designText(featureOf(p, fid)!.design!)}` : ''}
 OTHER FEATURES: ${spec.features.filter((f) => f.id !== fid).map((f) => `${f.id} ${f.name}`).join('; ') || 'none'}
@@ -145,10 +146,18 @@ ${context || '(nothing relevant found)'}
 
 GOAL: ${goal}`;
   const tools = TOOLS.filter((t) => a.tools.includes(t.name));
-  const messages: Msg[] = [{ role: 'user', content: user }];
+  const messages: Msg[] = [{ role: 'user', content: a.id === 'ideation' && fid ? await withAttachments(pid, rid, fid, user) : user }];
   let done = false;
   for (let turn = 0; turn < 14 && !done; turn++) {
-    const r = await claude(settings, a.system, messages, tools, 8000);
+    let r;
+    try { r = await claude(settings, a.system, messages, tools, 8000); }
+    catch (e) {
+      // REQ-113: if the API refuses an attached file (size, pixels, pages), run once more with the files by name only
+      if (turn > 0 || typeof messages[0].content === 'string' || !/Claude API 400/.test((e as Error).message)) throw e;
+      step(pid, rid, 'error', 'The model refused an attached file — running again with the files by name only', (e as Error).message, { ok: false });
+      messages[0] = { role: 'user', content: firstMessage(user, featureOf(getP(pid), fid!)?.idea.attachments, {}) };
+      r = await claude(settings, a.system, messages, tools, 8000);
+    }
     const text = r.content.filter((b): b is Extract<Block, { type: 'text' }> => b.type === 'text').map((b) => b.text).join('\n').trim();
     step(pid, rid, 'model', `Model turn ${turn + 1}`, text || '(tool calls only)', { tokens: r.tokens });
     messages.push({ role: 'assistant', content: r.content });
@@ -166,16 +175,31 @@ GOAL: ${goal}`;
     messages.push({ role: 'user', content: results });
   }
 }
+/** REQ-113 AC5: the Ideation agent's first message carries the attached images and PDFs (a file that cannot be read
+ *  is passed by name, and the run says so). */
+async function withAttachments(pid: string, rid: string, fid: string, text: string) {
+  const p = getP(pid);
+  const atts = featureOf(p, fid)?.idea.attachments || [];
+  const token = tokenFor(p);
+  const loaded: Record<string, string | undefined> = {};
+  for (const a of atts.filter((x) => x.kind !== 'other')) {
+    try { loaded[a.path] = a.data ?? (p.repo && token ? await github.fileBase64(token, p.repo, a.path) : undefined); }
+    catch (e) { step(pid, rid, 'retrieve', `Could not read ${a.name}; passed by name only`, (e as Error).message, { ok: false }); }
+  }
+  if (atts.length) step(pid, rid, 'retrieve', `Attached files: ${atts.map((a) => a.name).join(', ')}`);
+  return firstMessage(text, atts, loaded);
+}
 export const preview = (o: Record<string, unknown>) => Object.entries(o).map(([k, v]) => `${k}: ${typeof v === 'string' ? (v.length > 40 ? JSON.stringify(v.slice(0, 40) + '…') : JSON.stringify(v)) : Array.isArray(v) ? `[${v.length}]` : JSON.stringify(v)}`).join(', ');
 
 async function execTool(pid: string, rid: string, name: string, input: Record<string, unknown>, index: Index): Promise<string> {
   const p = getP(pid);
   const token = tokenFor(getP(pid));
   switch (name) {
-    case 'search_knowledge': return fmtHits(index.search(String(input.query), 6)) || 'No results.';
-    case 'list_files': { const pre = String(input.prefix || ''); return index.files.filter((f) => !f.startsWith('spec:') && f.startsWith(pre)).join('\n') || 'No files.'; }
+    case 'search_knowledge': return fmtHits(index.search(String(input.query), 12).filter((h) => !isAttachmentPath(h.chunk.path)).slice(0, 6)) || 'No results.';
+    case 'list_files': { const pre = String(input.prefix || ''); return index.files.filter((f) => !f.startsWith('spec:') && !isAttachmentPath(f) && f.startsWith(pre)).join('\n') || 'No files.'; }
     case 'read_file': {
       const path = String(input.path);
+      if (isAttachmentPath(path)) return 'ERROR: attached files are not readable as repo files (REQ-113)';
       const cached = rag.repoDocs(pid).find((d) => d.path === path);
       if (cached) return cached.content;
       if (token && p.repo) { const f = await github.file(token, p.repo, path); return f ? f.content : 'ERROR: file not found'; }
@@ -356,7 +380,7 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
     const pi = r.proposal.idea;
     store.spec(pid, (s) => ({
       ...s,
-      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi, ...(r.agent === 'ideation' ? stamp : {}), need: f.idea.need || (r.agent === 'ideation' ? r.goal : undefined) } } : f)) : s.features,
+      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi, ...(r.agent === 'ideation' ? stamp : {}), need: f.idea.need || (r.agent === 'ideation' ? r.goal : undefined), attachments: f.idea.attachments } } : f)) : s.features,
       requirements: [...s.requirements, ...(r.proposal!.requirements || [])],
       tests: [...s.tests, ...(r.proposal!.tests || []).map((t) => ({ ...t, ...stamp }))],
     }));

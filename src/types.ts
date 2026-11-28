@@ -41,7 +41,19 @@ export interface Idea {
   risks: string[];
   approvedBy?: string;     // F-015 REQ-036: who approved the intent, "<email> (<role>)"
   approvedAt?: string;
+  attachments?: Attachment[]; // F-001 REQ-113: files attached to the business need
   stack?: string;          // (v1) moved to Spec.stack
+}
+
+/** F-001 REQ-113: a file attached to a feature's business need, stored at `path` in the project's repo. */
+export type AttachmentKind = 'image' | 'pdf' | 'other';
+export interface Attachment {
+  name: string;            // the name as picked
+  path: string;            // compass/intent/attachments/F-xxx/<safe name>
+  type: string;            // MIME type
+  kind: AttachmentKind;    // image and pdf go to the Ideation agent; other only by name
+  size: number;            // bytes
+  data?: string;           // base64, only for demo / local projects (kept in this browser, never committed)
 }
 
 export interface DesignScreen {
@@ -117,6 +129,7 @@ export interface FileChange {
   content: string;
   before?: string;
   reason?: string;
+  encoding?: 'base64';     // REQ-113: content is already base64 (binary files)
 }
 
 export type StepKind = 'plan' | 'retrieve' | 'tool_call' | 'tool_result' | 'model' | 'guardrail' | 'eval' | 'approval' | 'github' | 'error';
