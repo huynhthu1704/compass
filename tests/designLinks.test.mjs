@@ -209,3 +209,20 @@ test("TC-530 (REQ-081): the old made-up demo frame link never hides the project'
   // New demo projects carry no made-up Figma link.
   assert.doesNotMatch(read('src/demo.ts'), /figma\.com\/design\/demo\//);
 });
+
+test('TC-531 (REQ-081): every demo project shows the Travel Map Figma file', async () => {
+  const { DEMO_FIGMA_FILE, withDemoDesignFiles } = await import('../src/demoOnce.ts');
+  assert.equal(DEMO_FIGMA_FILE, 'https://www.figma.com/design/iT9WxxZFmyiz8HSWpg5E7K/Travel-Map---Demo-Compass?node-id=0-1');
+  assert.equal(checkFigmaUrl(DEMO_FIGMA_FILE), null, 'a link Project settings accepts');
+  assert.equal(designPreviews(designFiles({ kind: 'figma', url: DEMO_FIGMA_FILE }))[0].src, figmaEmbed(DEMO_FIGMA_FILE), 'the Design page previews it');
+  // A demo project saved in a browser before this change gets the file; one that has design files keeps its own.
+  const old = { id: 'd', demo: true, spec: { features: [] } };
+  assert.deepEqual(withDemoDesignFiles(old).spec.designTool, { kind: 'figma', url: DEMO_FIGMA_FILE });
+  const own = { id: 'd', demo: true, spec: { designTool: { kind: 'miro', url: MIRO } } };
+  assert.equal(withDemoDesignFiles(own), own);
+  const real = { id: 'r', demo: false, spec: {} };
+  assert.equal(withDemoDesignFiles(real), real, 'real projects are never changed');
+  // New demo projects ship with it, and stored ones are topped up when the browser loads them.
+  assert.match(read('src/demo.ts'), /designTool: \{ kind: 'figma', url: DEMO_FIGMA_FILE \}/);
+  assert.match(read('src/store.ts'), /\.map\(migrateProject\)\.map\(withDemoDesignFiles\)/);
+});
