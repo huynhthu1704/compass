@@ -163,11 +163,10 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
-      // The project GitHub token (REQ-034, ADR-011). Retired by REQ-043: build 3 of phase 1 stops reading it and closes
-      // these rules. Until then they stay as before, so these rules can be published as soon as this build is merged.
+      // Retired project tokens (REQ-043, ADR-016): nobody reads or writes them; a super admin deletes what remains.
       match /secrets/{doc} {
-        allow read: if isMember(pid) || isSuperAdmin();
-        allow create, update, delete: if doc == 'token' && (isAdmin(pid) || isSuperAdmin());
+        allow read, create, update: if false;
+        allow delete: if isSuperAdmin();
       }
     }
   }

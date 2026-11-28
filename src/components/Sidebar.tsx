@@ -5,7 +5,7 @@ import { exitDemo, go } from '../App';
 import { featureStage, stageStatus } from '../progress';
 import { projectKey, signOut, useSession, useWorkspace } from '../firebase';
 import { canOpenConnections } from '../team';
-import { accountCard, accountChips, accountMenu, accountName, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
+import { accountCard, accountChips, accountMenu, accountName, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, usersLink, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
 import { pickedRoles, ROLE_ORDER, STAGES, toggleRole, type Project, type Role, type Stage } from '../types';
 import { STAGE_INFO } from '../ui';
@@ -74,8 +74,9 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
       <div className="brand">{logo}<div className="brand-text">Compass</div></div>
 
       <nav className="nav" aria-label="Workspace">
-        {link(WORKSPACE_LINKS[0], !p && !['connect', 'architecture'].includes(parts[0]))}
+        {link(WORKSPACE_LINKS[0], !p && !['connect', 'architecture', 'users'].includes(parts[0]))}
         {link(WORKSPACE_LINKS[1], parts[0] === 'architecture')}
+        {signedIn && !session.demo && session.superAdmin && link(usersLink, parts[0] === 'users')}
       </nav>
 
       {p && <ProjectGroup p={p} sync={sync} sub={sub} openId={openId} fsub={fsub} link={link} team={canManageTeam} />}

@@ -65,6 +65,9 @@ export function themeToggle(theme: 'light' | 'dark'): { next: 'light' | 'dark'; 
 /** F-015 SCR-3: the Team item, shown after the project links to Admins of the project and the super admin. */
 export const teamLink = (projectId: string): NavLink => ({ key: 'team', label: 'Team', path: `/p/${projectId}/team`, icon: 'team', title: 'People on this project and their roles' });
 
+/** REQ-046, SCR-8: the super admins' Users screen, in the workspace group (only for super admins). */
+export const usersLink: NavLink = { key: 'users', label: 'Users', path: '/users', icon: 'team', title: 'Super admins and the people on every team' };
+
 /** REQ-080, ADR-015: Project settings, for every role — the last link of the project group, after Team. */
 export const settingsLink = (projectId: string): NavLink => ({ key: 'settings', label: 'Project settings', path: `/p/${projectId}/settings`, icon: 'settings' });
 

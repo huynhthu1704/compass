@@ -1,4 +1,4 @@
-// F-015 Firestore security rules (REQ-030, REQ-031, REQ-033 … REQ-038, REQ-041 … REQ-046) — TC-067, TC-079, TC-084, TC-087.
+// F-015 Firestore security rules (REQ-030, REQ-031, REQ-033 … REQ-038, REQ-041 … REQ-046) — TC-067, TC-079, TC-082, TC-084, TC-087.
 // The gate-table check always runs. The emulator cases run with `npm run test:rules` (Firestore emulator);
 // plain `npm test` skips them when no emulator is running.
 import test from 'node:test';
@@ -133,14 +133,11 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     saAdd.update(doc(sa, 'projects/p1'), { members: [...p1.members, 'ux@example.com'], team: { ...team, 'ux@example.com': ['UX'] } });
     saAdd.set(doc(sa, 'people/ux@example.com'), { projects: arrayUnion('p1') }, { merge: true });
     await assertSucceeds(saAdd.commit());
-    await assertSucceeds(setDoc(doc(sa, 'projects/p1/secrets/token'), { token: 'z' }));                  // project tokens stay until build 3 (REQ-043)
-    await assertSucceeds(getDoc(doc(ba, 'projects/p1/secrets/token')));
     await assertSucceeds(getDocs(query(collection(ba, 'projects'), where('members', 'array-contains', 'ba@example.com'))));
     const adminAdd = writeBatch(admin);
     adminAdd.update(doc(admin, 'projects/p1'), { members: [...p1.members, 'ux@example.com', 'z@example.com'], team: { ...team, 'ux@example.com': ['UX'], 'z@example.com': ['QA'] } });
     adminAdd.set(doc(admin, 'people/z@example.com'), { projects: arrayUnion('p1') }, { merge: true });
     await assertSucceeds(adminAdd.commit());
-    await assertSucceeds(setDoc(doc(admin, 'projects/p1/secrets/token'), { token: 'y' }));
     await assertSucceeds(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'BA')));
     await assertSucceeds(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'tests', 'QA')));
     await assertSucceeds(addDoc(collection(sa, 'projects/p1/approvals'), record(SA, 'design', 'super admin')));
@@ -159,6 +156,17 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     await assertFails(setDoc(doc(as(SA), 'config/access'), { superAdmins: [SA, 'x@example.com'] }));
     await assertSucceeds(setDoc(doc(as(SA), 'config/access'), { superAdmins: [SA] }));
     await assertFails(setDoc(doc(as('x@example.com'), 'config/access'), { superAdmins: [SA, 'x@example.com'] })); // nobody but the owner changes it
+  });
+
+  await t.test('TC-082 (REQ-043): retired project tokens are never read or written; a super admin deletes them', async () => {
+    await seed();
+    const ba = as('ba@example.com'), admin = as('admin@example.com'), sa = as(SA);
+    for (const db of [ba, admin, sa]) await assertFails(getDoc(doc(db, 'projects/p1/secrets/token')));
+    await assertFails(setDoc(doc(admin, 'projects/p1/secrets/token'), { token: 'y' }));
+    await assertFails(setDoc(doc(sa, 'projects/p1/secrets/token'), { token: 'y' }));
+    await assertFails(deleteDoc(doc(admin, 'projects/p1/secrets/token')));
+    await assertSucceeds(deleteDoc(doc(sa, 'projects/p1/secrets/token')));
+    await assertSucceeds(deleteDoc(doc(sa, 'projects/p4/secrets/token')));                                 // nothing stored: fine
   });
 
   await t.test('TC-087 (REQ-046): only the owner adds or removes super admins, and the owner stays', async () => {

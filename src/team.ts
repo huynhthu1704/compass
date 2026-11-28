@@ -208,6 +208,35 @@ export function auditFor(ctx: { firebase: boolean; demo: boolean; signedIn: bool
   return auditLine(ctx.email, ctx.roles.length ? ctx.roles : ctx.superAdmin ? ['super admin'] : []);
 }
 
+/** The owner: the first entry of config/access, which the rules create with the owner alone (ADR-013, ADR-018). */
+export function ownerOf(superAdmins: string[]): string | undefined {
+  return superAdmins.length ? normalizeEmail(superAdmins[0]) : undefined;
+}
+
+/** The super admin list after switching one person on or off (REQ-046 AC1): the owner stays first and is never removed;
+ *  no duplicates; emails in lower case. */
+export function withSuperAdmin(list: string[], email: string, on: boolean): string[] {
+  const all = [...new Set(list.map(normalizeEmail))];
+  const owner = all[0], e = normalizeEmail(email);
+  const rest = all.slice(1).filter((x) => x !== e);
+  if (e === owner) return all;
+  return owner ? [owner, ...rest, ...(on ? [e] : [])] : rest;
+}
+
+export interface PersonRow { email: string; projects: string[]; badge: 'Owner' | 'Super admin' | null; superAdmin: boolean }
+/** The Users screen's people (REQ-046 AC3, SCR-8): everyone on any team and every super admin, with their project
+ *  names; the owner first, then super admins, then the rest by email. */
+export function peopleRows(teams: { name: string; members: { email: string }[] }[], superAdmins: string[]): PersonRow[] {
+  const owner = ownerOf(superAdmins), sas = new Set(superAdmins.map(normalizeEmail));
+  const map = new Map<string, string[]>();
+  for (const e of sas) map.set(e, []);
+  for (const t of teams) for (const m of t.members) { const e = normalizeEmail(m.email); map.set(e, [...(map.get(e) || []), t.name]); }
+  const rank = (e: string) => (e === owner ? 0 : sas.has(e) ? 1 : 2);
+  return [...map.entries()]
+    .map(([email, projects]) => ({ email, projects: [...new Set(projects)].sort(), superAdmin: sas.has(email), badge: email === owner ? 'Owner' as const : sas.has(email) ? 'Super admin' as const : null }))
+    .sort((a, b) => rank(a.email) - rank(b.email) || a.email.localeCompare(b.email));
+}
+
 /** Whether the shared work token, key and settings apply (REQ-041 AC1, AC7): whenever sign-in is configured, outside
  *  the demo — also while signing in or after signing out, so a device token never reaches a team project meanwhile. */
 export function usesSharedSettings(ctx: { firebase: boolean; demo: boolean }): boolean {
