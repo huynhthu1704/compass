@@ -132,7 +132,7 @@ test('TC-510 (REQ-110): the footer is one account card; the account menu lists t
   assert.deepEqual(accountChips({ signedIn: false, roles: [] }), [], 'sign-in off: no chips, the role picker shows the role');
 
   assert.deepEqual(accountMenu({ signedIn: true }), ['connections', 'theme', 'sign-out']);
-  assert.deepEqual(accountMenu({ signedIn: true, demo: true }), ['connections', 'theme', 'leave-demo', 'sign-out']);
+  assert.deepEqual(accountMenu({ signedIn: true, demo: true }), ['theme', 'leave-demo', 'sign-out'], 'demo: no Connections (ADR-027)');
   assert.deepEqual(accountMenu({ signedIn: false }), ['connections', 'theme'], 'sign-in off: no Sign out');
 
   const src = read('src/components/Sidebar.tsx');

@@ -276,10 +276,11 @@ test('TC-078 (REQ-041 AC1, AC5, AC7): signed in, the shared key, model and auto-
   assert.equal(workspaceSettings(ws, { signedIn: false, demo: false }), null, 'sign-in off: device settings');
 });
 
-test('TC-080 (part, REQ-041 AC2, REQ-110 AC2): only super admins open Connections while signed in', () => {
+test('TC-080 (part, REQ-041 AC2, REQ-110 AC2, ADR-027): only super admins open Connections while signed in, and nobody in the demo', () => {
   assert.equal(canOpenConnections({ signedIn: true, demo: false, superAdmin: true }), true);
   assert.equal(canOpenConnections({ signedIn: true, demo: false, superAdmin: false }), false, 'a member');
-  assert.equal(canOpenConnections({ signedIn: true, demo: true, superAdmin: false }), true, 'demo: as before');
+  assert.equal(canOpenConnections({ signedIn: true, demo: true, superAdmin: false }), false, 'demo: no Connections (ADR-027)');
+  assert.equal(canOpenConnections({ signedIn: true, demo: true, superAdmin: true }), false, 'demo: not even for a super admin (ADR-027)');
   assert.equal(canOpenConnections({ signedIn: false, demo: false, superAdmin: false }), true, 'sign-in off: as before');
 });
 

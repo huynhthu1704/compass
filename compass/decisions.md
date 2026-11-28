@@ -84,7 +84,7 @@ _2026-11-27 · Accepted · REQ-030, REQ-032, REQ-033, REQ-035_
 
 ## ADR-011 · Members use a shared GitHub token per project
 
-_2026-11-27 · Accepted · REQ-034, REQ-031_
+_2026-11-27 · Superseded by ADR-016 · REQ-034, REQ-031_
 
 **Context:** GitHub writes need a token. Team members who sign in with Google may have no GitHub account or token.
 
@@ -104,7 +104,7 @@ _2026-11-27 · Accepted · REQ-033, REQ-036, REQ-037, REQ-038_
 
 ## ADR-013 · The super admin is recorded automatically at first sign-in
 
-_2026-11-27 · Accepted · REQ-035_
+_2026-11-27 · Changed by ADR-018 · REQ-035_
 
 **Context:** The Product Owner asked not to add herself to Firestore by hand. Writing her email into the rules would publish a personal email in the repo.
 
@@ -141,3 +141,103 @@ _2026-11-28 · Accepted · REQ-110, REQ-073, REQ-039, REQ-040, REQ-032_
 **Decision:** The Product Owner approved the mockup on 2026-11-28 with one change: "Remove try the demo in this section, the rest is fine to proceed". The footer is one account card (initial, name, role chips) that opens a menu with the email, Connections, the theme switch, Leave demo (in the demo) and Sign out.
 
 **Consequences:** REQ-073: AC1 changes — clicking the account card opens the account menu, and "Connections" is an item in it; AC2 changes — the theme is a "Dark theme" switch in the menu and the role picker shows only with sign-in off or in the demo. REQ-039 AC2: the read-only roles show as chips on the account card instead of a "My roles: …" line (still read-only). REQ-032 AC2: the card shows the part of the email before "@"; the full email is in the card's tooltip and at the top of the account menu. REQ-040 AC2: signed-in people on a team no longer start the demo from the sidebar; "Try the demo" stays on the "You have no access yet" screen. TC-404 checks the theme switch and the Connections item in the menu.
+
+## ADR-016 · Phase 1: everyone works through a shared GitHub work token set by super admins; project tokens are retired; only super admins create projects
+
+_2026-11-27 · Accepted · REQ-041, REQ-042, REQ-043, REQ-044_
+
+**Context:** Project Admins could set their own project token (ADR-011), and members could use their own tokens to import repositories. The Product Owner wants to control all GitHub access in phase 1.
+
+**Decision:** The Product Owner decided in chat on 2026-11-27: "the intention is that everyone will use my personal token for action and changes in the first phase. So the github and anthropic token should only be configured by me". With sign-in on, Compass uses a fine-grained work token set by super admins (Compass project repositories only; Contents, Pull requests, Issues, Workflows and Pages: Read and write; Actions: Read; never Administration) for every team member on team projects; project tokens are retired. After the review of #117 the Product Owner chose (2026-11-28) that only super admins create or import projects, with a creator token kept only on their own device, so the shared work token, made as listed, never needs the rights to create or delete repositories. Every commit and pull request ends with "Made in Compass by <email> (<role>)" (the Product Owner kept the email). Supersedes ADR-011. Phase 2 (each person's own token, "Connect with GitHub") is on the backlog, #111.
+
+**Consequences:** GitHub shows the work token owner's account on every change; the audit line helps reading but is not proof (the Firestore rules never see GitHub), Compass's approval records stay the proof. Every member's browser can read the work token, so it is limited and replaced when someone leaves. Members' emails become part of GitHub history, public in public repositories. A super admin adds each new repository to the work token on GitHub. One work token reaches every Compass project repository, and members of any team can read it, so a member of one project could change another project's repository on GitHub outside Compass; the Product Owner accepted this for phase 1 (chat, 2026-11-28: "Accept for phase 1"). One work token per project is in phase 2 (#111). Who can read the work token and key follows team membership, which project Admins set: adding someone gives their browser the token and key ("Accept: Admins are trusted", 2026-11-28). Compass cannot check from outside that the work token has no Administration permission ("Full list + reminder", 2026-11-28). After a project is created or imported, its setup waits until the work token reaches the new repository ("Wait for work token", 2026-11-28). Switching GitHub Pages on needs Administration, so it uses a super admin's creator token ("Creator token", 2026-11-28). Compass cannot check how the work token was made on GitHub; the protection holds only if it is made as listed.
+
+## ADR-017 · Phase 1: everyone's live agents use the Anthropic key set by super admins
+
+_2026-11-27 · Accepted · REQ-041_
+
+**Context:** Live agent runs cost money on the key owner's Anthropic account.
+
+**Decision:** The Product Owner decided in chat on 2026-11-27 (same message as ADR-016): with sign-in on, only super admins set the Anthropic key, and Compass uses it for every team member's live agent runs on team projects; a key saved on a member's device is not used.
+
+**Consequences:** All agent cost is on the key owner's Anthropic account; every member's browser can read the key, so it gets its own spending limit and is replaced when someone leaves. Members use the model the super admins chose.
+
+## ADR-018 · The owner can make other people super admins (changes ADR-013)
+
+_2026-11-27 · Accepted · REQ-046, REQ-041_
+
+**Context:** ADR-013 recorded a single super admin at first sign-in and allowed no change from a browser. In phase 1 the token and key must be manageable by more than one trusted person.
+
+**Decision:** The Product Owner decided in chat on 2026-11-27: "Me and users given super admin permission can update the token". The owner (the hashed email in firestore.rules, ADR-013) can add or remove super admins on the Users screen; the owner can never be removed. Super admins can do everything except grant or remove super admin. Changes ADR-013's rule that no browser can change config/access: from now on the owner's browser can change its list.
+
+**Consequences:** The Firestore rules let the owner update config/access; more people can see every project and read and replace the token and key.
+
+## ADR-020 · With sign-in on, Connections is only for super admins, also in the account menu
+
+_2026-11-28 · Accepted · REQ-041, REQ-110_
+
+**Context:** REQ-110 (#119) put "Connections" in every signed-in person's account menu, while REQ-041 hides Connections from everyone but super admins.
+
+**Decision:** The Product Owner chose in chat on 2026-11-28: "Hide for members". With sign-in on, the account menu shows "Connections" only to super admins; REQ-110 AC2 is amended. With sign-in off or in the demo, as REQ-110 says.
+
+**Consequences:** Members' account menu has their email, Dark theme and Sign out (and Leave demo in the demo).
+
+## ADR-021 · Every GitHub issue follows a standard template: Figma link, screenshot and a detailed requirement table
+
+_2026-11-28 · Accepted_
+
+**Context:** Requirement issues were free text (story + Given/When/Then), with no link to the design and no picture, so readers had to open spec.json and Figma to understand them.
+
+**Decision:** The Product Owner asked in chat on 2026-11-28: "for each github issue created, especially new requirement, attach the figma link and screenshot and provide a table of detailed requirement as standard template". .github/ISSUE_TEMPLATE/requirement.md and bug.md hold the standard; agents follow it for every issue they create (AGENTS.md). Screenshots are exported from the Figma frame, committed to compass/design/screens/ and linked by commit SHA.
+
+**Consequences:** Every requirement issue shows its Figma frame, a screenshot, a Requirement details table and an Acceptance criteria table. A requirement without UI says "Design: none: <reason>".
+
+## ADR-022 · "Open demo project" opens the demo only inside the demo session, for every signed-in person
+
+_2026-11-28 · Accepted · REQ-109, REQ-040_
+
+**Context:** People must sign in to use Compass, including the demo. Signed in outside the demo, a person who is not a super admin sees only projects their team lists (REQ-032); the demo project has no repository, so "Open demo project" and "Explore the demo" added a hidden project and the page stayed on Projects: the button seemed broken. A super admin saw the demo project next to the real ones.
+
+**Decision:** The Product Owner chose in chat on 2026-11-28: the button enters the demo session (as "Try the demo" does, REQ-040) and then opens the demo project, and people need to sign in to view the demo — super admins go through the demo session too.
+
+**Consequences:** The person picks a demo role, sees the demo banner and "Leave demo", and their real projects are hidden until they leave (REQ-040 AC3). ADR-019 still keeps "Try the demo" out of the sidebar. Only a build without Firebase config (no sign-in at all, e.g. local development) opens the demo project directly.
+
+## ADR-024 · The sign-in screen does not say you need an account first
+
+_2026-11-28 · Accepted · REQ-032, REQ-040_
+
+**Context:** Anyone with a Google account can sign in. SCR-1 said "Use the Google account your admin added to your project" and "No account yet? Ask your project Admin to add your email on the Team page, then sign in here.", which made signing in sound blocked. Someone on no team already lands on "You have no access yet" (SCR-2) with the same advice and "Try the demo", and the demo needs sign-in (ADR-022).
+
+**Decision:** The Product Owner decided in chat on 2026-11-28: remove the "No account yet?" hint and say "Sign in with your Google account. You'll see the projects your team added you to, or you can try the demo." under the title.
+
+**Consequences:** SCR-1 lists the new line and no longer lists the hint. SCR-2 keeps "Ask your admin to add this email to a project". The Figma frame for SCR-1 (node 102-609) still shows the old hint until it is redrawn.
+
+## ADR-025 · Several roles on "What's your role?", in the demo and with sign-in off
+
+_2026-11-28 · Accepted · REQ-121, REQ-040_
+
+**Context:** The role screen and the sidebar picker held one role, so trying the whole flow meant switching roles again and again, while the Team page already gives a real person several roles.
+
+**Decision:** The Product Owner chose in chat on 2026-11-28: a person picks one or more roles on "What's your role?" — in the demo and in a copy without sign-in ("Both") — and the sidebar's single dropdown becomes a checkbox menu ("Demo roles: PO, BA ▾") that always keeps at least one role.
+
+**Consequences:** With sign-in on, real roles still come only from the team (ADR-014). SCR-7 now shows the checkbox menu; its Figma frame still shows the old dropdown until it is redrawn. A browser's saved single role becomes its one picked role.
+
+## ADR-026 · The demo role screen can always be left: "Leave demo" and the browser Back button
+
+_2026-11-28 · Accepted · REQ-040_
+
+**Context:** "Open demo project" starts the demo session and clears the role (ADR-022, REQ-040 AC2), so the "What's your role?" screen replaces every route until a role is picked. The browser Back button changed the address but showed the same screen, and "Leave demo" sits in the demo banner, which that screen hides: people could only pick a role or reload the page.
+
+**Decision:** The Product Owner chose in chat on 2026-11-28 (after a screenshot of the trapped role screen): the role screen inside the demo shows "Leave demo", and navigating away from the route the demo was opened on before a role is picked (the browser Back button) leaves the demo.
+
+**Consequences:** Leaving returns to the person's projects, or to "You have no access yet" if they are on no team (REQ-040 AC4). Once a demo role is picked, Back moves inside the demo as before and the demo is left with "Leave demo" in the banner or the account menu. Outside the demo the role screen is unchanged.
+
+## ADR-027 · The demo has no Connections
+
+_2026-11-28 · Accepted · REQ-110, REQ-041_
+
+**Context:** ADR-020 kept "Connections" in the account menu in the demo. The demo is sample data kept in the browser: nothing is saved to GitHub or Firebase, and agents in a demo project always run in demo mode, so a token or key entered there does nothing for the demo.
+
+**Decision:** The Product Owner decided in chat on 2026-11-28 (after a screenshot of the demo account menu): "the connection should not be displayed for the demo mode". In the demo the account menu has no "Connections" and the Connections address opens Projects, for everyone including super admins. This amends REQ-110 AC2 and the REQ-041 demo AC.
+
+**Consequences:** The demo account menu has the email, Dark theme, Leave demo and Sign out. Agent cards in a demo project no longer say "add an Anthropic key in Connections for live runs". With sign-in off (no demo session), Connections is unchanged: it is where people add their own keys.

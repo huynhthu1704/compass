@@ -89,7 +89,7 @@ export function accountChips(a: { signedIn: boolean; demo?: boolean; superAdmin?
 
 export type AccountMenuItem = 'connections' | 'theme' | 'leave-demo' | 'sign-out';
 
-/** REQ-110 SCR-2: the account menu, top to bottom. "Try the demo" is never in the sidebar (ADR-019). */
+/** REQ-110 SCR-2: the account menu, top to bottom. "Try the demo" is never in the sidebar (ADR-019); the demo has no Connections (ADR-027). */
 export function accountMenu(a: { signedIn: boolean; demo?: boolean }): AccountMenuItem[] {
-  return ['connections', 'theme', ...(a.demo ? ['leave-demo' as const] : []), ...(a.signedIn ? ['sign-out' as const] : [])];
+  return [...(a.demo ? [] : ['connections' as const]), 'theme', ...(a.demo ? ['leave-demo' as const] : []), ...(a.signedIn ? ['sign-out' as const] : [])];
 }

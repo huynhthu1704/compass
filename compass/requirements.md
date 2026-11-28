@@ -60,13 +60,13 @@
 | REQ-039 | F-015 | With sign-in on, roles come from the team instead of the role picker | Should | In build | TC-075, TC-077 |
 | REQ-040 | F-015 | A signed-in person can try the demo with a role of their choice | Should | In build | TC-076, TC-077, TC-509, TC-528 |
 | REQ-080 | F-003 | The admin links the project's Figma file and Miro board on a Project settings page | Must | Approved | TC-400, TC-500, TC-501, TC-502 |
-| REQ-081 | F-003 | Every Design page keeps the preview in focus and shows the design files behind a button | Must | Approved | TC-502, TC-503, TC-505, TC-506, TC-530 |
+| REQ-081 | F-003 | Every Design page keeps the preview in focus and shows the design files behind a button | Must | Approved | TC-502, TC-503, TC-505, TC-506, TC-530, TC-531 |
 | REQ-082 | F-003 | Projects with the old single design link keep working, and agents name both files | Must | Approved | TC-501, TC-504, TC-507 |
 | REQ-108 | F-011 | Acceptance criteria and test steps are readable on the agent run page | Should | Done | TC-508 |
 | REQ-109 | F-015 | The project list keeps only one demo project | Should | In build | TC-509 |
 | REQ-110 | F-013 | The sidebar footer is one account card that opens an account menu | Should | Done | TC-510, TC-080 |
 | REQ-041 | F-015 | The super admins' GitHub work token and Anthropic key are used for everyone; only super admins set them | Must | In build | TC-078, TC-079, TC-080, TC-086, TC-088 |
-| REQ-042 | F-015 | Every commit and pull request says who did it in Compass | Must | Approved | TC-081, TC-086 |
+| REQ-042 | F-015 | Every commit and pull request says who did it in Compass | Must | In build | TC-081, TC-086 |
 | REQ-043 | F-015 | Project tokens set by project Admins are retired | Must | In build | TC-082, TC-088 |
 | REQ-044 | F-015 | Only super admins create or import projects, only in the GitHub account for new projects | Must | In build | TC-083, TC-084, TC-085, TC-086 |
 | REQ-046 | F-015 | The owner can make other people super admins | Must | In build | TC-087, TC-088 |
@@ -1753,6 +1753,13 @@ When I open the Design page
 Then the button reads "Design files · none", the preview area says "No design files linked yet", and the admin also sees a link to Project settings
 ```
 
+_AC5_
+```gherkin
+Given anyone opens the demo project, in any browser, new or saved there before
+When they open Project settings or a feature's Design page
+Then the Figma file is the Travel Map demo file (https://www.figma.com/design/iT9WxxZFmyiz8HSWpg5E7K/Travel-Map---Demo-Compass?node-id=0-1) and it is previewed; a demo project that already has its own design files keeps them; real projects are never changed
+```
+
 ## REQ-082 · Projects with the old single design link keep working, and agents name both files
 As a team with an existing project, I want my current design link to keep working and the agents to know both design files, so that nothing has to be fixed by hand.
 
@@ -1848,7 +1855,7 @@ _AC2_
 ```gherkin
 Given the account card
 When I click it (or press Enter or Space on it)
-Then a menu opens with my full email, "Connections" with the GitHub state (with sign-in on, only for super admins: REQ-041, ADR-020), a "Dark theme" switch and "Sign out"; in the demo it also has "Leave demo"; it never has "Try the demo"
+Then a menu opens with my full email, "Connections" with the GitHub state (with sign-in on, only for super admins: REQ-041, ADR-020; never in the demo: ADR-027), a "Dark theme" switch and "Sign out"; in the demo it also has "Leave demo"; it never has "Try the demo"
 ```
 
 _AC3_
@@ -1932,13 +1939,13 @@ _AC7_
 ```gherkin
 Given sign-in is off, or the demo is open
 When anyone uses Compass
-Then tokens and keys work as today, per device
+Then tokens and keys work as today, per device; in the demo Connections is not shown and its address opens Projects (ADR-027)
 ```
 
 ## REQ-042 · Every commit and pull request says who did it in Compass
 As the super admin, I want every GitHub change made with my token to name the person who did it, so that GitHub's history stays a clear audit trail.
 
-**Priority:** Must · **Status:** Approved
+**Priority:** Must · **Status:** In build
 
 **Acceptance criteria**
 
