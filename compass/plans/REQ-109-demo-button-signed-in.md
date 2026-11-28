@@ -9,10 +9,11 @@ With sign-in on, a signed-in person outside the demo who is not a super admin ca
 found nothing and fell back to the Projects page — the button seemed to do nothing.
 
 ## Files
-- compass/spec.json — ADR-022 (the Product Owner's choice in chat), TC-509 text
+- compass/spec.json — ADR-022 (the Product Owner's choice in chat), TC-509 text and `reqIds` (+ REQ-040, review nit)
 - src/team.ts — pure `opensDemoSession(session)`: true for any signed-in person outside the demo (super admins too)
-- src/pages/Projects.tsx — "Open demo project" / "Explore the demo" call `enterDemo()` first when needed, then open the demo project
-- tests/demoOnce.test.mjs — TC-509 cases for `opensDemoSession`
+- src/demoOnce.ts — pure `openDemo(projects, create, session, effects)`: enters the demo session when needed, then reuses or adds and opens the demo project (effects passed in so the wiring is tested, review nit)
+- src/pages/Projects.tsx — "Open demo project" / "Explore the demo" call `openDemo`
+- tests/demoOnce.test.mjs — TC-509 cases for `opensDemoSession` and for `openDemo`'s call order
 
 ## Steps
 1. Commit this plan and the failing TC-509 cases.

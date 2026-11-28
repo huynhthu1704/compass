@@ -1,11 +1,11 @@
 import { go } from '../App';
 import { demoProject } from '../demo';
-import { openOrCreateDemo } from '../demoOnce';
+import { openDemo as openDemoWith } from '../demoOnce';
 import { featureStage } from '../progress';
 import { useState } from 'react';
 import { canSeeProject, enterDemo, getSession, getWorkspace, useSession, type ProjectAccess } from '../firebase';
 import { github, GitHubError } from '../github';
-import { missingTokenMessage, opensDemoSession, pickToken, sharedOpenProblem, sharedToOpen } from '../team';
+import { missingTokenMessage, pickToken, sharedOpenProblem, sharedToOpen } from '../team';
 import { importRepo } from './Import';
 import { store, useStore } from '../store';
 import { ago, Badge, Button, PageHead, StageChip } from '../ui';
@@ -37,10 +37,8 @@ export function ProjectsPage() {
       go(`/p/${p.id}`);
     } catch (e) { setOpenErr(`${a.name || a.id}: ${(e as Error).message}`); } finally { setOpening(null); }
   };
-  const openDemo = () => {
-    // ADR-022: signed in, the demo project opens only inside the demo session (REQ-040), super admins included.
-    if (opensDemoSession(session)) enterDemo();
-    const { project, isNew } = openOrCreateDemo(store.get().projects, demoProject); if (isNew) store.addProject(project); go(`/p/${project.id}`); }; // one demo project only (REQ-109)
+  // REQ-109, ADR-022: one demo project, opened inside the demo session when signed in (REQ-040), super admins included.
+  const openDemo = () => { openDemoWith(store.get().projects, demoProject, session, { enterDemo, addProject: (p) => store.addProject(p), go }); };
   return (
     <div className="stack gap-xl">
       <PageHead
