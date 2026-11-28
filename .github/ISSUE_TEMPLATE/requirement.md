@@ -21,16 +21,17 @@ labels: requirement
 ## Design
 | | |
 |---|---|
-| Figma | [F-xxx · SCR-n · <screen name>](https://www.figma.com/design/<fileKey>?node-id=<node-id>) |
+| Design frame | [F-xxx · SCR-n · <screen name>](<frame link in the design tool, e.g. https://www.figma.com/design/<fileKey>?node-id=<node-id>>) |
 | Design doc | `compass/design/F-xxx.md` (status: Draft / Approved) |
 
-<!-- One screenshot per screen this requirement delivers, exported from the Figma frame above.
+<!-- One screenshot per screen this requirement delivers, exported from the design frame above.
      How: compass/design/README.md → Screenshots. In short: commit compass/design/screens/F-xxx-SCR-n.png in a pull
      request and link it by that commit's SHA (the head of the open PR, or the commit on main once merged; never a
      branch without a PR, which can disappear):
      https://github.com/<owner>/<repo>/raw/<commit-sha>/compass/design/screens/F-xxx-SCR-n.png
+     Add one line per screen below this comment:
+     ![F-xxx SCR-n · <screen name>](https://github.com/<owner>/<repo>/raw/<commit-sha>/compass/design/screens/F-xxx-SCR-n.png)
      No UI → write "Design: none: <reason>". Not drawn yet → "Design: not drawn yet" and update this issue when it is. -->
-![F-xxx SCR-n · <screen name>](https://github.com/<owner>/<repo>/raw/<commit-sha>/compass/design/screens/F-xxx-SCR-n.png)
 
 ## Requirement details
 | Field | Value |
@@ -41,7 +42,7 @@ labels: requirement
 | User story | As a … I want … so that … |
 | Priority | Must / Should / Could |
 | Status | Draft / Approved / In build / Done |
-| Roles | <who uses it: PO, BA, UX, QA, Dev, DM, Ops, Admin, super admin> |
+| Roles | <the product's user roles this requirement is for> |
 | Intent | `compass/intent/<file>.md` |
 | Screens | SCR-n, SCR-m |
 | Business rules | <rules, limits, permissions> |

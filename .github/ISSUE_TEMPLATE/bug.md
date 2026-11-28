@@ -10,7 +10,7 @@ labels: bug
 |---|---|
 | Requirement / test case | REQ-… / TC-… |
 | Feature | F-xxx · <feature name> |
-| Figma (expected) | [F-xxx · SCR-n · <screen name>](https://www.figma.com/design/<fileKey>?node-id=<node-id>), or none: <reason> |
+| Design frame (expected) | [F-xxx · SCR-n · <screen name>](<frame link in the design tool>), or none: <reason> |
 | Where | <page or address, browser, desktop / phone> |
 | Severity | Blocker / Major / Minor |
 
@@ -24,7 +24,8 @@ labels: bug
 …
 
 ## Screenshots
-<!-- What you see (paste or drag an image here), next to the Figma frame it should match. -->
-| Expected (Figma) | Actual |
+<!-- Paste or drag images into the table: what you see, next to the design frame it should match.
+     No image → write "none". -->
+| Expected (design) | Actual |
 |---|---|
-| ![expected](…) | ![actual](…) |
+| … | … |
