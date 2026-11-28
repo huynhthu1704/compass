@@ -144,7 +144,9 @@ test('TC-510 (REQ-110): the footer is one account card; the account menu lists t
   assert.match(footer, /aria-expanded=\{open\}/);
   assert.match(footer, /role="menu"/);
   assert.match(footer, /role="menuitemcheckbox"[^>]*aria-checked=\{settings\.theme === 'dark'\}/, 'the theme is a switch in the menu');
-  assert.match(footer, /e\.key === 'Escape'/, 'Escape closes the menu');
+  assert.match(footer, /<AccountMenu open=\{open\} setOpen=\{setOpen\} onKeyDown=\{\(e\) => \{ if \(open && e\.key === 'Escape'\) \{ setOpen\(false\); cardRef\.current\?\.focus\(\); \} \}\}>/, 'Escape closes the menu from the card or the menu and returns focus to the card');
+  assert.match(src, /className="account" onKeyDown=\{onKeyDown\}/, 'the Escape handler sits on the card + menu wrapper');
+  assert.match(footer, /<div className="account-menu-head" tabIndex=\{-1\}>[\s\S]*?<\/div>\s*<div className="account-menu-items" role="menu"/, 'the email header is beside role="menu", not inside it');
   assert.match(footer, /\{\(!signedIn \|\| session\.demo\) && <div className="row gap-sm account-role"/, 'the role picker only with sign-in off or in the demo');
   const css = read('src/index.css');
   assert.match(css, /\.account-menu \{[^}]*position: absolute[^}]*bottom: 100%/, 'the menu opens upward inside the footer');
