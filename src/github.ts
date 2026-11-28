@@ -60,6 +60,14 @@ export const github = {
     }
   },
 
+  /** REQ-113: a binary file as base64 (the contents API inlines files up to 1 MB; larger ones are read as a blob). */
+  async fileBase64(t: string, r: RepoRef, path: string, ref?: string): Promise<string> {
+    const res = await gh<{ content: string; sha: string; encoding: string }>(t, `${rp(r)}/contents/${path.split('/').map(encodeURIComponent).join('/')}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`);
+    if (res.encoding === 'base64' && res.content) return res.content.replace(/\n/g, '');
+    const blob = await gh<{ content: string }>(t, `${rp(r)}/git/blobs/${res.sha}`);
+    return blob.content.replace(/\n/g, '');
+  },
+
   /** Commit many files in ONE commit on `branch` (created from `base` if missing). */
   async commit(t: string, r: RepoRef, branch: string, message: string, changes: FileChange[], base = r.defaultBranch) {
     let head: string;
@@ -76,7 +84,7 @@ export const github = {
     for (const c of changes) {
       if (c.action === 'delete') entries.push({ path: c.path, mode: '100644', type: 'blob', sha: null });
       else {
-        const blob = await gh<{ sha: string }>(t, `${rp(r)}/git/blobs`, { method: 'POST', body: JSON.stringify({ content: enc(c.content), encoding: 'base64' }) });
+        const blob = await gh<{ sha: string }>(t, `${rp(r)}/git/blobs`, { method: 'POST', body: JSON.stringify({ content: c.encoding === 'base64' ? c.content : enc(c.content), encoding: 'base64' }) });
         entries.push({ path: c.path, mode: '100644', type: 'blob', sha: blob.sha });
       }
     }

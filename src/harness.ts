@@ -10,6 +10,7 @@ import { designToolText } from './designLinks';
 import { checkChanges, evalChanges, evalRequirements, evalTests, scanInjection } from './guardrails';
 import { FRAMEWORK_VERSION, frameworkFiles, specFiles } from './framework';
 import { demoIdea } from './ideaDraft';
+import { firstMessage, ideaForPrompt } from './attachments';
 import { github } from './github';
 import { claude, type Block, type Msg, type ToolDef } from './llm';
 import { fmtHits, rag, type Index } from './rag';
@@ -132,7 +133,7 @@ async function liveLoop(pid: string, rid: string, a: AgentDef, goal: string, con
   const user = `PROJECT: ${p.name} — ${p.description}
 REPO: ${p.repo ? `${p.repo.owner}/${p.repo.name}` : '(not connected — spec only)'}
 TECH STACK: ${spec.stack}
-FEATURE: ${fid ? `${fid} ${featureOf(p, fid)?.name}\nIDEA: ${JSON.stringify(featureOf(p, fid)?.idea)}` : '(not specified)'}
+FEATURE: ${fid ? `${fid} ${featureOf(p, fid)?.name}\nIDEA: ${JSON.stringify(ideaForPrompt(featureOf(p, fid)!.idea))}` : '(not specified)'}
 DESIGN TOOL: ${designToolText(p.spec.designTool) || '(none connected)'}
 ${fid && featureOf(p, fid)?.design ? `DESIGN (${featureOf(p, fid)!.design!.status}):\n${designText(featureOf(p, fid)!.design!)}` : ''}
 OTHER FEATURES: ${spec.features.filter((f) => f.id !== fid).map((f) => `${f.id} ${f.name}`).join('; ') || 'none'}
@@ -145,7 +146,7 @@ ${context || '(nothing relevant found)'}
 
 GOAL: ${goal}`;
   const tools = TOOLS.filter((t) => a.tools.includes(t.name));
-  const messages: Msg[] = [{ role: 'user', content: user }];
+  const messages: Msg[] = [{ role: 'user', content: a.id === 'ideation' && fid ? await withAttachments(pid, rid, fid, user) : user }];
   let done = false;
   for (let turn = 0; turn < 14 && !done; turn++) {
     const r = await claude(settings, a.system, messages, tools, 8000);
@@ -165,6 +166,20 @@ GOAL: ${goal}`;
     }
     messages.push({ role: 'user', content: results });
   }
+}
+/** REQ-113 AC5: the Ideation agent's first message carries the attached images and PDFs (a file that cannot be read
+ *  is passed by name, and the run says so). */
+async function withAttachments(pid: string, rid: string, fid: string, text: string) {
+  const p = getP(pid);
+  const atts = featureOf(p, fid)?.idea.attachments || [];
+  const token = tokenFor(p);
+  const loaded: Record<string, string | undefined> = {};
+  for (const a of atts.filter((x) => x.kind !== 'other')) {
+    try { loaded[a.path] = a.data ?? (p.repo && token ? await github.fileBase64(token, p.repo, a.path) : undefined); }
+    catch (e) { step(pid, rid, 'retrieve', `Could not read ${a.name}; passed by name only`, (e as Error).message, { ok: false }); }
+  }
+  if (atts.length) step(pid, rid, 'retrieve', `Attached files: ${atts.map((a) => a.name).join(', ')}`);
+  return firstMessage(text, atts, loaded);
 }
 export const preview = (o: Record<string, unknown>) => Object.entries(o).map(([k, v]) => `${k}: ${typeof v === 'string' ? (v.length > 40 ? JSON.stringify(v.slice(0, 40) + '…') : JSON.stringify(v)) : Array.isArray(v) ? `[${v.length}]` : JSON.stringify(v)}`).join(', ');
 
@@ -356,7 +371,7 @@ export async function approveRun(pid: string, rid: string): Promise<string> {
     const pi = r.proposal.idea;
     store.spec(pid, (s) => ({
       ...s,
-      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi, ...(r.agent === 'ideation' ? stamp : {}), need: f.idea.need || (r.agent === 'ideation' ? r.goal : undefined) } } : f)) : s.features,
+      features: pi ? s.features.map((f) => (f.id === r.featureId ? { ...f, name: f.name && f.name !== 'New feature' ? f.name : featureName(pi.intent || f.name), idea: { ...f.idea, ...pi, ...(r.agent === 'ideation' ? stamp : {}), need: f.idea.need || (r.agent === 'ideation' ? r.goal : undefined), attachments: f.idea.attachments } } : f)) : s.features,
       requirements: [...s.requirements, ...(r.proposal!.requirements || [])],
       tests: [...s.tests, ...(r.proposal!.tests || []).map((t) => ({ ...t, ...stamp }))],
     }));

@@ -2091,7 +2091,7 @@
       "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
-      "id": "REQ-111",
+      "id": "REQ-113",
       "featureId": "F-001",
       "title": "Attach files to a feature's business need on the Idea page",
       "priority": "Should",
@@ -3358,29 +3358,29 @@
       "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it\nAnd the arrow keys move between the items and wrap around at the ends, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)"
     },
     {
-      "id": "TC-511",
+      "id": "TC-513",
       "reqIds": [
-        "REQ-111"
+        "REQ-113"
       ],
       "title": "Attachments: allowed types, 5 MB limit, repo path and spec entry",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given files sketch.png (1 MB), brief.pdf (2 MB), notes.md, setup.exe and big.pdf (6 MB) attached to F-001\nWhen they are checked\nThen sketch.png, brief.pdf and notes.md are accepted and setup.exe (\"type not allowed\") and big.pdf (\"over 5 MB\") are refused with their names\nAnd each accepted file gets the path compass/intent/attachments/F-001/<safe file name>, with unsafe characters replaced and a second file of the same name numbered\nAnd the idea in the spec lists name, path, type and size of each accepted file\nAnd removing one drops it from the list and yields a delete of its path"
     },
     {
-      "id": "TC-512",
+      "id": "TC-514",
       "reqIds": [
-        "REQ-111"
+        "REQ-113"
       ],
       "title": "The Ideation agent receives attached images and PDFs as data",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a business need with sketch.png, brief.pdf and budget.xlsx attached\nWhen the Ideation agent's first message is built\nThen it holds an image block for sketch.png and a document block for brief.pdf, each labelled as untrusted data\nAnd budget.xlsx is listed by name only\nAnd a need without attachments gives the same text-only message as before"
     },
     {
-      "id": "TC-513",
+      "id": "TC-515",
       "reqIds": [
-        "REQ-111"
+        "REQ-113"
       ],
       "title": "Attach, open and remove files on the Idea page (desktop, phone, dark, keyboard)",
       "type": "Manual",
