@@ -4,7 +4,8 @@ Status: Approved (by the Product Owner, 2026-11-27, in chat: "Approve"; revised 
 #117, with the Product Owner's answers: token scope "Only super admins create"; import by people who are not super admins
 "New repos only" (moot once only super admins add projects); audit line "Email"; then "Hide for members" (Connections in
 the account menu), "Yes, super admins import" and "Accept for phase 1" (one work token for every project); after the third review
-"Accept: Admins are trusted", "Wait for work token" and "Full list + reminder")
+"Accept: Admins are trusted", "Wait for work token" and "Full list + reminder"; after the fourth review "Creator token"
+(for switching GitHub Pages on) and "Fix, short check, merge")
 Requested: 2026-11-27 by the Product Owner, in chat. Revised the same day; the last word: "the intention is that everyone
 will use my personal token for action and changes in the first phase. So the github and anthropic token should only be
 configured by me"
@@ -17,8 +18,9 @@ With sign-in on, in phase 1:
 - **One shared GitHub work token and one shared Anthropic key, set only by super admins**, on Connections. Compass uses
   them for every person's GitHub work and live agent runs on team projects. The work token is a fine-grained token
   limited to the Compass project repositories (Contents, Pull requests, Issues, Workflows and Pages: Read and write;
-  Actions: Read; never Administration), so it cannot create or delete
-  repositories. The Connections page is hidden from everyone but super admins; members use the model and sync settings
+  Actions: Read; never Administration), so, made as listed, it cannot create or delete
+  repositories (Compass cannot check this on GitHub). Switching GitHub Pages on needs Administration, so it uses a super
+  admin's creator token. The Connections page is hidden from everyone but super admins; members use the model and sync settings
   the super admins chose. A token or key that someone saved on their own device is never used for a team project.
 - **Project Admins no longer set a project token.** The per-project token card on the Team page is removed and stored
   project tokens are deleted (the shared work token replaces them).
@@ -30,7 +32,7 @@ With sign-in on, in phase 1:
   Administration permission, so it is never shared), and only in the GitHub account for new projects set on
   Connections. A super admin can also import an existing repository of that account. After creating or importing, Compass
   asks them to add the repository to the shared work token on GitHub; the setup (framework, workflow, Pages,
-  first agent run) waits until the work token reaches it. Everyone else
+  first agent run) waits until the work token reaches it; Pages is switched on with the creator token. Everyone else
   sees "Ask a super admin to add a project". Only super admins create a project's first team (ADR-012 unchanged).
 - With sign-in off, or in the demo, nothing changes.
 
@@ -38,7 +40,7 @@ With sign-in on, in phase 1:
 - A team member without any token of their own can save to GitHub, approve and release, and run live agents; GitHub
   shows the work token owner's account, and each commit or pull request ends with the member's audit line.
 - Only super admins can set or replace the work token, the GitHub account for new projects and the Anthropic key: the
-  Firestore rules refuse writes from anyone else. Team members' browsers can read the work token and key (they must, to
+  Firestore rules refuse writes from anyone else. Team members' and super admins' browsers can read the work token and key (they must, to
   use them); nobody else can.
 - The Team page has no project token; stored project tokens are deleted.
 - Only super admins see Import and New project; a new repository is created, and an existing one imported, only in the
@@ -61,7 +63,8 @@ control away.
   per project is in phase 2 (#111).
 - With sign-in on, Connections is also left out of members' account menu (REQ-110 amended, ADR-020).
 - Who can read the work token and key follows team membership, and project Admins add people to teams (REQ-030): adding
-  someone gives their browser the token and key. Accepted: Admins are trusted (ADR-016).
+  someone gives their browser the token and key. The rules check a per-person document, people/{email}, written with
+  each team change (REQ-041 AC3). Accepted: Admins are trusted (ADR-016).
 - Compass cannot check from outside that the work token has no Administration permission; Connections lists the needed
   permissions and says never to tick Administration (ADR-016).
 - What the Firestore rules guard: writes to the token, key, account and super admin list in Firestore. They never see
