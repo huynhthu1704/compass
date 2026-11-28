@@ -53,3 +53,25 @@ test('TC-509 (REQ-109 AC1/AC2, REQ-040, ADR-022): "Open demo project" starts the
   assert.deepEqual(run([demo('d1')], { status: 'signed-in', demo: true }), ['go /p/d1'], 'already in the demo: opens directly');
   assert.deepEqual(run([], { status: 'off' }), ['add new', 'go /p/new'], 'a build without sign-in: opens directly');
 });
+
+// REQ-040 AC4, ADR-026 — TC-528: the demo role screen is not a trap; Back before picking a role leaves the demo.
+import { leavesDemoOnNavigate, routeOf } from '../src/team.ts';
+
+test('TC-528 (REQ-040 AC4, ADR-026): browser Back from the demo role screen leaves the demo', () => {
+  assert.equal(routeOf('#/p/abc?x=1'), '/p/abc');
+  assert.equal(routeOf(''), '/');
+  assert.equal(routeOf('#/'), '/');
+  const s = { demo: true, hasRole: false, entry: '/p/d1' };
+  assert.equal(leavesDemoOnNavigate({ ...s, route: '/p/d1' }), false, '"Open demo project" lands on the entry route: stay');
+  assert.equal(leavesDemoOnNavigate({ ...s, route: '/' }), true, 'Back to Projects before picking a role: leave');
+  assert.equal(leavesDemoOnNavigate({ ...s, hasRole: true, route: '/' }), false, 'a demo role is picked: navigate inside the demo');
+  assert.equal(leavesDemoOnNavigate({ ...s, demo: false, route: '/' }), false, 'not in the demo');
+});
+
+test('TC-528 (REQ-040, ADR-026): "Open demo project" records the demo project route as the entry', () => {
+  const entries = [];
+  const fx = { enterDemo: (entry) => entries.push(entry), addProject: () => {}, go: () => {} };
+  openDemo([real('r1'), demo('d1')], () => demo('new'), { status: 'signed-in', demo: false }, fx);
+  openDemo([real('r1')], () => demo('new'), { status: 'signed-in', demo: false }, fx);
+  assert.deepEqual(entries, ['/p/d1', '/p/new']);
+});

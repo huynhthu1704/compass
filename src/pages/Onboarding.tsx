@@ -1,4 +1,5 @@
-import { getSession } from '../firebase';
+import { go } from '../App';
+import { getSession, leaveDemo, useSession } from '../firebase';
 import { demoProject } from '../demo';
 import { useState } from 'react';
 import { store } from '../store';
@@ -18,6 +19,7 @@ const ROLES: [Role, string, string][] = [
 
 export function Onboarding() {
   const [role, setRole] = useState<Role | undefined>();
+  const inDemo = !!useSession().demo;
   return (
     <div style={{ maxWidth: 1040, margin: '0 auto', padding: '64px 24px' }} className="stack gap-2xl">
       <div className="stack gap-md">
@@ -40,7 +42,9 @@ export function Onboarding() {
           ))}
         </div>
       </div>
-      <div><Button variant="accent" disabled={!role} onClick={() => { store.setSettings({ role }); if (getSession().demo) { const d = store.get().projects.find((x) => x.demo) || demoProject(); if (!store.get().projects.includes(d)) store.addProject(d); window.location.hash = `/p/${d.id}`; } else window.location.hash = '/connect?welcome=1'; }}>Continue</Button></div>
+      <div className="row gap-md wrap"><Button variant="accent" disabled={!role} onClick={() => { store.setSettings({ role }); if (getSession().demo) { const d = store.get().projects.find((x) => x.demo) || demoProject(); if (!store.get().projects.includes(d)) store.addProject(d); window.location.hash = `/p/${d.id}`; } else window.location.hash = '/connect?welcome=1'; }}>Continue</Button>
+        {inDemo && <Button variant="secondary" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</Button>}{/* REQ-040 AC4, ADR-026 */}
+      </div>
     </div>
   );
 }
