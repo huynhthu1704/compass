@@ -1022,9 +1022,8 @@
             ],
             "elements": [
               "Compass brand",
-              "Title \"Sign in to Compass\" and the email-matching hint",
+              "Title \"Sign in to Compass\" and the line \"Sign in with your Google account. You'll see the projects your team added you to, or you can try the demo.\" (ADR-024)",
               "Button \"Sign in with Google\" (Google logo, full width)",
-              "Hint \"No account yet? Ask your project Admin…\"",
               "Demo-mode note"
             ],
             "states": [
@@ -1160,17 +1159,19 @@
             "purpose": "The demo opened by a signed-in person: sample projects only, a role of their choice, clearly marked as a demo.",
             "reqIds": [
               "REQ-040",
-              "REQ-039"
+              "REQ-039",
+              "REQ-121"
             ],
             "elements": [
               "Honey banner \"Demo — sample data, kept in this browser only\" with \"Leave demo\"",
-              "Sidebar role picker \"Demo role: QA ▾\" (only in the demo)",
+              "Sidebar roles control \"Demo roles: PO, BA ▾\" (only in the demo; \"Roles: …\" with sign-in off): opens a checkbox per role, the last ticked one disabled (REQ-121, ADR-025)",
               "Account card with the Google email; its menu has Leave demo and Sign out",
               "Sample project (Travel Journal) as today"
             ],
             "states": [
               "Leave demo → back to the projects, or to \"You have no access yet\"",
-              "No Firebase or GitHub call while in the demo"
+              "No Firebase or GitHub call while in the demo",
+              "\"What's your role?\" before the demo: role cards toggle, several can be ticked, Continue needs one (REQ-121)"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=191-915"
           },
@@ -1262,7 +1263,7 @@
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=275-1012"
           }
         ],
-        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change. The brand block uses the Logo / Compass component from the Components page. Phase 1 (REQ-041–REQ-046, ADR-016–018): Connections (SCR-11) is for super admins only: the work token, the GitHub account for new projects, the Anthropic key and the model and sync settings are saved for everyone on the teams; the creator token stays on the super admin's device. Commits and pull requests end with \"Made in Compass by <email> (<role>)\" (REQ-042, no screen). SCR-8 to SCR-11 approved by the Product Owner in chat on 2026-11-28.",
+        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change. The brand block uses the Logo / Compass component from the Components page. Phase 1 (REQ-041–REQ-046, ADR-016–018): Connections (SCR-11) is for super admins only: the work token, the GitHub account for new projects, the Anthropic key and the model and sync settings are saved for everyone on the teams; the creator token stays on the super admin's device. Commits and pull requests end with \"Made in Compass by <email> (<role>)\" (REQ-042, no screen). SCR-8 to SCR-11 approved by the Product Owner in chat on 2026-11-28. SCR-7 roles control changed to a checkbox menu by REQ-121 (approved by the Product Owner in chat on 2026-11-28, ADR-025); the Figma frame is still the single dropdown.",
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-27T00:00:00.000Z"
       }
@@ -1481,7 +1482,8 @@
       "ac": [
         "Given the design tokens in src/index.css\nWhen I compare them with the Figma page \"🎨 Design system\" (Honey edition v0.2)\nThen the primitive and semantic colours match in light and dark mode, with honey #FFC629 as the brand colour and dark ink text on it",
         "Given any state colour in the portal\nWhen it is shown\nThen honey means brand or \"your turn\", sky means working/info, mint means done/success and coral means rework/error",
-        "Given normal text on its background\nWhen contrast is measured in light and dark mode\nThen it is at least 4.5:1 (WCAG AA)"
+        "Given normal text on its background\nWhen contrast is measured in light and dark mode\nThen it is at least 4.5:1 (WCAG AA)",
+        "Given any checkbox or radio button in the portal\nWhen it is ticked, in light or dark mode\nThen it is filled with the honey brand colour (--color-bg-brand) and the browser draws a dark check mark on it, never the browser's default blue"
       ]
     },
     {
@@ -2272,6 +2274,24 @@
         "Given the owner (the account whose hashed email is in the Firestore rules, ADR-013) opens the Users screen\nWhen they switch \"Super admin\" on or off for a person\nThen that person gains or loses super admin rights at their next page load; the Firestore rules accept this change only from the owner, and the owner can never be removed",
         "Given a person who is a super admin but not the owner\nWhen they use Compass\nThen they can do everything the super admin does (see every project, open Connections, set or replace the work token, the GitHub account for new projects and the Anthropic key, create or import projects, manage teams, delete old project tokens), except granting or removing super admin",
         "Given the Users screen\nWhen any super admin opens it\nThen each person shows a \"Super admin\" badge when they are one, and the owner is marked \"Owner\""
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "REQ-121",
+      "featureId": "F-015",
+      "title": "Pick one or more roles on \"What's your role?\" and in the sidebar",
+      "priority": "Should",
+      "status": "In build",
+      "intent": "compass/intent/2026-11-28-several-roles.md",
+      "story": "As someone trying Compass (in the demo, or in a copy without sign-in), I want to hold several roles at once, so that I can see every part of the flow my roles touch without switching roles again and again.",
+      "ac": [
+        "Given the \"What's your role?\" screen (in the demo, or with sign-in off)\nWhen the person clicks role cards\nThen each click ticks or unticks that role (aria-pressed), several can be ticked, and Continue is enabled only while at least one is ticked",
+        "Given the person ticked PO and BA and clicked Continue\nWhen the portal opens\nThen the sidebar shows \"Demo roles: PO, BA\" (\"Roles: PO, BA\" with sign-in off) and, in the demo, the account chip reads \"Demo · PO, BA\"",
+        "Given the sidebar roles control\nWhen the person opens it\nThen it lists every role as a honey checkbox with the picked ones ticked; ticking or unticking a role saves at once, and the last ticked role cannot be unticked",
+        "Given the person holds several picked roles\nWhen a page asks for a role (the design-files admin is the PO; a design approval without sign-in names the role)\nThen they count as holding every picked role, and a design approval without sign-in names the picked role that owns the gate (UX, else PO), or the first picked role when none of them owns it",
+        "Given a browser saved a single role before this change\nWhen Compass loads\nThen that role is kept as the picked role; and entering or leaving the demo, or signing out from it, still forgets the demo roles (REQ-040)"
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-28T00:00:00.000Z"
@@ -3436,10 +3456,10 @@
         "REQ-040",
         "REQ-039"
       ],
-      "title": "Try the demo from the no-access screen and leave it",
+      "title": "Try the demo from the no-access screen and leave it, also from the role screen",
       "type": "Manual",
-      "status": "Not run",
-      "gherkin": "Given a Google account on no team\nWhen I sign in, click \"Try the demo\", pick QA, open the sample project, then click \"Leave demo\"\nThen I see the role screen, then the sample project with the demo banner and a demo role picker, then \"You have no access yet\" again; a team member signing in sees \"My roles: …\" and no role screen"
+      "status": "Pass",
+      "gherkin": "Given a Google account on no team\nWhen I sign in, click \"Try the demo\", pick QA, open the sample project, then click \"Leave demo\"\nThen I see the role screen, then the sample project with the demo banner and a demo role picker, then \"You have no access yet\" again; a team member signing in sees \"My roles: …\" and no role screen\nAnd given a signed-in person on Projects clicks \"Open demo project\" and sees the role screen\nWhen they press the browser Back button\nThen they see their projects (or \"You have no access yet\") with no demo banner\nAnd when they open the demo again and click \"Leave demo\" on the role screen\nThen they see their projects (or \"You have no access yet\") with no demo banner"
     },
     {
       "id": "TC-500",
@@ -3536,12 +3556,13 @@
     {
       "id": "TC-509",
       "reqIds": [
-        "REQ-109"
+        "REQ-109",
+        "REQ-040"
       ],
       "title": "Opening the demo reuses the demo project; duplicate demo projects are dropped on load",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a project list with a real project and a demo project\nWhen the demo is opened\nThen the existing demo project is returned and the list is unchanged\nAnd given a list with no demo project, a new demo project is created and added once\nAnd given a saved list with two demo projects and two real projects, loading keeps the first (most recent) demo project and both real projects in order"
+      "gherkin": "Given a project list with a real project and a demo project\nWhen the demo is opened\nThen the existing demo project is returned and the list is unchanged\nAnd given a list with no demo project, a new demo project is created and added once\nAnd given a saved list with two demo projects and two real projects, loading keeps the first (most recent) demo project and both real projects in order\nAnd given a signed-in person outside the demo, super admin or not, opening the demo starts the demo session first (ADR-022); already in the demo it does not\nAnd clicking \"Open demo project\" while signed in starts the demo session before the demo project is added (if missing) and opened"
     },
     {
       "id": "TC-510",
@@ -3554,13 +3575,33 @@
       "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it\nAnd the arrow keys move between the items and wrap around at the ends, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)"
     },
     {
+      "id": "TC-528",
+      "reqIds": [
+        "REQ-040"
+      ],
+      "title": "Leaving the \"Open demo project\" route before a demo role is picked leaves the demo",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given a signed-in person clicked \"Open demo project\", so the demo is opened on /p/<demo id> with no role yet\nWhen the route becomes /p/<demo id>\nThen they stay in the demo\nAnd when the route becomes any other route before a role is picked (the browser Back button)\nThen the demo is left\nAnd once a demo role is picked, or outside the demo, a route change never leaves the demo\nAnd every \"Leave demo\" (the demo banner, the account menu and the demo role screen) calls the one shared exitDemo(), which leaves the demo and goes to /; no other source file leaves the demo and navigates by hand (source check; the click itself is manual TC-077)"
+    },
+    {
+      "id": "TC-530",
+      "reqIds": [
+        "REQ-081"
+      ],
+      "title": "The old made-up demo frame link never hides the project's Figma file",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given a project whose Figma file is set in Project settings\nWhen a feature's frame link points to the made-up \"demo\" Figma file of older demo projects\nThen the Design page previews the project's Figma file, and with no project file nothing is previewed\nAnd a real frame link, in any Figma file, is still previewed first\nAnd new demo projects carry no made-up Figma link"
+    },
+    {
       "id": "TC-078",
       "reqIds": [
         "REQ-041"
       ],
       "title": "Team projects use only the super admin's GitHub token and Anthropic key",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given sign-in on, the shared work token and key, and a member with a token and key saved on their own device\nWhen Compass picks the token and key for the member's GitHub action and agent run\nThen it uses the shared ones; with none set, the GitHub action is refused with \"No GitHub token yet — ask a super admin\" and agents run in demo mode; with sign-in off or in the demo, the device token and key are used as before"
     },
     {
@@ -3667,6 +3708,26 @@
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the live site, the owner and a person made super admin on the Users screen\nWhen that person reloads, opens Connections, replaces the work token and clicks \"Delete old project tokens\" on Users\nThen Connections is visible to them, the new token is used for every member, the old tokens are gone, and the Users screen marks the owner \"Owner\" and them \"Super admin\" with read-only switches"
+    },
+    {
+      "id": "TC-527",
+      "reqIds": [
+        "REQ-121"
+      ],
+      "title": "Several roles can be picked on the role screen and in the sidebar, and count everywhere",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given the role helpers\nWhen roles are toggled\nThen they are kept in role order without duplicates, and with keepOne the last role cannot be removed\nAnd a browser that saved a single role gets it back as the picked roles\nAnd isDesignAdmin is true for picked roles that include PO, with sign-in off or in the demo\nAnd the role screen toggles cards with aria-pressed, disables Continue with no role and saves roles\nAnd the sidebar renders a checkbox per role, disables the last ticked one and lists the roles in the demo chip\nAnd App, entering and leaving the demo and signing out read or clear the picked roles"
+    },
+    {
+      "id": "TC-529",
+      "reqIds": [
+        "REQ-010"
+      ],
+      "title": "Checkboxes and radio buttons are honey in light and dark mode",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given src/index.css\nWhen the rule for checkboxes and radio buttons is read\nThen accent-color is var(--color-bg-brand)\nAnd --color-bg-brand is honey in light and dark mode"
     },
     {
       "id": "TC-513",
@@ -3955,6 +4016,57 @@
       "context": "Requirement issues were free text (story + Given/When/Then), with no link to the design and no picture, so readers had to open spec.json and Figma to understand them.",
       "decision": "The Product Owner asked in chat on 2026-11-28: \"for each github issue created, especially new requirement, attach the figma link and screenshot and provide a table of detailed requirement as standard template\". .github/ISSUE_TEMPLATE/requirement.md and bug.md hold the standard; agents follow it for every issue they create (AGENTS.md). Screenshots are exported from the Figma frame, committed to compass/design/screens/ and linked by commit SHA.",
       "consequences": "Every requirement issue shows its Figma frame, a screenshot, a Requirement details table and an Acceptance criteria table. A requirement without UI says \"Design: none: <reason>\"."
+    },
+    {
+      "id": "ADR-022",
+      "date": "2026-11-28",
+      "title": "\"Open demo project\" opens the demo only inside the demo session, for every signed-in person",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-109",
+        "REQ-040"
+      ],
+      "context": "People must sign in to use Compass, including the demo. Signed in outside the demo, a person who is not a super admin sees only projects their team lists (REQ-032); the demo project has no repository, so \"Open demo project\" and \"Explore the demo\" added a hidden project and the page stayed on Projects: the button seemed broken. A super admin saw the demo project next to the real ones.",
+      "decision": "The Product Owner chose in chat on 2026-11-28: the button enters the demo session (as \"Try the demo\" does, REQ-040) and then opens the demo project, and people need to sign in to view the demo — super admins go through the demo session too.",
+      "consequences": "The person picks a demo role, sees the demo banner and \"Leave demo\", and their real projects are hidden until they leave (REQ-040 AC3). ADR-019 still keeps \"Try the demo\" out of the sidebar. Only a build without Firebase config (no sign-in at all, e.g. local development) opens the demo project directly."
+    },
+    {
+      "id": "ADR-024",
+      "date": "2026-11-28",
+      "title": "The sign-in screen does not say you need an account first",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-032",
+        "REQ-040"
+      ],
+      "context": "Anyone with a Google account can sign in. SCR-1 said \"Use the Google account your admin added to your project\" and \"No account yet? Ask your project Admin to add your email on the Team page, then sign in here.\", which made signing in sound blocked. Someone on no team already lands on \"You have no access yet\" (SCR-2) with the same advice and \"Try the demo\", and the demo needs sign-in (ADR-022).",
+      "decision": "The Product Owner decided in chat on 2026-11-28: remove the \"No account yet?\" hint and say \"Sign in with your Google account. You'll see the projects your team added you to, or you can try the demo.\" under the title.",
+      "consequences": "SCR-1 lists the new line and no longer lists the hint. SCR-2 keeps \"Ask your admin to add this email to a project\". The Figma frame for SCR-1 (node 102-609) still shows the old hint until it is redrawn."
+    },
+    {
+      "id": "ADR-025",
+      "date": "2026-11-28",
+      "title": "Several roles on \"What's your role?\", in the demo and with sign-in off",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-121",
+        "REQ-040"
+      ],
+      "context": "The role screen and the sidebar picker held one role, so trying the whole flow meant switching roles again and again, while the Team page already gives a real person several roles.",
+      "decision": "The Product Owner chose in chat on 2026-11-28: a person picks one or more roles on \"What's your role?\" — in the demo and in a copy without sign-in (\"Both\") — and the sidebar's single dropdown becomes a checkbox menu (\"Demo roles: PO, BA ▾\") that always keeps at least one role.",
+      "consequences": "With sign-in on, real roles still come only from the team (ADR-014). SCR-7 now shows the checkbox menu; its Figma frame still shows the old dropdown until it is redrawn. A browser's saved single role becomes its one picked role."
+    },
+    {
+      "id": "ADR-026",
+      "date": "2026-11-28",
+      "title": "The demo role screen can always be left: \"Leave demo\" and the browser Back button",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-040"
+      ],
+      "context": "\"Open demo project\" starts the demo session and clears the role (ADR-022, REQ-040 AC2), so the \"What's your role?\" screen replaces every route until a role is picked. The browser Back button changed the address but showed the same screen, and \"Leave demo\" sits in the demo banner, which that screen hides: people could only pick a role or reload the page.",
+      "decision": "The Product Owner chose in chat on 2026-11-28 (after a screenshot of the trapped role screen): the role screen inside the demo shows \"Leave demo\", and navigating away from the route the demo was opened on before a role is picked (the browser Back button) leaves the demo.",
+      "consequences": "Leaving returns to the person's projects, or to \"You have no access yet\" if they are on no team (REQ-040 AC4). Once a demo role is picked, Back moves inside the demo as before and the demo is left with \"Leave demo\" in the banner or the account menu. Outside the demo the role screen is unchanged."
     }
   ]
 }

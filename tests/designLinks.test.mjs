@@ -1,4 +1,5 @@
 // F-003 Project design files: TC-500, TC-501 and the source part of TC-502 (REQ-080, REQ-082).
+// F-015 REQ-121 — TC-527: several picked roles (here because the PO among them is the design-files admin).
 // src/designLinks.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -73,7 +74,7 @@ test('TC-502 (REQ-080): only the admin role edits; the page shows the hint and t
   assert.equal(isDesignAdmin({ role: 'BA', signIn: 'signed-in', superAdmin: false, projectRoles: [], demo: true }), false);
   assert.equal(isDesignAdmin({ role: undefined, signIn: 'signed-in', superAdmin: true, projectRoles: [], demo: true }), true, 'the super admin on a sample project');
   const src = read('src/pages/ProjectSettings.tsx');
-  assert.match(src, /isDesignAdmin\(\{ role: settings\.role, signIn: session\.status, superAdmin: session\.superAdmin, projectRoles, demo: !!session\.demo \|\| !!p\.demo \}\)/);
+  assert.match(src, /isDesignAdmin\(\{ roles: pickedRoles\(settings\), signIn: session\.status, superAdmin: session\.superAdmin, projectRoles, demo: !!session\.demo \|\| !!p\.demo \}\)/);
   assert.match(src, /Only the project admin can change the design files\./);
   assert.match(src, /No design files linked yet\./);
   assert.match(src, /saveDesignFiles\(/);
@@ -145,4 +146,66 @@ test('TC-506 (REQ-081, source part): the Design page has a Design files button a
   assert.match(src, /offsetParent !== null/, 'focus returns to the button that is shown');
   assert.match(read('src/index.css'), /\.files-btn-phone \{ display: none; \}/);
   assert.match(src, /ArrowRight/, 'the preview switch follows the arrow keys');
+});
+
+test('TC-527 (REQ-121 AC1, AC3, AC5): roles toggle in role order, the last one can be kept, a saved single role is read', async () => {
+  const { ROLE_ORDER, pickedRoles, toggleRole } = await import('../src/types.ts');
+  assert.deepEqual(ROLE_ORDER, ['PO', 'BA', 'DM', 'UX', 'Dev', 'QA', 'Ops'], 'the order of the role screen');
+  assert.deepEqual(toggleRole([], 'QA'), ['QA']);
+  assert.deepEqual(toggleRole(['QA'], 'PO'), ['PO', 'QA'], 'kept in role order');
+  assert.deepEqual(toggleRole(['PO', 'QA'], 'PO'), ['QA'], 'a ticked role is unticked');
+  assert.deepEqual(toggleRole(['QA'], 'QA'), [], 'the role screen may untick the last one (Continue is then disabled)');
+  assert.deepEqual(toggleRole(['QA'], 'QA', true), ['QA'], 'the sidebar keeps at least one role');
+  assert.deepEqual(toggleRole(['QA', 'PO'], 'BA', true), ['PO', 'BA', 'QA']);
+  assert.deepEqual(pickedRoles({ roles: ['QA', 'PO', 'PO'] }), ['PO', 'QA'], 'no duplicates, in role order');
+  assert.deepEqual(pickedRoles({ role: 'BA' }), ['BA'], 'a browser that saved one role before REQ-121 keeps it');
+  assert.deepEqual(pickedRoles({ roles: ['UX'], role: 'BA' }), ['UX'], 'the picked roles win over the old field');
+  assert.deepEqual(pickedRoles({}), []);
+});
+
+test('TC-527 (REQ-121 AC4): the PO among several picked roles is the design-files admin; the approval names the gate role', () => {
+  const v = (roles, extra = {}) => ({ roles, signIn: 'off', superAdmin: false, projectRoles: [], ...extra });
+  assert.equal(isDesignAdmin(v(['BA', 'PO', 'QA'])), true, 'sign-in off: PO among the picked roles');
+  assert.equal(isDesignAdmin(v(['BA', 'QA', 'UX'])), false, 'no PO among them');
+  assert.equal(isDesignAdmin(v(['QA', 'PO'], { signIn: 'signed-in', demo: true })), true, 'in the demo');
+  assert.equal(isDesignAdmin(v(['PO'], { signIn: 'signed-in' })), false, 'sign-in on, outside the demo: the team decides');
+  const design = read('src/pages/Design.tsx');
+  assert.match(design, /isDesignAdmin\(\{ roles: pickedRoles\(settings\),/);
+  assert.match(design, /const designRole = \(roles: Role\[\]\) => GATE_ROLES\.design\.find\(\(r\) => roles\.includes\(r as Role\)\) \|\| roles\[0\] \|\| 'PO';/);
+  assert.match(design, /designRole\(pickedRoles\(settings\)\)/);
+});
+
+test('TC-527 (REQ-121 AC1–AC3, AC5): the role screen and the sidebar pick several roles; the demo forgets them', () => {
+  const onb = read('src/pages/Onboarding.tsx');
+  assert.match(onb, /aria-pressed=\{roles\.includes\(k\)\} onClick=\{\(\) => setRoles\(toggleRole\(roles, k\)\)\}/, 'each card ticks or unticks its role');
+  assert.match(onb, /disabled=\{!roles\.length\}/, 'Continue needs at least one role');
+  assert.match(onb, /store\.setSettings\(\{ roles, role: undefined \}\)/, 'saves the roles and drops the old single role');
+  const side = read('src/components/Sidebar.tsx');
+  assert.match(side, /<RolesPicker label=\{session\.demo \? 'Demo roles' : 'Roles'\} roles=\{roles\} \/>/);
+  assert.match(side, /<input type="checkbox" style=\{\{ accentColor: 'var\(--color-bg-brand\)' \}\} checked=\{on\} disabled=\{on && roles\.length === 1\} onChange=\{\(\) => store\.setSettings\(\{ roles: toggleRole\(roles, r, true\), role: undefined \}\)\} \/>/, 'one honey checkbox per role; the last ticked one is disabled');
+  assert.match(side, /ROLE_ORDER\.map\(\(r\) =>/, 'every role is listed');
+  assert.match(side, /demoRole: roles\.join\(', '\) \|\| undefined/, 'the demo chip reads "Demo · PO, BA"');
+  assert.match(side, /e\.key === 'Escape' && ref\.current\?\.open/, 'Escape closes the menu');
+  assert.match(side, /document\.addEventListener\('click', close\)/, 'a click outside closes the roles menu after the tap lands, so the account card does not move first');
+  assert.doesNotMatch(side, /settings\.role\b/, 'no reader of the old single role left');
+  assert.match(read('src/App.tsx'), /hasRole: pickedRoles\(settings\)\.length > 0/);
+  const fb = read('src/firebase.ts');
+  assert.match(fb, /const NO_ROLES = \{ roles: undefined, role: undefined \};/);
+  assert.equal((fb.match(/store\.setSettings\(NO_ROLES\)/g) || []).length, 3, 'entering, leaving the demo and signing out from it forget the roles');
+  assert.doesNotMatch(fb, /setSettings\(\{ role: undefined \}\)/);
+});
+
+test("TC-530 (REQ-081): the old made-up demo frame link never hides the project's Figma file", () => {
+  const files = designFiles({ kind: 'figma', url: FIG });
+  // Older demo projects saved in a browser have F-001's frame on a made-up file ("demo"): Project settings' file is previewed.
+  const demoFrame = 'https://www.figma.com/design/demo/Travel-Journal?node-id=1-2';
+  assert.equal(designPreviews(files, demoFrame)[0].src, figmaEmbed(FIG));
+  assert.deepEqual(designPreviews({}, demoFrame), [], 'no project file: the made-up link is not previewed either');
+  // A real frame link always wins, also when it is in another Figma file (Owner decision, 2026-11-28).
+  const otherFile = 'https://www.figma.com/design/Zz9OtherFileKey12345/Other?node-id=1-2';
+  assert.equal(designPreviews(files, otherFile)[0].src, figmaEmbed(otherFile));
+  assert.equal(designPreviews(files, `${FIG}?node-id=1-2`)[0].src, figmaEmbed(`${FIG}?node-id=1-2`));
+  assert.equal(designPreviews(files, 'https://www.figma.com/design/demo-board-x1/Real')[0].src, figmaEmbed('https://www.figma.com/design/demo-board-x1/Real'), 'only the exact "demo" key is skipped');
+  // New demo projects carry no made-up Figma link.
+  assert.doesNotMatch(read('src/demo.ts'), /figma\.com\/design\/demo\//);
 });

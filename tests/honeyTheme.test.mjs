@@ -1,4 +1,4 @@
-// F-010 honey brand (REQ-010, REQ-011, REQ-012) — TC-014, TC-015, TC-016, TC-017, TC-019
+// F-010 honey brand (REQ-010, REQ-011, REQ-012) — TC-014, TC-015, TC-016, TC-017, TC-019, TC-529
 // The expected values are the Figma design system "Compass — Team floor" › 🎨 Design system (Honey edition v0.2),
 // with the AA-safe text shades approved in ADR-004.
 import test from 'node:test';
@@ -129,4 +129,9 @@ test('TC-019 (REQ-010): one meaning per state colour', () => {
   assert.ok(run, 'RunView defines STATUS_TONE');
   const tones = Object.fromEntries([...run[1].matchAll(/'?([\w-]+)'?:\s*'(\w+)'/g)].map((m) => [m[1], m[2]]));
   assert.deepEqual(tones, { running: 'info', 'awaiting-approval': 'accent', approved: 'success', rejected: 'neutral', failed: 'danger', done: 'success' });
+});
+
+test('TC-529 (REQ-010 AC4): checkboxes and radio buttons are honey in light and dark mode', () => {
+  assert.match(CSS, /input\[type="checkbox"\], input\[type="radio"\] \{ accent-color: var\(--color-bg-brand\); \}/);
+  for (const [name, theme] of [['light', LIGHT], ['dark', DARK]]) assert.equal(resolve(theme, 'color-bg-brand'), '#FFC629', `honey in ${name} mode`);
 });

@@ -163,16 +163,36 @@ export function applyTeamOp(current: Member[], op: TeamOp, isNew = false): TeamR
   return r;
 }
 
-/** The GitHub token to use for a project (REQ-034, ADR-011): with sign-in on, the project's shared token wins over the
- *  person's own device token; without sign-in (or no project token yet) the device token is used, as before. */
-export function pickToken(own: string | undefined, projectToken: string | null | undefined, signedIn: boolean): string | undefined {
-  return (signedIn && projectToken) || own || undefined;
+/** The GitHub token to use for a project (REQ-041 AC1, ADR-016): with sign-in on, the shared work token that super
+ *  admins set, or nothing; a token saved on the person's device is never used for a team project. With sign-in off,
+ *  the device token, exactly as before. */
+export function pickToken(own: string | undefined, workToken: string | null | undefined, signedIn: boolean): string | undefined {
+  return signedIn ? workToken || undefined : own || undefined;
 }
 
-/** What a person sees when no GitHub token is available for a project (REQ-034 AC4). With team access the fix is the
- *  project's shared token, so they are told to ask an Admin; without sign-in, to connect their own account. */
+/** What a person sees when no GitHub token is available (REQ-041 AC5): with sign-in on, only a super admin can set it. */
 export function missingTokenMessage(signedIn: boolean): string {
-  return signedIn ? "The project's GitHub token is missing or expired — ask an Admin" : 'Connect GitHub first';
+  return signedIn ? 'No GitHub token yet — ask a super admin' : 'Connect GitHub first';
+}
+
+/** The shared settings that replace the device's own while someone is signed in, outside the demo (REQ-041 AC1, AC2,
+ *  ADR-017): the Anthropic key (none → agents run in demo mode), the model and auto-sync the super admins chose.
+ *  Null with sign-in off or in the demo: the device's settings apply, as before (AC7). */
+export function workspaceSettings(ws: { anthropicKey?: string; model?: string; autoSync?: boolean } | null | undefined, ctx: { signedIn: boolean; demo: boolean }): { apiKey: string | undefined; model: string; autoSync: boolean } | null {
+  if (!ctx.signedIn || ctx.demo) return null;
+  return { apiKey: ws?.anthropicKey || undefined, model: ws?.model || 'claude-sonnet-5-5', autoSync: ws?.autoSync ?? true };
+}
+
+/** Whether the shared work token, key and settings apply (REQ-041 AC1, AC7): whenever sign-in is configured, outside
+ *  the demo — also while signing in or after signing out, so a device token never reaches a team project meanwhile. */
+export function usesSharedSettings(ctx: { firebase: boolean; demo: boolean }): boolean {
+  return ctx.firebase && !ctx.demo;
+}
+
+/** Who may open Connections (REQ-041 AC2, REQ-110 AC2 as amended by ADR-020): with sign-in on, only super admins;
+ *  with sign-in off or in the demo, everyone, as before. */
+export function canOpenConnections(ctx: { signedIn: boolean; demo: boolean; superAdmin: boolean }): boolean {
+  return !ctx.signedIn || ctx.demo || ctx.superAdmin;
 }
 
 /** A copy of the spec with these requirements In build; never changes the input. approveRun applies it to the store only
@@ -214,6 +234,20 @@ export function projectVisible(p: { repo: { owner: string; name: string } | null
   if (s.demo) return !!p.demo;
   if (s.superAdmin) return true;
   return !!p.repo && s.accessIds.includes(`${p.repo.owner}__${p.repo.name}`.toLowerCase());
+}
+
+/** The route part of a location hash: "#/p/abc?x=1" → "/p/abc"; empty → "/". */
+export const routeOf = (hash: string) => hash.replace(/^#/, '').split('?')[0] || '/';
+
+/** REQ-040 AC4, ADR-026: in the demo, before a role is picked, the role screen covers every route — so a navigation away
+ *  from the route the demo was opened on (the browser Back button) leaves the demo instead of trapping the person. */
+export function leavesDemoOnNavigate(s: { demo?: boolean; hasRole: boolean; entry?: string; route: string }): boolean {
+  return !!s.demo && !s.hasRole && s.entry !== undefined && s.route !== s.entry;
+}
+
+/** ADR-022: a signed-in person, super admins included, opens the demo project only inside the demo session. */
+export function opensDemoSession(s: { status: string; demo?: boolean }): boolean {
+  return s.status === 'signed-in' && !s.demo;
 }
 
 /** "<email> (<role>)" → { email, role }; null for older free-text values such as "PO" or "the Product Owner". */

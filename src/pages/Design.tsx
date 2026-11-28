@@ -7,9 +7,13 @@ import { projectKey, useSession } from '../firebase';
 import { featureOf } from '../spec';
 import { now, store, useStore } from '../store';
 import { gateState, recordApproval, useUnconfirmed } from '../approvals';
-import type { Design, DesignScreen, Project } from '../types';
+import { GATE_ROLES } from '../team';
+import { pickedRoles, type Design, type DesignScreen, type Project, type Role } from '../types';
 import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead, toast } from '../ui';
 
+
+/** REQ-121 AC4: a design approval without sign-in names the picked role that owns the gate (UX, else PO). */
+const designRole = (roles: Role[]) => GATE_ROLES.design.find((r) => roles.includes(r as Role)) || roles[0] || 'PO';
 
 export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const { settings } = useStore();
@@ -17,7 +21,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   // REQ-081: the project's design files sit behind one button; only the admin gets the link to Project settings.
   const session = useSession();
   const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
-  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!session.demo || !!p.demo });
+  const admin = isDesignAdmin({ roles: pickedRoles(settings), signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!session.demo || !!p.demo });
   const [approving, setApproving] = useState(false);
   const unconfirmed = useUnconfirmed(p); // REQ-038
   const [panel, setPanel] = useState(false);
@@ -38,7 +42,7 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
     setApproving(true);
     try {
       const by = await recordApproval(p, 'design', [fid]);
-      setD({ status: 'Approved', approvedBy: by?.text || (settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO'), approvedAt: now() });
+      setD({ status: 'Approved', approvedBy: by?.text || (settings.githubUser ? `@${settings.githubUser}` : designRole(pickedRoles(settings))), approvedAt: now() });
     } catch (e) { toast((e as Error).message); } finally { setApproving(false); }
   };
   const files = designFiles(p.spec.designTool);

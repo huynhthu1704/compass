@@ -18,7 +18,7 @@
 | REQ-007 | F-009 | Handoffs move as cards between desks, and a failed review sends the card back | Should | In build | TC-008 |
 | REQ-008 | F-009 | Approvals can be given from the Team floor with the same result as from Agent runs | Must | In build | TC-009, TC-012 |
 | REQ-009 | F-009 | The Team floor respects reduced motion, works on a phone and in demo mode, at no extra cost | Must | In build | TC-010, TC-011 |
-| REQ-010 | F-010 | Compass colours follow the honey design system in light and dark mode | Must | In build | TC-014, TC-015, TC-019 |
+| REQ-010 | F-010 | Compass colours follow the honey design system in light and dark mode | Must | In build | TC-014, TC-015, TC-019, TC-529 |
 | REQ-011 | F-010 | Compass type, shapes and logo follow the honey design system | Must | In build | TC-016, TC-020, TC-021 |
 | REQ-012 | F-010 | No page keeps the old teal theme | Must | In build | TC-017, TC-018, TC-022 |
 | REQ-013 | F-011 | Draft and Approved labels look different at a glance | Must | Approved | TC-023, TC-024 |
@@ -58,9 +58,9 @@
 | REQ-037 | F-015 | Each approval is recorded in Firebase, whose rules accept it only from the owning role | Must | In build | TC-067, TC-072 |
 | REQ-038 | F-015 | Approvals in the repo that Firebase does not confirm are flagged | Should | In build | TC-067, TC-073, TC-074 |
 | REQ-039 | F-015 | With sign-in on, roles come from the team instead of the role picker | Should | In build | TC-075, TC-077 |
-| REQ-040 | F-015 | A signed-in person can try the demo with a role of their choice | Should | In build | TC-076, TC-077 |
+| REQ-040 | F-015 | A signed-in person can try the demo with a role of their choice | Should | In build | TC-076, TC-077, TC-509, TC-528 |
 | REQ-080 | F-003 | The admin links the project's Figma file and Miro board on a Project settings page | Must | Approved | TC-400, TC-500, TC-501, TC-502 |
-| REQ-081 | F-003 | Every Design page keeps the preview in focus and shows the design files behind a button | Must | Approved | TC-502, TC-503, TC-505, TC-506 |
+| REQ-081 | F-003 | Every Design page keeps the preview in focus and shows the design files behind a button | Must | Approved | TC-502, TC-503, TC-505, TC-506, TC-530 |
 | REQ-082 | F-003 | Projects with the old single design link keep working, and agents name both files | Must | Approved | TC-501, TC-504, TC-507 |
 | REQ-108 | F-011 | Acceptance criteria and test steps are readable on the agent run page | Should | Done | TC-508 |
 | REQ-109 | F-015 | The project list keeps only one demo project | Should | In build | TC-509 |
@@ -70,6 +70,7 @@
 | REQ-043 | F-015 | Project tokens set by project Admins are retired | Must | In build | TC-082, TC-088 |
 | REQ-044 | F-015 | Only super admins create or import projects, only in the GitHub account for new projects | Must | In build | TC-083, TC-084, TC-085, TC-086 |
 | REQ-046 | F-015 | The owner can make other people super admins | Must | In build | TC-087, TC-088 |
+| REQ-121 | F-015 | Pick one or more roles on "What's your role?" and in the sidebar | Should | In build | TC-527 |
 | REQ-113 | F-001 | Attach files to a feature's business need on the Idea page | Should | In build | TC-513, TC-514, TC-515 |
 
 ## REQ-001 · The Compass repo has the Compass Framework
@@ -406,6 +407,13 @@ _AC3_
 Given normal text on its background
 When contrast is measured in light and dark mode
 Then it is at least 4.5:1 (WCAG AA)
+```
+
+_AC4_
+```gherkin
+Given any checkbox or radio button in the portal
+When it is ticked, in light or dark mode
+Then it is filled with the honey brand colour (--color-bg-brand) and the browser draws a dark check mark on it, never the browser's default blue
 ```
 
 ## REQ-011 · Compass type, shapes and logo follow the honey design system
@@ -2037,6 +2045,48 @@ _AC3_
 Given the Users screen
 When any super admin opens it
 Then each person shows a "Super admin" badge when they are one, and the owner is marked "Owner"
+```
+
+## REQ-121 · Pick one or more roles on "What's your role?" and in the sidebar
+As someone trying Compass (in the demo, or in a copy without sign-in), I want to hold several roles at once, so that I can see every part of the flow my roles touch without switching roles again and again.
+
+**Priority:** Should · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given the "What's your role?" screen (in the demo, or with sign-in off)
+When the person clicks role cards
+Then each click ticks or unticks that role (aria-pressed), several can be ticked, and Continue is enabled only while at least one is ticked
+```
+
+_AC2_
+```gherkin
+Given the person ticked PO and BA and clicked Continue
+When the portal opens
+Then the sidebar shows "Demo roles: PO, BA" ("Roles: PO, BA" with sign-in off) and, in the demo, the account chip reads "Demo · PO, BA"
+```
+
+_AC3_
+```gherkin
+Given the sidebar roles control
+When the person opens it
+Then it lists every role as a honey checkbox with the picked ones ticked; ticking or unticking a role saves at once, and the last ticked role cannot be unticked
+```
+
+_AC4_
+```gherkin
+Given the person holds several picked roles
+When a page asks for a role (the design-files admin is the PO; a design approval without sign-in names the role)
+Then they count as holding every picked role, and a design approval without sign-in names the picked role that owns the gate (UX, else PO), or the first picked role when none of them owns it
+```
+
+_AC5_
+```gherkin
+Given a browser saved a single role before this change
+When Compass loads
+Then that role is kept as the picked role; and entering or leaving the demo, or signing out from it, still forgets the demo roles (REQ-040)
 ```
 
 ## REQ-113 · Attach files to a feature's business need on the Idea page

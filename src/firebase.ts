@@ -3,7 +3,7 @@
 // Without it the portal works exactly as before (REQ-032 AC5). The firebase library is only loaded when it is on.
 import { useSyncExternalStore } from 'react';
 import { store } from './store';
-import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, peopleChanges, projectVisible, teamDoc, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
+import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, peopleChanges, projectVisible, routeOf, teamDoc, workspaceSettings, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
 import type { RepoRef } from './types';
 
 export interface FirebaseWebConfig { apiKey: string; authDomain: string; projectId: string; appId: string; [k: string]: string }
@@ -32,11 +32,40 @@ export interface Session {
   error?: string;
   /** REQ-040: a signed-in person is trying the demo (sample projects only, nothing sent to Firebase or GitHub). */
   demo?: boolean;
+  /** ADR-026: the route the demo was opened on; leaving it before a role is picked leaves the demo. */
+  demoEntry?: string;
 }
 
 let session: Session = { status: firebaseEnabled ? 'loading' : 'off', superAdmin: false, access: [] };
 const listeners = new Set<() => void>();
-const set = (patch: Partial<Session>) => { session = { ...session, ...patch }; listeners.forEach((l) => l()); };
+const set = (patch: Partial<Session>) => {
+  session = { ...session, ...patch };
+  if (session.status !== 'signed-in') { workspace = undefined; workspaceFor = ''; }
+  applyWorkspace();
+  listeners.forEach((l) => l());
+};
+
+// ---- Shared work token, Anthropic key and settings (REQ-041, ADR-016, ADR-017) ----------------------------------------
+// Loaded after sign-in for super admins and people on a team; kept in memory only. undefined = not loaded yet.
+let workspace: Workspace | null | undefined;
+let workspaceFor = ''; // the email the cached workspace was loaded for
+/** The device settings are replaced by the shared ones while signed in, outside the demo (store override, never saved). */
+function applyWorkspace() {
+  // Whenever sign-in is configured (outside the demo), also while signed out: no device key or auto-sync setting applies.
+  store.setOverride(workspaceSettings(workspace, { signedIn: firebaseEnabled, demo: !!session.demo }));
+}
+/** The shared workspace: an object, null when none is saved or it cannot be read, undefined while loading. */
+export const getWorkspace = () => workspace;
+export const useWorkspace = () => useSyncExternalStore((l) => { tokenListeners.add(l); return () => tokenListeners.delete(l); }, () => workspace);
+/** Loads (or reloads, after a super admin saved it) the workspace for the signed-in person. */
+export async function refreshWorkspace() {
+  const email = session.email || '';
+  if (session.status !== 'signed-in' || !(session.superAdmin || session.access.length)) { workspace = null; workspaceFor = email; applyWorkspace(); tokenChanged(); return; }
+  let ws: Workspace | null;
+  try { ws = await loadWorkspace(); } catch { ws = null; }
+  if (session.status !== 'signed-in' || session.email !== email) return; // signed out or switched account meanwhile
+  workspace = ws; workspaceFor = email; applyWorkspace(); tokenChanged(); // auto-sync and open pages pick up the token
+}
 export const useSession = () => useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => session);
 export const getSession = () => session;
 
@@ -74,7 +103,7 @@ export async function startSession() {
     const { auth, authApp } = await load();
     currentAuth = authApp;
     auth.onAuthStateChanged(authApp, (user) => {
-      if (!user) { clearProjectTokens(); if (session.demo) store.setSettings({ role: undefined }); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false }); return; }
+      if (!user) { clearProjectTokens(); if (session.demo) store.setSettings(NO_ROLES); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false, demoEntry: undefined }); return; }
       if (session.email && normalizeEmail(user.email || '') !== session.email) clearProjectTokens(); // another account in this tab
       void loadAccess(user.email || '', user.emailVerified);
     });
@@ -84,7 +113,7 @@ export async function startSession() {
 /** Reads config/access (creating it at the super admin's first sign-in, ADR-013) and the person's projects. */
 async function loadAccess(rawEmail: string, verified: boolean) {
   const email = normalizeEmail(rawEmail);
-  if (!verified) { set({ status: 'signed-in', email, superAdmin: false, access: [] }); return; }
+  if (!verified) { workspace = null; workspaceFor = email; set({ status: 'signed-in', email, superAdmin: false, access: [] }); return; }
   // A refresh (after a team save or Reload) keeps the current screen; only the first load shows "Loading…".
   if (session.status !== 'signed-in' || session.email !== email) set({ status: 'loading', email });
   try {
@@ -109,10 +138,13 @@ async function loadAccess(rawEmail: string, verified: boolean) {
     if (!stillSignedIn(email)) return; // signed out (or switched account) while loading
     const info = new Map(docs.map((d) => [d.id, { name: d.name, repo: d.repo }]));
     set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins).map((a) => ({ ...a, ...info.get(a.id) })), error: undefined });
+    // Load the workspace once per account, and again when someone with no team (nothing readable) is added to one.
+    if (!session.superAdmin && session.access.length === 0) { workspace = null; workspaceFor = email; applyWorkspace(); } // removed from every team: drop the cached token and key
+    else if (workspaceFor !== email || !workspace) void refreshWorkspace();
     // REQ-041 AC3: a super admin's sign-in backfills people/{email} for teams saved before the index existed (once per tab).
     if (superAdmin && !peopleSynced) { peopleSynced = true; void syncPeopleIndex().catch(() => { peopleSynced = false; }); }
   } catch (e) {
-    if (stillSignedIn(email)) set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` });
+    if (stillSignedIn(email)) { workspace = null; workspaceFor = email; set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` }); }
   }
 }
 
@@ -291,9 +323,12 @@ export async function loadApprovalEvidence(key: string): Promise<import('./team'
   };
 }
 
+/** REQ-121: forgets the picked roles, including a single role saved before REQ-121. */
+const NO_ROLES = { roles: undefined, role: undefined };
+
 // ---- Demo after sign-in (REQ-040, ADR-014) ------------------------------------------------------------------------------
 
 /** Opens the demo for a signed-in person: sample projects only, a demo role of their choice. */
-export function enterDemo() { if (session.status !== 'signed-in') return; store.setSettings({ role: undefined }); set({ demo: true }); } // always pick a demo role (REQ-040 AC2)
+export function enterDemo(entry = routeOf(window.location.hash)) { if (session.status !== 'signed-in') return; store.setSettings(NO_ROLES); set({ demo: true, demoEntry: entry }); } // always pick a demo role (REQ-040 AC2)
 /** Leaves the demo; the demo role is forgotten by the caller so it never leaks into real work. */
-export function leaveDemo() { store.setSettings({ role: undefined }); set({ demo: false }); } // the demo role never leaks into real work
+export function leaveDemo() { store.setSettings(NO_ROLES); set({ demo: false, demoEntry: undefined }); } // the demo role never leaks into real work

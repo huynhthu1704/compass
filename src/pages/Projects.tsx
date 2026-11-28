@@ -1,9 +1,9 @@
 import { go } from '../App';
 import { demoProject } from '../demo';
-import { openOrCreateDemo } from '../demoOnce';
+import { openDemo as openDemoWith } from '../demoOnce';
 import { featureStage } from '../progress';
 import { useState } from 'react';
-import { canSeeProject, getSession, loadProjectToken, projectTokenOf, useSession, type ProjectAccess } from '../firebase';
+import { canSeeProject, enterDemo, getSession, getWorkspace, useSession, type ProjectAccess } from '../firebase';
 import { github, GitHubError } from '../github';
 import { missingTokenMessage, pickToken, sharedOpenProblem, sharedToOpen } from '../team';
 import { importRepo } from './Import';
@@ -22,8 +22,7 @@ export function ProjectsPage() {
   const openShared = async (a: ProjectAccess) => {
     setOpening(a.id); setOpenErr(null);
     try {
-      await loadProjectToken(a.id).catch(() => undefined);
-      const t = pickToken(settings.githubToken, projectTokenOf(a.id), true);
+      const t = pickToken(settings.githubToken, getWorkspace()?.workToken, true); // REQ-041: the shared work token
       if (!t) throw new Error(missingTokenMessage(true));
       const who = session.email;
       const r = await github.getRepo(t, a.repo!.owner, a.repo!.name).catch((e) => {
@@ -38,7 +37,8 @@ export function ProjectsPage() {
       go(`/p/${p.id}`);
     } catch (e) { setOpenErr(`${a.name || a.id}: ${(e as Error).message}`); } finally { setOpening(null); }
   };
-  const openDemo = () => { const { project, isNew } = openOrCreateDemo(store.get().projects, demoProject); if (isNew) store.addProject(project); go(`/p/${project.id}`); }; // one demo project only (REQ-109)
+  // REQ-109, ADR-022: one demo project, opened inside the demo session when signed in (REQ-040), super admins included.
+  const openDemo = () => { openDemoWith(store.get().projects, demoProject, session, { enterDemo, addProject: (p) => store.addProject(p), go }); };
   return (
     <div className="stack gap-xl">
       <PageHead

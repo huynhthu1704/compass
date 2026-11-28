@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, peopleChanges, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, canOpenConnections, peopleChanges, usesSharedSettings, workspaceSettings, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -123,16 +123,15 @@ test('TC-062, TC-063 (REQ-031): a change is applied to the team as saved now, so
   assert.equal(applyTeamOp([], { kind: 'add', email: 'ba@example.com', roles: ['BA', 'Admin'] }, true).ok, true);
 });
 
-test('TC-068 (REQ-034): GitHub calls use the project token for signed-in members', () => {
-  assert.equal(pickToken(undefined, 'project-token', true), 'project-token', 'a member without their own token uses the project token');
-  assert.equal(pickToken('own-token', 'project-token', true), 'project-token', 'with team access the project token wins');
-  assert.equal(pickToken('own-token', null, true), 'own-token', 'no project token yet → own token');
-  assert.equal(pickToken(undefined, null, true), undefined, 'no token at all → missing (the portal asks for an Admin)');
-  assert.equal(pickToken('own-token', 'project-token', false), 'own-token', 'sign-in off → device token, as before');
+test('TC-078 (REQ-041 AC1, AC7): GitHub calls use the shared work token for signed-in people', () => {
+  assert.equal(pickToken(undefined, 'work-token', true), 'work-token', 'a member without their own token uses the work token');
+  assert.equal(pickToken('own-token', 'work-token', true), 'work-token', 'signed in: the work token, never the device token');
+  assert.equal(pickToken('own-token', null, true), undefined, 'no work token yet → missing, even with a device token');
+  assert.equal(pickToken('own-token', 'work-token', false), 'own-token', 'sign-in off → device token, as before');
 });
 
-test('TC-068 (REQ-034 AC4): with no token, a signed-in member is told to ask an Admin', () => {
-  assert.equal(missingTokenMessage(true), "The project's GitHub token is missing or expired — ask an Admin");
+test('TC-078 (REQ-041 AC5): with no work token, a signed-in person is told to ask a super admin', () => {
+  assert.equal(missingTokenMessage(true), 'No GitHub token yet — ask a super admin');
   assert.equal(missingTokenMessage(false), 'Connect GitHub first', 'sign-in off: as before');
 });
 
@@ -266,4 +265,29 @@ test('TC-079 (part, REQ-041 AC3): a team change lists who joins and who leaves, 
   assert.deepEqual(peopleChanges(before, [...before, { email: 'QA@Example.com', roles: ['QA'] }]), { joined: ['qa@example.com'], left: [] });
   assert.deepEqual(peopleChanges(before, [before[0]]), { joined: [], left: ['ba@example.com'] });
   assert.deepEqual(peopleChanges(before, [{ email: 'BA@example.com', roles: ['BA', 'QA'] }, before[0]]), { joined: [], left: [] }, 'changing roles or letter case is no change');
+});
+
+test('TC-078 (REQ-041 AC1, AC5, AC7): signed in, the shared key, model and auto-sync replace the device settings', () => {
+  const ws = { anthropicKey: 'shared-key', model: 'claude-opus-5-5', autoSync: false };
+  assert.deepEqual(workspaceSettings(ws, { signedIn: true, demo: false }), { apiKey: 'shared-key', model: 'claude-opus-5-5', autoSync: false });
+  assert.deepEqual(workspaceSettings({}, { signedIn: true, demo: false }), { apiKey: undefined, model: 'claude-sonnet-5-5', autoSync: true }, 'no shared key → demo agents, even with a key on the device');
+  assert.deepEqual(workspaceSettings(null, { signedIn: true, demo: false }), { apiKey: undefined, model: 'claude-sonnet-5-5', autoSync: true }, 'not loaded yet or refused');
+  assert.equal(workspaceSettings(ws, { signedIn: true, demo: true }), null, 'demo: device settings');
+  assert.equal(workspaceSettings(ws, { signedIn: false, demo: false }), null, 'sign-in off: device settings');
+});
+
+test('TC-080 (part, REQ-041 AC2, REQ-110 AC2): only super admins open Connections while signed in', () => {
+  assert.equal(canOpenConnections({ signedIn: true, demo: false, superAdmin: true }), true);
+  assert.equal(canOpenConnections({ signedIn: true, demo: false, superAdmin: false }), false, 'a member');
+  assert.equal(canOpenConnections({ signedIn: true, demo: true, superAdmin: false }), true, 'demo: as before');
+  assert.equal(canOpenConnections({ signedIn: false, demo: false, superAdmin: false }), true, 'sign-in off: as before');
+});
+
+test('TC-078 (REQ-041 AC1, AC7): with sign-in configured, the shared token applies even while signed out — never the device token', () => {
+  assert.equal(usesSharedSettings({ firebase: true, demo: false }), true, 'signed in, signing in, or signed out with the app still open');
+  assert.equal(usesSharedSettings({ firebase: true, demo: true }), false, 'demo: per device, as before');
+  assert.equal(usesSharedSettings({ firebase: false, demo: false }), false, 'sign-in off: per device, as before');
+  // Signed out, the cached workspace is gone, so a team project gets no token at all.
+  assert.equal(pickToken('device-token', undefined, usesSharedSettings({ firebase: true, demo: false })), undefined);
+  assert.deepEqual(workspaceSettings(undefined, { signedIn: true, demo: false }), { apiKey: undefined, model: 'claude-sonnet-5-5', autoSync: true }, 'no device key while signed out');
 });

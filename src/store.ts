@@ -13,10 +13,16 @@ export const now = () => new Date().toISOString();
 export const emptySpec = (): Spec => ({ version: 2, stack: DEFAULT_STACK, features: [], requirements: [], tests: [], decisions: [] });
 
 let state: State = DEFAULT;
+// F-015 REQ-041: settings that replace the device's own while signed in (shared key, model, auto-sync; ADR-017).
+// Never saved to the device. `view` is what the app reads; `state` is what is stored.
+let override: Partial<Settings> | null = null;
+let view: State = state;
+const refresh = () => { view = override ? { ...state, settings: { ...state.settings, ...override } } : state; };
 const listeners = new Set<() => void>();
 let timer: ReturnType<typeof setTimeout> | undefined;
 
 function emit() {
+  refresh();
   listeners.forEach((l) => l());
   clearTimeout(timer);
   timer = setTimeout(() => { idbSet(KEY, state).catch(() => { /* storage unavailable */ }); }, 150);
@@ -28,8 +34,17 @@ export const store = {
       const raw = (await idbGet(KEY)) as State | undefined;
       if (raw) state = { ...DEFAULT, ...raw, settings: { ...DEFAULT.settings, ...raw.settings }, projects: keepOneDemo((raw.projects || []).map(migrateProject)) }; // drop duplicate demo copies (REQ-109)
     } catch { /* IndexedDB blocked: keep defaults */ }
+    refresh();
   },
-  get: () => state,
+  /** The state with the signed-in override applied (what every page and agent uses). */
+  get: () => view,
+  /** The device's own state, without the override (Connections: the creator token saved on this device). */
+  raw: () => state,
+  /** Sets or clears the override (firebase.ts, on every session or workspace change). Never saved. */
+  setOverride(o: Partial<Settings> | null) {
+    if (JSON.stringify(o) === JSON.stringify(override)) return;
+    override = o; refresh(); listeners.forEach((l) => l());
+  },
   subscribe: (l: () => void) => { listeners.add(l); return () => listeners.delete(l); },
   setSettings(patch: Partial<Settings>) { state = { ...state, settings: { ...state.settings, ...patch } }; emit(); },
   addProject(p: Project) { const m = migrateProject(p); state = { ...state, projects: [m, ...state.projects.filter((x) => x.id !== m.id)] }; emit(); },
