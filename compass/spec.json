@@ -3534,6 +3534,16 @@
       "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it\nAnd the arrow keys move between the items and wrap around at the ends, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)"
     },
     {
+      "id": "TC-528",
+      "reqIds": [
+        "REQ-040"
+      ],
+      "title": "The demo can be left from the \"What's your role?\" screen, also with the browser Back button",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a signed-in person clicked \"Open demo project\" and sees \"What's your role?\" on /p/<demo id>\nWhen the route changes to the demo project route\nThen they stay in the demo\nAnd when they press the browser Back button before picking a role (the route becomes another one)\nThen the demo is left and they see their projects, or \"You have no access yet\" if they are on no team\nAnd once a demo role is picked, moving between routes keeps the demo\nAnd the role screen inside the demo shows \"Leave demo\", which returns to their projects"
+    },
+    {
       "id": "TC-078",
       "reqIds": [
         "REQ-041"
