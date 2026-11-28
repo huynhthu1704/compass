@@ -4,7 +4,7 @@
 import { firebaseEnabled, getSession, getWorkspace, projectKey } from './firebase';
 import { setAuditSource } from './github';
 import { store } from './store';
-import { auditLine, missingTokenMessage, pickToken, usesSharedSettings } from './team';
+import { auditFor, missingTokenMessage, pickToken, usesSharedSettings } from './team';
 import type { Project } from './types';
 
 export function tokenFor(p: Pick<Project, 'repo'> | undefined): string | undefined {
@@ -25,7 +25,11 @@ export function missingToken(p: Pick<Project, 'repo' | 'demo'> | undefined): str
 // request Compass makes, with their roles on that project (the harness uses the gate's role after an approval).
 setAuditSource((r) => {
   const s = getSession();
-  if (!usesSharedSettings({ firebase: firebaseEnabled, demo: !!s.demo }) || s.status !== 'signed-in' || !s.email) return null;
-  const roles = s.access.find((a) => a.id === projectKey(r))?.roles || [];
-  return auditLine(s.email, roles.length ? roles : s.superAdmin ? ['super admin'] : []);
+  return auditFor({ firebase: firebaseEnabled, demo: !!s.demo, signedIn: s.status === 'signed-in', email: s.email, superAdmin: s.superAdmin, roles: s.access.find((a) => a.id === projectKey(r))?.roles || [] });
 });
+
+/** REQ-042: the audit line after a gate — the approval record's "email (role)" — or null with sign-in off or in the demo. */
+export function gateAudit(by: string | null | undefined): string | null {
+  const s = getSession();
+  return by ? auditFor({ firebase: firebaseEnabled, demo: !!s.demo, signedIn: s.status === 'signed-in', email: s.email, superAdmin: s.superAdmin, roles: [], gateBy: by }) : null;
+}

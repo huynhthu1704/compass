@@ -8,7 +8,7 @@ Since build 2a (#135), everyone's GitHub work on team projects runs with the sha
 owner's account on every change. The audit line puts the person who did it into the commit and pull request text.
 Compass's approval records in Firebase stay the proof of an approval: the Firestore rules never see GitHub.
 
-## Files (7)
+## Files (8)
 - `src/team.ts` (pure, tested):
   - `auditLine(email, roles)` → "Made in Compass by <email> (<roles>)".
   - `withAudit(text, line)` adds the line once, at the end.
@@ -24,7 +24,7 @@ Compass's approval records in Firebase stay the proof of an approval: the Firest
   - **Release:** the squash merges and the spec commit use the release approval.
 - `src/firebase.ts` (short check of #135): when someone is removed from every team, notify the listeners, so the menu
   and pages redraw at once.
-- `tests/team.test.mjs`: TC-081.
+- `tests/team.test.mjs`: TC-081 (the line helpers and `auditFor`, the pure choice of the line; review of #138).
 - `compass/spec.json`: REQ-042 In build, TC-081 Pass.
 - This plan.
 
@@ -35,7 +35,10 @@ plan → helpers + test → github/token/harness → checks → review → the P
 - **The emails become part of GitHub history,** public in public repositories (the Product Owner chose the email, ADR-016).
 - **Not proof:** someone holding the work token can commit on GitHub without Compass, so the line proves nothing; the
   approval records do.
-- **Commits made before this change** have no line.
+- **Commits made before this change** have no line. Neither has the first commit GitHub itself makes when a new
+  repository is created (auto-init).
+- **Release squash merges:** the new commit message replaces GitHub's default body (the list of the PR's commits) with
+  the audit line; the PR itself still lists them.
 
 ## Proof
 - `npm test` (TC-081: gate role, roles when no gate applies, super admin, nothing with sign-in off, the line added only

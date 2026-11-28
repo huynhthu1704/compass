@@ -190,10 +190,22 @@ export function auditLine(email: string, roles: string[] | string): string {
   return `Made in Compass by ${normalizeEmail(email)}${r ? ` (${r})` : ''}`;
 }
 
-/** Adds the audit line once, at the end; nothing when there is no line (sign-in off, the demo). */
+/** Adds the audit line once, at the end; nothing when there is no line (sign-in off, the demo). Only a line already at
+ *  the very end counts, so text written by an agent that mentions the phrase never replaces the real line. */
 export function withAudit(text: string, line: string | null | undefined): string {
-  if (!line || text.includes('Made in Compass by ')) return text;
+  if (!line) return text;
+  const last = text.trimEnd().split('\n').pop() || '';
+  if (last.startsWith('Made in Compass by ')) return text;
   return `${text.trimEnd()}\n\n${line}`;
+}
+
+/** Which audit line Compass adds (REQ-042): none with sign-in off, in the demo or when nobody is signed in; after a gate,
+ *  the approval record's "email (role)"; otherwise the person's roles on the project ("super admin" when they are a super
+ *  admin with no team roles). */
+export function auditFor(ctx: { firebase: boolean; demo: boolean; signedIn: boolean; email?: string; superAdmin: boolean; roles: string[]; gateBy?: string | null }): string | null {
+  if (!usesSharedSettings({ firebase: ctx.firebase, demo: ctx.demo }) || !ctx.signedIn || !ctx.email) return null;
+  if (ctx.gateBy) return `Made in Compass by ${ctx.gateBy}`;
+  return auditLine(ctx.email, ctx.roles.length ? ctx.roles : ctx.superAdmin ? ['super admin'] : []);
 }
 
 /** Whether the shared work token, key and settings apply (REQ-041 AC1, AC7): whenever sign-in is configured, outside
