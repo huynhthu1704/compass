@@ -1831,12 +1831,19 @@ Then the menu closes; "Dark theme" switches the theme, "Connections" opens Conne
 
 _AC4_
 ```gherkin
+Given the account menu is open and focus is in it
+When I press ArrowDown or ArrowUp
+Then focus moves to the next or previous item and wraps around at the ends; from the header at the top of the menu (my name and email, or the account state with sign-in off), ArrowDown goes to the first item and ArrowUp to the last
+```
+
+_AC5_
+```gherkin
 Given sign-in is off, or I am in the demo
 When I look at the footer
 Then the role picker is shown above the account card, and the menu has no "Sign out" when sign-in is off
 ```
 
-_AC5_
+_AC6_
 ```gherkin
 Given a phone (below 900 px)
 When I open the Menu
