@@ -1662,8 +1662,8 @@
       "intent": "compass/intent/2026-11-27-sidebar-navigation.md",
       "story": "As any portal user, I want my GitHub connection, my role and the theme together at the bottom of the sidebar, so that settings are in one tidy place.",
       "ac": [
-        "Given GitHub is connected as @user\nWhen I look at the bottom of the sidebar\nThen an account card shows the initial, \"@user\" and \"GitHub connected\"; without a connection it shows \"Not connected\" and \"Demo mode · connect\"; clicking the card opens Connections",
-        "Given the footer\nWhen I look under the account card\nThen the role picker fills the row next to one theme button labelled \"Switch to dark theme\" (or \"Switch to light theme\"), and clicking it switches the theme",
+        "Given GitHub is connected as @user and sign-in is off\nWhen I look at the bottom of the sidebar\nThen an account card shows the initial, \"@user\" and \"GitHub connected\"; without a connection it shows \"Not connected\" and \"Demo mode · connect\"; clicking the card opens the account menu, whose \"Connections\" item opens Connections (REQ-110, ADR-019)",
+        "Given the footer\nWhen I open the account menu\nThen it has one theme control, a \"Dark theme\" switch titled \"Switch to dark theme\" (or \"Switch to light theme\"), and choosing it switches the theme; the role picker sits above the card only with sign-in off or in the demo (REQ-110, ADR-019)",
         "Given a phone (below 900 px)\nWhen I open the Menu\nThen the sidebar shows the same groups, card and footer"
       ]
     },
@@ -1967,7 +1967,7 @@
       "story": "As the product owner, I want people's roles to come only from the team list, so that nobody can give themselves a role by picking it.",
       "ac": [
         "Given Firebase is configured and a person signs in\nWhen the portal opens\nThen the \"What's your role?\" screen is not shown and their roles on each project come from that project's team",
-        "Given a signed-in person on a real project\nWhen they look at the sidebar\nThen it shows \"My roles: …\" read-only for that project, and nothing in the portal lets them change their own roles",
+        "Given a signed-in person on a real project\nWhen they look at the sidebar\nThen the account card shows their roles on that project read-only, as chips (ADR-019), and nothing in the portal lets them change their own roles",
         "Given Firebase is not configured\nWhen the portal opens\nThen the \"What's your role?\" screen and the sidebar role picker work as today"
       ],
       "approvedBy": "the Product Owner (in chat)",
@@ -1983,7 +1983,7 @@
       "story": "As someone who has signed in but is not on a team yet, I want to try Compass in a role of my choice, so that I can see how it works before my admin adds me.",
       "ac": [
         "Given a signed-in person who is on no team\nWhen they see \"You have no access yet\"\nThen the screen also offers \"Try the demo\"",
-        "Given a signed-in person clicks \"Try the demo\" (from the no-access screen, or from the sidebar account menu when they are on a team)\nWhen the demo opens\nThen they pick a role on the \"What's your role?\" screen and see only the sample demo projects, with a banner \"Demo — sample data, kept in this browser only\" and \"Leave demo\"",
+        "Given a signed-in person clicks \"Try the demo\" on the no-access screen (the sidebar has no \"Try the demo\", ADR-019)\nWhen the demo opens\nThen they pick a role on the \"What's your role?\" screen and see only the sample demo projects, with a banner \"Demo — sample data, kept in this browser only\" and \"Leave demo\"",
         "Given the demo is open\nWhen the person changes their demo role in the sidebar, approves gates or edits the sample project\nThen it works like demo mode today: nothing is read from or written to Firebase or GitHub, and no real project, team or token is shown",
         "Given the demo is open\nWhen the person clicks \"Leave demo\"\nThen they return to their projects, or to \"You have no access yet\" if they are on no team"
       ],
@@ -2740,7 +2740,7 @@
       "title": "Account footer and single theme button",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given GitHub connected as @alice, and no connection, in light and in dark mode\nWhen the account card and the theme button are computed\nThen the card shows \"A\", \"@alice\", \"GitHub connected\" (or \"?\", \"Not connected\", \"Demo mode · connect\") and opens Connections; there is exactly one theme button, labelled \"Switch to dark theme\" in light mode and \"Switch to light theme\" in dark mode, and clicking it sets the theme to the other one"
+      "gherkin": "Given GitHub connected as @alice, and no connection, in light and in dark mode\nWhen the account card and the theme control are computed\nThen the card shows \"A\", \"@alice\", \"GitHub connected\" (or \"?\", \"Not connected\", \"Demo mode · connect\"); the account menu's \"Connections\" item opens Connections; there is exactly one theme control, the \"Dark theme\" switch titled \"Switch to dark theme\" in light mode and \"Switch to light theme\" in dark mode, and choosing it sets the theme to the other one"
     },
     {
       "id": "TC-405",
@@ -3333,7 +3333,7 @@
       "title": "The footer is one account card; the account menu lists the right items for each state",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)"
+      "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it"
     }
   ],
   "decisions": [

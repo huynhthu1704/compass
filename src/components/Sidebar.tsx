@@ -81,7 +81,8 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
             {ROLES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </div>}
-        <AccountMenu open={open} setOpen={setOpen}>
+        {/* REQ-110: Escape closes the menu from anywhere in the card or menu (also after Shift+Tab back to the card) */}
+        <AccountMenu open={open} setOpen={setOpen} onKeyDown={(e) => { if (open && e.key === 'Escape') { setOpen(false); cardRef.current?.focus(); } }}>
           <button ref={cardRef} className="side-card account-card" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} title={signedIn ? session.email : account.name}>
             <span className="side-avatar round account-avatar" aria-hidden>{account.initial}</span>
             <span className="side-meta">
@@ -93,11 +94,10 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
             <Icon name="more" size={18} />
           </button>
           {open && (
-            <div className="account-menu" role="menu" aria-label="Account" onKeyDown={(e) => {
-              if (e.key === 'Escape') { setOpen(false); cardRef.current?.focus(); }
-              else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') moveFocus(e);
-            }}>
+            <div className="account-menu">
+              {/* the header is not a menu item, so it sits beside role="menu"; tabIndex -1 keeps focus inside when it is clicked */}
               <div className="account-menu-head" tabIndex={-1}><strong>{name}</strong><span>{signedIn ? <>{session.email!.split('@')[0]}@<wbr />{session.email!.split('@').slice(1).join('@')}</> : account.state}</span></div>
+              <div className="account-menu-items" role="menu" aria-label="Account" onKeyDown={(e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') moveFocus(e); }}>
               {items.map((it) => it === 'connections'
                 ? <button key={it} role="menuitem" onClick={choose(() => go('/connect'))}><Icon name="link" size={16} />Connections<span className="account-menu-hint">{settings.githubUser ? 'GitHub ✓' : 'Not connected'}</span></button>
                 : it === 'theme'
@@ -105,6 +105,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
                   : it === 'leave-demo'
                     ? <button key={it} role="menuitem" onClick={choose(() => { leaveDemo(); go('/'); })}><Icon name="exit" size={16} />Leave demo</button>
                     : <button key={it} role="menuitem" className="account-menu-danger" onClick={choose(() => void signOut())}><Icon name="exit" size={16} />Sign out</button>)}
+              </div>
             </div>
           )}
         </AccountMenu>
@@ -166,7 +167,7 @@ function ProjectGroup({ p, sync, sub, openId, fsub, link, team }: { p: Project; 
 }
 
 /** REQ-110: the footer's account card and its menu; a click outside closes the menu, and it opens with focus on the first item. */
-function AccountMenu({ open, setOpen, children }: { open: boolean; setOpen: (v: boolean) => void; children: ReactNode }) {
+function AccountMenu({ open, setOpen, onKeyDown, children }: { open: boolean; setOpen: (v: boolean) => void; onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -176,7 +177,7 @@ function AccountMenu({ open, setOpen, children }: { open: boolean; setOpen: (v: 
     return () => document.removeEventListener('pointerdown', close);
   }, [open, setOpen]);
   // Tab (or any focus move) out of the card and menu closes it; a click outside is the pointerdown above.
-  return <div ref={ref} className="account" onBlur={(e) => { if (open && e.relatedTarget && !ref.current?.contains(e.relatedTarget as Node)) setOpen(false); }}>{children}</div>;
+  return <div ref={ref} className="account" onKeyDown={onKeyDown} onBlur={(e) => { if (open && e.relatedTarget && !ref.current?.contains(e.relatedTarget as Node)) setOpen(false); }}>{children}</div>;
 }
 
 /** REQ-110: arrow keys move between the menu items. */
