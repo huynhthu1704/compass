@@ -2227,10 +2227,10 @@
       "priority": "Must",
       "status": "Approved",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
-      "story": "As the owner of Compass, I want to give trusted people super admin rights, so that they can also manage the GitHub token, the Anthropic key, users and projects.",
+      "story": "As the owner of Compass, I want to give trusted people super admin rights, so that they can also manage the work token, the Anthropic key, users and projects.",
       "ac": [
         "Given the owner (the account whose hashed email is in the Firestore rules, ADR-013) opens the Users screen\nWhen they switch \"Super admin\" on or off for a person\nThen that person gains or loses super admin rights at their next page load; the Firestore rules accept this change only from the owner, and the owner can never be removed",
-        "Given a person who is a super admin but not the owner\nWhen they use Compass\nThen they can do everything the super admin does (see every project, open Connections, set or replace the GitHub token and Anthropic key, grant \"Can create projects\", manage teams), except granting or removing super admin",
+        "Given a person who is a super admin but not the owner\nWhen they use Compass\nThen they can do everything the super admin does (see every project, open Connections, set or replace the work token, the GitHub account for new projects and the Anthropic key, create or import projects, manage teams, delete old project tokens), except granting or removing super admin",
         "Given the Users screen\nWhen any super admin opens it\nThen each person shows a \"Super admin\" badge when they are one, and the owner is marked \"Owner\""
       ],
       "approvedBy": "the Product Owner (in chat)",
