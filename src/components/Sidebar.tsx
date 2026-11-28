@@ -193,7 +193,7 @@ function RolesPicker({ label, roles }: { label: string; roles: Role[] }) {
           const on = roles.includes(r);
           return (
             <label key={r} className="row gap-sm body-sm" style={{ alignItems: 'center', cursor: on && roles.length === 1 ? 'default' : 'pointer' }} title={on && roles.length === 1 ? 'Keep at least one role' : undefined}>
-              <input type="checkbox" style={{ accentColor: 'var(--color-bg-brand)' }} checked={on} disabled={on && roles.length === 1} onChange={() => store.setSettings({ roles: toggleRole(roles, r, true), role: undefined })} />
+              <input type="checkbox" checked={on} disabled={on && roles.length === 1} onChange={() => store.setSettings({ roles: toggleRole(roles, r, true), role: undefined })} />
               <span className="mono t-brand" style={{ minWidth: 32 }}>{r}</span><span>{ROLE_NAMES[r]}</span>
             </label>
           );
