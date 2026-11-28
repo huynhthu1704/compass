@@ -103,7 +103,7 @@ export async function startSession() {
     const { auth, authApp } = await load();
     currentAuth = authApp;
     auth.onAuthStateChanged(authApp, (user) => {
-      if (!user) { clearProjectTokens(); if (session.demo) store.setSettings({ role: undefined }); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false, demoEntry: undefined }); return; }
+      if (!user) { clearProjectTokens(); if (session.demo) store.setSettings(NO_ROLES); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false, demoEntry: undefined }); return; }
       if (session.email && normalizeEmail(user.email || '') !== session.email) clearProjectTokens(); // another account in this tab
       void loadAccess(user.email || '', user.emailVerified);
     });
@@ -323,9 +323,12 @@ export async function loadApprovalEvidence(key: string): Promise<import('./team'
   };
 }
 
+/** REQ-121: forgets the picked roles, including a single role saved before REQ-121. */
+const NO_ROLES = { roles: undefined, role: undefined };
+
 // ---- Demo after sign-in (REQ-040, ADR-014) ------------------------------------------------------------------------------
 
 /** Opens the demo for a signed-in person: sample projects only, a demo role of their choice. */
-export function enterDemo(entry = routeOf(window.location.hash)) { if (session.status !== 'signed-in') return; store.setSettings({ role: undefined }); set({ demo: true, demoEntry: entry }); } // always pick a demo role (REQ-040 AC2)
+export function enterDemo(entry = routeOf(window.location.hash)) { if (session.status !== 'signed-in') return; store.setSettings(NO_ROLES); set({ demo: true, demoEntry: entry }); } // always pick a demo role (REQ-040 AC2)
 /** Leaves the demo; the demo role is forgotten by the caller so it never leaks into real work. */
-export function leaveDemo() { store.setSettings({ role: undefined }); set({ demo: false, demoEntry: undefined }); } // the demo role never leaks into real work
+export function leaveDemo() { store.setSettings(NO_ROLES); set({ demo: false, demoEntry: undefined }); } // the demo role never leaks into real work

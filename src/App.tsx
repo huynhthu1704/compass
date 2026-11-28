@@ -19,6 +19,7 @@ import { TeamFloorPage } from './pages/TeamFloor';
 import { syncLabel, useSync } from './autosync';
 import { FeaturePage } from './pages/Feature';
 import { store, useStore } from './store';
+import { pickedRoles } from './types';
 import { Toaster } from './ui';
 import { Sidebar } from './components/Sidebar';
 import { canSeeProject, firebaseEnabled, getSession, leaveDemo, startSession, useSession, useWorkspace } from './firebase';
@@ -27,6 +28,8 @@ import { NoAccessPage, SignInPage } from './pages/SignIn';
 import { canOpenConnections, leavesDemoOnNavigate, routeOf, startScreen } from './team';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
+/** "Leave demo" everywhere (banner, account menu, demo role screen): back to the person's projects (REQ-040 AC4). */
+export const exitDemo = () => { leaveDemo(); go('/'); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
 
 function useRoute() {
@@ -49,7 +52,7 @@ export default function App() {
   useEffect(() => { void startSession(); }, []);
   // REQ-040 AC4, ADR-026: the browser Back button on the demo role screen leaves the demo instead of trapping the person.
   useEffect(() => {
-    const on = () => { const s = getSession(); if (leavesDemoOnNavigate({ demo: s.demo, hasRole: !!store.get().settings.role, entry: s.demoEntry, route: routeOf(window.location.hash) })) leaveDemo(); };
+    const on = () => { const s = getSession(); if (leavesDemoOnNavigate({ demo: s.demo, hasRole: pickedRoles(store.get().settings).length > 0, entry: s.demoEntry, route: routeOf(window.location.hash) })) leaveDemo(); };
     window.addEventListener('hashchange', on); return () => window.removeEventListener('hashchange', on);
   }, []);
   const session = useSession();
@@ -59,7 +62,7 @@ export default function App() {
   const sync = useSync(routeProject); // hooks must run before any early return
   // F-015: with Firebase configured, people sign in with Google and their roles come from the team (REQ-032).
   // REQ-039/040: with sign-in on, roles come from the team; the role screen appears only inside the demo.
-  const screen = startScreen({ firebase: firebaseEnabled, status: session.status, demo: !!session.demo, hasRole: !!settings.role, hasAccess: session.superAdmin || session.access.length > 0 });
+  const screen = startScreen({ firebase: firebaseEnabled, status: session.status, demo: !!session.demo, hasRole: pickedRoles(settings).length > 0, hasAccess: session.superAdmin || session.access.length > 0 });
   if (screen === 'loading') return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><span className="body t-secondary">Loading…</span></main>;
   if (screen === 'sign-in') return <><SignInPage logo={<Logo />} error={session.error} /><Toaster /></>;
   if (screen === 'no-access') return <><NoAccessPage logo={<Logo />} email={session.email} error={session.error} /><Toaster /></>;
@@ -97,7 +100,7 @@ export default function App() {
           {session.demo && (
             <div className="row gap-md wrap" role="status" style={{ padding: '12px 16px', marginBottom: 16, borderRadius: 12, background: 'var(--color-bg-brand-subtle)', border: '1px solid var(--color-border-brand)', alignItems: 'center' }}>
               <span className="stack grow"><strong className="body-sm">Demo — sample data, kept in this browser only</strong><span className="body-sm t-secondary">Nothing here is saved to GitHub or Firebase. Your real projects are not shown while you are in the demo.</span></span>
-              <button className="btn secondary sm" onClick={() => { leaveDemo(); go('/'); }}>Leave demo</button>
+              <button className="btn secondary sm" onClick={exitDemo}>Leave demo</button>
             </div>
           )}
           {page}

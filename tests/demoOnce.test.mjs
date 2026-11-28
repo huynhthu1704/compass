@@ -75,3 +75,20 @@ test('TC-528 (REQ-040, ADR-026): "Open demo project" records the demo project ro
   openDemo([real('r1')], () => demo('new'), { status: 'signed-in', demo: false }, fx);
   assert.deepEqual(entries, ['/p/d1', '/p/new']);
 });
+
+// REQ-040 AC4 — TC-528: every "Leave demo" (banner, account menu, demo role screen) uses the one shared exitDemo().
+// A source check: exitDemo needs the browser and Firebase, so the click itself is covered by manual TC-077.
+import { readFileSync, readdirSync } from 'node:fs';
+
+test('TC-528 (REQ-040 AC4): every "Leave demo" button calls the one shared exitDemo()', () => {
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  const app = read('src/App.tsx');
+  assert.match(app, /export const exitDemo = \(\) => \{ leaveDemo\(\); go\('\/'\); \};/, 'exitDemo leaves the demo, then goes to the projects');
+  assert.match(app, /onClick=\{exitDemo\}>Leave demo</, 'the demo banner');
+  assert.match(read('src/components/Sidebar.tsx'), /onClick=\{choose\(exitDemo\)\}/, 'the account menu');
+  assert.match(read('src/pages/Onboarding.tsx'), /onClick=\{exitDemo\}>Leave demo</, 'the demo role screen');
+  const files = (dir) => readdirSync(new URL(`../${dir}`, import.meta.url), { withFileTypes: true })
+    .flatMap((e) => (e.isDirectory() ? files(`${dir}/${e.name}`) : /\.tsx?$/.test(e.name) ? [`${dir}/${e.name}`] : []));
+  const inlined = files('src').filter((f) => /leaveDemo\(\);\s*go\(/.test(read(f).replace(/export const exitDemo = \(\) => \{ leaveDemo\(\); go\('\/'\); \};/, '')));
+  assert.deepEqual(inlined, [], 'no other file leaves the demo and navigates by hand');
+});

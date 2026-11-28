@@ -4,14 +4,14 @@ import { FileRow, FileRows } from '../components/DesignFilesPanel';
 import { checkDesignInput, designFiles, FIGMA_HELP, isDesignAdmin, MIRO_HELP, saveDesignFiles, TOOL_NAMES } from '../designLinks';
 import { projectKey, useSession } from '../firebase';
 import { store, useStore } from '../store';
-import type { Project } from '../types';
+import { pickedRoles, type Project } from '../types';
 import { Badge, Button, Field, PageHead, toast } from '../ui';
 
 export function ProjectSettingsPage({ p }: { p: Project }) {
   const { settings } = useStore();
   const session = useSession();
   const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
-  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!session.demo || !!p.demo });
+  const admin = isDesignAdmin({ roles: pickedRoles(settings), signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!session.demo || !!p.demo });
   const files = designFiles(p.spec.designTool);
   const empty = !files.figma && !files.miro && !files.other;
   const [editing, setEditing] = useState(empty);
