@@ -2281,21 +2281,23 @@
       "featureId": "F-003",
       "title": "The Design agent saves each screen as a layout the Figma plugin can draw",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
       "story": "As a designer, I want every screen of a drafted design to carry a structured layout, so that the Compass Figma plugin can draw it without me retyping the design.",
       "ac": [
         "Given every requirement of a feature is approved\nWhen the Design agent saves its design\nThen each screen has, next to its name, purpose, REQ ids and states, a layout: an ordered list of sections, each with elements of a known kind (heading, text, field, button, badge, list, table, card, image placeholder) with their label or sample content and, where the file has one, the component name to use",
         "Given a saved design whose layout has an element of an unknown kind, or a screen with no section\nWhen the portal checks the design before saving it\nThen it refuses that screen and names the screen and the element, and the other screens are kept",
         "Given a design saved before this change, without layouts\nWhen the Design page opens it\nThen it shows as before, says the screens can be drawn by hand or after a Redesign, and the manual path (draw, link, approve) still works"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-115",
       "featureId": "F-003",
       "title": "The Compass Figma plugin signs in to Compass, and only UX, PO or Admin can start a drawing run",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
       "story": "As a project Admin, I want the plugin to know who is using it, so that only my team can use the shared key and only people who may approve a design can draw one.",
       "ac": [
@@ -2303,14 +2305,16 @@
         "Given a signed-in person\nWhen they pick a project\nThen the plugin lists only projects they are a member of, and the Draw button is enabled only for UX, PO, the project Admin or a super admin; anyone else sees the design but cannot draw",
         "Given a signed-in plugin\nWhen it reads the project's shared Anthropic key and work token\nThen it keeps them in memory for the session only, never in figma.clientStorage, the Figma file or a log, and signing out or closing the plugin forgets them",
         "Given a code that was never confirmed, was confirmed by someone else's account or is older than 10 minutes\nWhen the plugin tries to use it\nThen sign-in fails with a message saying why, and nothing is read"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-116",
       "featureId": "F-003",
       "title": "The plugin's Design agent draws every screen from the file's design system with a fixed set of tools",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
       "story": "As a Product Owner, I want the screens drawn from our components and tokens, so that what I review in Figma is what we will build.",
       "ac": [
@@ -2319,60 +2323,70 @@
         "Given a part that several screens need and the file does not have\nWhen the agent creates it\nThen it creates one component on the Components page, in a section named after the feature, and places instances of it on the screens",
         "Given the plugin's tools\nWhen the model asks to change or delete a node outside the feature's section and the Components page, or to delete a node the plugin did not create\nThen the tool refuses, tells the model why, and nothing changes; the model has no tool that runs code",
         "Given a run that fails part-way (network, Claude error, Figma error)\nWhen the plugin stops\nThen the frames already drawn stay, the run says which screens are missing, and the design stays a Draft in Compass"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-117",
       "featureId": "F-003",
       "title": "The agent checks an image of each drawn screen and fixes what it finds",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
       "story": "As a reviewer, I want obvious layout mistakes fixed before I look, so that I review the design and not clipped text or overlaps.",
       "ac": [
         "Given a screen the agent has drawn\nWhen it exports the frame as an image and compares it with the screen's layout\nThen it looks for clipped or overlapping text, placeholder text (\"Button\", \"Label\"), missing sections and elements in the wrong order, and fixes each one it finds",
         "Given a screen that still has a problem after 3 fix rounds\nWhen the agent stops\nThen it leaves the screen as it is and the run report lists the open problem for that screen, so a person can fix it"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-118",
       "featureId": "F-003",
       "title": "The plugin saves the frame links to compass/spec.json, and the Design page shows them",
       "priority": "Must",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
       "story": "As a Product Owner, I want the drawn frames linked in Compass automatically, so that I can review and approve without copying links.",
       "ac": [
         "Given a finished drawing run\nWhen the plugin saves\nThen it commits compass/spec.json through the project's shared work token with each drawn screen's frame link and the section link as the feature's design link, and the design stays a Draft",
         "Given someone changed compass/spec.json on main while the plugin was drawing\nWhen the plugin saves\nThen it reads the latest file and changes only the drawn screens' links (matched by screen id), keeping every other change",
         "Given the links saved\nWhen anyone opens the feature's Design page in the portal\nThen the preview shows the drawn section, and approval works as before (UX or PO; coding stays locked until then)"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-119",
       "featureId": "F-003",
       "title": "Running the plugin again after a Redesign redraws only the screens that changed",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
       "story": "As a designer, I want a redraw to leave unchanged screens alone, so that my manual touches on them survive.",
       "ac": [
         "Given a feature drawn once and a Redesign in the portal that changed SCR-2 only\nWhen the plugin runs again\nThen it redraws SCR-2 in place (same frame name and position), skips the unchanged screens, adds new screens and asks before removing a screen the design no longer has",
         "Given a screen whose layout did not change\nWhen the plugin runs again\nThen that frame is not touched, including changes a person made to it by hand"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-120",
       "featureId": "F-003",
       "title": "Approving a design starts the Test design agent",
       "priority": "Should",
-      "status": "Draft",
+      "status": "Approved",
       "intent": "compass/intent/2026-11-28-design-agent-draws-in-figma.md",
       "story": "As a QA, I want test case design to start as soon as the design is approved, so that the feature moves on without waiting for someone to click.",
       "ac": [
         "Given a feature with approved requirements, no test case for some of them and a design that has just been approved\nWhen the approval is saved\nThen the Test design agent starts for the feature's requirements without a test case, and the page says so",
         "Given the Test design agent already running or waiting for approval for that feature, or every requirement already covered\nWhen the design is approved\nThen no new run starts"
-      ]
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     }
   ],
   "tests": [
