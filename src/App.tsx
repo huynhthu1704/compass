@@ -21,7 +21,7 @@ import { FeaturePage } from './pages/Feature';
 import { useStore } from './store';
 import { Toaster } from './ui';
 import { Sidebar } from './components/Sidebar';
-import { canSeeProject, firebaseEnabled, leaveDemo, loadProjectToken, projectKey, startSession, useProjectToken, useSession } from './firebase';
+import { canSeeProject, firebaseEnabled, leaveDemo, startSession, useSession, useWorkspace } from './firebase';
 import { tokenFor } from './token';
 import { NoAccessPage, SignInPage } from './pages/SignIn';
 import { canOpenConnections, startScreen } from './team';
@@ -48,11 +48,7 @@ export default function App() {
   useEffect(() => setMenu(false), [parts.join('/')]);
   useEffect(() => { void startSession(); }, []);
   const session = useSession();
-  // F-015 REQ-034: when a signed-in person opens a project, load its shared GitHub token (members may read it).
-  const openRepo = parts[0] === 'p' ? state.projects.find((x) => x.id === parts[1] && canSeeProject(x, session))?.repo : undefined;
-  const openKey = openRepo && session.status === 'signed-in' ? projectKey(openRepo) : '';
-  useEffect(() => { if (openKey) loadProjectToken(openKey).catch(() => undefined); }, [openKey]);
-  useProjectToken(openKey); // re-render when the project token arrives, so the sync label and GitHub actions use it
+  useWorkspace(); // F-015 REQ-041: re-render when the shared work token arrives, so the sync label and GitHub actions use it
 
   const routeProject = parts[0] === 'p' ? parts[1] : undefined;
   const sync = useSync(routeProject); // hooks must run before any early return

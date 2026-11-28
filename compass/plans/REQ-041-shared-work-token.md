@@ -12,7 +12,7 @@ and auto-sync setting. Super admins set these on Connections. Connections is hid
 The original build 2 also had the audit line (REQ-042). Together they need more than 12 files, so the audit line moves
 to build 2b.
 
-## Files (11)
+## Files (12)
 - `src/team.ts` (pure, tested):
   - `pickToken(own, workToken, signedIn)` — with sign-in on, the work token or nothing; with sign-in off, the device
     token.
@@ -31,7 +31,11 @@ to build 2b.
 - `src/token.ts`: `tokenFor` uses the work token when signed in; `missingToken` says "Loading the shared settings…"
   while it loads, otherwise "No GitHub token yet — ask a super admin".
 - `src/pages/Projects.tsx`: opening a shared project uses the work token.
-- `src/App.tsx`: the Connections address shows Projects to anyone who may not open it.
+- `src/App.tsx`: the Connections address shows Projects to anyone who may not open it. The retired project token is no
+  longer loaded when a project opens; the page re-renders when the shared settings arrive.
+- `src/pages/NewProject.tsx` (review of #135): signed in, after a super admin creates a repository with their creator
+  token, Compass stops and says what to do next — add the repository to the work token on GitHub, install the framework
+  from Overview, switch Pages on. Build 3 adds "Continue setup" and switches Pages on with the creator token.
 - `src/components/Sidebar.tsx`: the account menu leaves out Connections for them (REQ-110 AC2 as amended).
 - `src/pages/Connect.tsx`, for super admins while signed in:
   - **Work token** (shared): its permissions are listed, with "never Administration — Compass cannot check this";
@@ -57,7 +61,12 @@ checks → emulator run in the browser (super admin saves; a member has no Conne
 - **The override is never saved:** a member's own key stays on their device, but is not used while they are signed in.
   Signing out, or entering the demo, removes the override.
 - **Super admins' creator token** is the device token they had before (`settings.githubToken`). Import and New project
-  keep using it, as today. Build 3 limits them to the account for new projects.
+  keep using it to read and create repositories. Build 3 limits them to the account for new projects.
+- **Until build 3:**
+  - **Release → "Enable GitHub Pages"** uses the work token, which has no Administration permission, so it fails;
+    switch Pages on in the repository settings instead.
+  - **The Team page still shows the project-token card,** whose token is no longer used.
+  - **Members still see Import and New project,** which use their own device token.
 - **Agents read the key from the store's settings.** The override covers every current caller, and `llm.ts` is
   unchanged.
 

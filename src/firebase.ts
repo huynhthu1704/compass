@@ -110,7 +110,7 @@ export async function startSession() {
 /** Reads config/access (creating it at the super admin's first sign-in, ADR-013) and the person's projects. */
 async function loadAccess(rawEmail: string, verified: boolean) {
   const email = normalizeEmail(rawEmail);
-  if (!verified) { set({ status: 'signed-in', email, superAdmin: false, access: [] }); return; }
+  if (!verified) { workspace = null; workspaceFor = email; set({ status: 'signed-in', email, superAdmin: false, access: [] }); return; }
   // A refresh (after a team save or Reload) keeps the current screen; only the first load shows "Loading…".
   if (session.status !== 'signed-in' || session.email !== email) set({ status: 'loading', email });
   try {
@@ -140,7 +140,7 @@ async function loadAccess(rawEmail: string, verified: boolean) {
     // REQ-041 AC3: a super admin's sign-in backfills people/{email} for teams saved before the index existed (once per tab).
     if (superAdmin && !peopleSynced) { peopleSynced = true; void syncPeopleIndex().catch(() => { peopleSynced = false; }); }
   } catch (e) {
-    if (stillSignedIn(email)) set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` });
+    if (stillSignedIn(email)) { workspace = null; workspaceFor = email; set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` }); }
   }
 }
 
