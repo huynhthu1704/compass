@@ -13,6 +13,8 @@ const PAIRS = {
   'compass/plans/README.md': 'src/framework/plans-README.md',
   'compass/design/README.md': 'src/framework/design-README.md',
   '.claude/settings.json': 'src/framework/claude-settings.json',
+  '.github/ISSUE_TEMPLATE/requirement.md': 'src/framework/issue-requirement.md',
+  '.github/ISSUE_TEMPLATE/bug.md': 'src/framework/issue-bug.md',
 };
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 

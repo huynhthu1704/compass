@@ -3,7 +3,7 @@ name: Bug
 about: Something does not behave as the requirement says
 labels: bug
 ---
-<!-- Standard bug issue (ADR-021). -->
+<!-- Standard bug issue. -->
 
 ## Details
 | Field | Value |
