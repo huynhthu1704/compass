@@ -3415,10 +3415,10 @@
         "REQ-040",
         "REQ-039"
       ],
-      "title": "Try the demo from the no-access screen and leave it",
+      "title": "Try the demo from the no-access screen and leave it, also from the role screen",
       "type": "Manual",
-      "status": "Not run",
-      "gherkin": "Given a Google account on no team\nWhen I sign in, click \"Try the demo\", pick QA, open the sample project, then click \"Leave demo\"\nThen I see the role screen, then the sample project with the demo banner and a demo role picker, then \"You have no access yet\" again; a team member signing in sees \"My roles: …\" and no role screen"
+      "status": "Pass",
+      "gherkin": "Given a Google account on no team\nWhen I sign in, click \"Try the demo\", pick QA, open the sample project, then click \"Leave demo\"\nThen I see the role screen, then the sample project with the demo banner and a demo role picker, then \"You have no access yet\" again; a team member signing in sees \"My roles: …\" and no role screen\nAnd given a signed-in person on Projects clicks \"Open demo project\" and sees the role screen\nWhen they press the browser Back button\nThen they see their projects (or \"You have no access yet\") with no demo banner\nAnd when they open the demo again and click \"Leave demo\" on the role screen\nThen they see their projects (or \"You have no access yet\") with no demo banner"
     },
     {
       "id": "TC-500",
@@ -3532,6 +3532,16 @@
       "type": "Automated",
       "status": "Pass",
       "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it\nAnd the arrow keys move between the items and wrap around at the ends, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)"
+    },
+    {
+      "id": "TC-528",
+      "reqIds": [
+        "REQ-040"
+      ],
+      "title": "Leaving the \"Open demo project\" route before a demo role is picked leaves the demo",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given a signed-in person clicked \"Open demo project\", so the demo is opened on /p/<demo id> with no role yet\nWhen the route becomes /p/<demo id>\nThen they stay in the demo\nAnd when the route becomes any other route before a role is picked (the browser Back button)\nThen the demo is left\nAnd once a demo role is picked, or outside the demo, a route change never leaves the demo"
     },
     {
       "id": "TC-078",
@@ -3918,6 +3928,18 @@
       "context": "People must sign in to use Compass, including the demo. Signed in outside the demo, a person who is not a super admin sees only projects their team lists (REQ-032); the demo project has no repository, so \"Open demo project\" and \"Explore the demo\" added a hidden project and the page stayed on Projects: the button seemed broken. A super admin saw the demo project next to the real ones.",
       "decision": "The Product Owner chose in chat on 2026-11-28: the button enters the demo session (as \"Try the demo\" does, REQ-040) and then opens the demo project, and people need to sign in to view the demo — super admins go through the demo session too.",
       "consequences": "The person picks a demo role, sees the demo banner and \"Leave demo\", and their real projects are hidden until they leave (REQ-040 AC3). ADR-019 still keeps \"Try the demo\" out of the sidebar. Only a build without Firebase config (no sign-in at all, e.g. local development) opens the demo project directly."
+    },
+    {
+      "id": "ADR-026",
+      "date": "2026-11-28",
+      "title": "The demo role screen can always be left: \"Leave demo\" and the browser Back button",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-040"
+      ],
+      "context": "\"Open demo project\" starts the demo session and clears the role (ADR-022, REQ-040 AC2), so the \"What's your role?\" screen replaces every route until a role is picked. The browser Back button changed the address but showed the same screen, and \"Leave demo\" sits in the demo banner, which that screen hides: people could only pick a role or reload the page.",
+      "decision": "The Product Owner chose in chat on 2026-11-28 (after a screenshot of the trapped role screen): the role screen inside the demo shows \"Leave demo\", and navigating away from the route the demo was opened on before a role is picked (the browser Back button) leaves the demo.",
+      "consequences": "Leaving returns to the person's projects, or to \"You have no access yet\" if they are on no team (REQ-040 AC4). Once a demo role is picked, Back moves inside the demo as before and the demo is left with \"Leave demo\" in the banner or the account menu. Outside the demo the role screen is unchanged."
     }
   ]
 }
