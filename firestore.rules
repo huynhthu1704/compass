@@ -37,7 +37,10 @@ service cloud.firestore {
     function peopleChangeOk(email, before, after) {
       let added = after.removeAll(before);
       let removed = before.removeAll(after);
-      return (added.size() == 1 && removed.size() == 0 && canManage(added[0])
+      // A write that changes nothing (removing someone whose record never listed the project, re-adding someone whose
+      // record still lists it) is accepted, so a team change never fails on it; it gives no access (isPerson()).
+      return (added.size() == 0 && removed.size() == 0)
+        || (added.size() == 1 && removed.size() == 0 && canManage(added[0])
                 && email in getAfter(projectPath(added[0])).data.members)
         || (added.size() == 0 && removed.size() == 1 && canManage(removed[0])
                 && !(email in getAfter(projectPath(removed[0])).data.members));
@@ -58,6 +61,16 @@ service cloud.firestore {
 
     // A team document: members, at least one Admin (REQ-031), every member has roles. Emails are stored lower-case by
     // the portal (src/team.ts); a mixed-case entry could never match me(), so it would only lock that person out.
+    // A team change adds or removes at most one person, and that person's people/{email} must agree after the write
+    // (REQ-041 AC3), so removing someone always takes away their read access to the work token and key.
+    function peopleAgree(pid, before, after) {
+      let joined = after.removeAll(before);
+      let left = before.removeAll(after);
+      return (joined.size() == 0 && left.size() == 0)
+        || (joined.size() == 1 && left.size() == 0 && pid in getAfter(personPath(joined[0])).data.projects)
+        || (joined.size() == 0 && left.size() == 1 && !(pid in getAfter(personPath(left[0])).data.projects));
+    }
+
     function validProject(d) {
       return d.keys().hasOnly(['name', 'repo', 'members', 'admins', 'team'])
         && d.members is list && d.admins is list && d.team is map
@@ -85,11 +98,18 @@ service cloud.firestore {
 
     // The shared work token, Anthropic key and settings (REQ-041, REQ-044, ADR-016, ADR-017). Every reader's browser
     // can read the token and key: super admins and anyone on a team (people/{email}). Only super admins write them.
+    function validWorkspace(d) {
+      return d.keys().hasOnly(['workToken', 'anthropicKey', 'model', 'autoSync', 'newProjectsAccount'])
+        && (!('workToken' in d) || d.workToken is string)
+        && (!('anthropicKey' in d) || d.anthropicKey is string)
+        && (!('model' in d) || d.model is string)
+        && (!('autoSync' in d) || d.autoSync is bool)
+        && (!('newProjectsAccount' in d) || d.newProjectsAccount is string);
+    }
     match /config/workspace {
       allow get: if isSuperAdmin() || isPerson();
       allow list: if false;
-      allow create, update: if isSuperAdmin()
-        && request.resource.data.keys().hasOnly(['workToken', 'anthropicKey', 'model', 'autoSync', 'newProjectsAccount']);
+      allow create, update: if isSuperAdmin() && validWorkspace(request.resource.data);
       allow delete: if isSuperAdmin();
     }
 
@@ -107,11 +127,13 @@ service cloud.firestore {
       allow get: if isMember(pid) || isSuperAdmin();
       allow list: if isSuperAdmin() || (signedIn() && me() in resource.data.members);
       // Only the super admin creates a project's first team, together with its approval baseline (REQ-030, REQ-038).
-      allow create: if isSuperAdmin() && validProject(request.resource.data) && existsAfter(baselinePath(pid));
+      allow create: if isSuperAdmin() && validProject(request.resource.data) && existsAfter(baselinePath(pid))
+        && peopleAgree(pid, [], request.resource.data.members);
       // Admins of the project or the super admin manage the team; the repo never changes (REQ-030, REQ-031, REQ-035).
       allow update: if (isAdmin(pid) || isSuperAdmin())
         && validProject(request.resource.data)
-        && request.resource.data.repo == resource.data.repo;
+        && request.resource.data.repo == resource.data.repo
+        && peopleAgree(pid, resource.data.members, request.resource.data.members);
       allow delete: if false;
 
       // The approvals already in spec.json when the team was created (REQ-038). Written once, never changed.
@@ -141,10 +163,11 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
-      // Retired project tokens (REQ-043, ADR-016): nobody reads or writes them; a super admin deletes what remains.
+      // The project GitHub token (REQ-034, ADR-011). Retired by REQ-043: build 3 of phase 1 stops reading it and closes
+      // these rules. Until then they stay as before, so these rules can be published as soon as this build is merged.
       match /secrets/{doc} {
-        allow read, create, update: if false;
-        allow delete: if isSuperAdmin();
+        allow read: if isMember(pid) || isSuperAdmin();
+        allow create, update, delete: if doc == 'token' && (isAdmin(pid) || isSuperAdmin());
       }
     }
   }

@@ -1,4 +1,4 @@
-// F-015 Firestore security rules (REQ-030, REQ-031, REQ-033 … REQ-038, REQ-041 … REQ-046) — TC-067, TC-079, TC-082, TC-084, TC-087.
+// F-015 Firestore security rules (REQ-030, REQ-031, REQ-033 … REQ-038, REQ-041 … REQ-046) — TC-067, TC-079, TC-084, TC-087.
 // The gate-table check always runs. The emulator cases run with `npm run test:rules` (Firestore emulator);
 // plain `npm test` skips them when no emulator is running.
 import test from 'node:test';
@@ -129,9 +129,18 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     await assertSucceeds(getDocs(query(collection(mixed, 'projects'), where('members', 'array-contains', 'ba@example.com'))));
     await assertSucceeds(addDoc(collection(mixed, 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'BA')));
     await assertSucceeds(getDoc(doc(sa, 'config/access')));                                                // the super admin reads it
-    await assertSucceeds(updateDoc(doc(sa, 'projects/p1'), { members: [...p1.members, 'ux@example.com'], team: { ...team, 'ux@example.com': ['UX'] } })); // super admin manages any team
+    const saAdd = writeBatch(sa);                                                                          // super admin manages any team
+    saAdd.update(doc(sa, 'projects/p1'), { members: [...p1.members, 'ux@example.com'], team: { ...team, 'ux@example.com': ['UX'] } });
+    saAdd.set(doc(sa, 'people/ux@example.com'), { projects: arrayUnion('p1') }, { merge: true });
+    await assertSucceeds(saAdd.commit());
+    await assertSucceeds(setDoc(doc(sa, 'projects/p1/secrets/token'), { token: 'z' }));                  // project tokens stay until build 3 (REQ-043)
+    await assertSucceeds(getDoc(doc(ba, 'projects/p1/secrets/token')));
     await assertSucceeds(getDocs(query(collection(ba, 'projects'), where('members', 'array-contains', 'ba@example.com'))));
-    await assertSucceeds(updateDoc(doc(admin, 'projects/p1'), { members: [...p1.members, 'z@example.com'], team: { ...team, 'z@example.com': ['QA'] } }));
+    const adminAdd = writeBatch(admin);
+    adminAdd.update(doc(admin, 'projects/p1'), { members: [...p1.members, 'ux@example.com', 'z@example.com'], team: { ...team, 'ux@example.com': ['UX'], 'z@example.com': ['QA'] } });
+    adminAdd.set(doc(admin, 'people/z@example.com'), { projects: arrayUnion('p1') }, { merge: true });
+    await assertSucceeds(adminAdd.commit());
+    await assertSucceeds(setDoc(doc(admin, 'projects/p1/secrets/token'), { token: 'y' }));
     await assertSucceeds(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'BA')));
     await assertSucceeds(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'tests', 'QA')));
     await assertSucceeds(addDoc(collection(sa, 'projects/p1/approvals'), record(SA, 'design', 'super admin')));
@@ -139,6 +148,7 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     const first = writeBatch(sa);
     first.set(doc(sa, 'projects/p2'), { name: 'P2', repo: { owner: 'o', name: 'r2' }, members: ['admin@example.com'], admins: ['admin@example.com'], team: { 'admin@example.com': ['Admin'] } });
     first.set(doc(sa, 'projects/p2/baseline/initial'), { approvals: [{ item: 'REQ-001', gate: 'requirements', approvedBy: 'po@example.com (PO)' }] });
+    first.set(doc(sa, 'people/admin@example.com'), { projects: arrayUnion('p2') }, { merge: true });
     await assertSucceeds(first.commit());
   });
 
@@ -149,16 +159,6 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     await assertFails(setDoc(doc(as(SA), 'config/access'), { superAdmins: [SA, 'x@example.com'] }));
     await assertSucceeds(setDoc(doc(as(SA), 'config/access'), { superAdmins: [SA] }));
     await assertFails(setDoc(doc(as('x@example.com'), 'config/access'), { superAdmins: [SA, 'x@example.com'] })); // nobody but the owner changes it
-  });
-
-  await t.test('TC-082 (REQ-043): retired project tokens are never read or written; a super admin deletes them', async () => {
-    await seed();
-    const ba = as('ba@example.com'), admin = as('admin@example.com'), sa = as(SA);
-    for (const db of [ba, admin, sa]) await assertFails(getDoc(doc(db, 'projects/p1/secrets/token')));
-    await assertFails(setDoc(doc(admin, 'projects/p1/secrets/token'), { token: 'y' }));
-    await assertFails(setDoc(doc(sa, 'projects/p1/secrets/token'), { token: 'y' }));
-    await assertFails(deleteDoc(doc(admin, 'projects/p1/secrets/token')));
-    await assertSucceeds(deleteDoc(doc(sa, 'projects/p1/secrets/token')));
   });
 
   await t.test('TC-087 (REQ-046): only the owner adds or removes super admins, and the owner stays', async () => {
@@ -179,6 +179,8 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     const ba = as('ba@example.com'), admin = as('admin@example.com'), sa = as(SA), out = as('x@example.com'), z = as('z@example.com');
     for (const db of [ba, admin]) await assertFails(updateDoc(doc(db, 'config/workspace'), { workToken: 'mine' })); // a member and a project Admin
     await assertFails(updateDoc(doc(sa, 'config/workspace'), { other: 1 }));                               // only the known fields
+    await assertFails(updateDoc(doc(sa, 'config/workspace'), { autoSync: 'yes' }));                        // typed values
+    await assertFails(updateDoc(doc(sa, 'config/workspace'), { workToken: 42 }));
     await assertSucceeds(setDoc(doc(sa, 'config/workspace'), { workToken: 'w2', anthropicKey: 'k2', model: 'm2', autoSync: false, newProjectsAccount: 'acme' }));
     await assertSucceeds(getDoc(doc(ba, 'config/workspace')));                                             // on a team
     await assertSucceeds(getDoc(doc(sa, 'config/workspace')));
@@ -203,6 +205,41 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     rm.set(doc(admin, 'people/z@example.com'), { projects: arrayRemove('p1') }, { merge: true });
     await assertSucceeds(rm.commit());
     await assertFails(getDoc(doc(z, 'config/workspace')));
+    // A team change must take the person's people record along: a removal or an addition without it is refused.
+    const back = writeBatch(admin);
+    back.update(doc(admin, 'projects/p1'), { members: [...p1.members, 'z@example.com'], team: { ...team, 'z@example.com': ['QA'] } });
+    back.set(doc(admin, 'people/z@example.com'), { projects: arrayUnion('p1') }, { merge: true });
+    await assertSucceeds(back.commit());
+    await assertFails(updateDoc(doc(admin, 'projects/p1'), { members: p1.members, team }));               // removal without people/z
+    await assertFails(updateDoc(doc(admin, 'projects/p1'), { members: [...p1.members, 'z@example.com', 'y@example.com'], team: { ...team, 'z@example.com': ['QA'], 'y@example.com': ['UX'] } })); // addition without people/y
+    const two = writeBatch(admin);                                                                       // two people in one change
+    two.update(doc(admin, 'projects/p1'), { members: ['admin@example.com'], team: { 'admin@example.com': team['admin@example.com'] } });
+    two.set(doc(admin, 'people/z@example.com'), { projects: arrayRemove('p1') }, { merge: true });
+    two.set(doc(admin, 'people/ba@example.com'), { projects: arrayRemove('p1') }, { merge: true });
+    await assertFails(two.commit());
+  });
+
+  await t.test('TC-079 (REQ-041 AC3): a people write that changes nothing never blocks a team change', async () => {
+    await seed();
+    const admin = as('admin@example.com');
+    // Existing teams have no people record yet: removing ba (record lists p1) works, and so does removing someone with no record.
+    await env.withSecurityRulesDisabled(async (c) => updateDoc(doc(c.firestore(), 'projects/p1'), { members: [...p1.members, 'old@example.com'], team: { ...team, 'old@example.com': ['QA'] } }));
+    const noRecord = writeBatch(admin);
+    noRecord.update(doc(admin, 'projects/p1'), { members: p1.members, team });
+    noRecord.set(doc(admin, 'people/old@example.com'), { projects: arrayRemove('p1') }, { merge: true });
+    await assertSucceeds(noRecord.commit());
+    // Re-adding someone whose record still lists the project.
+    await env.withSecurityRulesDisabled(async (c) => setDoc(doc(c.firestore(), 'people/back@example.com'), { projects: ['p1'] }));
+    const readd = writeBatch(admin);
+    readd.update(doc(admin, 'projects/p1'), { members: [...p1.members, 'back@example.com'], team: { ...team, 'back@example.com': ['UX'] } });
+    readd.set(doc(admin, 'people/back@example.com'), { projects: arrayUnion('p1') }, { merge: true });
+    await assertSucceeds(readd.commit());
+    // Removing someone whose record does not list the project.
+    await env.withSecurityRulesDisabled(async (c) => setDoc(doc(c.firestore(), 'people/back@example.com'), { projects: ['p4'] }));
+    const gone = writeBatch(admin);
+    gone.update(doc(admin, 'projects/p1'), { members: p1.members, team });
+    gone.set(doc(admin, 'people/back@example.com'), { projects: arrayRemove('p1') }, { merge: true });
+    await assertSucceeds(gone.commit());
   });
 
   await t.test('TC-084 (REQ-044 AC2/AC4): only super admins create a first team and set the account for new projects', async () => {

@@ -181,16 +181,15 @@ export async function changeTeam(key: string, project: { name: string; repo: { o
  *  require). Returns how many entries were added. Safe to run again: entries already there are skipped. */
 export async function syncPeopleIndex(): Promise<number> {
   const { fs, db } = await load();
-  const projects = await fs.getDocs(fs.collection(db, 'projects'));
-  const people = new Map<string, string[]>();
+  const [projects, records] = await Promise.all([fs.getDocs(fs.collection(db, 'projects')), fs.getDocs(fs.collection(db, 'people'))]);
+  const people = new Map(records.docs.map((d) => [d.id, (d.data().projects || []) as string[]]));
   let added = 0;
   for (const p of projects.docs) {
     for (const raw of ((p.data() as Partial<TeamDoc>).members || [])) {
       const e = normalizeEmail(raw);
-      if (!people.has(e)) { const snap = await fs.getDoc(fs.doc(db, 'people', e)); people.set(e, snap.exists() ? ((snap.data().projects || []) as string[]) : []); }
-      if (people.get(e)!.includes(p.id)) continue;
-      await fs.setDoc(fs.doc(db, 'people', e), { projects: fs.arrayUnion(p.id) }, { merge: true });
-      people.get(e)!.push(p.id); added++;
+      if ((people.get(e) || []).includes(p.id)) continue;
+      // One refused entry (e.g. an old mixed-case email the rules cannot match) must not stop the others.
+      try { await fs.setDoc(fs.doc(db, 'people', e), { projects: fs.arrayUnion(p.id) }, { merge: true }); added++; } catch { /* skip */ }
     }
   }
   return added;
@@ -226,12 +225,11 @@ export async function setSuperAdmins(emails: string[]) {
   await fs.updateDoc(fs.doc(db, 'config', 'access'), { superAdmins: [...new Set(emails.map(normalizeEmail))] });
 }
 
-/** Deletes the retired project tokens without reading them (super admins only, REQ-043 AC2). */
-export async function deleteOldProjectTokens(): Promise<number> {
+/** Deletes any retired project tokens that remain, without reading them (super admins only, REQ-043 AC2; used in build 3). */
+export async function deleteOldProjectTokens(): Promise<void> {
   const { fs, db } = await load();
   const projects = await fs.getDocs(fs.collection(db, 'projects'));
   await Promise.all(projects.docs.map((p) => fs.deleteDoc(fs.doc(db, 'projects', p.id, 'secrets', 'token'))));
-  return projects.size;
 }
 
 // ---- Project GitHub token (REQ-034, ADR-011; retired by REQ-043 — removed in build 3) ---------------------------------
