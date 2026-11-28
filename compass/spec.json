@@ -991,7 +991,7 @@
           "Team page per project: add by email, several roles, change, remove",
           "Sign in with Google matched by verified email",
           "Role → gate rules in the portal and in Firestore security rules",
-          "A shared GitHub token per project, managed by its Admins",
+          "A shared GitHub token per project, managed by its Admins (phase 1 replaces it with a shared work token set by super admins: REQ-041, REQ-043, ADR-016)",
           "Super admin and project Admins",
           "approvedBy records email and role"
         ],
@@ -1002,7 +1002,7 @@
           "Per-feature or per-requirement permissions"
         ],
         "risks": [
-          "Any member can copy the shared GitHub token from the browser; removing a member does not revoke a copy (ADR-011)",
+          "Any member can copy the shared GitHub work token and Anthropic key from the browser; removing a member does not revoke a copy (ADR-011, then ADR-016)",
           "New dependency: firebase (needs the human-approved label)",
           "The Product Owner must create the Firebase project and publish the rules once",
           "Free Spark plan limits (50k reads/day) — far above a small team"
@@ -1011,7 +1011,7 @@
       "design": {
         "status": "Approved",
         "url": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=98-704",
-        "summary": "People sign in on a single centred card (\"Sign in to Compass\" + \"Sign in with Google\"); a Google account on no team lands on \"You have no access yet\" with its email, Reload and Sign out, and no project data. Inside a project, Admins and the super admin get a new \"Team\" item in the sidebar (below Knowledge). The Team page has three cards: Add person (email + role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin; several can be ticked), the team list (email, role chips, Edit roles, Remove; the only Admin cannot be removed) and the project GitHub token (masked, Test, Replace, fine-grained token help, and a reminder to replace it after removing someone). Each gate card on a feature page shows its button enabled for the signed-in person's roles and greyed out with \"Needs the <role> role\" otherwise; approvals show \"Approved by <email> (<role>)\"; an approval that Firebase does not confirm shows a red \"Unconfirmed\" badge. The sidebar account card shows the Google email (its menu has Sign out) and the role picker shows \"My roles: …\". On phones the Team page stacks the cards, role checkboxes wrap, and Edit roles / Remove move into a ⋮ menu per row. With sign-in on, the \"What's your role?\" onboarding screen is not shown: roles come from the team. Someone on no team can \"Try the demo\" from the no-access screen (team members from the sidebar account menu): they pick a role on the existing role screen and see the sample projects with a honey \"Demo\" banner and a demo role picker in the sidebar.",
+        "summary": "People sign in on a single centred card (\"Sign in to Compass\" + \"Sign in with Google\"); a Google account on no team lands on \"You have no access yet\" with its email, Reload and Sign out, and no project data. Inside a project, Admins and the super admin get a new \"Team\" item in the sidebar (below Knowledge). The Team page has three cards: Add person (email + role checkboxes PO, BA, UX, QA, Dev, DM, Ops, Admin; several can be ticked), the team list (email, role chips, Edit roles, Remove; the only Admin cannot be removed) and the project GitHub token (masked, Test, Replace, fine-grained token help, and a reminder to replace it after removing someone). Each gate card on a feature page shows its button enabled for the signed-in person's roles and greyed out with \"Needs the <role> role\" otherwise; approvals show \"Approved by <email> (<role>)\"; an approval that Firebase does not confirm shows a red \"Unconfirmed\" badge. The sidebar account card shows the Google email (its menu has Sign out) and the role picker shows \"My roles: …\". On phones the Team page stacks the cards, role checkboxes wrap, and Edit roles / Remove move into a ⋮ menu per row. With sign-in on, the \"What's your role?\" onboarding screen is not shown: roles come from the team. Someone on no team can \"Try the demo\" from the no-access screen (team members from the sidebar account menu): they pick a role on the existing role screen and see the sample projects with a honey \"Demo\" banner and a demo role picker in the sidebar. Phase 1 (REQ-041–REQ-046): the project GitHub token card is removed from the Team page on desktop and phone (SCR-9); super admins set a shared work token on Connections (SCR-11).",
         "screens": [
           {
             "id": "SCR-1",
@@ -1081,7 +1081,8 @@
               "Super admin ticking Admin → that person manages this project only",
               "Token missing or expired → red badge \"Missing or expired\"",
               "Not an Admin → page not in the menu, token never shown",
-              "Project with no team yet → only the super admin sees Add person; saving creates the first team and the approval baseline"
+              "Project with no team yet → only the super admin sees Add person; saving creates the first team and the approval baseline",
+              "Phase 1: the Project GitHub token card and its states are removed (REQ-043, SCR-9)"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=137-611"
           },
@@ -1148,7 +1149,8 @@
             ],
             "states": [
               "Same states as SCR-3",
-              "No sideways scrolling at 390 px"
+              "No sideways scrolling at 390 px",
+              "Phase 1: the token row is removed (REQ-043), as on SCR-9"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=143-672"
           },
@@ -1197,7 +1199,7 @@
           {
             "id": "SCR-9",
             "name": "Desktop · Team page without project token",
-            "purpose": "The Team page after the project token is retired: Add person and the team list only.",
+            "purpose": "The Team page after the project token is retired, on desktop and phone: Add person and the team list only.",
             "reqIds": [
               "REQ-043"
             ],
@@ -1208,7 +1210,9 @@
               "No project GitHub token card and no \"replace the token\" notice"
             ],
             "states": [
-              "Same states as SCR-3, without the token states"
+              "Same states as SCR-3, without the token states",
+              "After removing someone → honey notice \"Ask a super admin to replace the work token and Anthropic key\"",
+              "Phone → as SCR-6 without the token row"
             ],
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=269-966"
           },
@@ -1221,7 +1225,7 @@
               "REQ-041"
             ],
             "elements": [
-              "Sidebar without Connections: the account card shows email and sign-in state but opens no settings page",
+              "Sidebar without Connections: the account card's menu (REQ-110) has the email, Dark theme and Sign out, but no Connections",
               "Header: GitHub work and live agents use the super admins' accounts",
               "Honey notice \"Need a new project? Ask a super admin to add a project\"",
               "Card \"Your projects (n)\": project name, my role chips, Open"
@@ -1916,7 +1920,7 @@
         "Given a person on the team\nWhen I change their role checkboxes and save\nThen the list shows the new roles and their next action in the portal uses them",
         "Given a person on the team\nWhen I click Remove and confirm\nThen they are gone from the list and, at their next page load, no longer see the project",
         "Given the project has only one Admin\nWhen anyone tries to remove that person or untick their Admin role\nThen it is refused with \"A project needs at least one Admin\"",
-        "Given I remove a person\nWhen the removal is saved\nThen the page reminds me to replace the project's GitHub token, because they may have copied it"
+        "Given I remove a person\nWhen the removal is saved\nThen the page reminds me to ask a super admin to replace the shared work token and Anthropic key, because the person may have copied them (changed by REQ-043, ADR-016)"
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-27T00:00:00.000Z"
@@ -1948,7 +1952,7 @@
       "intent": "compass/intent/2026-11-27-team-access.md",
       "story": "As the product owner, I want each gate tied to its role, so that only the right person can approve each stage.",
       "ac": [
-        "Given the gate rules: intent and requirements → PO (BA may also approve requirements); design → UX or PO; test cases → QA; start a build → Dev; merge and release → DM or PO; team and token → Admin\nWhen a signed-in person opens a gate whose role they do not have\nThen its button is disabled with the hint \"Needs the <role> role\"",
+        "Given the gate rules: intent and requirements → PO (BA may also approve requirements); design → UX or PO; test cases → QA; start a build → Dev; merge and release → DM or PO; team → Admin (the project token is retired by REQ-043)\nWhen a signed-in person opens a gate whose role they do not have\nThen its button is disabled with the hint \"Needs the <role> role\"",
         "Given a person with several roles (e.g. BA and QA)\nWhen they open the requirements and test-case gates\nThen both are enabled, and the design and release gates are disabled",
         "Given a person changes the page in the browser to enable a disabled gate\nWhen the approval is saved\nThen the Firestore rules refuse its approval record (REQ-037), the portal shows \"Not allowed for your roles\" and nothing is committed to GitHub (an approval committed outside the portal without a record is flagged, REQ-038)",
         "Given the super admin\nWhen they open any gate\nThen it is enabled"
@@ -1984,7 +1988,7 @@
       "story": "As the super admin, I want to see every project and name its Admins, so that each project can manage its own team.",
       "ac": [
         "Given the super admin's Google email is fixed in the Firestore rules as a one-way hash (the plain email is never in the repo)\nWhen that account, with a verified email, signs in to Compass for the first time\nThen the portal records it in the Firestore document config/access, and it sees every project and can open every Team page",
-        "Given I am the super admin on a project's Team page\nWhen I tick Admin for a person\nThen that person can manage this project's team and token, and no other project's",
+        "Given I am the super admin on a project's Team page\nWhen I tick Admin for a person\nThen that person can manage this project's team (the project token is retired by REQ-043), and no other project's",
         "Given a signed-in person whose email does not match the super admin hash, or is not verified\nWhen the portal tries to create config/access\nThen Firestore refuses it; once config/access exists, only the owner's browser can change its list of super admins, and the owner always stays in it (changed by REQ-046, ADR-018)"
       ],
       "approvedBy": "the Product Owner (in chat)",
@@ -2155,6 +2159,25 @@
       "approvedAt": "2026-11-27T00:00:00.000Z"
     },
     {
+      "id": "REQ-110",
+      "featureId": "F-013",
+      "title": "The sidebar footer is one account card that opens an account menu",
+      "priority": "Should",
+      "status": "In build",
+      "intent": "compass/intent/2026-11-28-sidebar-account-menu.md",
+      "design": "compass/design/2026-11-28-account-menu.md",
+      "story": "As any portal user, I want one tidy account card at the bottom of the sidebar with my account actions behind it, so that I see who I am and my roles at a glance without a crowded footer.",
+      "ac": [
+        "Given I am signed in with Google\nWhen I look at the bottom of the sidebar\nThen I see one account card with my initial, my name (the part of my email before \"@\") and my roles on the open project as chips (\"Super admin\" for the super admin), and no \"Try the demo\", \"Sign out\", \"My roles\" line or separate theme button",
+        "Given the account card\nWhen I click it (or press Enter or Space on it)\nThen a menu opens with my full email, \"Connections\" with the GitHub state (with sign-in on, only for super admins: REQ-041, ADR-020), a \"Dark theme\" switch and \"Sign out\"; in the demo it also has \"Leave demo\"; it never has \"Try the demo\"",
+        "Given the account menu is open\nWhen I choose an item, press Escape or click outside it\nThen the menu closes; \"Dark theme\" switches the theme, \"Connections\" opens Connections and \"Sign out\" signs me out",
+        "Given sign-in is off, or I am in the demo\nWhen I look at the footer\nThen the role picker is shown above the account card, and the menu has no \"Sign out\" when sign-in is off",
+        "Given a phone (below 900 px)\nWhen I open the Menu\nThen the footer and its account menu work the same, within the menu width"
+      ],
+      "approvedBy": "the Product Owner (in chat)",
+      "approvedAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
       "id": "REQ-041",
       "featureId": "F-015",
       "title": "The super admins' GitHub work token and Anthropic key are used for everyone; only super admins set them",
@@ -2165,13 +2188,13 @@
       "ac": [
         "Given sign-in is on and a super admin saved the GitHub work token and the Anthropic key on Connections\nWhen any team member saves to GitHub, approves, releases or runs an agent on a team project\nThen Compass uses the work token and key; a token or key saved on the member's own device is never used for a team project",
         "Given sign-in is on\nWhen a person who is not a super admin uses Compass\nThen the Connections page is hidden: no sidebar card or link leads to it, opening its address goes to Projects, and they use the model and auto-sync settings the super admins chose",
-        "Given the Firestore rules\nWhen anyone writes the work token, the Anthropic key or the model and sync settings\nThen only a super admin's write is accepted; reads are accepted only from signed-in team members and super admins (their browsers must read them to use them)",
+        "Given the Firestore rules\nWhen anyone writes the work token, the Anthropic key or the model and sync settings\nThen only a super admin's write is accepted; reads are accepted only from signed-in team members and super admins (their browsers must read them to use them; one work token reaches every Compass project repository, accepted for phase 1 in ADR-016)",
         "Given no work token (or no Anthropic key) is set\nWhen a member tries a GitHub action (or a live agent run)\nThen nothing is written, the GitHub action says \"No GitHub token yet — ask a super admin\", and agents run in demo mode",
         "Given a super admin replaces or removes the token or key\nWhen members next act\nThen the new value is used, or the actions above are disabled",
         "Given sign-in is off, or the demo is open\nWhen anyone uses Compass\nThen tokens and keys work as today, per device"
       ],
       "approvedBy": "the Product Owner (in chat)",
-      "approvedAt": "2026-11-27T00:00:00.000Z"
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-042",
@@ -2186,7 +2209,7 @@
         "Given sign-in is off, or the demo is open\nWhen Compass commits\nThen messages are as today"
       ],
       "approvedBy": "the Product Owner (in chat)",
-      "approvedAt": "2026-11-27T00:00:00.000Z"
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-043",
@@ -2201,7 +2224,7 @@
         "Given project tokens were stored before\nWhen the release is deployed\nThen the Firestore rules refuse every read and write of a project's stored token except a super admin's delete; the super admins' Users screen offers \"Delete old project tokens\", which deletes any that remain without reading them, and the release notes say to revoke those tokens on GitHub"
       ],
       "approvedBy": "the Product Owner (in chat)",
-      "approvedAt": "2026-11-27T00:00:00.000Z"
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-044",
@@ -2215,10 +2238,10 @@
         "Given sign-in is on\nWhen a person who is not a super admin opens Projects\nThen \"Import from GitHub\" and \"+ New project\" are not shown, and the page says \"Ask a super admin to add a project\"",
         "Given a super admin opens Connections\nWhen they set the \"GitHub account for new projects\" and save a creator token\nThen the account is saved for all super admins (the Firestore rules accept it only from super admins), while the creator token stays only on that super admin's device and is never saved to Firebase",
         "Given a super admin creates a new project\nWhen Compass creates the repository with their creator token\nThen it is created only in the GitHub account for new projects (any other owner is refused before any GitHub call), the first team is saved with the super admin as Admin together with the approval baseline, and Compass reminds them to add the repository to the shared work token on GitHub",
-        "Given a super admin imports an existing repository\nWhen they pick it\nThen only repositories of the GitHub account for new projects are offered, and the first team is saved as above; the Firestore rules accept a project's first team only from a super admin (ADR-012)"
+        "Given a super admin imports an existing repository\nWhen they pick it\nThen only repositories of the GitHub account for new projects are offered, the first team is saved with them as Admin together with the approval baseline, and Compass reminds them to add the repository to the shared work token on GitHub; the Firestore rules accept a project's first team only from a super admin (ADR-012)"
       ],
       "approvedBy": "the Product Owner (in chat)",
-      "approvedAt": "2026-11-27T00:00:00.000Z"
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     },
     {
       "id": "REQ-046",
@@ -2234,7 +2257,7 @@
         "Given the Users screen\nWhen any super admin opens it\nThen each person shows a \"Super admin\" badge when they are one, and the owner is marked \"Owner\""
       ],
       "approvedBy": "the Product Owner (in chat)",
-      "approvedAt": "2026-11-27T00:00:00.000Z"
+      "approvedAt": "2026-11-28T00:00:00.000Z"
     }
   ],
   "tests": [
@@ -3473,6 +3496,16 @@
       "gherkin": "Given a project list with a real project and a demo project\nWhen the demo is opened\nThen the existing demo project is returned and the list is unchanged\nAnd given a list with no demo project, a new demo project is created and added once\nAnd given a saved list with two demo projects and two real projects, loading keeps the first (most recent) demo project and both real projects in order"
     },
     {
+      "id": "TC-510",
+      "reqIds": [
+        "REQ-110"
+      ],
+      "title": "The footer is one account card; the account menu lists the right items for each state",
+      "type": "Automated",
+      "status": "Pass",
+      "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)"
+    },
+    {
       "id": "TC-078",
       "reqIds": [
         "REQ-041"
@@ -3497,10 +3530,10 @@
       "reqIds": [
         "REQ-041"
       ],
-      "title": "The Connections page is hidden from everyone but the super admin",
+      "title": "The Connections page is hidden from everyone but super admins; members use the shared model and sync settings",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given sign-in on\nWhen a member looks for Connections in the sidebar and then opens its address directly, and the super admin does the same\nThen the member finds no link and lands on Projects; the super admin sees Connections with the GitHub token and Anthropic key boxes; with sign-in off or in the demo, Connections is shown as today"
+      "gherkin": "Given sign-in on, and super admins chose a model and turned auto-sync off\nWhen a member looks for Connections in the sidebar and account menu, then opens its address directly, and a super admin does the same\nThen the member finds no link, lands on Projects and their agent runs use the chosen model with auto-sync off; the super admin sees Connections; with sign-in off or in the demo, Connections is shown as today"
     },
     {
       "id": "TC-081",
@@ -3510,7 +3543,7 @@
       "title": "Commits and pull requests name the person who did it",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given sign-in on and ba@example.com with roles BA and QA\nWhen Compass builds the commit message for an approved requirement and the pull request body for a build run\nThen both end with \"Made in Compass by ba@example.com (BA)\" (the gate's role); with sign-in off they are unchanged"
+      "gherkin": "Given sign-in on and ba@example.com with roles BA and QA\nWhen Compass builds the commit message for an approved requirement, the pull request body for a build run, and a commit with no gate (a spec save)\nThen they end with \"Made in Compass by ba@example.com (BA)\", the gate's role, and for the commit with no gate \"Made in Compass by ba@example.com (BA, QA)\"; with sign-in off they are unchanged"
     },
     {
       "id": "TC-082",
@@ -3550,7 +3583,7 @@
       "title": "New repositories only in the account for new projects, with the device's creator token",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the GitHub account for new projects \"acme\", a creator token on the super admin's device and a stubbed GitHub\nWhen the super admin creates a repository under \"acme\", then under another owner, and imports from another owner\nThen the first is created with the creator token (never sent to Firebase) and the reminder to add it to the work token is shown; the other two are refused before any GitHub call"
+      "gherkin": "Given the GitHub account for new projects \"acme\", a creator token on the super admin's device and a stubbed GitHub\nWhen the super admin creates a repository under \"acme\", then under another owner, imports a repository of \"acme\", and imports from another owner\nThen the first is created with the creator token (never sent to Firebase) and the import of \"acme\" goes ahead, both with the reminder to add the repository to the work token; the other two are refused before any GitHub call"
     },
     {
       "id": "TC-086",
@@ -3559,7 +3592,7 @@
         "REQ-042",
         "REQ-044"
       ],
-      "title": "End to end: a permitted member creates a project and commits as themselves",
+      "title": "End to end: a super admin creates a project and a member commits with the audit line",
       "type": "Manual",
       "status": "Not run",
       "gherkin": "Given the live site, the work token and key set by a super admin, and a member with no token of their own\nWhen the super admin creates a project with their creator token, adds the new repository to the work token on GitHub and adds the member to the team, and the member approves a requirement\nThen the repository is in the account for new projects, the member's commit is made with the work token and ends with \"Made in Compass by <member email> (<role>)\", and the member never sees Connections"
@@ -3572,18 +3605,19 @@
       "title": "Only the owner grants or removes super admin, and the owner stays",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given the Firestore emulator, the owner and a member\nWhen the member makes themselves super admin, the owner makes the member super admin, the new super admin then makes a third person super admin, and the owner tries to remove themselves\nThen the first is refused, the second accepted, the third refused and the fourth refused; the new super admin can then write the GitHub token"
+      "gherkin": "Given the Firestore emulator, the owner and a member\nWhen the member makes themselves super admin, the owner makes the member super admin, the new super admin then makes a third person super admin, the owner switches the member off again, and the owner tries to remove themselves\nThen the first is refused, the second accepted, the third refused, the fourth accepted (the member can no longer write the work token) and the fifth refused"
     },
     {
       "id": "TC-088",
       "reqIds": [
         "REQ-046",
-        "REQ-041"
+        "REQ-041",
+        "REQ-043"
       ],
       "title": "A second super admin sets the token and key",
       "type": "Manual",
       "status": "Not run",
-      "gherkin": "Given the live site, the owner and a person made super admin on the Users screen\nWhen that person reloads, opens Connections and replaces the GitHub token\nThen Connections is visible to them, the new token is used for every member, and the Users screen shows them with a \"Super admin\" badge but without the owner's switch"
+      "gherkin": "Given the live site, the owner and a person made super admin on the Users screen\nWhen that person reloads, opens Connections, replaces the work token and clicks \"Delete old project tokens\" on Users\nThen Connections is visible to them, the new token is used for every member, the old tokens are gone, and the Users screen marks the owner \"Owner\" and them \"Super admin\" with read-only switches"
     }
   ],
   "decisions": [
@@ -3729,7 +3763,7 @@
       "id": "ADR-013",
       "date": "2026-11-27",
       "title": "The super admin is recorded automatically at first sign-in",
-      "status": "Accepted",
+      "status": "Changed by ADR-018",
       "reqIds": [
         "REQ-035"
       ],
@@ -3765,6 +3799,22 @@
       "consequences": "REQ-070, REQ-075 and their tests list Project settings as the last project link. The Admin check is a portal check only: compass/spec.json → designTool lives in the repository, so anyone with GitHub write access can still change it there (Firestore rules never see GitHub commits)."
     },
     {
+      "id": "ADR-019",
+      "date": "2026-11-28",
+      "title": "\"Try the demo\" leaves the sidebar; account actions move into an account menu",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-110",
+        "REQ-073",
+        "REQ-039",
+        "REQ-040",
+        "REQ-032"
+      ],
+      "context": "The sidebar footer had four loose rows (account card, \"Try the demo\" and \"Sign out\" buttons, a \"My roles\" line and a lone theme button). The Product Owner asked to redesign it and reviewed a mockup in chat.",
+      "decision": "The Product Owner approved the mockup on 2026-11-28 with one change: \"Remove try the demo in this section, the rest is fine to proceed\". The footer is one account card (initial, name, role chips) that opens a menu with the email, Connections, the theme switch, Leave demo (in the demo) and Sign out.",
+      "consequences": "REQ-073: AC1 changes — clicking the account card opens the account menu, and \"Connections\" is an item in it; AC2 changes — the theme is a \"Dark theme\" switch in the menu and the role picker shows only with sign-in off or in the demo. REQ-039 AC2: the read-only roles show as chips on the account card instead of a \"My roles: …\" line (still read-only). REQ-032 AC2: the card shows the part of the email before \"@\"; the full email is in the card's tooltip and at the top of the account menu. REQ-040 AC2: signed-in people on a team no longer start the demo from the sidebar; \"Try the demo\" stays on the \"You have no access yet\" screen. TC-404 checks the theme switch and the Connections item in the menu."
+    },
+    {
       "id": "ADR-016",
       "date": "2026-11-27",
       "title": "Phase 1: everyone works through a shared GitHub work token set by super admins; project tokens are retired; only super admins create projects",
@@ -3776,18 +3826,18 @@
       ],
       "context": "Project Admins could set their own project token (ADR-011), and members could use their own tokens to import repositories. The Product Owner wants to control all GitHub access in phase 1.",
       "decision": "The Product Owner decided in chat on 2026-11-27: \"the intention is that everyone will use my personal token for action and changes in the first phase. So the github and anthropic token should only be configured by me\". With sign-in on, Compass uses a fine-grained work token set by super admins (Compass project repositories only; Contents, Pull requests, Issues; no Administration) for every team member on team projects; project tokens are retired. After the review of #117 the Product Owner chose (2026-11-28) that only super admins create or import projects, with a creator token kept only on their own device, so no shared token can create or delete repositories. Every commit and pull request ends with \"Made in Compass by <email> (<role>)\" (the Product Owner kept the email). Supersedes ADR-011. Phase 2 (each person's own token, \"Connect with GitHub\") is on the backlog, #111.",
-      "consequences": "GitHub shows the work token owner's account on every change; the audit line helps reading but is not proof (the Firestore rules never see GitHub), Compass's approval records stay the proof. Every member's browser can read the work token, so it is limited and replaced when someone leaves. Members' emails become part of GitHub history, public in public repositories. A super admin adds each new repository to the work token on GitHub."
+      "consequences": "GitHub shows the work token owner's account on every change; the audit line helps reading but is not proof (the Firestore rules never see GitHub), Compass's approval records stay the proof. Every member's browser can read the work token, so it is limited and replaced when someone leaves. Members' emails become part of GitHub history, public in public repositories. A super admin adds each new repository to the work token on GitHub. One work token reaches every Compass project repository, and members of any team can read it, so a member of one project could change another project's repository on GitHub outside Compass; the Product Owner accepted this for phase 1 (chat, 2026-11-28: \"Accept for phase 1\"). One work token per project is in phase 2 (#111)."
     },
     {
       "id": "ADR-017",
       "date": "2026-11-27",
-      "title": "Phase 1: everyone's live agents use the super admin's Anthropic key",
+      "title": "Phase 1: everyone's live agents use the Anthropic key set by super admins",
       "status": "Accepted",
       "reqIds": [
         "REQ-041"
       ],
       "context": "Live agent runs cost money on the key owner's Anthropic account.",
-      "decision": "The Product Owner decided in chat on 2026-11-27 (same message as ADR-016): with sign-in on, only the super admin sets the Anthropic key, and Compass uses it for every team member's live agent runs on team projects; a key saved on a member's device is not used.",
+      "decision": "The Product Owner decided in chat on 2026-11-27 (same message as ADR-016): with sign-in on, only super admins set the Anthropic key, and Compass uses it for every team member's live agent runs on team projects; a key saved on a member's device is not used.",
       "consequences": "All agent cost is on the key owner's Anthropic account; every member's browser can read the key, so it gets its own spending limit and is replaced when someone leaves. Members use the model the super admins chose."
     },
     {
@@ -3802,6 +3852,19 @@
       "context": "ADR-013 recorded a single super admin at first sign-in and allowed no change from a browser. In phase 1 the token and key must be manageable by more than one trusted person.",
       "decision": "The Product Owner decided in chat on 2026-11-27: \"Me and users given super admin permission can update the token\". The owner (the hashed email in firestore.rules, ADR-013) can add or remove super admins on the Users screen; the owner can never be removed. Super admins can do everything except grant or remove super admin. Changes ADR-013's rule that no browser can change config/access: from now on the owner's browser can change its list.",
       "consequences": "The Firestore rules let the owner update config/access; more people can see every project and read and replace the token and key."
+    },
+    {
+      "id": "ADR-020",
+      "date": "2026-11-28",
+      "title": "With sign-in on, Connections is only for super admins, also in the account menu",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-041",
+        "REQ-110"
+      ],
+      "context": "REQ-110 (#119) put \"Connections\" in every signed-in person's account menu, while REQ-041 hides Connections from everyone but super admins.",
+      "decision": "The Product Owner chose in chat on 2026-11-28: \"Hide for members\". With sign-in on, the account menu shows \"Connections\" only to super admins; REQ-110 AC2 is amended. With sign-in off or in the demo, as REQ-110 says.",
+      "consequences": "Members' account menu has their email, Dark theme and Sign out (and Leave demo in the demo)."
     }
   ]
 }

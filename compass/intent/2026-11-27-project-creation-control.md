@@ -1,7 +1,9 @@
 # Intent: phase 1 — everyone works through the super admins' GitHub token and Anthropic key; only super admins create projects
 
-Status: Approved (by the Product Owner, 2026-11-27, in chat: "Approve"; revised 2026-11-28 after the independent review of
-#117, with the Product Owner's answers: "Only super admins create", "New repos only", audit line "Email")
+Status: Approved (by the Product Owner, 2026-11-27, in chat: "Approve"; revised 2026-11-28 after the independent reviews of
+#117, with the Product Owner's answers: token scope "Only super admins create"; import by people who are not super admins
+"New repos only" (moot once only super admins add projects); audit line "Email"; then "Hide for members" (Connections in
+the account menu), "Yes, super admins import" and "Accept for phase 1" (one work token for every project))
 Requested: 2026-11-27 by the Product Owner, in chat. Revised the same day; the last word: "the intention is that everyone
 will use my personal token for action and changes in the first phase. So the github and anthropic token should only be
 configured by me"
@@ -24,7 +26,8 @@ With sign-in on, in phase 1:
 - **Only super admins add projects:** only super admins see "Import from GitHub" and "+ New project". A super admin
   creates a new repository with a **creator token** saved only on their own device (it needs all repositories and the
   Administration permission, so it is never shared), and only in the GitHub account for new projects set on
-  Connections; Compass then reminds them to add the new repository to the shared work token on GitHub. Everyone else
+  Connections. A super admin can also import an existing repository of that account. After creating or importing, Compass
+  reminds them to add the repository to the shared work token on GitHub. Everyone else
   sees "Ask a super admin to add a project". Only super admins create a project's first team (ADR-012 unchanged).
 - With sign-in off, or in the demo, nothing changes.
 
@@ -35,7 +38,8 @@ With sign-in on, in phase 1:
   Firestore rules refuse writes from anyone else. Team members' browsers can read the work token and key (they must, to
   use them); nobody else can.
 - The Team page has no project token; stored project tokens are deleted.
-- Only super admins see Import and New project; a new repository is created only in the GitHub account for new projects.
+- Only super admins see Import and New project; a new repository is created, and an existing one imported, only in the
+  GitHub account for new projects.
 - Only the owner can add or remove super admins: the Firestore rules refuse anyone else.
 
 ## Why
@@ -49,6 +53,10 @@ control away.
   outside Compass. Therefore: the work token is fine-grained, limited to the Compass project repositories, without the
   Administration permission, with an expiry date; the Anthropic key has its own spending limit; both are replaced when
   someone leaves.
+- One work token reaches every Compass project repository, and members of any team can read it: a member of one project
+  could change another project's repository on GitHub outside Compass. Accepted for phase 1 (ADR-016); one work token
+  per project is in phase 2 (#111).
+- With sign-in on, Connections is also left out of members' account menu (REQ-110 amended, ADR-020).
 - What the Firestore rules guard: writes to the token, key, account and super admin list in Firestore. They never see
   GitHub: a person holding the work token can commit on GitHub without Compass, so the audit line is a convenience, not
   proof. Proof of an approval stays Compass's approval record (REQ-037, ADR-012).

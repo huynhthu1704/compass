@@ -375,6 +375,32 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height
 .icon-btn { all: unset; box-sizing: border-box; cursor: pointer; width: 34px; height: 34px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-border-default); color: var(--color-text-secondary); }
 .icon-btn:hover { background: var(--color-bg-subtle); color: var(--color-text-primary); }
 
+/* REQ-110 · account card and account menu (design compass/design/2026-11-28-account-menu.md) */
+.account { position: relative; }
+.account-card { width: 100%; }
+.account-card[aria-expanded="true"] { border-color: var(--color-border-brand); }
+.side-avatar.account-avatar { background: var(--color-bg-brand-subtle); color: var(--color-text-primary); }
+.account-chips { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); }
+.account-chip { font-size: 11px; line-height: 16px; font-weight: 600; padding: 0 6px; border-radius: var(--radius-full); background: var(--color-bg-muted); color: var(--color-text-secondary); }
+.account-chip.brand { background: var(--color-bg-brand-subtle); color: var(--color-text-brand); }
+.account-chip.success { background: var(--color-bg-success-subtle); color: var(--color-text-success); }
+.account-chip.warning { background: var(--color-bg-warning-subtle); color: var(--color-text-warning); border: 1px solid var(--color-border-brand); }
+.account-role { align-items: center; padding: 0 var(--spacing-xs); }
+.account-menu { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: var(--spacing-xs); z-index: 20; display: flex; flex-direction: column; padding: var(--spacing-xs); border-radius: var(--radius-md); border: 1px solid var(--color-border-default); background: var(--color-bg-surface); box-shadow: var(--elevation-2); }
+.account-menu-head { outline: none; display: flex; flex-direction: column; gap: 2px; padding: var(--spacing-sm); margin-bottom: var(--spacing-xs); border-bottom: 1px solid var(--color-border-subtle); font-size: 13px; color: var(--color-text-primary); }
+.account-menu-head span { font-size: 12px; color: var(--color-text-tertiary); overflow-wrap: break-word; }
+.account-menu button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: var(--spacing-sm); padding: 7px var(--spacing-sm); border-radius: var(--radius-sm); font-size: 13px; color: var(--color-text-primary); }
+.account-menu button .icon { flex: none; color: var(--color-text-tertiary); }
+.account-menu button:hover, .account-menu button:focus-visible { background: var(--color-bg-subtle); }
+.account-menu-hint { margin-left: auto; white-space: nowrap; font-size: 12px; color: var(--color-text-tertiary); }
+.account-switch { margin-left: auto; flex: none; position: relative; width: 28px; height: 16px; border-radius: var(--radius-full); background: var(--color-border-strong); transition: background .15s; }
+.account-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--color-bg-surface); transition: transform .15s; }
+.account-menu [aria-checked="true"] .account-switch { background: var(--color-bg-brand); }
+.account-menu [aria-checked="true"] .account-switch::after { transform: translateX(12px); }
+.account-menu .account-menu-danger { margin-top: var(--spacing-xs); border-top: 1px solid var(--color-border-subtle); border-radius: 0 0 var(--radius-sm) var(--radius-sm); color: var(--color-text-danger); }
+.account-menu .account-menu-danger .icon { color: var(--color-text-danger); }
+@media (max-width: 900px) { .account { display: flex; flex-direction: column-reverse; } .account-menu { position: static; margin-bottom: var(--spacing-xs); box-shadow: none; } } /* the phone menu is not a fixed height: open in place, above the card */
+
 /* F-020 · quote an agent answer and ask (REQ-050 … REQ-054; design compass/design/F-020.md) */
 .quote-pill { flex: none; border: 1px solid var(--color-border-default); background: var(--color-bg-surface); color: var(--color-text-secondary); border-radius: var(--radius-full); padding: 2px var(--spacing-md); font-size: 12px; line-height: 18px; cursor: pointer; user-select: none; }
 .quote-pill:hover { background: var(--color-bg-subtle); color: var(--color-text-primary); }
