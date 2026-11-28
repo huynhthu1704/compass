@@ -17,13 +17,13 @@ export function keepOneDemo<T extends P>(projects: T[]): T[] {
 }
 
 /** "Open demo project" / "Explore the demo" (REQ-109, ADR-022): signed in outside the demo, start the demo session
- *  first; then reuse or add the one demo project and open it. Effects are passed in so node:test checks the wiring. */
+ *  first, on the demo project's route (ADR-026); then reuse or add the one demo project and open it. Effects are passed in so node:test checks the wiring. */
 export function openDemo<T extends P>(
   projects: T[], create: () => T, session: { status: string; demo?: boolean },
-  fx: { enterDemo: () => void; addProject: (p: T) => void; go: (path: string) => void },
+  fx: { enterDemo: (entry: string) => void; addProject: (p: T) => void; go: (path: string) => void },
 ): T {
-  if (opensDemoSession(session)) fx.enterDemo();
   const { project, isNew } = openOrCreateDemo(projects, create);
+  if (opensDemoSession(session)) fx.enterDemo(`/p/${project.id}`); // ADR-026: the route the demo is opened on
   if (isNew) fx.addProject(project);
   fx.go(`/p/${project.id}`);
   return project;

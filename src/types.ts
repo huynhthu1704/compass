@@ -2,6 +2,15 @@
 
 export type Role = 'PO' | 'BA' | 'DM' | 'UX' | 'Dev' | 'QA' | 'Ops';
 export type Lang = 'en' | 'vi';
+/** REQ-121: the roles in the order the role screen and the sidebar list them. */
+export const ROLE_ORDER: Role[] = ['PO', 'BA', 'DM', 'UX', 'Dev', 'QA', 'Ops'];
+/** REQ-121: the roles picked on "What's your role?" (demo or sign-in off); a browser that saved one `role` keeps it. */
+export const pickedRoles = (s: { roles?: Role[]; role?: Role }): Role[] => ROLE_ORDER.filter((r) => (s.roles ?? (s.role ? [s.role] : [])).includes(r));
+/** REQ-121: ticks or unticks a role; with keepOne the last role stays ticked. */
+export function toggleRole(roles: Role[], r: Role, keepOne = false): Role[] {
+  if (!roles.includes(r)) return ROLE_ORDER.filter((x) => x === r || roles.includes(x));
+  return keepOne && roles.length === 1 ? roles : roles.filter((x) => x !== r);
+}
 
 /** Pipeline stages a project moves through. Each stage is owned by an agent in the harness. */
 export type Stage = 'idea' | 'requirements' | 'design' | 'tests' | 'build' | 'release';
@@ -190,7 +199,8 @@ export interface Project {
 }
 
 export interface Settings {
-  role?: Role;
+  roles?: Role[];      // REQ-121: the picked roles; read them with pickedRoles()
+  role?: Role;        // the single role saved before REQ-121, read only by pickedRoles()
   lang: Lang;
   theme: 'light' | 'dark';
   githubToken?: string;

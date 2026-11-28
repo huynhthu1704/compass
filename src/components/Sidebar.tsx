@@ -1,13 +1,13 @@
 // F-013 Sidebar navigation (REQ-070 … REQ-073) — design: compass/design/F-013.md
 // REQ-110: the footer is one account card with an account menu — design: compass/design/2026-11-28-account-menu.md
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { go } from '../App';
+import { exitDemo, go } from '../App';
 import { featureStage, stageStatus } from '../progress';
-import { leaveDemo, projectKey, signOut, useSession, useWorkspace } from '../firebase';
+import { projectKey, signOut, useSession, useWorkspace } from '../firebase';
 import { canOpenConnections } from '../team';
 import { accountCard, accountChips, accountMenu, accountName, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
-import { STAGES, type Project, type Stage } from '../types';
+import { pickedRoles, ROLE_ORDER, STAGES, toggleRole, type Project, type Role, type Stage } from '../types';
 import { STAGE_INFO } from '../ui';
 
 // Stroke icons on a 24×24 grid in currentColor, so they follow the theme tokens.
@@ -31,7 +31,7 @@ const Icon = ({ name, size = 18 }: { name: keyof typeof PATHS; size?: number }) 
   <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={PATHS[name]} /></svg>
 );
 
-const ROLES: [string, string][] = [['PO', 'Product Owner'], ['BA', 'Business Analyst'], ['DM', 'Delivery Manager'], ['UX', 'Designer'], ['Dev', 'Developer'], ['QA', 'QA'], ['Ops', 'Ops']];
+const ROLE_NAMES: Record<Role, string> = { PO: 'Product Owner', BA: 'Business Analyst', DM: 'Delivery Manager', UX: 'Designer', Dev: 'Developer', QA: 'QA', Ops: 'Ops' };
 const toneText = (t: Tone) => ({ success: 't-success', danger: 't-danger', warning: 't-accent', info: 't-tertiary', neutral: 't-tertiary' })[t];
 const stageName = (s: Stage | 'done') => (s === 'done' ? 'Done' : STAGE_INFO[s].name);
 
@@ -52,7 +52,8 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLButtonElement>(null);
   const name = signedIn ? accountName(session.email!) : account.name;
-  const chips = accountChips({ signedIn, demo: session.demo, superAdmin: session.superAdmin, roles: myRoles, demoRole: settings.role });
+  const roles = pickedRoles(settings);
+  const chips = accountChips({ signedIn, demo: session.demo, superAdmin: session.superAdmin, roles: myRoles, demoRole: roles.join(', ') || undefined }); // REQ-121: "Demo · PO, BA"
   // REQ-110 AC2 as amended by ADR-020: with sign-in on, Connections is only in super admins' menu (REQ-041 AC2).
   const ws = useWorkspace();
   // Signed in (outside the demo), Connections is the shared page: its hint is the work token, not this device's token.
@@ -80,12 +81,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
       {p && <ProjectGroup p={p} sync={sync} sub={sub} openId={openId} fsub={fsub} link={link} team={canManageTeam} />}
 
       <div className="sidebar-footer">
-        {(!signedIn || session.demo) && <div className="row gap-sm account-role">
-          <span className="body-sm t-secondary">{session.demo ? 'Demo role' : 'Role'}</span>
-          <select className="select role-select" value={settings.role} onChange={(e) => store.setSettings({ role: e.target.value as typeof settings.role })} aria-label={session.demo ? 'Demo role' : 'Your role'}>
-            {ROLES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>}
+        {(!signedIn || session.demo) && <div className="row gap-sm account-role"><RolesPicker label={session.demo ? 'Demo roles' : 'Roles'} roles={roles} /></div>}
         {/* REQ-110: Escape closes the menu from anywhere in the card or menu (also after Shift+Tab back to the card) */}
         <AccountMenu open={open} setOpen={setOpen} onKeyDown={(e) => { if (open && e.key === 'Escape') { setOpen(false); cardRef.current?.focus(); } }}>
           <button ref={cardRef} className="side-card account-card" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} title={signedIn ? session.email : account.name}>
@@ -108,7 +104,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
                 : it === 'theme'
                   ? <button key={it} role="menuitemcheckbox" aria-checked={settings.theme === 'dark'} title={theme.label} onClick={choose(() => store.setSettings({ theme: theme.next }))}><Icon name="moon" size={16} />Dark theme<span className="account-switch" aria-hidden /></button>
                   : it === 'leave-demo'
-                    ? <button key={it} role="menuitem" onClick={choose(() => { leaveDemo(); go('/'); })}><Icon name="exit" size={16} />Leave demo</button>
+                    ? <button key={it} role="menuitem" onClick={choose(exitDemo)}><Icon name="exit" size={16} />Leave demo</button>
                     : <button key={it} role="menuitem" className="account-menu-danger" onClick={choose(() => void signOut())}><Icon name="exit" size={16} />Sign out</button>)}
               </div>
             </div>
@@ -168,6 +164,42 @@ function ProjectGroup({ p, sync, sub, openId, fsub, link, team }: { p: Project; 
         </>
       )}
     </section>
+  );
+}
+
+/** REQ-121: the picked roles as a checkbox menu ("Demo roles: PO, BA ▾"); the last ticked role cannot be unticked.
+ *  A <details> disclosure: Enter/Space opens it, Escape or a click outside closes it. */
+function RolesPicker({ label, roles }: { label: string; roles: Role[] }) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    // On click, not pointerdown: closing first would shift the account card out from under a tap on a phone.
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) ref.current.open = false; };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [open]);
+  const text = roles.join(', ') || 'none';
+  return (
+    <details ref={ref} className="grow" style={{ minWidth: 0 }} onToggle={(e) => setOpen(e.currentTarget.open)}
+      onKeyDown={(e) => { if (e.key === 'Escape' && ref.current?.open) { e.stopPropagation(); ref.current.open = false; ref.current.querySelector('summary')?.focus(); } }}>
+      <summary className="row gap-sm" style={{ listStyle: 'none', cursor: 'pointer', alignItems: 'center' }} aria-label={`${label}: ${text}`}>
+        <span className="body-sm t-secondary">{label}</span>
+        <span className="select role-select" style={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}><span>{text}</span><span aria-hidden>▾</span></span>
+      </summary>
+      <fieldset className="stack gap-xs" style={{ border: 0, margin: 0, padding: 'var(--spacing-sm) var(--spacing-xs) 0' }}>
+        <legend className="sr-only">{label}</legend>
+        {ROLE_ORDER.map((r) => {
+          const on = roles.includes(r);
+          return (
+            <label key={r} className="row gap-sm body-sm" style={{ alignItems: 'center', cursor: on && roles.length === 1 ? 'default' : 'pointer' }} title={on && roles.length === 1 ? 'Keep at least one role' : undefined}>
+              <input type="checkbox" style={{ accentColor: 'var(--color-bg-brand)' }} checked={on} disabled={on && roles.length === 1} onChange={() => store.setSettings({ roles: toggleRole(roles, r, true), role: undefined })} />
+              <span className="mono t-brand" style={{ minWidth: 32 }}>{r}</span><span>{ROLE_NAMES[r]}</span>
+            </label>
+          );
+        })}
+      </fieldset>
+    </details>
   );
 }
 

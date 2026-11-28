@@ -15,7 +15,7 @@ Intent: compass/intent/2026-11-26-honey-brand.md · Design: compass/design/F-010
 
 ## Risks
 - A light honey fill could leave a light check mark → browsers pick the check mark colour by contrast with accent-color; checked in screenshots (dark mark on honey in both themes).
-- Pull request #142 (REQ-121) sets the same colour inline on the sidebar roles checkboxes → same token, so nothing changes visually and the two PRs do not conflict; the inline style can be dropped in a later tidy-up.
+- Pull request #142 (REQ-121) sets the same colour inline on the sidebar roles checkboxes → same token, so nothing changes visually. #142 merged first; its TC-527 and this PR's TC-529 were added at the same place in compass/spec.json, so main was merged in keeping both (by id). Dropping the inline style later must update TC-527 in tests/designLinks.test.mjs, which checks it.
 
 ## Proof
 - `npm test` TC-529
