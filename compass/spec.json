@@ -1175,7 +1175,7 @@
           {
             "id": "SCR-8",
             "name": "Desktop · Users (super admins)",
-            "purpose": "Super admins decide who can create projects; the owner makes people super admins; old project tokens are deleted here. Draft, waiting for the Product Owner's approval.",
+            "purpose": "Super admins decide who can create projects; the owner makes people super admins; old project tokens are deleted here.",
             "reqIds": [
               "REQ-044",
               "REQ-046",
@@ -1198,7 +1198,7 @@
           {
             "id": "SCR-9",
             "name": "Desktop · Team page without project token",
-            "purpose": "The Team page after the project token is retired: Add person and the team list only. Draft, waiting for the Product Owner's approval.",
+            "purpose": "The Team page after the project token is retired: Add person and the team list only.",
             "reqIds": [
               "REQ-043"
             ],
@@ -1216,7 +1216,7 @@
           {
             "id": "SCR-10",
             "name": "Desktop · Projects for a member",
-            "purpose": "What a team member without \"Can create projects\" sees: their projects, no Import or New project, and no Connections. Draft, waiting for the Product Owner's approval.",
+            "purpose": "What a team member without \"Can create projects\" sees: their projects, no Import or New project, and no Connections.",
             "reqIds": [
               "REQ-044",
               "REQ-041"
@@ -1237,7 +1237,7 @@
           {
             "id": "SCR-11",
             "name": "Desktop · Connections for super admins",
-            "purpose": "Super admins set the GitHub token, the GitHub account for new projects and the Anthropic key, all used by everyone on the teams. Draft, waiting for the Product Owner's approval.",
+            "purpose": "Super admins set the GitHub token, the GitHub account for new projects and the Anthropic key, all used by everyone on the teams.",
             "reqIds": [
               "REQ-041",
               "REQ-044"
@@ -1256,7 +1256,7 @@
             "frameUrl": "https://www.figma.com/design/79331aUkgSOKxR8y54x6fS?node-id=275-1012"
           }
         ],
-        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change. The brand block uses the Logo / Compass component from the Components page. Phase 1 (REQ-041–REQ-046, ADR-016–018): Connections (SCR-11) is for super admins only: the GitHub token, the GitHub account for new projects and the Anthropic key are saved for everyone on the teams. Commits and pull requests end with \"Made in Compass by <email> (<role>)\" (REQ-042, no screen). SCR-8 to SCR-11 are drafts until the Product Owner approves them.",
+        "notes": "Components: local \"F-015 / Button\" (Primary, Secondary, Danger, Disabled), \"F-015 / Role chip\" and \"F-015 / Role checkbox\", bound to the Compass color variables and text styles (Lexend headings, Be Vietnam Pro body). Keyboard: role checkboxes are real checkboxes in one group with a legend; disabled gate buttons keep their hint as aria-describedby so screen readers say which role is needed; the ⋮ menu on phones is a button with a menu. Text colours from honey tokens only. The sidebar reuses the approved sidebar design; only the Team item and account card text change. The brand block uses the Logo / Compass component from the Components page. Phase 1 (REQ-041–REQ-046, ADR-016–018): Connections (SCR-11) is for super admins only: the GitHub token, the GitHub account for new projects and the Anthropic key are saved for everyone on the teams. Commits and pull requests end with \"Made in Compass by <email> (<role>)\" (REQ-042, no screen). SCR-8 to SCR-11 approved by the Product Owner in chat on 2026-11-28.",
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-27T00:00:00.000Z"
       }
