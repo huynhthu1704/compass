@@ -143,6 +143,9 @@ test('TC-510 (REQ-110): the footer is one account card; the account menu lists t
   assert.match(footer, /aria-haspopup="menu"/, 'the account card opens the menu');
   assert.match(footer, /aria-expanded=\{open\}/);
   assert.match(footer, /role="menu"/);
+  // arrow keys work from anywhere in the popover, including after the header was clicked
+  assert.match(footer, /<div className="account-menu" onKeyDown=\{\(e\) => \{ if \(e\.key === 'ArrowDown' \|\| e\.key === 'ArrowUp'\) moveFocus\(e\); \}\}>/, 'the arrow keys are handled on the whole popover');
+  assert.match(src, /items\[i < 0 \? \(down \? 0 : items\.length - 1\)/, 'from the header, ArrowDown goes to the first item and ArrowUp to the last');
   assert.match(footer, /role="menuitemcheckbox"[^>]*aria-checked=\{settings\.theme === 'dark'\}/, 'the theme is a switch in the menu');
   assert.match(footer, /<AccountMenu open=\{open\} setOpen=\{setOpen\} onKeyDown=\{\(e\) => \{ if \(open && e\.key === 'Escape'\) \{ setOpen\(false\); cardRef\.current\?\.focus\(\); \} \}\}>/, 'Escape closes the menu from the card or the menu and returns focus to the card');
   assert.match(src, /className="account" onKeyDown=\{onKeyDown\}/, 'the Escape handler sits on the card + menu wrapper');

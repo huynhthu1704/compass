@@ -94,10 +94,10 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
             <Icon name="more" size={18} />
           </button>
           {open && (
-            <div className="account-menu">
+            <div className="account-menu" onKeyDown={(e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') moveFocus(e); }}>
               {/* the header is not a menu item, so it sits beside role="menu"; tabIndex -1 keeps focus inside when it is clicked */}
               <div className="account-menu-head" tabIndex={-1}><strong>{name}</strong><span>{signedIn ? <>{session.email!.split('@')[0]}@<wbr />{session.email!.split('@').slice(1).join('@')}</> : account.state}</span></div>
-              <div className="account-menu-items" role="menu" aria-label="Account" onKeyDown={(e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') moveFocus(e); }}>
+              <div className="account-menu-items" role="menu" aria-label="Account">
               {items.map((it) => it === 'connections'
                 ? <button key={it} role="menuitem" onClick={choose(() => go('/connect'))}><Icon name="link" size={16} />Connections<span className="account-menu-hint">{settings.githubUser ? 'GitHub ✓' : 'Not connected'}</span></button>
                 : it === 'theme'
@@ -180,10 +180,11 @@ function AccountMenu({ open, setOpen, onKeyDown, children }: { open: boolean; se
   return <div ref={ref} className="account" onKeyDown={onKeyDown} onBlur={(e) => { if (open && e.relatedTarget && !ref.current?.contains(e.relatedTarget as Node)) setOpen(false); }}>{children}</div>;
 }
 
-/** REQ-110: arrow keys move between the menu items. */
+/** REQ-110: arrow keys move between the menu items; from the header (not an item), ArrowDown goes to the first and ArrowUp to the last. */
 function moveFocus(e: KeyboardEvent<HTMLDivElement>) {
   e.preventDefault();
   const items = [...e.currentTarget.querySelectorAll<HTMLElement>('[role^="menuitem"]')];
   const i = items.indexOf(document.activeElement as HTMLElement);
-  items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+  const down = e.key === 'ArrowDown';
+  items[i < 0 ? (down ? 0 : items.length - 1) : (i + (down ? 1 : -1) + items.length) % items.length]?.focus();
 }

@@ -1076,4 +1076,5 @@ And the sidebar footer renders no "Try the demo", no "My roles" line and exactly
 And choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)
 And below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)
 And the email header sits beside the role="menu" list, not inside it
+And the arrow keys move between the items, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)
 ```
