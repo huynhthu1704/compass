@@ -41,6 +41,7 @@
 | REQ-073 The account footer shows the connection, the role and one theme button | TC-404 (Not run), TC-405 (Not run) |
 | REQ-074 The portal shows no "AI dev portal" tagline | TC-406 (Not run) |
 | REQ-075 The sidebar has no Knowledge link for any role | TC-407 (Not run) |
+| REQ-076 The portal has no Knowledge page; its address opens the Feature board | TC-408 (Not run) |
 | REQ-050 Quote any part of an agent run | TC-200 (Not run), TC-201 (Not run), TC-202 (Not run), TC-216 (Not run), TC-217 (Not run) |
 | REQ-051 Ask the agent about the quoted text | TC-203 (Not run), TC-204 (Not run), TC-205 (Not run), TC-214 (Not run), TC-217 (Not run) |
 | REQ-052 Revise the proposal from the quoted text | TC-206 (Not run), TC-207 (Not run), TC-208 (Not run), TC-215 (Not run) |
@@ -432,7 +433,7 @@ And the below-900 px rule for .main is unchanged
 ## TC-028 · No sideways scrolling and no text outside its row, from 1920 px down to 390 px
 Covers: REQ-015 · Type: Manual · Status: Not run
 ```gherkin
-Given every page in the sidebar (Projects, Agent architecture, Feature board, Team floor, Release, Agent runs, Knowledge, Connections, the feature stages) and New project
+Given every page in the sidebar (Projects, Agent architecture, Feature board, Team floor, Release, Agent runs, Connections, the feature stages) and New project
 When I open each at 1920, 1600, 1280, 1000, 901 and 390 px wide
 Then the content is 1600 px wide at 1920 px, forms keep their reading width, no page scrolls sideways, and no text in a list row is squeezed to one word per line or drawn outside its row
 ```
@@ -616,12 +617,20 @@ When it is searched for the text "AI dev portal"
 Then no file contains it, the sidebar brand renders "Compass" without a second line and the onboarding overline is "Compass"
 ```
 
-## TC-407 · No Knowledge link in the sidebar; the page still opens
+## TC-407 · No Knowledge link in the sidebar for any role
 Covers: REQ-075 · Type: Automated · Status: Not run
 ```gherkin
 Given the sidebar model for an open project and the sidebar component, which take no role
 When the project links are computed and the sources are read
-Then no link points to /knowledge or is labelled Knowledge for any role, the sidebar has no knowledge icon, and App still renders the Knowledge page for the knowledge route
+Then no link points to /knowledge or is labelled Knowledge for any role and the sidebar has no knowledge icon
+```
+
+## TC-408 · No Knowledge page or route; agents still index
+Covers: REQ-076 · Type: Automated · Status: Not run
+```gherkin
+Given the portal source
+When the routes in App and the pages under src/pages are read
+Then there is no Knowledge page, no knowledge route or import (so /p/<id>/knowledge falls through to the Feature board), the agent harness still builds the index with rag.ensure and searches it, and Import still indexes the repository
 ```
 
 ## TC-200 · A quote keeps the selected text and names its source

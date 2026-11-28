@@ -20,7 +20,7 @@ export function approvalCount(runs: Pick<Run, 'status'>[]): ApprovalCount | null
 }
 
 /** REQ-070 / REQ-071: the project group, in order; only Team floor carries the approval count.
- *  REQ-075: no Knowledge link for any role — the page stays reachable at `/p/<id>/knowledge`. */
+ *  REQ-075: no Knowledge link for any role (REQ-076: the page itself is gone). */
 export function projectLinks(projectId: string, runs: Pick<Run, 'status'>[]): NavLink[] {
   const base = `/p/${projectId}`;
   const count = approvalCount(runs) || undefined;

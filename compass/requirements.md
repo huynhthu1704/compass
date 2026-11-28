@@ -40,6 +40,7 @@
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
 | REQ-075 | F-013 | The sidebar has no Knowledge link for any role | Should | Approved | TC-407 |
+| REQ-076 | F-013 | The portal has no Knowledge page; its address opens the Feature board | Should | Approved | TC-408 |
 | REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216, TC-217 |
 | REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214, TC-217 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
@@ -438,7 +439,7 @@ As the product owner, I want the rebrand to reach every page, so that no screen 
 
 _AC1_
 ```gherkin
-Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs, Knowledge)
+Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs)
 When I open it in light and dark mode
 Then it uses the honey theme
 ```
@@ -982,11 +983,25 @@ When I look under the project card
 Then the links are, in order, Feature board, Team floor, Agent runs, Release and Project settings (ADR-015), and there is no Knowledge link
 ```
 
+## REQ-076 · The portal has no Knowledge page; its address opens the Feature board
+As the Product Owner, I want the Knowledge (RAG) page gone from the portal, so that no one lands on a technical page that is not part of the delivery flow.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a project is open, in any role
+When I open the address /p/<project>/knowledge
+Then the project's Feature board opens and no Knowledge page exists in the portal
+```
+
 _AC2_
 ```gherkin
-Given the address /p/<project>/knowledge
-When I open it directly
-Then the Knowledge page still opens, and agent runs keep indexing and searching the repository as before
+Given a project is open or imported
+When an agent run starts
+Then the agents still index the repository and search it as before (the index builds on the run's first search, or at import)
 ```
 
 ## REQ-050 · Quote any part of an agent run

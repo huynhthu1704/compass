@@ -19,7 +19,7 @@ export async function importRepo(t: string, r: R, name = r.name) {
   p.releases = rel.map((x) => ({ tag: x.tag_name, name: x.name || x.tag_name, url: x.html_url, date: x.published_at, prs: [] }));
   store.addProject(p);
   toast('Indexing repository for RAG…');
-  // Indexing is a convenience for the agents: a failure must not leave a half-imported project (Re-index on Knowledge).
+  // Indexing is a convenience for the agents: a failure must not leave a half-imported project (the first agent run indexes it, rag.ensure).
   try { rag.setRepoDocs(p.id, await loadRepoDocs(t, p)); }
   catch (e) { toast(`Imported, but indexing failed: ${(e as Error).message}`); return p; }
   toast(specFile ? 'Imported — Compass spec found' : 'Imported — install the framework from Overview');
