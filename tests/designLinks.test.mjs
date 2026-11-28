@@ -146,3 +146,19 @@ test('TC-506 (REQ-081, source part): the Design page has a Design files button a
   assert.match(read('src/index.css'), /\.files-btn-phone \{ display: none; \}/);
   assert.match(src, /ArrowRight/, 'the preview switch follows the arrow keys');
 });
+
+test('TC-530 (REQ-081): the Figma preview shows the project file when the feature frame is in another file', () => {
+  const files = designFiles({ kind: 'figma', url: FIG });
+  // The demo's feature frame points to a made-up file ("demo"): the project file from Project settings is previewed.
+  const otherFile = 'https://www.figma.com/design/demo/Travel-Journal?node-id=1-2';
+  assert.equal(designPreviews(files, otherFile)[0].src, figmaEmbed(FIG));
+  // A frame in the project's own file still wins, also through a branch link of that file.
+  const sameFile = `${FIG}?node-id=1-2`;
+  assert.equal(designPreviews(files, sameFile)[0].src, figmaEmbed(sameFile));
+  const branch = 'https://www.figma.com/design/79331aUkgSOKxR8y54x6fS/branch/Br4nchK3yAbc12/Compass?node-id=3-4';
+  assert.equal(designPreviews(files, branch)[0].src, figmaEmbed(branch));
+  // No project Figma file: the feature frame is the only Figma link, so it is previewed.
+  assert.equal(designPreviews({}, otherFile)[0].src, figmaEmbed(otherFile));
+  // The demo project ships no made-up Figma link that Figma would answer with "Invalid URL".
+  assert.doesNotMatch(read('src/demo.ts'), /figma\.com\/design\/demo\//);
+});

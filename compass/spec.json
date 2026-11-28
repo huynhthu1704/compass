@@ -3544,6 +3544,16 @@
       "gherkin": "Given a signed-in person clicked \"Open demo project\", so the demo is opened on /p/<demo id> with no role yet\nWhen the route becomes /p/<demo id>\nThen they stay in the demo\nAnd when the route becomes any other route before a role is picked (the browser Back button)\nThen the demo is left\nAnd once a demo role is picked, or outside the demo, a route change never leaves the demo"
     },
     {
+      "id": "TC-530",
+      "reqIds": [
+        "REQ-081"
+      ],
+      "title": "The Figma preview shows the project file when the feature frame is in another file",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a project whose Figma file is set in Project settings\nWhen a feature's frame link points to a different Figma file (such as the demo's made-up \"demo\" file)\nThen the Design page previews the project's Figma file\nAnd a frame link in the same file (a branch link included) still wins, and with no project file the frame link is previewed\nAnd the demo project carries no made-up Figma link"
+    },
+    {
       "id": "TC-078",
       "reqIds": [
         "REQ-041"
