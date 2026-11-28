@@ -3642,7 +3642,7 @@
       ],
       "title": "Stored project tokens can no longer be read or written",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given the Firestore emulator and a stored project token\nWhen a member, an Admin, then a super admin read it, and an Admin writes one\nThen every read and the write are refused; only the super admin's delete is accepted; the Team page has no project token card"
     },
     {

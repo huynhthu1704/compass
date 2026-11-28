@@ -103,8 +103,7 @@ export async function startSession() {
     const { auth, authApp } = await load();
     currentAuth = authApp;
     auth.onAuthStateChanged(authApp, (user) => {
-      if (!user) { clearProjectTokens(); if (session.demo) store.setSettings(NO_ROLES); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false, demoEntry: undefined }); return; }
-      if (session.email && normalizeEmail(user.email || '') !== session.email) clearProjectTokens(); // another account in this tab
+      if (!user) { if (session.demo) store.setSettings(NO_ROLES); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false, demoEntry: undefined }); return; }
       void loadAccess(user.email || '', user.emailVerified);
     });
   } catch (e) { set({ status: 'signed-out', error: (e as Error).message }); }
@@ -257,51 +256,25 @@ export async function setSuperAdmins(emails: string[]) {
   await fs.updateDoc(fs.doc(db, 'config', 'access'), { superAdmins: [...new Set(emails.map(normalizeEmail))] });
 }
 
-/** Deletes any retired project tokens that remain, without reading them (super admins only, REQ-043 AC2; used in build 3). */
+/** Every project's team (super admins may list all projects), for the Users screen (REQ-046 AC3). */
+export async function loadAllTeams(): Promise<{ id: string; name: string; members: Member[] }[]> {
+  const { fs, db } = await load();
+  const snap = await fs.getDocs(fs.collection(db, 'projects'));
+  return snap.docs.map((d) => { const x = d.data() as TeamDoc; return { id: d.id, name: x.name || d.id, members: membersFromDoc(x) }; });
+}
+
+/** Deletes any retired project tokens that remain, without reading them (super admins only, REQ-043 AC2; Users screen). */
 export async function deleteOldProjectTokens(): Promise<void> {
   const { fs, db } = await load();
   const projects = await fs.getDocs(fs.collection(db, 'projects'));
   await Promise.all(projects.docs.map((p) => fs.deleteDoc(fs.doc(db, 'projects', p.id, 'secrets', 'token'))));
 }
 
-// ---- Project GitHub token (REQ-034, ADR-011; retired by REQ-043 — removed in build 3) ---------------------------------
-
-const tokens = new Map<string, string | null>();
+// Listeners for the shared workspace (auto-sync and open pages re-check when the work token arrives or changes).
 const tokenListeners = new Set<() => void>();
 const tokenChanged = () => tokenListeners.forEach((l) => l());
-
-/** The cached project token: a string, null when the project has none, undefined when not loaded yet. */
-export const projectTokenOf = (key: string) => tokens.get(key);
-/** Forget every cached project token (sign-out, or another account signs in in this tab). */
-export function clearProjectTokens() { tokenGeneration++; failedTokens.clear(); if (tokens.size) { tokens.clear(); tokenChanged(); } }
-const failedTokens = new Set<string>();
-/** True when the last load of this project's token was refused or failed (REQ-034 AC4: say so, not "Loading…"). */
-export const projectTokenFailed = (key: string) => failedTokens.has(key);
-let tokenGeneration = 0;
-/** Called whenever a project token is loaded, replaced or forgotten (autosync re-checks dirty projects). */
+/** Called whenever the shared workspace is loaded, replaced or forgotten (autosync re-checks dirty projects). */
 export function onProjectTokenChange(l: () => void) { tokenListeners.add(l); return () => { tokenListeners.delete(l); }; }
-export const useProjectToken = (key: string) => useSyncExternalStore((l) => { tokenListeners.add(l); return () => tokenListeners.delete(l); }, () => tokens.get(key));
-
-/** Loads the project token (members and the super admin may read it). */
-export async function loadProjectToken(key: string) {
-  const { fs, db } = await load();
-  const gen = tokenGeneration;
-  try {
-    const snap = await fs.getDoc(fs.doc(db, 'projects', key, 'secrets', 'token'));
-    if (gen !== tokenGeneration) return; // signed out or switched account while loading: drop the old result
-    tokens.set(key, snap.exists() ? String(snap.data().token || '') || null : null);
-    failedTokens.delete(key);
-  } catch (e) { if (gen === tokenGeneration) { tokens.delete(key); failedTokens.add(key); tokenChanged(); } throw e; } // refused: forget it, remember the failure
-  tokenChanged();
-}
-
-/** Saves the project token (Admins of the project or the super admin; the rules refuse anyone else). */
-export async function saveProjectToken(key: string, token: string) {
-  const { fs, db } = await load();
-  await fs.setDoc(fs.doc(db, 'projects', key, 'secrets', 'token'), { token });
-  tokens.set(key, token);
-  tokenChanged();
-}
 
 // ---- Approval records (REQ-037, ADR-012) -------------------------------------------------------------------------------
 

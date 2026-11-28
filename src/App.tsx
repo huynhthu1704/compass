@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArchitecturePage } from './pages/Architecture';
 import { BuildPage } from './pages/Build';
 import { ConnectPage } from './pages/Connect';
+import { UsersPage } from './pages/Users';
 import { IdeaPage } from './pages/Idea';
 import { ImportPage } from './pages/Import';
 import { ProjectSettingsPage } from './pages/ProjectSettings';
@@ -75,6 +76,8 @@ export default function App() {
   if (session.demo && ['new', 'import'].includes(parts[0])) page = <ProjectsPage />;
   // REQ-041 AC2: with sign-in on, Connections is only for super admins; anyone else lands on Projects.
   else if (parts[0] === 'connect') page = canOpenConnections({ signedIn: session.status === 'signed-in', demo: !!session.demo, superAdmin: session.superAdmin }) ? <ConnectPage /> : <ProjectsPage />;
+  // REQ-046, SCR-8: the Users screen is only for super admins (signed in, outside the demo); anyone else lands on Projects.
+  else if (parts[0] === 'users') page = session.status === 'signed-in' && !session.demo && session.superAdmin ? <UsersPage /> : <ProjectsPage />;
   else if (parts[0] === 'new') page = <NewProjectPage />;
   else if (parts[0] === 'import') page = <ImportPage />;
   else if (parts[0] === 'architecture') page = <ArchitecturePage />;

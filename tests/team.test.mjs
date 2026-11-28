@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, auditFor, auditLine, canOpenConnections, peopleChanges, withAudit, usesSharedSettings, workspaceSettings, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, auditFor, auditLine, canOpenConnections, ownerOf, peopleChanges, peopleRows, withSuperAdmin, withAudit, usesSharedSettings, workspaceSettings, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -310,4 +310,21 @@ test('TC-081 (REQ-042): commits and pull requests end with who did it, once', ()
   assert.equal(auditFor({ ...on, firebase: false }), null, 'sign-in off');
   assert.equal(auditFor({ ...on, demo: true }), null, 'demo');
   assert.equal(auditFor({ ...on, signedIn: false }), null, 'signed out');
+});
+
+test('TC-087 (part, REQ-046 AC1): switching super admin keeps the owner first and never removes them', () => {
+  const list = ['owner@example.com', 'ba@example.com'];
+  assert.equal(ownerOf(list), 'owner@example.com');
+  assert.deepEqual(withSuperAdmin(list, 'UX@Example.com', true), ['owner@example.com', 'ba@example.com', 'ux@example.com']);
+  assert.deepEqual(withSuperAdmin(list, 'ba@example.com', false), ['owner@example.com']);
+  assert.deepEqual(withSuperAdmin(list, 'ba@example.com', true), list, 'no duplicate');
+  assert.deepEqual(withSuperAdmin(list, 'owner@example.com', false), list, 'the owner is never removed');
+});
+
+test('TC-088 (part, REQ-046 AC3): the Users screen lists everyone with projects and Owner / Super admin badges', () => {
+  const teams = [{ name: 'Travel', members: [{ email: 'owner@example.com' }, { email: 'dev@example.com' }] }, { name: 'Bee', members: [{ email: 'Dev@example.com' }] }];
+  const rows = peopleRows(teams, ['owner@example.com', 'sa2@example.com']);
+  assert.deepEqual(rows.map((r) => [r.email, r.projects.join(','), r.badge]), [
+    ['owner@example.com', 'Travel', 'Owner'], ['sa2@example.com', '', 'Super admin'], ['dev@example.com', 'Bee,Travel', null],
+  ]);
 });

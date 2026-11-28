@@ -1,9 +1,8 @@
 // F-015 SCR-3 / SCR-6 Team page (REQ-030, REQ-031, REQ-035, REQ-038 AC1). Design: compass/design/F-015.md.
 // The super admin creates a project's first team (with its approval baseline); Admins add people with one or more
-// roles, change roles and remove people. The project GitHub token card (REQ-034) comes with the next step.
+// roles, change roles and remove people. No project token any more: GitHub work uses the shared work token (REQ-043, SCR-9).
 import { useEffect, useState } from 'react';
-import { changeTeam, loadProjectToken, loadTeam, projectKey, reloadAccess, saveProjectToken, useProjectToken, useSession } from '../firebase';
-import { github } from '../github';
+import { changeTeam, loadTeam, projectKey, reloadAccess, useSession } from '../firebase';
 import { baselineFrom, LAST_ADMIN, TEAM_ROLES, type Member, type TeamOp, type TeamRole } from '../team';
 import type { Project } from '../types';
 import { Badge, Button, PageHead } from '../ui';
@@ -83,7 +82,7 @@ export function TeamPage({ p }: { p: Project }) {
       {removed && (
         <div className="card stack gap-xs" style={{ padding: '12px 16px', background: 'var(--color-bg-brand-subtle)' }} role="status">
           <strong className="body-sm">You removed {removed}</strong>
-          <span className="body-sm t-secondary">They may have copied the project's GitHub token. Replace it on GitHub and save the new one here.</span>
+          <span className="body-sm t-secondary">They may have copied the shared work token and Anthropic key. Ask a super admin to replace both (REQ-031, REQ-043).</span>
         </div>
       )}
       {!loading && !exists && (
@@ -129,61 +128,6 @@ export function TeamPage({ p }: { p: Project }) {
         })}
       </section>
 
-      <TokenCard projectKey={key} />
     </div>
-  );
-}
-
-/** SCR-3 token card (REQ-034, ADR-011): Admins save one GitHub token for the project; members use it. Only the last
- *  4 characters are shown. "Test" checks the token with GitHub before it is saved. */
-function TokenCard({ projectKey: key }: { projectKey: string }) {
-  const token = useProjectToken(key);
-  const [value, setValue] = useState('');
-  const [replacing, setReplacing] = useState(false);
-  const [state, setState] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => { if (token === undefined) loadProjectToken(key).catch((e) => setState({ tone: 'danger', text: `Could not load the token: ${(e as Error).message}` })); }, [key, token]);
-
-  const test = async (t: string) => {
-    try { const me = await github.me(t); return { ok: true as const, text: `Works · GitHub account @${me.login}` }; }
-    catch (e) { return { ok: false as const, text: (e as { status?: number }).status === 401 ? 'This token is not valid or has expired.' : (e as Error).message }; }
-  };
-  const save = async () => {
-    setBusy(true); setState(null);
-    const r = await test(value.trim());
-    if (!r.ok) { setState({ tone: 'danger', text: `Not saved: ${r.text}` }); setBusy(false); return; }
-    try { await saveProjectToken(key, value.trim()); setValue(''); setReplacing(false); setState({ tone: 'success', text: `Saved. ${r.text}` }); }
-    catch (e) { setState({ tone: 'danger', text: `Not saved: ${(e as Error).message}` }); }
-    finally { setBusy(false); }
-  };
-  const check = async () => { setBusy(true); const r = await test(token || ''); setState({ tone: r.ok ? 'success' : 'danger', text: r.text }); setBusy(false); };
-
-  return (
-    <section className="card pad-xl stack gap-md" aria-labelledby="project-token">
-      <div className="row gap-sm wrap" style={{ alignItems: 'center' }}>
-        <h2 id="project-token" className="h3">Project GitHub token</h2>
-        {token ? <Badge tone="success">Saved</Badge> : token === null ? <Badge tone="warning">Missing</Badge> : null}
-      </div>
-      <p className="body t-secondary">Members use this token for this project's GitHub work, so they do not need their own. Only Admins see this card.</p>
-      {token && !replacing && (
-        <div className="row gap-sm wrap" style={{ alignItems: 'center' }}>
-          <span className="mono" style={{ padding: '10px 12px', background: 'var(--color-bg-subtle)', borderRadius: 8 }}><span aria-hidden>{`••••••••••••${token.slice(-4)}`}</span><span className="sr-only">{`Token ending in ${token.slice(-4)}`}</span></span>
-          <Button variant="secondary" disabled={busy} onClick={check}>Test</Button>
-          <Button variant="accent" disabled={busy} onClick={() => setReplacing(true)}>Replace token</Button>
-        </div>
-      )}
-      {(!token || replacing) && token !== undefined && (
-        <div className="row gap-sm wrap" style={{ alignItems: 'flex-end' }}>
-          <label className="stack gap-xs" style={{ flex: '1 1 320px' }}>
-            <span className="body-sm" style={{ fontWeight: 500 }}>{token ? 'New token' : 'Token'}</span>
-            <input className="input mono" type="password" value={value} onChange={(e) => setValue(e.target.value)} placeholder="github_pat_…" autoComplete="off" />
-          </label>
-          <Button variant="accent" disabled={busy || !value.trim()} onClick={save}>{busy ? 'Testing…' : 'Test & save'}</Button>
-          {replacing && <Button variant="secondary" disabled={busy} onClick={() => { setReplacing(false); setValue(''); }}>Cancel</Button>}
-        </div>
-      )}
-      <p className="body-sm t-secondary">Use a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">fine-grained token</a> for this repository only, with <strong>Contents, Pull requests and Issues: Read &amp; write</strong>, and an expiry date. Every member's browser can read it (ADR-011), so replace it after removing someone.</p>
-      {state && <p className={`body-sm ${state.tone === 'danger' ? 't-danger' : 't-success'}`} role={state.tone === 'danger' ? 'alert' : 'status'}>{state.text}</p>}
-    </section>
   );
 }
