@@ -3,7 +3,7 @@ import { demoProject } from '../demo';
 import { openOrCreateDemo } from '../demoOnce';
 import { featureStage } from '../progress';
 import { useState } from 'react';
-import { canSeeProject, getSession, loadProjectToken, projectTokenOf, useSession, type ProjectAccess } from '../firebase';
+import { canSeeProject, getSession, getWorkspace, useSession, type ProjectAccess } from '../firebase';
 import { github, GitHubError } from '../github';
 import { missingTokenMessage, pickToken, sharedOpenProblem, sharedToOpen } from '../team';
 import { importRepo } from './Import';
@@ -22,8 +22,7 @@ export function ProjectsPage() {
   const openShared = async (a: ProjectAccess) => {
     setOpening(a.id); setOpenErr(null);
     try {
-      await loadProjectToken(a.id).catch(() => undefined);
-      const t = pickToken(settings.githubToken, projectTokenOf(a.id), true);
+      const t = pickToken(settings.githubToken, getWorkspace()?.workToken, true); // REQ-041: the shared work token
       if (!t) throw new Error(missingTokenMessage(true));
       const who = session.email;
       const r = await github.getRepo(t, a.repo!.owner, a.repo!.name).catch((e) => {

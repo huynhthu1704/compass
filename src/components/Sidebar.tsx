@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { go } from '../App';
 import { featureStage, stageStatus } from '../progress';
-import { leaveDemo, projectKey, signOut, useSession } from '../firebase';
+import { leaveDemo, projectKey, signOut, useSession, useWorkspace } from '../firebase';
+import { canOpenConnections } from '../team';
 import { accountCard, accountChips, accountMenu, accountName, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
 import { STAGES, type Project, type Stage } from '../types';
@@ -52,7 +53,11 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   const cardRef = useRef<HTMLButtonElement>(null);
   const name = signedIn ? accountName(session.email!) : account.name;
   const chips = accountChips({ signedIn, demo: session.demo, superAdmin: session.superAdmin, roles: myRoles, demoRole: settings.role });
-  const items = accountMenu({ signedIn, demo: session.demo });
+  // REQ-110 AC2 as amended by ADR-020: with sign-in on, Connections is only in super admins' menu (REQ-041 AC2).
+  const ws = useWorkspace();
+  // Signed in (outside the demo), Connections is the shared page: its hint is the work token, not this device's token.
+  const connHint = signedIn && !session.demo ? (ws?.workToken ? 'Work token ✓' : 'No work token') : settings.githubUser ? 'GitHub ✓' : 'Not connected';
+  const items = accountMenu({ signedIn, demo: session.demo }).filter((it) => it !== 'connections' || canOpenConnections({ signedIn, demo: !!session.demo, superAdmin: session.superAdmin }));
   // REQ-110 AC3: choosing an item closes the menu and returns focus to the card, then acts.
   const choose = (act: () => void) => () => { setOpen(false); cardRef.current?.focus(); act(); };
 
@@ -99,7 +104,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
               <div className="account-menu-head" tabIndex={-1}><strong>{name}</strong><span>{signedIn ? <>{session.email!.split('@')[0]}@<wbr />{session.email!.split('@').slice(1).join('@')}</> : account.state}</span></div>
               <div className="account-menu-items" role="menu" aria-label="Account">
               {items.map((it) => it === 'connections'
-                ? <button key={it} role="menuitem" onClick={choose(() => go('/connect'))}><Icon name="link" size={16} />Connections<span className="account-menu-hint">{settings.githubUser ? 'GitHub ✓' : 'Not connected'}</span></button>
+                ? <button key={it} role="menuitem" onClick={choose(() => go('/connect'))}><Icon name="link" size={16} />Connections<span className="account-menu-hint">{connHint}</span></button>
                 : it === 'theme'
                   ? <button key={it} role="menuitemcheckbox" aria-checked={settings.theme === 'dark'} title={theme.label} onClick={choose(() => store.setSettings({ theme: theme.next }))}><Icon name="moon" size={16} />Dark theme<span className="account-switch" aria-hidden /></button>
                   : it === 'leave-demo'

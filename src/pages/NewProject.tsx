@@ -4,7 +4,8 @@ import { github, toRef } from '../github';
 import { installFramework, slug, startRun } from '../harness';
 import { emptyIdea, featureName } from '../spec';
 import { newProject, now, store, useStore } from '../store';
-import { Badge, Button, Field, PageHead, useAction } from '../ui';
+import { Badge, Button, Field, PageHead, toast, useAction } from '../ui';
+import { getSession } from '../firebase';
 
 export function NewProjectPage() {
   const { settings } = useStore();
@@ -26,11 +27,20 @@ export function NewProjectPage() {
       const r = await github.createRepo(settings.githubToken, repoName, p.description, priv);
       p = { ...p, repo: toRef(r) };
       store.addProject(p);
-      add('Installing Compass Framework + starter site + CI/deploy workflows…');
-      await installFramework(p.id, { starter: true, direct: true });
-      add('Enabling GitHub Pages (deploy from GitHub Actions)…');
-      try { const pg = await github.enablePages(settings.githubToken, p.repo!); store.update(p.id, (x) => ({ ...x, repo: x.repo && { ...x.repo, pagesUrl: pg.html_url } })); }
-      catch (e) { add(`Pages not enabled automatically (${(e as Error).message}) — enable it in repo Settings → Pages → Source: GitHub Actions.`); }
+      // REQ-041/REQ-044 (phase 1): signed in, the setup runs with the shared work token, which cannot reach a new
+      // repository until a super admin adds it on GitHub. So stop here and say what to do next (build 3 adds the
+      // "Continue setup" step and switches Pages on with the creator token).
+      const s = getSession();
+      if (s.status === 'signed-in' && !s.demo) {
+        const next = `Repository created. Next: add ${p.repo!.owner}/${p.repo!.name} to the work token on GitHub, then install the framework from the project's Overview (without the starter site for now) and switch GitHub Pages on in the repository's Settings → Pages.`;
+        add(next); toast(next);
+      } else {
+        add('Installing Compass Framework + starter site + CI/deploy workflows…');
+        await installFramework(p.id, { starter: true, direct: true });
+        add('Enabling GitHub Pages (deploy from GitHub Actions)…');
+        try { const pg = await github.enablePages(settings.githubToken, p.repo!); store.update(p.id, (x) => ({ ...x, repo: x.repo && { ...x.repo, pagesUrl: pg.html_url } })); }
+        catch (e) { add(`Pages not enabled automatically (${(e as Error).message}) — enable it in repo Settings → Pages → Source: GitHub Actions.`); }
+      }
     } else store.addProject(p);
     add('Ideation agent is shaping the idea…');
     startRun(p.id, 'ideation', idea.trim(), { featureId: 'F-001' });
