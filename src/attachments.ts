@@ -53,7 +53,14 @@ export const ATTACHMENTS_DIR = 'compass/intent/attachments/';
 export const folderOf = (fid: string) => `${ATTACHMENTS_DIR}${fid}`;
 /** Attached files are never repo knowledge: no agent retrieves, lists or reads them as docs (only the Ideation run gets
  *  its feature's images and PDFs, labelled as data). */
-export const isAttachmentPath = (path: string) => path.replace(/^\/+/, '').toLowerCase().startsWith(ATTACHMENTS_DIR);
+export function isAttachmentPath(path: string) {
+  const parts: string[] = [];
+  for (const seg of path.replace(/\\/g, '/').split('/')) {
+    if (!seg || seg === '.') continue;
+    if (seg === '..') parts.pop(); else parts.push(seg);
+  }
+  return `${parts.join('/').toLowerCase()}/`.startsWith(ATTACHMENTS_DIR);
+}
 
 /** The repo path for a new file, numbered "name-2.ext" when the name is taken (never an overwrite). */
 export function pathFor(fid: string, name: string, taken: Set<string>) {

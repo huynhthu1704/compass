@@ -95,6 +95,8 @@ test('TC-514: attached files are never retrieved, listed or read as repo knowled
   assert.ok(isAttachmentPath('compass/intent/attachments/F-001/notes.md'));
   assert.ok(isAttachmentPath('/Compass/Intent/Attachments/F-001/notes.md'));
   assert.ok(!isAttachmentPath('compass/intent/F-001.md'));
+  for (const sneaky of ['./compass/intent/attachments/F-001/a.md', 'compass/x/../intent/attachments/F-001/a.md', 'compass//intent/attachments/a.md', 'compass\\intent\\attachments\\a.md', 'compass/intent/attachments'])
+    assert.ok(isAttachmentPath(sneaky), sneaky);
   const h = read('src/harness.ts');
   assert.equal((h.match(/filter\(\(h\) => !isAttachmentPath\(h\.chunk\.path\)\)/g) || []).length, 2, 'first retrieval and search_knowledge');
   assert.match(h, /!f\.startsWith\('spec:'\) && !isAttachmentPath\(f\)/, 'list_files');
