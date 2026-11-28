@@ -3,7 +3,7 @@
 // Without it the portal works exactly as before (REQ-032 AC5). The firebase library is only loaded when it is on.
 import { useSyncExternalStore } from 'react';
 import { store } from './store';
-import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, peopleChanges, projectVisible, teamDoc, workspaceSettings, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
+import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, peopleChanges, projectVisible, routeOf, teamDoc, workspaceSettings, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
 import type { RepoRef } from './types';
 
 export interface FirebaseWebConfig { apiKey: string; authDomain: string; projectId: string; appId: string; [k: string]: string }
@@ -32,6 +32,8 @@ export interface Session {
   error?: string;
   /** REQ-040: a signed-in person is trying the demo (sample projects only, nothing sent to Firebase or GitHub). */
   demo?: boolean;
+  /** ADR-026: the route the demo was opened on; leaving it before a role is picked leaves the demo. */
+  demoEntry?: string;
 }
 
 let session: Session = { status: firebaseEnabled ? 'loading' : 'off', superAdmin: false, access: [] };
@@ -101,7 +103,7 @@ export async function startSession() {
     const { auth, authApp } = await load();
     currentAuth = authApp;
     auth.onAuthStateChanged(authApp, (user) => {
-      if (!user) { clearProjectTokens(); if (session.demo) store.setSettings(NO_ROLES); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false }); return; }
+      if (!user) { clearProjectTokens(); if (session.demo) store.setSettings(NO_ROLES); set({ status: 'signed-out', email: undefined, superAdmin: false, access: [], error: undefined, demo: false, demoEntry: undefined }); return; }
       if (session.email && normalizeEmail(user.email || '') !== session.email) clearProjectTokens(); // another account in this tab
       void loadAccess(user.email || '', user.emailVerified);
     });
@@ -327,6 +329,6 @@ const NO_ROLES = { roles: undefined, role: undefined };
 // ---- Demo after sign-in (REQ-040, ADR-014) ------------------------------------------------------------------------------
 
 /** Opens the demo for a signed-in person: sample projects only, a demo role of their choice. */
-export function enterDemo() { if (session.status !== 'signed-in') return; store.setSettings(NO_ROLES); set({ demo: true }); } // always pick a demo role (REQ-040 AC2)
+export function enterDemo(entry = routeOf(window.location.hash)) { if (session.status !== 'signed-in') return; store.setSettings(NO_ROLES); set({ demo: true, demoEntry: entry }); } // always pick a demo role (REQ-040 AC2)
 /** Leaves the demo; the demo role is forgotten by the caller so it never leaks into real work. */
-export function leaveDemo() { store.setSettings(NO_ROLES); set({ demo: false }); } // the demo role never leaks into real work
+export function leaveDemo() { store.setSettings(NO_ROLES); set({ demo: false, demoEntry: undefined }); } // the demo role never leaks into real work

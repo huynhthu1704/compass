@@ -18,14 +18,14 @@ import { TestsPage } from './pages/Tests';
 import { TeamFloorPage } from './pages/TeamFloor';
 import { syncLabel, useSync } from './autosync';
 import { FeaturePage } from './pages/Feature';
-import { useStore } from './store';
+import { store, useStore } from './store';
 import { pickedRoles } from './types';
 import { Toaster } from './ui';
 import { Sidebar } from './components/Sidebar';
-import { canSeeProject, firebaseEnabled, leaveDemo, startSession, useSession, useWorkspace } from './firebase';
+import { canSeeProject, firebaseEnabled, getSession, leaveDemo, startSession, useSession, useWorkspace } from './firebase';
 import { tokenFor } from './token';
 import { NoAccessPage, SignInPage } from './pages/SignIn';
-import { canOpenConnections, startScreen } from './team';
+import { canOpenConnections, leavesDemoOnNavigate, routeOf, startScreen } from './team';
 
 export const go = (path: string) => { window.location.hash = path; window.scrollTo(0, 0); };
 export const query = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -48,6 +48,11 @@ export default function App() {
   useEffect(() => { document.documentElement.dataset.theme = settings.theme; document.documentElement.lang = settings.lang; }, [settings.theme, settings.lang]);
   useEffect(() => setMenu(false), [parts.join('/')]);
   useEffect(() => { void startSession(); }, []);
+  // REQ-040 AC4, ADR-026: the browser Back button on the demo role screen leaves the demo instead of trapping the person.
+  useEffect(() => {
+    const on = () => { const s = getSession(); if (leavesDemoOnNavigate({ demo: s.demo, hasRole: pickedRoles(store.get().settings).length > 0, entry: s.demoEntry, route: routeOf(window.location.hash) })) leaveDemo(); };
+    window.addEventListener('hashchange', on); return () => window.removeEventListener('hashchange', on);
+  }, []);
   const session = useSession();
   useWorkspace(); // F-015 REQ-041: re-render when the shared work token arrives, so the sync label and GitHub actions use it
 

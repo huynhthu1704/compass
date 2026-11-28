@@ -236,6 +236,15 @@ export function projectVisible(p: { repo: { owner: string; name: string } | null
   return !!p.repo && s.accessIds.includes(`${p.repo.owner}__${p.repo.name}`.toLowerCase());
 }
 
+/** The route part of a location hash: "#/p/abc?x=1" → "/p/abc"; empty → "/". */
+export const routeOf = (hash: string) => hash.replace(/^#/, '').split('?')[0] || '/';
+
+/** REQ-040 AC4, ADR-026: in the demo, before a role is picked, the role screen covers every route — so a navigation away
+ *  from the route the demo was opened on (the browser Back button) leaves the demo instead of trapping the person. */
+export function leavesDemoOnNavigate(s: { demo?: boolean; hasRole: boolean; entry?: string; route: string }): boolean {
+  return !!s.demo && !s.hasRole && s.entry !== undefined && s.route !== s.entry;
+}
+
 /** ADR-022: a signed-in person, super admins included, opens the demo project only inside the demo session. */
 export function opensDemoSession(s: { status: string; demo?: boolean }): boolean {
   return s.status === 'signed-in' && !s.demo;
