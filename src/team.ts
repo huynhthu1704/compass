@@ -183,6 +183,19 @@ export function workspaceSettings(ws: { anthropicKey?: string; model?: string; a
   return { apiKey: ws?.anthropicKey || undefined, model: ws?.model || 'claude-sonnet-5-5', autoSync: ws?.autoSync ?? true };
 }
 
+/** The audit line at the end of a commit or pull request made through Compass (REQ-042, ADR-016): who did it, with the
+ *  role that passed the gate or their roles on the project. It helps people read GitHub's history; it is not proof. */
+export function auditLine(email: string, roles: string[] | string): string {
+  const r = Array.isArray(roles) ? roles.join(', ') : roles;
+  return `Made in Compass by ${normalizeEmail(email)}${r ? ` (${r})` : ''}`;
+}
+
+/** Adds the audit line once, at the end; nothing when there is no line (sign-in off, the demo). */
+export function withAudit(text: string, line: string | null | undefined): string {
+  if (!line || text.includes('Made in Compass by ')) return text;
+  return `${text.trimEnd()}\n\n${line}`;
+}
+
 /** Whether the shared work token, key and settings apply (REQ-041 AC1, AC7): whenever sign-in is configured, outside
  *  the demo — also while signing in or after signing out, so a device token never reaches a team project meanwhile. */
 export function usesSharedSettings(ctx: { firebase: boolean; demo: boolean }): boolean {
