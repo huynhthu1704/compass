@@ -236,6 +236,11 @@ export function projectVisible(p: { repo: { owner: string; name: string } | null
   return !!p.repo && s.accessIds.includes(`${p.repo.owner}__${p.repo.name}`.toLowerCase());
 }
 
+/** ADR-022: a signed-in person, super admins included, opens the demo project only inside the demo session. */
+export function opensDemoSession(s: { status: string; demo?: boolean }): boolean {
+  return s.status === 'signed-in' && !s.demo;
+}
+
 /** "<email> (<role>)" → { email, role }; null for older free-text values such as "PO" or "the Product Owner". */
 export function parseApprovedBy(s: string | undefined): { email: string; role: string } | null {
   const m = /^(\S+@\S+) \(([^)]+)\)$/.exec((s || '').trim());
