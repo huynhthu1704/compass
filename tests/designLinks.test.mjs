@@ -214,6 +214,7 @@ test('TC-531 (REQ-081): every demo project shows the Travel Map Figma file', asy
   const { DEMO_FIGMA_FILE, withDemoDesignFiles } = await import('../src/demoOnce.ts');
   assert.equal(DEMO_FIGMA_FILE, 'https://www.figma.com/design/iT9WxxZFmyiz8HSWpg5E7K/Travel-Map---Demo-Compass?node-id=0-1');
   assert.equal(checkFigmaUrl(DEMO_FIGMA_FILE), null, 'a link Project settings accepts');
+  assert.equal(designPreviews(designFiles({ kind: 'figma', url: DEMO_FIGMA_FILE }))[0].src, figmaEmbed(DEMO_FIGMA_FILE), 'the Design page previews it');
   // A demo project saved in a browser before this change gets the file; one that has design files keeps its own.
   const old = { id: 'd', demo: true, spec: { features: [] } };
   assert.deepEqual(withDemoDesignFiles(old).spec.designTool, { kind: 'figma', url: DEMO_FIGMA_FILE });
