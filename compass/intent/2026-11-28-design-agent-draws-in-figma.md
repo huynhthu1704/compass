@@ -57,9 +57,16 @@ requirements' wording.
   component, "Idea / Brief field", on the Components page, and placed instances of it. It took about ten Figma calls:
   five reads, three writes and two screenshots. It checked its own screenshot and fixed two layout defects (one
   column instead of two, a stray white fill) before showing the result.
-- **Access from Compass: not proven yet.** The spike used Claude Code's Figma connection, signed in as the Product
-  Owner. It does not show that the portal's own Claude API call can reach Figma's MCP server with a token that
-  Compass holds. That is the next step.
+- **Access from Compass: blocked by Figma (connection test, 2026-11-28).** Figma's remote MCP server signs clients
+  in with OAuth (`mcp:connect` scope) and a client registration endpoint. Registering Compass as a new client returned
+  **403 Forbidden** from Figma, and a token-less or personal-access-token call returns 401. Figma's docs say: "Only
+  clients listed in the Figma MCP catalog, such as VS Code, Cursor, and Claude Code, can connect to the Figma MCP
+  server. If you're a developer who wants to connect a new MCP client, join the waitlist." The catalog lists Claude
+  Code and Claude Desktop, not the Claude API's MCP connector. So the portal cannot reach Figma's MCP server itself
+  today. (Docs: developers.figma.com/docs/figma-mcp-server/remote-server-installation and /rate-limits-access.)
+- **Plan and limits:** writing outside your drafts needs a Full seat. Canvas writes are free during Figma's beta and
+  will become usage-based. Read tools count toward 200 calls a day on a Professional Full or Dev seat (10 a minute).
+  Write tools are exempt.
 
 ## Risks to settle first (a spike before any requirement)
 - **Can a third-party app use Figma's remote MCP server?** Figma may accept only approved MCP clients and only OAuth
