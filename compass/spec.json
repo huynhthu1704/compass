@@ -3417,7 +3417,7 @@
       ],
       "title": "Try the demo from the no-access screen and leave it, also from the role screen",
       "type": "Manual",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given a Google account on no team\nWhen I sign in, click \"Try the demo\", pick QA, open the sample project, then click \"Leave demo\"\nThen I see the role screen, then the sample project with the demo banner and a demo role picker, then \"You have no access yet\" again; a team member signing in sees \"My roles: …\" and no role screen\nAnd given a signed-in person on Projects clicks \"Open demo project\" and sees the role screen\nWhen they press the browser Back button\nThen they see their projects (or \"You have no access yet\") with no demo banner\nAnd when they open the demo again and click \"Leave demo\" on the role screen\nThen they see their projects (or \"You have no access yet\") with no demo banner"
     },
     {
