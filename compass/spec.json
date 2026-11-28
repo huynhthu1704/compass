@@ -2186,7 +2186,7 @@
       "story": "As any portal user, I want one tidy account card at the bottom of the sidebar with my account actions behind it, so that I see who I am and my roles at a glance without a crowded footer.",
       "ac": [
         "Given I am signed in with Google\nWhen I look at the bottom of the sidebar\nThen I see one account card with my initial, my name (the part of my email before \"@\") and my roles on the open project as chips (\"Super admin\" for the super admin), and no \"Try the demo\", \"Sign out\", \"My roles\" line or separate theme button",
-        "Given the account card\nWhen I click it (or press Enter or Space on it)\nThen a menu opens with my full email, \"Connections\" with the GitHub state (with sign-in on, only for super admins: REQ-041, ADR-020), a \"Dark theme\" switch and \"Sign out\"; in the demo it also has \"Leave demo\"; it never has \"Try the demo\"",
+        "Given the account card\nWhen I click it (or press Enter or Space on it)\nThen a menu opens with my full email, \"Connections\" with the GitHub state (with sign-in on, only for super admins: REQ-041, ADR-020; never in the demo: ADR-027), a \"Dark theme\" switch and \"Sign out\"; in the demo it also has \"Leave demo\"; it never has \"Try the demo\"",
         "Given the account menu is open\nWhen I choose an item, press Escape or click outside it\nThen the menu closes; \"Dark theme\" switches the theme, \"Connections\" opens Connections and \"Sign out\" signs me out",
         "Given the account menu is open and focus is in it\nWhen I press ArrowDown or ArrowUp\nThen focus moves to the next or previous item and wraps around at the ends; from the header at the top of the menu (my name and email, or the account state with sign-in off), ArrowDown goes to the first item and ArrowUp to the last",
         "Given sign-in is off, or I am in the demo\nWhen I look at the footer\nThen the role picker is shown above the account card, and the menu has no \"Sign out\" when sign-in is off",
@@ -2210,7 +2210,7 @@
         "Given a super admin saves the work token on Connections\nWhen Compass shows the token fields\nThen it lists the permissions the work token needs (Contents, Pull requests, Issues, Workflows and Pages: Read and write; Actions: Read; never Administration; switching GitHub Pages on needs Administration, so it uses a super admin's creator token, REQ-044) and says that Compass cannot check from outside that Administration is off, so the super admin must not tick it",
         "Given no work token (or no Anthropic key) is set\nWhen a member tries a GitHub action (or a live agent run)\nThen nothing is written, the GitHub action says \"No GitHub token yet — ask a super admin\", and agents run in demo mode",
         "Given a super admin replaces or removes the token or key\nWhen members next act\nThen the new value is used, or the actions above are disabled",
-        "Given sign-in is off, or the demo is open\nWhen anyone uses Compass\nThen tokens and keys work as today, per device"
+        "Given sign-in is off, or the demo is open\nWhen anyone uses Compass\nThen tokens and keys work as today, per device; in the demo Connections is not shown and its address opens Projects (ADR-027)"
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-28T00:00:00.000Z"
@@ -3574,7 +3574,7 @@
       "title": "The footer is one account card; the account menu lists the right items for each state",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it\nAnd the arrow keys move between the items and wrap around at the ends, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)"
+      "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd in the demo the menu has no Connections (ADR-027)\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it\nAnd the arrow keys move between the items and wrap around at the ends, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)"
     },
     {
       "id": "TC-528",
@@ -3635,7 +3635,7 @@
       "title": "The Connections page is hidden from everyone but super admins; members use the shared model and sync settings",
       "type": "Automated",
       "status": "Not run",
-      "gherkin": "Given sign-in on, and super admins chose a model and turned auto-sync off\nWhen a member looks for Connections in the sidebar and account menu, then opens its address directly, and a super admin does the same\nThen the member finds no link, lands on Projects and their agent runs use the chosen model with auto-sync off; the super admin sees Connections; with sign-in off or in the demo, Connections is shown as today; the super admin's Connections lists the work token permissions (Contents, Pull requests, Issues, Workflows and Pages: Read and write; Actions: Read; never Administration)"
+      "gherkin": "Given sign-in on, and super admins chose a model and turned auto-sync off\nWhen a member looks for Connections in the sidebar and account menu, then opens its address directly, and a super admin does the same\nThen the member finds no link, lands on Projects and their agent runs use the chosen model with auto-sync off; the super admin sees Connections; with sign-in off, Connections is shown as today; in the demo nobody sees Connections, not even a super admin, and its address lands on Projects (ADR-027); the super admin's Connections lists the work token permissions (Contents, Pull requests, Issues, Workflows and Pages: Read and write; Actions: Read; never Administration)"
     },
     {
       "id": "TC-081",
@@ -4010,7 +4010,7 @@
       "id": "ADR-020",
       "date": "2026-11-28",
       "title": "With sign-in on, Connections is only for super admins, also in the account menu",
-      "status": "Accepted",
+      "status": "Changed by ADR-027",
       "reqIds": [
         "REQ-041",
         "REQ-110"
@@ -4079,6 +4079,19 @@
       "context": "\"Open demo project\" starts the demo session and clears the role (ADR-022, REQ-040 AC2), so the \"What's your role?\" screen replaces every route until a role is picked. The browser Back button changed the address but showed the same screen, and \"Leave demo\" sits in the demo banner, which that screen hides: people could only pick a role or reload the page.",
       "decision": "The Product Owner chose in chat on 2026-11-28 (after a screenshot of the trapped role screen): the role screen inside the demo shows \"Leave demo\", and navigating away from the route the demo was opened on before a role is picked (the browser Back button) leaves the demo.",
       "consequences": "Leaving returns to the person's projects, or to \"You have no access yet\" if they are on no team (REQ-040 AC4). Once a demo role is picked, Back moves inside the demo as before and the demo is left with \"Leave demo\" in the banner or the account menu. Outside the demo the role screen is unchanged."
+    },
+    {
+      "id": "ADR-027",
+      "date": "2026-11-28",
+      "title": "The demo has no Connections",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-110",
+        "REQ-041"
+      ],
+      "context": "ADR-020 kept \"Connections\" in the account menu in the demo. The demo is sample data kept in the browser: nothing is saved to GitHub or Firebase, and agents in a demo project always run in demo mode, so a token or key entered there does nothing for the demo.",
+      "decision": "The Product Owner decided in chat on 2026-11-28 (after a screenshot of the demo account menu): \"the connection should not be displayed for the demo mode\". In the demo the account menu has no \"Connections\" and the Connections address opens Projects, for everyone including super admins. This amends REQ-110 AC2 and the REQ-041 demo AC.",
+      "consequences": "The demo account menu has the email, Dark theme, Leave demo and Sign out. Agent cards in a demo project no longer say \"add an Anthropic key in Connections for live runs\". With sign-in off (no demo session), Connections is unchanged: it is where people add their own keys."
     }
   ]
 }

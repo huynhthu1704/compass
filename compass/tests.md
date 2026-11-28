@@ -61,13 +61,13 @@
 | REQ-039 With sign-in on, roles come from the team instead of the role picker | TC-075 (Pass), TC-077 (Pass) |
 | REQ-040 A signed-in person can try the demo with a role of their choice | TC-076 (Pass), TC-077 (Pass), TC-509 (Pass), TC-528 (Pass) |
 | REQ-080 The admin links the project's Figma file and Miro board on a Project settings page | TC-400 (Not run), TC-500 (Not run), TC-501 (Not run), TC-502 (Not run) |
-| REQ-081 Every Design page keeps the preview in focus and shows the design files behind a button | TC-502 (Not run), TC-503 (Not run), TC-505 (Not run), TC-506 (Not run), TC-530 (Pass) |
+| REQ-081 Every Design page keeps the preview in focus and shows the design files behind a button | TC-502 (Not run), TC-503 (Not run), TC-505 (Not run), TC-506 (Not run), TC-530 (Pass), TC-531 (Pass) |
 | REQ-082 Projects with the old single design link keep working, and agents name both files | TC-501 (Not run), TC-504 (Not run), TC-507 (Not run) |
 | REQ-108 Acceptance criteria and test steps are readable on the agent run page | TC-508 (Pass) |
 | REQ-109 The project list keeps only one demo project | TC-509 (Pass) |
 | REQ-110 The sidebar footer is one account card that opens an account menu | TC-510 (Pass), TC-080 (Not run) |
 | REQ-041 The super admins' GitHub work token and Anthropic key are used for everyone; only super admins set them | TC-078 (Pass), TC-079 (Pass), TC-080 (Not run), TC-086 (Not run), TC-088 (Not run) |
-| REQ-042 Every commit and pull request says who did it in Compass | TC-081 (Not run), TC-086 (Not run) |
+| REQ-042 Every commit and pull request says who did it in Compass | TC-081 (Pass), TC-086 (Not run) |
 | REQ-043 Project tokens set by project Admins are retired | TC-082 (Not run), TC-088 (Not run) |
 | REQ-044 Only super admins create or import projects, only in the GitHub account for new projects | TC-083 (Not run), TC-084 (Pass), TC-085 (Not run), TC-086 (Not run) |
 | REQ-046 The owner can make other people super admins | TC-087 (Pass), TC-088 (Not run) |
@@ -1094,6 +1094,7 @@ Given a signed-in super admin who is PO on the open project
 When the account chips are built
 Then they are "Super admin" and "PO"
 And the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo
+And in the demo the menu has no Connections (ADR-027)
 And with sign-in off the menu has no Sign out
 And no state lists "Try the demo"
 And the sidebar footer renders no "Try the demo", no "My roles" line and exactly one theme control inside the menu
@@ -1125,6 +1126,16 @@ And a real frame link, in any Figma file, is still previewed first
 And new demo projects carry no made-up Figma link
 ```
 
+## TC-531 · Every demo project shows the Travel Map Figma file
+Covers: REQ-081 · Type: Automated · Status: Pass
+```gherkin
+Given anyone opens the demo project, in any browser, new or saved there before
+When they open Project settings or a feature's Design page
+Then the Figma file is https://www.figma.com/design/iT9WxxZFmyiz8HSWpg5E7K/Travel-Map---Demo-Compass?node-id=0-1
+And the Design page previews it
+And a demo project that already has its own design files keeps them, and real projects are never changed
+```
+
 ## TC-078 · Team projects use only the super admin's GitHub token and Anthropic key
 Covers: REQ-041 · Type: Automated · Status: Pass
 ```gherkin
@@ -1147,11 +1158,11 @@ Covers: REQ-041, REQ-110 · Type: Automated · Status: Not run
 ```gherkin
 Given sign-in on, and super admins chose a model and turned auto-sync off
 When a member looks for Connections in the sidebar and account menu, then opens its address directly, and a super admin does the same
-Then the member finds no link, lands on Projects and their agent runs use the chosen model with auto-sync off; the super admin sees Connections; with sign-in off or in the demo, Connections is shown as today; the super admin's Connections lists the work token permissions (Contents, Pull requests, Issues, Workflows and Pages: Read and write; Actions: Read; never Administration)
+Then the member finds no link, lands on Projects and their agent runs use the chosen model with auto-sync off; the super admin sees Connections; with sign-in off, Connections is shown as today; in the demo nobody sees Connections, not even a super admin, and its address lands on Projects (ADR-027); the super admin's Connections lists the work token permissions (Contents, Pull requests, Issues, Workflows and Pages: Read and write; Actions: Read; never Administration)
 ```
 
 ## TC-081 · Commits and pull requests name the person who did it
-Covers: REQ-042 · Type: Automated · Status: Not run
+Covers: REQ-042 · Type: Automated · Status: Pass
 ```gherkin
 Given sign-in on and ba@example.com with roles BA and QA
 When Compass builds the commit message for an approved requirement, the pull request body for a build run, and a commit with no gate (a spec save)
