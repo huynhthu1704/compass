@@ -3,7 +3,12 @@
  * Runs in the browser with the user's own fine-grained token (Contents, Pull requests,
  * Issues, Workflows, Administration (for creating repos / enabling Pages) — read & write).
  */
+import { withAudit } from './team';
 import type { FileChange, RepoRef } from './types';
+
+// F-015 REQ-042: the audit line for commits and pull requests (set by token.ts; null with sign-in off or in the demo).
+let auditSource: (r: RepoRef) => string | null = () => null;
+export function setAuditSource(fn: (r: RepoRef) => string | null) { auditSource = fn; }
 
 const API = 'https://api.github.com';
 
@@ -62,6 +67,7 @@ export const github = {
 
   /** Commit many files in ONE commit on `branch` (created from `base` if missing). */
   async commit(t: string, r: RepoRef, branch: string, message: string, changes: FileChange[], base = r.defaultBranch) {
+    message = withAudit(message, auditSource(r));
     let head: string;
     try {
       head = (await gh<{ object: { sha: string } }>(t, `${rp(r)}/git/ref/heads/${encodeURIComponent(branch)}`)).object.sha;
@@ -87,10 +93,10 @@ export const github = {
   },
 
   createPR: (t: string, r: RepoRef, title: string, head: string, body: string) =>
-    gh<{ number: number; html_url: string; head: { sha: string } }>(t, `${rp(r)}/pulls`, { method: 'POST', body: JSON.stringify({ title, head, base: r.defaultBranch, body }) }),
+    gh<{ number: number; html_url: string; head: { sha: string } }>(t, `${rp(r)}/pulls`, { method: 'POST', body: JSON.stringify({ title, head, base: r.defaultBranch, body: withAudit(body, auditSource(r)) }) }),
   getPR: (t: string, r: RepoRef, n: number) => gh<{ number: number; state: string; merged: boolean; mergeable: boolean | null; head: { sha: string; ref: string }; html_url: string; title: string }>(t, `${rp(r)}/pulls/${n}`),
   listPRs: (t: string, r: RepoRef, state = 'open') => gh<{ number: number; title: string; html_url: string; head: { ref: string; sha: string }; user: { login: string }; merged_at: string | null }[]>(t, `${rp(r)}/pulls?state=${state}&per_page=30`),
-  mergePR: (t: string, r: RepoRef, n: number, title: string) => gh<{ sha: string; merged: boolean }>(t, `${rp(r)}/pulls/${n}/merge`, { method: 'PUT', body: JSON.stringify({ merge_method: 'squash', commit_title: title }) }),
+  mergePR: (t: string, r: RepoRef, n: number, title: string, message?: string) => gh<{ sha: string; merged: boolean }>(t, `${rp(r)}/pulls/${n}/merge`, { method: 'PUT', body: JSON.stringify({ merge_method: 'squash', commit_title: title, ...(message ? { commit_message: message } : {}) }) }),
 
   /** Open issues (pull requests filtered out), newest first, up to 1000 (F-012). */
   async openIssues(t: string, r: RepoRef) {

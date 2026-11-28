@@ -2219,7 +2219,7 @@
       "featureId": "F-015",
       "title": "Every commit and pull request says who did it in Compass",
       "priority": "Must",
-      "status": "Approved",
+      "status": "In build",
       "intent": "compass/intent/2026-11-27-project-creation-control.md",
       "story": "As the super admin, I want every GitHub change made with my token to name the person who did it, so that GitHub's history stays a clear audit trail.",
       "ac": [
@@ -3611,7 +3611,7 @@
       ],
       "title": "Commits and pull requests name the person who did it",
       "type": "Automated",
-      "status": "Not run",
+      "status": "Pass",
       "gherkin": "Given sign-in on and ba@example.com with roles BA and QA\nWhen Compass builds the commit message for an approved requirement, the pull request body for a build run, and a commit with no gate (a spec save)\nThen they end with \"Made in Compass by ba@example.com (BA)\", the gate's role, and for the commit with no gate \"Made in Compass by ba@example.com (BA, QA)\"; with sign-in off they are unchanged"
     },
     {
