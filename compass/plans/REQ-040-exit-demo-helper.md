@@ -1,6 +1,6 @@
 # Plan: REQ-040 One shared "Leave demo" action
 
-Feature: F-015 · Requirements: REQ-040 (AC4) · Test cases: TC-077, TC-528 (unchanged)
+Feature: F-015 · Requirements: REQ-040 (AC4) · Test cases: TC-510 (updated), TC-077, TC-528 (unchanged)
 Intent: compass/intent/2026-11-27-team-access.md · Design: compass/design/F-015.md (SCR-7; no visible change)
 
 ## Why
@@ -12,6 +12,7 @@ do the same thing (REQ-040 AC4).
 - src/App.tsx — export `exitDemo()` next to `go` (`leaveDemo()`, then `go('/')`); the demo banner uses it
 - src/components/Sidebar.tsx — the account menu's "Leave demo" uses `exitDemo`
 - src/pages/Onboarding.tsx — the role screen's "Leave demo" uses `exitDemo`
+- tests/sidebar.test.mjs — TC-510 read the account menu's inline `leaveDemo(); go('/')`; it now checks `choose(exitDemo)` and that `exitDemo` leaves the demo and goes to `/`
 
 ## Steps
 1. Commit this plan.
