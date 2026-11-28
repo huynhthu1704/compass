@@ -32,7 +32,7 @@ export function NewProjectPage() {
       // "Continue setup" step and switches Pages on with the creator token).
       const s = getSession();
       if (s.status === 'signed-in' && !s.demo) {
-        const next = `Repository created. Next: add ${p.repo!.owner}/${p.repo!.name} to the work token on GitHub, then install the framework from the project's Overview and switch GitHub Pages on in the repository's Settings → Pages.`;
+        const next = `Repository created. Next: add ${p.repo!.owner}/${p.repo!.name} to the work token on GitHub, then install the framework from the project's Overview (without the starter site for now) and switch GitHub Pages on in the repository's Settings → Pages.`;
         add(next); toast(next);
       } else {
         add('Installing Compass Framework + starter site + CI/deploy workflows…');

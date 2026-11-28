@@ -49,7 +49,8 @@ let workspace: Workspace | null | undefined;
 let workspaceFor = ''; // the email the cached workspace was loaded for
 /** The device settings are replaced by the shared ones while signed in, outside the demo (store override, never saved). */
 function applyWorkspace() {
-  store.setOverride(workspaceSettings(workspace, { signedIn: session.status === 'signed-in', demo: !!session.demo }));
+  // Whenever sign-in is configured (outside the demo), also while signed out: no device key or auto-sync setting applies.
+  store.setOverride(workspaceSettings(workspace, { signedIn: firebaseEnabled, demo: !!session.demo }));
 }
 /** The shared workspace: an object, null when none is saved or it cannot be read, undefined while loading. */
 export const getWorkspace = () => workspace;
@@ -136,7 +137,8 @@ async function loadAccess(rawEmail: string, verified: boolean) {
     const info = new Map(docs.map((d) => [d.id, { name: d.name, repo: d.repo }]));
     set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins).map((a) => ({ ...a, ...info.get(a.id) })), error: undefined });
     // Load the workspace once per account, and again when someone with no team (nothing readable) is added to one.
-    if (workspaceFor !== email || (!workspace && (session.superAdmin || session.access.length > 0))) void refreshWorkspace();
+    if (!session.superAdmin && session.access.length === 0) { workspace = null; workspaceFor = email; applyWorkspace(); } // removed from every team: drop the cached token and key
+    else if (workspaceFor !== email || !workspace) void refreshWorkspace();
     // REQ-041 AC3: a super admin's sign-in backfills people/{email} for teams saved before the index existed (once per tab).
     if (superAdmin && !peopleSynced) { peopleSynced = true; void syncPeopleIndex().catch(() => { peopleSynced = false; }); }
   } catch (e) {

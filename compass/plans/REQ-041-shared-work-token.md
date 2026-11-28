@@ -67,6 +67,10 @@ checks → emulator run in the browser (super admin saves; a member has no Conne
     switch Pages on in the repository settings instead.
   - **The Team page still shows the project-token card,** whose token is no longer used.
   - **Members still see Import and New project,** which use their own device token.
+  - **New project while signed in** leaves the starter site out (Overview installs the framework through a pull request
+    without it); build 3's "Continue setup" adds it.
+- **Sign-in configured counts as on, also while signing in or signed out** (review of #135): the shared token or nothing,
+  and no device key or auto-sync setting, so auto-sync can never commit a team project with a device token.
 - **Agents read the key from the store's settings.** The override covers every current caller, and `llm.ts` is
   unchanged.
 

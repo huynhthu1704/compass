@@ -183,6 +183,12 @@ export function workspaceSettings(ws: { anthropicKey?: string; model?: string; a
   return { apiKey: ws?.anthropicKey || undefined, model: ws?.model || 'claude-sonnet-5-5', autoSync: ws?.autoSync ?? true };
 }
 
+/** Whether the shared work token, key and settings apply (REQ-041 AC1, AC7): whenever sign-in is configured, outside
+ *  the demo — also while signing in or after signing out, so a device token never reaches a team project meanwhile. */
+export function usesSharedSettings(ctx: { firebase: boolean; demo: boolean }): boolean {
+  return ctx.firebase && !ctx.demo;
+}
+
 /** Who may open Connections (REQ-041 AC2, REQ-110 AC2 as amended by ADR-020): with sign-in on, only super admins;
  *  with sign-in off or in the demo, everyone, as before. */
 export function canOpenConnections(ctx: { signedIn: boolean; demo: boolean; superAdmin: boolean }): boolean {

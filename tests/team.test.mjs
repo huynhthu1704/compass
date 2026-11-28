@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, canOpenConnections, peopleChanges, workspaceSettings, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, canOpenConnections, peopleChanges, usesSharedSettings, workspaceSettings, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -281,4 +281,13 @@ test('TC-080 (part, REQ-041 AC2, REQ-110 AC2): only super admins open Connection
   assert.equal(canOpenConnections({ signedIn: true, demo: false, superAdmin: false }), false, 'a member');
   assert.equal(canOpenConnections({ signedIn: true, demo: true, superAdmin: false }), true, 'demo: as before');
   assert.equal(canOpenConnections({ signedIn: false, demo: false, superAdmin: false }), true, 'sign-in off: as before');
+});
+
+test('TC-078 (REQ-041 AC1, AC7): with sign-in configured, the shared token applies even while signed out — never the device token', () => {
+  assert.equal(usesSharedSettings({ firebase: true, demo: false }), true, 'signed in, signing in, or signed out with the app still open');
+  assert.equal(usesSharedSettings({ firebase: true, demo: true }), false, 'demo: per device, as before');
+  assert.equal(usesSharedSettings({ firebase: false, demo: false }), false, 'sign-in off: per device, as before');
+  // Signed out, the cached workspace is gone, so a team project gets no token at all.
+  assert.equal(pickToken('device-token', undefined, usesSharedSettings({ firebase: true, demo: false })), undefined);
+  assert.deepEqual(workspaceSettings(undefined, { signedIn: true, demo: false }), { apiKey: undefined, model: 'claude-sonnet-5-5', autoSync: true }, 'no device key while signed out');
 });
