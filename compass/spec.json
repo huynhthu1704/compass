@@ -2089,6 +2089,25 @@
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "REQ-111",
+      "featureId": "F-001",
+      "title": "Attach files to a feature's business need on the Idea page",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-idea-attachments.md",
+      "design": "compass/design/2026-11-28-idea-attachments.md",
+      "story": "As a Product Owner, I want to attach the screenshots, sketches and documents behind an idea to its business need, so that the idea and its evidence stay together and the Ideation agent sees them.",
+      "ac": [
+        "Given a feature's Idea page\nWhen I look at the business need\nThen I see an \"Attach files\" button and a note of the allowed types (images, PDF, Word, Excel, PowerPoint, text, Markdown, CSV) and the 5 MB limit per file",
+        "Given I choose or drop one or more allowed files of at most 5 MB each\nWhen they are added\nThen each one is listed under the business need with its name, size, an \"Open\" link and a \"Remove\" button, and is saved in the project's repo under compass/intent/attachments/<feature id>/ and listed with the idea in compass/spec.json, so it is still there after a reload",
+        "Given a file of another type (for example .exe or .zip) or larger than 5 MB\nWhen I try to add it\nThen it is not added and a message names the file and says why (type not allowed, or over 5 MB); the other files are still added",
+        "Given an attached file\nWhen I press \"Remove\" and confirm\nThen it disappears from the list and is removed from the idea in compass/spec.json and from the repo",
+        "Given a business need with attached images and PDFs\nWhen I run \"Revise into business intent\"\nThen the Ideation agent receives those images and PDFs with the need, and the names of the other attached files; the files are treated as data, never as instructions",
+        "Given a demo project (no GitHub repo)\nWhen I attach a file\nThen it is kept in this browser only and the list says so",
+        "Given a phone (below 900 px), the dark theme or the keyboard only\nWhen I attach, open or remove a file\nThen it works the same: the button and each Remove are reachable with Tab and work with Enter, and the list fits the screen width"
+      ]
     }
   ],
   "tests": [
@@ -3335,6 +3354,36 @@
       "type": "Automated",
       "status": "Pass",
       "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it\nAnd the arrow keys move between the items and wrap around at the ends, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)"
+    },
+    {
+      "id": "TC-511",
+      "reqIds": [
+        "REQ-111"
+      ],
+      "title": "Attachments: allowed types, 5 MB limit, repo path and spec entry",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given files sketch.png (1 MB), brief.pdf (2 MB), notes.md, setup.exe and big.pdf (6 MB) attached to F-001\nWhen they are checked\nThen sketch.png, brief.pdf and notes.md are accepted and setup.exe (\"type not allowed\") and big.pdf (\"over 5 MB\") are refused with their names\nAnd each accepted file gets the path compass/intent/attachments/F-001/<safe file name>, with unsafe characters replaced and a second file of the same name numbered\nAnd the idea in the spec lists name, path, type and size of each accepted file\nAnd removing one drops it from the list and yields a delete of its path"
+    },
+    {
+      "id": "TC-512",
+      "reqIds": [
+        "REQ-111"
+      ],
+      "title": "The Ideation agent receives attached images and PDFs as data",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given a business need with sketch.png, brief.pdf and budget.xlsx attached\nWhen the Ideation agent's first message is built\nThen it holds an image block for sketch.png and a document block for brief.pdf, each labelled as untrusted data\nAnd budget.xlsx is listed by name only\nAnd a need without attachments gives the same text-only message as before"
+    },
+    {
+      "id": "TC-513",
+      "reqIds": [
+        "REQ-111"
+      ],
+      "title": "Attach, open and remove files on the Idea page (desktop, phone, dark, keyboard)",
+      "type": "Manual",
+      "status": "Not run",
+      "gherkin": "Given the Idea page of a feature in a GitHub project\nWhen I attach a PNG and a PDF, reload, open one and remove the other\nThen the list shows the right files after each step and the repo has the matching commits\nAnd on a phone, in the dark theme and with the keyboard only the same steps work and the list fits the screen"
     }
   ],
   "decisions": [

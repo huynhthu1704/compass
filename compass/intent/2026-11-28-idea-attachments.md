@@ -1,6 +1,6 @@
 # Intent: Attach files to a feature's business need
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-28, in chat: "approved")
 Requested: 2026-11-28 by the Product Owner, in chat
 
 ## Business need
@@ -36,4 +36,4 @@ Attachments on the New project form (decided in chat: Idea page only), on requir
 of Office files; the agent reading Office or text files; editing a file in place.
 
 ## Requirements
-<filled after approval>
+- REQ-111 — Attach files to a feature's business need on the Idea page
