@@ -3561,7 +3561,7 @@
       "title": "Leaving the \"Open demo project\" route before a demo role is picked leaves the demo",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a signed-in person clicked \"Open demo project\", so the demo is opened on /p/<demo id> with no role yet\nWhen the route becomes /p/<demo id>\nThen they stay in the demo\nAnd when the route becomes any other route before a role is picked (the browser Back button)\nThen the demo is left\nAnd once a demo role is picked, or outside the demo, a route change never leaves the demo"
+      "gherkin": "Given a signed-in person clicked \"Open demo project\", so the demo is opened on /p/<demo id> with no role yet\nWhen the route becomes /p/<demo id>\nThen they stay in the demo\nAnd when the route becomes any other route before a role is picked (the browser Back button)\nThen the demo is left\nAnd once a demo role is picked, or outside the demo, a route change never leaves the demo\nAnd every \"Leave demo\" (the demo banner, the account menu and the demo role screen) calls the one shared exitDemo(), which leaves the demo and goes to /; no other source file leaves the demo and navigates by hand (source check; the click itself is manual TC-077)"
     },
     {
       "id": "TC-078",

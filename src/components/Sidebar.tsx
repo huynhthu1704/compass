@@ -1,9 +1,9 @@
 // F-013 Sidebar navigation (REQ-070 … REQ-073) — design: compass/design/F-013.md
 // REQ-110: the footer is one account card with an account menu — design: compass/design/2026-11-28-account-menu.md
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { go } from '../App';
+import { exitDemo, go } from '../App';
 import { featureStage, stageStatus } from '../progress';
-import { leaveDemo, projectKey, signOut, useSession, useWorkspace } from '../firebase';
+import { projectKey, signOut, useSession, useWorkspace } from '../firebase';
 import { canOpenConnections } from '../team';
 import { accountCard, accountChips, accountMenu, accountName, featureRows, projectLinks, projectState, settingsLink, signedInCard, teamLink, themeToggle, WORKSPACE_LINKS, type NavLink, type Tone } from '../sidebar';
 import { store, useStore } from '../store';
@@ -104,7 +104,7 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
                 : it === 'theme'
                   ? <button key={it} role="menuitemcheckbox" aria-checked={settings.theme === 'dark'} title={theme.label} onClick={choose(() => store.setSettings({ theme: theme.next }))}><Icon name="moon" size={16} />Dark theme<span className="account-switch" aria-hidden /></button>
                   : it === 'leave-demo'
-                    ? <button key={it} role="menuitem" onClick={choose(() => { leaveDemo(); go('/'); })}><Icon name="exit" size={16} />Leave demo</button>
+                    ? <button key={it} role="menuitem" onClick={choose(exitDemo)}><Icon name="exit" size={16} />Leave demo</button>
                     : <button key={it} role="menuitem" className="account-menu-danger" onClick={choose(() => void signOut())}><Icon name="exit" size={16} />Sign out</button>)}
               </div>
             </div>
