@@ -3548,10 +3548,10 @@
       "reqIds": [
         "REQ-081"
       ],
-      "title": "The Figma preview shows the project file when the feature frame is in another file",
+      "title": "The old made-up demo frame link never hides the project's Figma file",
       "type": "Automated",
       "status": "Pass",
-      "gherkin": "Given a project whose Figma file is set in Project settings\nWhen a feature's frame link points to a different Figma file (such as the demo's made-up \"demo\" file)\nThen the Design page previews the project's Figma file\nAnd a frame link in the same file (a branch link included) still wins, and with no project file the frame link is previewed\nAnd the demo project carries no made-up Figma link"
+      "gherkin": "Given a project whose Figma file is set in Project settings\nWhen a feature's frame link points to the made-up \"demo\" Figma file of older demo projects\nThen the Design page previews the project's Figma file, and with no project file nothing is previewed\nAnd a real frame link, in any Figma file, is still previewed first\nAnd new demo projects carry no made-up Figma link"
     },
     {
       "id": "TC-078",
