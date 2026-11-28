@@ -31,15 +31,11 @@ export function SignInPage({ logo, error }: { logo: ReactNode; error?: string })
   return (
     <Card logo={logo}>
       <h1 className="h1">Sign in to Compass</h1>
-      <p className="body t-secondary">Use the Google account your admin added to your project. Compass matches it by email.</p>
+      <p className="body t-secondary">Sign in with your Google account. You'll see the projects your team added you to, or you can try the demo.</p>
       <Button variant="secondary" onClick={go} disabled={busy} style={{ width: '100%', justifyContent: 'center', gap: 10 }}>
         <GoogleIcon />{busy ? 'Signing in…' : 'Sign in with Google'}
       </Button>
       {(err || error) && <p className="body-sm t-danger" role="alert">{err || error}</p>}
-      <div className="stack gap-xs" style={{ background: 'var(--color-bg-subtle)', borderRadius: 8, padding: '12px 14px' }}>
-        <strong className="body-sm">No account yet?</strong>
-        <span className="body-sm t-secondary">Ask your project Admin to add your email on the Team page, then sign in here.</span>
-      </div>
     </Card>
   );
 }
