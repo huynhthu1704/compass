@@ -1,6 +1,6 @@
 # Plan: REQ-040 One shared "Leave demo" action
 
-Feature: F-015 · Requirements: REQ-040 (AC4) · Test cases: TC-510 (updated), TC-077, TC-528 (unchanged)
+Feature: F-015 · Requirements: REQ-040 (AC4) · Test cases: TC-528 (extended), TC-510 (updated), TC-077 (unchanged)
 Intent: compass/intent/2026-11-27-team-access.md · Design: compass/design/F-015.md (SCR-7; no visible change)
 
 ## Why
@@ -12,7 +12,8 @@ do the same thing (REQ-040 AC4).
 - src/App.tsx — export `exitDemo()` next to `go` (`leaveDemo()`, then `go('/')`); the demo banner uses it
 - src/components/Sidebar.tsx — the account menu's "Leave demo" uses `exitDemo`
 - src/pages/Onboarding.tsx — the role screen's "Leave demo" uses `exitDemo`
-- tests/sidebar.test.mjs — TC-510 read the account menu's inline `leaveDemo(); go('/')`; it now checks `choose(exitDemo)` and that `exitDemo` leaves the demo and goes to `/`
+- tests/sidebar.test.mjs — TC-510 read the account menu's inline `leaveDemo(); go('/')`; it now expects `choose(exitDemo)`
+- tests/demoOnce.test.mjs, compass/spec.json — TC-528 (REQ-040) checks the source: `exitDemo` leaves the demo and goes to `/`, the banner, the account menu and the role screen call it, and no other file in `src` inlines the pair (the click itself stays manual TC-077, since `exitDemo` needs the browser and Firebase)
 
 ## Steps
 1. Commit this plan.
@@ -24,5 +25,5 @@ do the same thing (REQ-040 AC4).
   because the person is already navigating; it must not also go to `/`.
 
 ## Proof
-- `npm test` and `npm run build` pass unchanged; `grep "leaveDemo(); go('/')" src` finds only `exitDemo`.
+- `npm test` incl. the extended TC-528, and `npm run build`.
 - TC-077 (manual) still describes the behaviour: "Leave demo" in the banner, the account menu and the role screen.

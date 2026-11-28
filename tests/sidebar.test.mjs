@@ -157,8 +157,6 @@ test('TC-510 (REQ-110): the footer is one account card; the account menu lists t
   // AC3: every way of closing the menu
   assert.match(src, /const choose = \(act: \(\) => void\) => \(\) => \{ setOpen\(false\); cardRef\.current\?\.focus\(\); act\(\); \}/, 'a choice closes the menu and returns focus to the card');
   for (const act of [/onClick=\{choose\(\(\) => go\('\/connect'\)\)\}/, /onClick=\{choose\(\(\) => void signOut\(\)\)\}/, /onClick=\{choose\(exitDemo\)\}/, /onClick=\{choose\(\(\) => store\.setSettings\(\{ theme: theme\.next \}\)\)\}/]) assert.match(footer, act);
-  // REQ-040 AC4: every "Leave demo" (banner, account menu, demo role screen) uses the one shared exitDemo().
-  assert.match(read('src/App.tsx'), /export const exitDemo = \(\) => \{ leaveDemo\(\); go\('\/'\); \};/);
   assert.match(src, /document\.addEventListener\('pointerdown', close\)[\s\S]*?if \(!ref\.current\?\.contains\(e\.target as Node\)\) setOpen\(false\)|if \(!ref\.current\?\.contains\(e\.target as Node\)\) setOpen\(false\)[\s\S]*?document\.addEventListener\('pointerdown', close\)/, 'a click outside closes the menu');
   assert.match(src, /onBlur=\{\(e\) => \{ if \(open && e\.relatedTarget && !ref\.current\?\.contains\(e\.relatedTarget as Node\)\) setOpen\(false\); \}\}/, 'Tab (focus leaving the card and menu) closes it');
   // AC6: on phones the menu opens in place above the card, inside the Menu drawer
