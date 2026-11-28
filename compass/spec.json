@@ -3894,6 +3894,16 @@
       "context": "REQ-110 (#119) put \"Connections\" in every signed-in person's account menu, while REQ-041 hides Connections from everyone but super admins.",
       "decision": "The Product Owner chose in chat on 2026-11-28: \"Hide for members\". With sign-in on, the account menu shows \"Connections\" only to super admins; REQ-110 AC2 is amended. With sign-in off or in the demo, as REQ-110 says.",
       "consequences": "Members' account menu has their email, Dark theme and Sign out (and Leave demo in the demo)."
+    },
+    {
+      "id": "ADR-021",
+      "date": "2026-11-28",
+      "title": "Every GitHub issue follows a standard template: Figma link, screenshot and a detailed requirement table",
+      "status": "Accepted",
+      "reqIds": [],
+      "context": "Requirement issues were free text (story + Given/When/Then), with no link to the design and no picture, so readers had to open spec.json and Figma to understand them.",
+      "decision": "The Product Owner asked in chat on 2026-11-28: \"for each github issue created, especially new requirement, attach the figma link and screenshot and provide a table of detailed requirement as standard template\". .github/ISSUE_TEMPLATE/requirement.md and bug.md hold the standard; agents follow it for every issue they create (AGENTS.md). Screenshots are exported from the Figma frame, committed to compass/design/screens/ and linked by commit SHA.",
+      "consequences": "Every requirement issue shows its Figma frame, a screenshot, a Requirement details table and an Acceptance criteria table. A requirement without UI says \"Design: none: <reason>\"."
     }
   ]
 }
