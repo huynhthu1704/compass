@@ -40,6 +40,7 @@
 | REQ-073 | F-013 | The account footer shows the connection, the role and one theme button | Should | Approved | TC-404, TC-405 |
 | REQ-074 | F-013 | The portal shows no "AI dev portal" tagline | Should | Approved | TC-406 |
 | REQ-075 | F-013 | The sidebar has no Knowledge link for any role | Should | Approved | TC-407 |
+| REQ-076 | F-013 | The portal has no Knowledge page; its address opens the Feature board | Should | Approved | TC-408 |
 | REQ-050 | F-020 | Quote any part of an agent run | Must | Approved | TC-200, TC-201, TC-202, TC-216, TC-217 |
 | REQ-051 | F-020 | Ask the agent about the quoted text | Must | Approved | TC-203, TC-204, TC-205, TC-214, TC-217 |
 | REQ-052 | F-020 | Revise the proposal from the quoted text | Must | Approved | TC-206, TC-207, TC-208, TC-215 |
@@ -63,7 +64,12 @@
 | REQ-082 | F-003 | Projects with the old single design link keep working, and agents name both files | Must | Approved | TC-501, TC-504, TC-507 |
 | REQ-108 | F-011 | Acceptance criteria and test steps are readable on the agent run page | Should | Done | TC-508 |
 | REQ-109 | F-015 | The project list keeps only one demo project | Should | In build | TC-509 |
-| REQ-110 | F-013 | The sidebar footer is one account card that opens an account menu | Should | In build | TC-510 |
+| REQ-110 | F-013 | The sidebar footer is one account card that opens an account menu | Should | Done | TC-510, TC-080 |
+| REQ-041 | F-015 | The super admins' GitHub work token and Anthropic key are used for everyone; only super admins set them | Must | In build | TC-078, TC-079, TC-080, TC-086, TC-088 |
+| REQ-042 | F-015 | Every commit and pull request says who did it in Compass | Must | Approved | TC-081, TC-086 |
+| REQ-043 | F-015 | Project tokens set by project Admins are retired | Must | In build | TC-082, TC-088 |
+| REQ-044 | F-015 | Only super admins create or import projects, only in the GitHub account for new projects | Must | In build | TC-083, TC-084, TC-085, TC-086 |
+| REQ-046 | F-015 | The owner can make other people super admins | Must | In build | TC-087, TC-088 |
 | REQ-113 | F-001 | Attach files to a feature's business need on the Idea page | Should | In build | TC-513, TC-514, TC-515 |
 
 ## REQ-001 · The Compass repo has the Compass Framework
@@ -439,7 +445,7 @@ As the product owner, I want the rebrand to reach every page, so that no screen 
 
 _AC1_
 ```gherkin
-Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs, Knowledge)
+Given every page of the portal (Projects, Agent architecture, Connections, Feature board, the feature stages, Release, Agent runs)
 When I open it in light and dark mode
 Then it uses the honey theme
 ```
@@ -983,11 +989,25 @@ When I look under the project card
 Then the links are, in order, Feature board, Team floor, Agent runs, Release and Project settings (ADR-015), and there is no Knowledge link
 ```
 
+## REQ-076 · The portal has no Knowledge page; its address opens the Feature board
+As the Product Owner, I want the Knowledge (RAG) page gone from the portal, so that no one lands on a technical page that is not part of the delivery flow.
+
+**Priority:** Should · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given a project is open, in any role
+When I open the address /p/<project>/knowledge
+Then the project's Feature board opens and no Knowledge page exists in the portal
+```
+
 _AC2_
 ```gherkin
-Given the address /p/<project>/knowledge
-When I open it directly
-Then the Knowledge page still opens, and agent runs keep indexing and searching the repository as before
+Given a project is open or imported
+When an agent run starts
+Then the agents still index the repository and search it as before (the index builds on the run's first search, or at import)
 ```
 
 ## REQ-050 · Quote any part of an agent run
@@ -1344,7 +1364,7 @@ _AC4_
 ```gherkin
 Given I remove a person
 When the removal is saved
-Then the page reminds me to replace the project's GitHub token, because they may have copied it
+Then the page reminds me to ask a super admin to replace the shared work token and Anthropic key, because the person may have copied them (changed by REQ-043, ADR-016)
 ```
 
 ## REQ-032 · People sign in with Google and see only the projects whose team lists their email
@@ -1398,7 +1418,7 @@ As the product owner, I want each gate tied to its role, so that only the right 
 
 _AC1_
 ```gherkin
-Given the gate rules: intent and requirements → PO (BA may also approve requirements); design → UX or PO; test cases → QA; start a build → Dev; merge and release → DM or PO; team and token → Admin
+Given the gate rules: intent and requirements → PO (BA may also approve requirements); design → UX or PO; test cases → QA; start a build → Dev; merge and release → DM or PO; team → Admin (the project token is retired by REQ-043)
 When a signed-in person opens a gate whose role they do not have
 Then its button is disabled with the hint "Needs the <role> role"
 ```
@@ -1425,7 +1445,7 @@ Then it is enabled
 ```
 
 ## REQ-034 · A project Admin stores one GitHub token that the project's members use
-As a project admin, I want to save one GitHub token for the project, so that members without their own GitHub account can save their work to the repo.
+As a project admin, I want to save one GitHub token for the project, so that members without their own GitHub account can save their work to the repo. (Retired by REQ-043 and ADR-016 in phase 1: the shared work token set by super admins replaces project tokens.)
 
 **Priority:** Must · **Status:** In build
 
@@ -1477,14 +1497,14 @@ _AC2_
 ```gherkin
 Given I am the super admin on a project's Team page
 When I tick Admin for a person
-Then that person can manage this project's team and token, and no other project's
+Then that person can manage this project's team (the project token is retired by REQ-043), and no other project's
 ```
 
 _AC3_
 ```gherkin
 Given a signed-in person whose email does not match the super admin hash, or is not verified
-When the portal tries to create or change config/access
-Then Firestore refuses it; once config/access exists, no browser can change it
+When the portal tries to create config/access
+Then Firestore refuses it; once config/access exists, only the owner's browser can change its list of super admins, and the owner always stays in it (changed by REQ-046, ADR-018)
 ```
 
 ## REQ-036 · Every approval records the email and role of the person who gave it
@@ -1805,7 +1825,7 @@ Then only the most recently added demo project is kept, and every real project s
 ## REQ-110 · The sidebar footer is one account card that opens an account menu
 As any portal user, I want one tidy account card at the bottom of the sidebar with my account actions behind it, so that I see who I am and my roles at a glance without a crowded footer.
 
-**Priority:** Should · **Status:** In build
+**Priority:** Should · **Status:** Done
 
 **Acceptance criteria**
 
@@ -1820,7 +1840,7 @@ _AC2_
 ```gherkin
 Given the account card
 When I click it (or press Enter or Space on it)
-Then a menu opens with my full email, "Connections" with the GitHub state, a "Dark theme" switch and "Sign out"; in the demo it also has "Leave demo"; it never has "Try the demo"
+Then a menu opens with my full email, "Connections" with the GitHub state (with sign-in on, only for super admins: REQ-041, ADR-020), a "Dark theme" switch and "Sign out"; in the demo it also has "Leave demo"; it never has "Try the demo"
 ```
 
 _AC3_
@@ -1849,6 +1869,174 @@ _AC6_
 Given a phone (below 900 px)
 When I open the Menu
 Then the footer and its account menu work the same, within the menu width
+```
+
+## REQ-041 · The super admins' GitHub work token and Anthropic key are used for everyone; only super admins set them
+As the super admin, I want everyone to work through my GitHub and Anthropic accounts in phase 1, and nobody else to configure them, so that I control all access and cost.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given sign-in is on and a super admin saved the GitHub work token and the Anthropic key on Connections
+When any team member saves to GitHub, approves, releases or runs an agent on a team project
+Then Compass uses the work token and key; a token or key saved on the member's own device is never used for a team project
+```
+
+_AC2_
+```gherkin
+Given sign-in is on
+When a person who is not a super admin uses Compass
+Then the Connections page is hidden: no sidebar card or link leads to it, opening its address goes to Projects, and they use the model and auto-sync settings the super admins chose
+```
+
+_AC3_
+```gherkin
+Given the Firestore rules
+When anyone writes the work token, the Anthropic key or the model and sync settings
+Then only a super admin's write is accepted. Reads are accepted from super admins (listed in config/access) and from a person whose document people/{email} lists at least one project. That document is written in the same transaction as each team change by the project's Admin or a super admin (REQ-030, REQ-031), and the rules accept a project id in it only while that project's members list includes the email, and its removal when they leave. So adding someone to a team gives their browser the work token and key (accepted: Admins are trusted, ADR-016); one work token reaches every Compass project repository (accepted for phase 1, ADR-016)
+```
+
+_AC4_
+```gherkin
+Given a super admin saves the work token on Connections
+When Compass shows the token fields
+Then it lists the permissions the work token needs (Contents, Pull requests, Issues, Workflows and Pages: Read and write; Actions: Read; never Administration; switching GitHub Pages on needs Administration, so it uses a super admin's creator token, REQ-044) and says that Compass cannot check from outside that Administration is off, so the super admin must not tick it
+```
+
+_AC5_
+```gherkin
+Given no work token (or no Anthropic key) is set
+When a member tries a GitHub action (or a live agent run)
+Then nothing is written, the GitHub action says "No GitHub token yet — ask a super admin", and agents run in demo mode
+```
+
+_AC6_
+```gherkin
+Given a super admin replaces or removes the token or key
+When members next act
+Then the new value is used, or the actions above are disabled
+```
+
+_AC7_
+```gherkin
+Given sign-in is off, or the demo is open
+When anyone uses Compass
+Then tokens and keys work as today, per device
+```
+
+## REQ-042 · Every commit and pull request says who did it in Compass
+As the super admin, I want every GitHub change made with my token to name the person who did it, so that GitHub's history stays a clear audit trail.
+
+**Priority:** Must · **Status:** Approved
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given sign-in is on
+When Compass commits or opens a pull request for a person on a team project
+Then the commit message and the pull request description end with "Made in Compass by <email> (<role>)", with the role that passed the gate (or the person's roles when no gate applies); the line is written by Compass in the member's browser and helps people read GitHub's history, while Compass's approval record in Firebase stays the proof of an approval
+```
+
+_AC2_
+```gherkin
+Given sign-in is off, or the demo is open
+When Compass commits
+Then messages are as today
+```
+
+## REQ-043 · Project tokens set by project Admins are retired
+As the super admin, I want no other GitHub tokens in Compass besides mine, so that I alone control GitHub access in phase 1.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given this change is released
+When an Admin opens a project's Team page
+Then there is no project token card, and Compass never reads or uses a project token
+```
+
+_AC2_
+```gherkin
+Given project tokens were stored before
+When the release is deployed
+Then the Firestore rules refuse every read and write of a project's stored token except a super admin's delete; the super admins' Users screen offers "Delete old project tokens", which deletes any that remain without reading them, and the release notes say to revoke those tokens on GitHub
+```
+
+## REQ-044 · Only super admins create or import projects, only in the GitHub account for new projects
+As the owner, I want only super admins to add projects, and new repositories only in our GitHub account, so that every project is ours and the shared work token, made as listed on Connections, never needs the rights to create or delete repositories.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given sign-in is on
+When a person who is not a super admin opens Projects
+Then "Import from GitHub" and "+ New project" are not shown, and the page says "Ask a super admin to add a project"
+```
+
+_AC2_
+```gherkin
+Given a super admin opens Connections
+When they set the "GitHub account for new projects" and save a creator token
+Then the account is saved for all super admins (the Firestore rules accept it only from super admins), while the creator token stays only on that super admin's device and is never saved to Firebase
+```
+
+_AC3_
+```gherkin
+Given a super admin creates a new project
+When Compass creates the repository with their creator token
+Then it is created only in the GitHub account for new projects (any other owner is refused before any GitHub call), the first team is saved with the super admin as Admin together with the approval baseline, and Compass stops with "Add <repo> to the work token on GitHub, then click Continue setup"; the setup (framework, workflow, first agent run) runs only with the work token, once it can reach the repository, and GitHub Pages is switched on with the super admin's creator token (it needs Administration)
+```
+
+_AC4_
+```gherkin
+Given a super admin imports an existing repository
+When they pick it (from a list read with their creator token)
+Then only repositories of the GitHub account for new projects are offered, the first team is saved with them as Admin together with the approval baseline, and the setup waits for the work token as for a new project; the Firestore rules accept a project's first team only from a super admin (ADR-012)
+```
+
+_AC5_
+```gherkin
+Given a project whose GitHub Pages is off
+When someone opens Release
+Then only super admins see "Enable GitHub Pages", which uses their creator token on their device; members see "Ask a super admin to switch on GitHub Pages"
+```
+
+## REQ-046 · The owner can make other people super admins
+As the owner of Compass, I want to give trusted people super admin rights, so that they can also manage the work token, the Anthropic key, users and projects.
+
+**Priority:** Must · **Status:** In build
+
+**Acceptance criteria**
+
+_AC1_
+```gherkin
+Given the owner (the account whose hashed email is in the Firestore rules, ADR-013) opens the Users screen
+When they switch "Super admin" on or off for a person
+Then that person gains or loses super admin rights at their next page load; the Firestore rules accept this change only from the owner, and the owner can never be removed
+```
+
+_AC2_
+```gherkin
+Given a person who is a super admin but not the owner
+When they use Compass
+Then they can do everything the super admin does (see every project, open Connections, set or replace the work token, the GitHub account for new projects and the Anthropic key, create or import projects, manage teams, delete old project tokens), except granting or removing super admin
+```
+
+_AC3_
+```gherkin
+Given the Users screen
+When any super admin opens it
+Then each person shows a "Super admin" badge when they are one, and the owner is marked "Owner"
 ```
 
 ## REQ-113 · Attach files to a feature's business need on the Idea page

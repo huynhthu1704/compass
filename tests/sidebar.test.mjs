@@ -103,7 +103,7 @@ test('TC-406 (REQ-074): no "AI dev portal" tagline in the UI', async () => {
   assert.match(read('src/pages/Onboarding.tsx'), /<div className="overline t-brand">Compass<\/div>/, 'the overline is "Compass"');
 });
 
-test('TC-407 (REQ-075): no Knowledge link in the sidebar for any role; the page still opens', () => {
+test('TC-407 (REQ-075): no Knowledge link in the sidebar for any role', () => {
   // The sidebar links take no role, so the same list is shown to PO, BA, DM, UX, Dev, QA and Ops.
   for (const runs of [[], [{ status: 'awaiting-approval' }]]) {
     for (const l of [...WORKSPACE_LINKS, ...projectLinks('p1', runs)]) {
@@ -115,7 +115,6 @@ test('TC-407 (REQ-075): no Knowledge link in the sidebar for any role; the page 
   const sidebar = read('src/components/Sidebar.tsx');
   assert.doesNotMatch(sidebar, /knowledge/i, 'no Knowledge link or icon in the Sidebar component');
   assert.doesNotMatch(read('src/sidebar.ts').replace(/\/\*[\s\S]*?\*\//g, ''), /'knowledge'/, 'no knowledge link key or icon');
-  assert.match(read('src/App.tsx'), /sub === 'knowledge' \? <KnowledgePage p=\{p\} \/>/, 'the /knowledge route still renders the page');
 });
 
 test('F-015 (REQ-030, REQ-032): the Team item and the signed-in account card', () => {
@@ -162,4 +161,16 @@ test('TC-510 (REQ-110): the footer is one account card; the account menu lists t
   assert.match(src, /onBlur=\{\(e\) => \{ if \(open && e\.relatedTarget && !ref\.current\?\.contains\(e\.relatedTarget as Node\)\) setOpen\(false\); \}\}/, 'Tab (focus leaving the card and menu) closes it');
   // AC6: on phones the menu opens in place above the card, inside the Menu drawer
   assert.match(css, /@media \(max-width: 900px\) \{ \.account \{ display: flex; flex-direction: column-reverse; \} \.account-menu \{ position: static;/, 'phone: the menu is in the page flow, above the card');
+});
+
+test('TC-408 (REQ-076): no Knowledge page or route; agents still index', async () => {
+  const { existsSync } = await import('node:fs');
+  assert.equal(existsSync(new URL('../src/pages/Knowledge.tsx', import.meta.url)), false, 'the Knowledge page is gone');
+  const app = read('src/App.tsx');
+  assert.doesNotMatch(app, /KnowledgePage|pages\/Knowledge|'knowledge'/, 'no knowledge route or import, so the address falls through');
+  assert.match(app, /: <OverviewPage p=\{p\} \/>;/, 'an unknown project page opens the Feature board (OverviewPage)');
+  const harness = read('src/harness.ts');
+  assert.match(harness, /rag\.ensure\(/, 'agent runs still build the index');
+  assert.match(harness, /search_knowledge/, 'agents still search it');
+  assert.match(read('src/pages/Import.tsx'), /rag\.setRepoDocs\(p\.id, await loadRepoDocs\(/, 'import still indexes the repository');
 });

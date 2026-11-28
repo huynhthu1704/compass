@@ -3,7 +3,7 @@
 // Without it the portal works exactly as before (REQ-032 AC5). The firebase library is only loaded when it is on.
 import { useSyncExternalStore } from 'react';
 import { store } from './store';
-import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, projectVisible, teamDoc, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
+import { accessFor, applyTeamOp, membersFromDoc, normalizeEmail, peopleChanges, projectVisible, teamDoc, type BaselineApproval, type Member, type TeamDoc, type TeamOp, type TeamResult, type TeamRole } from './team';
 import type { RepoRef } from './types';
 
 export interface FirebaseWebConfig { apiKey: string; authDomain: string; projectId: string; appId: string; [k: string]: string }
@@ -109,6 +109,8 @@ async function loadAccess(rawEmail: string, verified: boolean) {
     if (!stillSignedIn(email)) return; // signed out (or switched account) while loading
     const info = new Map(docs.map((d) => [d.id, { name: d.name, repo: d.repo }]));
     set({ status: 'signed-in', email, superAdmin, access: accessFor(docs, viewer, superAdmins).map((a) => ({ ...a, ...info.get(a.id) })), error: undefined });
+    // REQ-041 AC3: a super admin's sign-in backfills people/{email} for teams saved before the index existed (once per tab).
+    if (superAdmin && !peopleSynced) { peopleSynced = true; void syncPeopleIndex().catch(() => { peopleSynced = false; }); }
   } catch (e) {
     if (stillSignedIn(email)) set({ status: 'signed-in', email, superAdmin: false, access: [], error: `Could not load your projects: ${(e as Error).message}` });
   }
@@ -119,6 +121,7 @@ function stillSignedIn(email: string) {
   return !!currentAuth && normalizeEmail(currentAuth.currentUser?.email || '') === email;
 }
 let currentAuth: import('firebase/auth').Auth | null = null;
+let peopleSynced = false;
 
 export async function signInWithGoogle() {
   const { auth, authApp } = await load();
@@ -160,6 +163,11 @@ export async function changeTeam(key: string, project: { name: string; repo: { o
     const r = applyTeamOp(current, op, !snap.exists());
     if (!r.ok) return r;
     tx.set(ref, teamDoc(project.name, project.repo, r.team));
+    // REQ-041 AC3: people/{email} gains or loses this project in the same write, so the rules can check who reads the
+    // shared work token and key.
+    const { joined, left } = peopleChanges(current, r.team);
+    for (const e of joined) tx.set(fs.doc(db, 'people', e), { projects: fs.arrayUnion(key) }, { merge: true });
+    for (const e of left) tx.set(fs.doc(db, 'people', e), { projects: fs.arrayRemove(key) }, { merge: true });
     if (!snap.exists()) tx.set(fs.doc(db, 'projects', key, 'baseline', 'initial'), { approvals: baseline() });
     return { ...r, created: !snap.exists() };
   });
@@ -167,7 +175,64 @@ export async function changeTeam(key: string, project: { name: string; repo: { o
   return result;
 }
 
-// ---- Project GitHub token (REQ-034, ADR-011) -------------------------------------------------------------------------
+// ---- People index, workspace and super admins (REQ-041, REQ-043, REQ-044, REQ-046; ADR-016 … ADR-018) ---------------
+
+/** A super admin backfills people/{email} for teams saved before the index existed (one project per write, as the rules
+ *  require). Returns how many entries were added. Safe to run again: entries already there are skipped. */
+export async function syncPeopleIndex(): Promise<number> {
+  const { fs, db } = await load();
+  const [projects, records] = await Promise.all([fs.getDocs(fs.collection(db, 'projects')), fs.getDocs(fs.collection(db, 'people'))]);
+  const people = new Map(records.docs.map((d) => [d.id, (d.data().projects || []) as string[]]));
+  let added = 0;
+  for (const p of projects.docs) {
+    for (const raw of ((p.data() as Partial<TeamDoc>).members || [])) {
+      const e = normalizeEmail(raw);
+      if ((people.get(e) || []).includes(p.id)) continue;
+      // One refused entry (e.g. an old mixed-case email the rules cannot match) must not stop the others.
+      try { await fs.setDoc(fs.doc(db, 'people', e), { projects: fs.arrayUnion(p.id) }, { merge: true }); added++; } catch { /* skip */ }
+    }
+  }
+  return added;
+}
+
+/** The shared work token, Anthropic key and settings that super admins set on Connections (ADR-016, ADR-017). */
+export interface Workspace { workToken?: string; anthropicKey?: string; model?: string; autoSync?: boolean; newProjectsAccount?: string }
+
+/** Reads the workspace (super admins and people on a team may); null when nothing is saved yet. */
+export async function loadWorkspace(): Promise<Workspace | null> {
+  const { fs, db } = await load();
+  const snap = await fs.getDoc(fs.doc(db, 'config', 'workspace'));
+  return snap.exists() ? (snap.data() as Workspace) : null;
+}
+
+/** Saves part of the workspace (super admins only; the rules refuse anyone else). Empty strings remove a value. */
+export async function saveWorkspace(patch: Workspace) {
+  const { fs, db } = await load();
+  const data = Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v === '' ? fs.deleteField() : v]));
+  await fs.setDoc(fs.doc(db, 'config', 'workspace'), data, { merge: true });
+}
+
+/** The super admin list (super admins may read it). */
+export async function loadSuperAdmins(): Promise<string[]> {
+  const { fs, db } = await load();
+  const snap = await fs.getDoc(fs.doc(db, 'config', 'access'));
+  return snap.exists() ? ((snap.data().superAdmins || []) as string[]).map(normalizeEmail) : [];
+}
+
+/** Replaces the super admin list (the owner only, who always stays in it; enforced by the rules, ADR-018). */
+export async function setSuperAdmins(emails: string[]) {
+  const { fs, db } = await load();
+  await fs.updateDoc(fs.doc(db, 'config', 'access'), { superAdmins: [...new Set(emails.map(normalizeEmail))] });
+}
+
+/** Deletes any retired project tokens that remain, without reading them (super admins only, REQ-043 AC2; used in build 3). */
+export async function deleteOldProjectTokens(): Promise<void> {
+  const { fs, db } = await load();
+  const projects = await fs.getDocs(fs.collection(db, 'projects'));
+  await Promise.all(projects.docs.map((p) => fs.deleteDoc(fs.doc(db, 'projects', p.id, 'secrets', 'token'))));
+}
+
+// ---- Project GitHub token (REQ-034, ADR-011; retired by REQ-043 — removed in build 3) ---------------------------------
 
 const tokens = new Map<string, string | null>();
 const tokenListeners = new Set<() => void>();

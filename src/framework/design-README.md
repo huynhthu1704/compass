@@ -24,6 +24,16 @@ that agents and reviewers can read it without opening the tool.
    `node compass/check-spec.mjs` fails when a requirement is In build or Done while its design is not Approved.
 4. If the design must change during the build, set it back to Draft, update it and get it approved again.
 
+## Screenshots
+Every requirement issue shows the screens it delivers (`.github/ISSUE_TEMPLATE/requirement.md`):
+1. Export the screen's frame from the design tool as PNG (in Figma: the frame linked in the design, at its 1× size).
+2. Commit it as `compass/design/screens/F-xxx-SCR-n.png` (the feature and screen ids from the design) in a pull request.
+3. In the issue, link it by that commit's SHA so the image never changes or breaks:
+   `https://github.com/<owner>/<repo>/raw/<commit-sha>/compass/design/screens/F-xxx-SCR-n.png`. Use the head of an
+   open pull request (GitHub keeps it) or the commit on `main` once merged, never a branch without a pull request.
+   This works in issues when the repository is public, or for readers who can see a private one.
+4. When the design changes, export again, commit, and update the link in the issue.
+
 ## Template
 ```markdown
 # Design: <short title>
