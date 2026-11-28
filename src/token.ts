@@ -1,6 +1,6 @@
 // F-015 REQ-034: which GitHub token a project uses. With team access, members use the project's shared token
 // (saved by its Admins on the Team page); otherwise the device's own token, exactly as before.
-import { getSession, projectKey, projectTokenOf } from './firebase';
+import { getSession, projectKey, projectTokenFailed, projectTokenOf } from './firebase';
 import { store } from './store';
 import { missingTokenMessage, pickToken } from './team';
 import type { Project } from './types';
@@ -15,5 +15,6 @@ export function tokenFor(p: Pick<Project, 'repo'> | undefined): string | undefin
  *  missing (or sign-in is off: callers keep their usual behaviour). While the token loads, say so instead. */
 export function missingToken(p: Pick<Project, 'repo' | 'demo'> | undefined): string | null {
   if (!p?.repo || p.demo || tokenFor(p) || getSession().status !== 'signed-in') return null;
-  return projectTokenOf(projectKey(p.repo)) === undefined ? 'Loading the project token…' : missingTokenMessage(true);
+  const key = projectKey(p.repo);
+  return projectTokenOf(key) === undefined && !projectTokenFailed(key) ? 'Loading the project token…' : missingTokenMessage(true);
 }

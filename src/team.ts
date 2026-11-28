@@ -89,8 +89,14 @@ export const gateHint = (gate: Gate) => `Needs the ${GATE_ROLES[gate].join(' or 
 /** approvedBy text for an approval (REQ-036): "<email> (<role>)", naming the person's role that owns the gate.
  *  Returns null when the person may not pass the gate, so no misleading audit entry can be written. */
 export function approvedBy(email: string, roles: TeamRole[], gate: Gate, superAdmin = false): string | null {
+  return approvalBy(email, roles, gate, superAdmin)?.text ?? null;
+}
+
+/** The role an approval is signed with (the first of the person's roles that owns the gate, else "super admin") and the
+ *  approvedBy text; null when the person may not pass the gate. The Firestore record uses `role` (REQ-037 AC3). */
+export function approvalBy(email: string, roles: TeamRole[], gate: Gate, superAdmin = false): { role: string; text: string } | null {
   const role = GATE_ROLES[gate].find((r) => roles.includes(r)) || (superAdmin ? 'super admin' : null);
-  return role ? `${normalizeEmail(email)} (${role})` : null;
+  return role ? { role, text: `${normalizeEmail(email)} (${role})` } : null;
 }
 
 // ---- Firestore team documents (F-015 Team page; same shape as firestore.rules → validProject) -----------------------
@@ -122,12 +128,21 @@ export function membersFromDoc(d: Partial<Pick<TeamDoc, 'members' | 'admins' | '
 
 export interface BaselineApproval { item: string; gate: Gate; approvedBy: string }
 
-/** The approvals already in spec.json when a project's first team is created (REQ-038 AC1): approved designs and
- *  requirements past Draft. Stored once in Firebase; approvals not in it and without a record are flagged later. */
-export function baselineFrom(spec: { features: { id: string; design?: { status: string; approvedBy?: string } }[]; requirements: { id: string; status: string; approvedBy?: string }[] }): BaselineApproval[] {
+/** The approvals already in spec.json when a project's first team is created (REQ-038 AC1): intents and test cases
+ *  with an approvedBy, approved designs and requirements past Draft. Stored once in Firebase; approvals not in it and without a record are flagged later. */
+/** The parts of spec.json that carry approvals: intents, designs, requirements and test cases. */
+export interface ApprovalSpec {
+  features: { id: string; idea?: { approvedBy?: string }; design?: { status: string; approvedBy?: string } }[];
+  requirements: { id: string; status: string; approvedBy?: string; featureId?: string }[];
+  tests?: { id: string; reqIds?: string[]; approvedBy?: string }[];
+}
+
+export function baselineFrom(spec: ApprovalSpec): BaselineApproval[] {
   return [
+    ...spec.features.filter((f) => f.idea?.approvedBy).map((f) => ({ item: f.id, gate: 'intent' as const, approvedBy: f.idea?.approvedBy || '' })),
     ...spec.features.filter((f) => f.design?.status === 'Approved').map((f) => ({ item: f.id, gate: 'design' as const, approvedBy: f.design?.approvedBy || '' })),
     ...spec.requirements.filter((r) => r.status !== 'Draft').map((r) => ({ item: r.id, gate: 'requirements' as const, approvedBy: r.approvedBy || '' })),
+    ...(spec.tests || []).filter((t) => t.approvedBy).map((t) => ({ item: t.id, gate: 'tests' as const, approvedBy: t.approvedBy || '' })),
   ];
 }
 
@@ -157,4 +172,111 @@ export function missingTokenMessage(signedIn: boolean): string {
  *  after GitHub accepted the commit and the pull request (REQ-034 AC4: nothing half-written on an expired token). */
 export function withReqsInBuild<S extends { requirements: { id: string; status: string }[] }>(spec: S, reqIds: string[] = []): S {
   return { ...spec, requirements: spec.requirements.map((q) => (reqIds.includes(q.id) ? { ...q, status: 'In build' } : q)) };
+}
+
+/** Shared projects to offer on this device (REQ-032 AC2): those the signed-in person may open whose repo is not a local
+ *  project yet. Repos are compared case-insensitively, like GitHub. */
+export function sharedToOpen<A extends { id: string; repo?: { owner: string; name: string } }>(access: A[], localRepos: ({ owner: string; name: string } | null | undefined)[]): A[] {
+  const key = (r: { owner: string; name: string }) => `${r.owner}/${r.name}`.toLowerCase();
+  const local = new Set(localRepos.filter((r): r is { owner: string; name: string } => !!r).map(key));
+  return access.filter((a) => a.repo && !local.has(key(a.repo)));
+}
+
+/** Which gate approving an agent's run passes (REQ-033): the ideation run approves the intent, a coder (or reviewer)
+ *  run starts a build, and so on. */
+export function gateForAgent(agent: string): Gate {
+  return ({ ideation: 'intent', requirements: 'requirements', designer: 'design', testdesign: 'tests', coder: 'build', reviewer: 'build', release: 'release' } as Record<string, Gate>)[agent] || 'build';
+}
+
+export type StartScreen = 'loading' | 'sign-in' | 'no-access' | 'role-picker' | 'app';
+
+/** What the portal shows first (REQ-032, REQ-039, REQ-040). With sign-in on, roles come from the team: the role picker
+ *  appears only inside the demo, which needs a signed-in person (the demo is never reachable before sign-in). */
+export function startScreen(s: { firebase: boolean; status: string; demo: boolean; hasRole: boolean; hasAccess: boolean }): StartScreen {
+  if (!s.firebase) return s.hasRole ? 'app' : 'role-picker';
+  if (s.status === 'loading' || s.status === 'off') return 'loading';
+  if (s.status !== 'signed-in') return 'sign-in';
+  if (s.demo) return s.hasRole ? 'app' : 'role-picker';
+  return s.hasAccess ? 'app' : 'no-access';
+}
+
+/** Which local projects a person sees (REQ-032 AC2, REQ-040 AC2/AC3). Sign-in off: all. In the demo: only the sample
+ *  projects — never a real project, its team or its token. Otherwise: the super admin all, others their team projects. */
+export function projectVisible(p: { repo: { owner: string; name: string } | null; demo?: boolean }, s: { status: string; demo?: boolean; superAdmin: boolean; accessIds: string[] }): boolean {
+  if (s.status === 'off') return true;
+  if (s.demo) return !!p.demo;
+  if (s.superAdmin) return true;
+  return !!p.repo && s.accessIds.includes(`${p.repo.owner}__${p.repo.name}`.toLowerCase());
+}
+
+/** "<email> (<role>)" → { email, role }; null for older free-text values such as "PO" or "the Product Owner". */
+export function parseApprovedBy(s: string | undefined): { email: string; role: string } | null {
+  const m = /^(\S+@\S+) \(([^)]+)\)$/.exec((s || '').trim());
+  return m ? { email: normalizeEmail(m[1]), role: m[2] } : null;
+}
+
+export interface ApprovalEvidence {
+  hasBaseline: boolean;
+  baseline: BaselineApproval[];
+  records: { items: string[]; gate: string; email: string; role: string }[];
+}
+
+/** Approvals in spec.json that Firebase does not confirm (REQ-038 AC2/AC4): neither in the baseline stored with the
+ *  first team (same item, gate and approvedBy) nor matched by an approval record (same item, gate, email and role).
+ *  No repo date is trusted. Without a baseline, every approval needs a record. */
+export function unconfirmedApprovals(spec: ApprovalSpec, ev: ApprovalEvidence): BaselineApproval[] {
+  return baselineFrom(spec).filter((a) => {
+    if (ev.hasBaseline && ev.baseline.some((b) => b.item === a.item && b.gate === a.gate && b.approvedBy === a.approvedBy)) return false;
+    const by = parseApprovedBy(a.approvedBy);
+    if (!by) return true;
+    // Same item: a test case needs a record that names the test case itself (a run's record lists the TC ids it approved).
+    return !ev.records.some((r) => r.gate === a.gate && r.items.includes(a.item) && normalizeEmail(r.email) === by.email && r.role === by.role);
+  });
+}
+
+/** Whether approval gates apply to a project (REQ-033). They fail closed: with Firebase configured, a real (non-demo) GitHub
+ *  project is gated even while the person is signing in or loading, so no gate is passed without a signed-in owner role. */
+export function gatesApply(x: { firebase: boolean; status: string; hasRepo: boolean; demoProject: boolean }): boolean {
+  return x.hasRepo && !x.demoProject && (x.firebase || x.status === 'signed-in');
+}
+
+type RepoName = { owner: string; name: string };
+/** Why a shared project cannot be opened from its team entry (REQ-034): the project's token cannot reach the repository
+ *  (GitHub answers 404 for a repo the token cannot see), or GitHub reports it under another owner/name (renamed or moved),
+ *  which would no longer match the team. Null when it can be opened. */
+export function sharedOpenProblem(expected: RepoName, got: RepoName | null, status?: number): string | null {
+  const full = `${expected.owner}/${expected.name}`;
+  if (status === 404 || !got) return `The project's GitHub token cannot reach ${full} — ask an Admin of the project to check the token on the Team page.`;
+  if (got.owner.toLowerCase() !== expected.owner.toLowerCase() || got.name.toLowerCase() !== expected.name.toLowerCase())
+    return `${full} is now ${got.owner}/${got.name} on GitHub (renamed or moved) — ask an Admin of the project to update its team.`;
+  return null;
+}
+
+/** Whether the portal checks a project's approvals against Firebase (REQ-038 AC4): only for a signed-in person outside
+ *  the demo, on a real (non-demo) GitHub project that has a team. Nothing is flagged otherwise. */
+export function checksApprovals(x: { signedIn: boolean; demoSession: boolean; demoProject: boolean; hasRepo: boolean; hasTeam: boolean }): boolean {
+  return x.signedIn && !x.demoSession && !x.demoProject && x.hasRepo && x.hasTeam;
+}
+
+/** The items an agent run's approval record names (REQ-038 "same item"): its requirements (or feature), plus the ids of
+ *  any test cases it proposes, so each approved test case is confirmed by its own id. */
+export function recordItems(run: { id: string; featureId?: string; reqIds?: string[]; proposal?: { tests?: { id: string }[] } }): string[] {
+  const base = run.reqIds?.length ? run.reqIds : [run.featureId || run.id];
+  return [...new Set([...base, ...(run.proposal?.tests || []).map((t) => t.id)])];
+}
+
+/** The approval record a run saved (REQ-037 AC4): who wrote it and for which version of the run's output. */
+export interface RunApproval { id: string; by: string; email: string; sig: string }
+
+/** A short fingerprint of what a run asks to approve (its proposal and change set), so a revised version is approved anew. */
+export function approvalSig(run: { proposal?: unknown; changes?: unknown }): string {
+  const s = JSON.stringify([run.proposal ?? null, run.changes ?? []]);
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return `${s.length}-${h.toString(36)}`;
+}
+
+/** A retry may reuse the run's saved record only for the same signed-in person and the same, unrevised version. */
+export function canReuseApproval(saved: RunApproval | undefined, email: string | undefined, sig: string): saved is RunApproval {
+  return !!saved && !!email && !!saved.email && normalizeEmail(saved.email) === normalizeEmail(email) && saved.sig === sig;
 }

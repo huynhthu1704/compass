@@ -1,6 +1,7 @@
 import { get as idbGet, set as idbSet } from 'idb-keyval';
 import { useSyncExternalStore } from 'react';
 import { DEFAULT_STACK, migrateProject } from './spec';
+import { keepOneDemo } from './demoOnce';
 import type { Project, Settings, Spec, State } from './types';
 
 const KEY = 'compass.v3';
@@ -25,7 +26,7 @@ export const store = {
   async init() {
     try {
       const raw = (await idbGet(KEY)) as State | undefined;
-      if (raw) state = { ...DEFAULT, ...raw, settings: { ...DEFAULT.settings, ...raw.settings }, projects: (raw.projects || []).map(migrateProject) };
+      if (raw) state = { ...DEFAULT, ...raw, settings: { ...DEFAULT.settings, ...raw.settings }, projects: keepOneDemo((raw.projects || []).map(migrateProject)) }; // drop duplicate demo copies (REQ-109)
     } catch { /* IndexedDB blocked: keep defaults */ }
   },
   get: () => state,

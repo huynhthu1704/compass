@@ -20,6 +20,7 @@
  *   .github/pull_request_template.md, ISSUE_TEMPLATE/ → role-friendly collaboration
  */
 import { designCoverage } from './designCoverage';
+import { designToolMd } from './designLinks';
 import { featureStage, stageStatus } from './progress';
 import type { Feature, FileChange, Project, Spec } from './types';
 // The scripts and docs below are installed verbatim into each repo
@@ -120,11 +121,11 @@ export function designMd(p: Project, f: Feature) {
   const d = f.design;
   const tool = p.spec.designTool;
   const head = `# Design: ${f.id} ${f.name}\n\n_Generated from \`compass/spec.json → features[${f.id}].design\`. Edit the design in the portal (or spec.json), not this file._\n\n`;
-  if (!d) return `${head}Status: Not started\n\nDesign tool: ${tool ? `[${tool.kind}](${tool.url})` : '_(none connected)_'}\n\nThe Design agent drafts the screens once every requirement of this feature is approved.\n`;
+  if (!d) return `${head}Status: Not started\n\nDesign tool: ${designToolMd(tool) || '_(none connected)_'}\n\nThe Design agent drafts the screens once every requirement of this feature is approved.\n`;
   const reqs = p.spec.requirements.filter((r) => r.featureId === f.id && r.status !== 'Draft');
   const { uncovered, noScreen } = designCoverage(reqs, d.screens);
   return `${head}Status: ${d.status}${d.approvedBy ? ` (by ${d.approvedBy}${d.approvedAt ? `, ${d.approvedAt.slice(0, 10)}` : ''})` : ''}
-Design tool: ${tool ? `[${tool.kind}](${tool.url})` : '_(none connected)_'}${d.url ? ` · this feature: [${d.url}](${d.url})` : ''}
+Design tool: ${designToolMd(tool) || '_(none connected)_'}${d.url ? ` · this feature: [${d.url}](${d.url})` : ''}
 
 ## Approach
 ${d.summary || '_(not set)_'}
@@ -259,7 +260,7 @@ Project: **${p.name}** — ${p.description || p.spec.features[0]?.idea.intent ||
 0. **Intent:** a new request starts as \`compass/intent/YYYY-MM-DD-topic.md\` (template in [\`compass/intent/README.md\`](compass/intent/README.md)), or as a feature idea in the portal (\`compass/intent/F-xxx.md\`). Get the Product Owner's approval before creating requirements.
 0b. **Business need → business intent:** the Product Owner writes the raw business need; it is revised into a business intent (who, what changes) with **Done when** (what will be true when the change is done) and approved. Never invent a baseline or target: a metric with its current value only for a change the Product Owner names a bet; its target is set after a few weeks of real data.
 1. **Intent → Requirement:** every change belongs to a feature (F-xxx, see \`compass/features.md\`) and starts from a requirement in \`compass/spec.json\` with Given/When/Then acceptance criteria.
-1b. **Requirement → Design:** once every requirement of the feature is approved, the design is drafted in \`compass/spec.json → features[].design\` (view: \`compass/design/F-xxx.md\`): screens traced to REQ ids, drawn in the project's design tool${p.spec.designTool ? ` ([${p.spec.designTool.kind}](${p.spec.designTool.url}))` : ''} (in Figma: components only on the "Components" page, one section per feature — \`compass/design/README.md\`). **No code before the design is Approved** — CI fails a requirement In build whose feature design is still a Draft.
+1b. **Requirement → Design:** once every requirement of the feature is approved, the design is drafted in \`compass/spec.json → features[].design\` (view: \`compass/design/F-xxx.md\`): screens traced to REQ ids, drawn in the project's design tool${designToolMd(p.spec.designTool) ? ` (${designToolMd(p.spec.designTool)})` : ''} (in Figma: components only on the "Components" page, one section per feature — \`compass/design/README.md\`). **No code before the design is Approved** — CI fails a requirement In build whose feature design is still a Draft.
 2. **Requirement → Test:** add at least one test case that references the requirement id. For a bug, commit the failing test first.
 3. **Plan:** before changing code, write \`compass/plans/<REQ-ids>-<short-name>.md\` from the template in [\`compass/plans/README.md\`](compass/plans/README.md) (Files, Steps, Risks, Proof) and commit it first. CI fails a PR that changes code without a plan.
 4. **Code:** branch \`compass/f-xxx-req-xxx-short-name\` (feature + requirement). Commit messages start with the requirement id, e.g. \`REQ-004: add guest checkout\`.

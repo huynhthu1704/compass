@@ -2,7 +2,7 @@
 // Types-only imports, so Node runs this file directly in tests/sidebar.test.mjs.
 import type { Feature, Run, Stage } from './types.ts';
 
-export type IconName = 'projects' | 'architecture' | 'board' | 'floor' | 'runs' | 'release' | 'team';
+export type IconName = 'projects' | 'architecture' | 'board' | 'floor' | 'runs' | 'release' | 'team' | 'settings';
 export type NavLink = { key: string; label: string; path: string; icon: IconName; title?: string; count?: ApprovalCount };
 export type ApprovalCount = { n: number; label: string; title: string };
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
@@ -65,7 +65,31 @@ export function themeToggle(theme: 'light' | 'dark'): { next: 'light' | 'dark'; 
 /** F-015 SCR-3: the Team item, shown after the project links to Admins of the project and the super admin. */
 export const teamLink = (projectId: string): NavLink => ({ key: 'team', label: 'Team', path: `/p/${projectId}/team`, icon: 'team', title: 'People on this project and their roles' });
 
+/** REQ-080, ADR-015: Project settings, for every role — the last link of the project group, after Team. */
+export const settingsLink = (projectId: string): NavLink => ({ key: 'settings', label: 'Project settings', path: `/p/${projectId}/settings`, icon: 'settings' });
+
 /** F-015 REQ-032 AC2: the account card when signed in with Google. */
 export function signedInCard(email: string, superAdmin: boolean): { initial: string; name: string; state: string; tone: Tone } {
   return { initial: (email.slice(0, 1) || '?').toUpperCase(), name: email, state: superAdmin ? 'Google · super admin' : 'Google sign-in', tone: 'success' };
+}
+
+/** REQ-110: the name on the account card — the part of the email before "@" (the full name is not stored). */
+export const accountName = (email: string): string => email.split('@')[0] || email;
+
+export type AccountChip = { label: string; tone: 'brand' | 'success' | 'warning' | 'neutral' };
+
+/** REQ-110: the chips under the name — the demo role in the demo, else "Super admin" and this project's roles. */
+export function accountChips(a: { signedIn: boolean; demo?: boolean; superAdmin?: boolean; roles: string[]; demoRole?: string }): AccountChip[] {
+  if (a.demo) return [{ label: a.demoRole ? `Demo · ${a.demoRole}` : 'Demo', tone: 'warning' }];
+  if (!a.signedIn) return [];
+  const chips: AccountChip[] = a.superAdmin ? [{ label: 'Super admin', tone: 'brand' }] : [];
+  for (const r of a.roles) chips.push({ label: r, tone: 'success' });
+  return chips.length ? chips : [{ label: 'Google', tone: 'neutral' }];
+}
+
+export type AccountMenuItem = 'connections' | 'theme' | 'leave-demo' | 'sign-out';
+
+/** REQ-110 SCR-2: the account menu, top to bottom. "Try the demo" is never in the sidebar (ADR-019). */
+export function accountMenu(a: { signedIn: boolean; demo?: boolean }): AccountMenuItem[] {
+  return ['connections', 'theme', ...(a.demo ? ['leave-demo' as const] : []), ...(a.signedIn ? ['sign-out' as const] : [])];
 }

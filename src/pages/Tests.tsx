@@ -1,5 +1,6 @@
 import { AgentBox } from '../components/AgentBox';
 import { evalTests, pct } from '../guardrails';
+import { useUnconfirmed } from '../approvals';
 import { featureOf } from '../spec';
 import { nextId, store } from '../store';
 import type { Project, TestCase } from '../types';
@@ -7,6 +8,7 @@ import { Badge, Button, PageHead, REQ_STATUS_TONE } from '../ui';
 
 export function TestsPage({ p, fid }: { p: Project; fid: string }) {
   const f = featureOf(p, fid);
+  const unconfirmed = useUnconfirmed(p); // REQ-038 AC2
   const reqIds = new Set(p.spec.requirements.filter((r) => r.featureId === fid).map((r) => r.id));
   const s = { ...p.spec, requirements: p.spec.requirements.filter((r) => reqIds.has(r.id)), tests: p.spec.tests.filter((t) => t.reqIds.some((x) => reqIds.has(x))) };
   const evals = evalTests(s);
@@ -40,6 +42,7 @@ export function TestsPage({ p, fid }: { p: Project; fid: string }) {
                     <div className="row gap-sm wrap"><span className="mono t-brand">{t.id}</span><input className="input" style={{ padding: '2px 8px', fontSize: 13, maxWidth: 360 }} value={t.title} onChange={(e) => set(t.id, { title: e.target.value })} />
                       <select className="select" style={{ width: 'auto', padding: '2px 6px', fontSize: 12 }} value={t.type} onChange={(e) => set(t.id, { type: e.target.value as TestCase['type'] })}><option>Automated</option><option>Manual</option></select>
                       <select className="select" style={{ width: 'auto', padding: '2px 6px', fontSize: 12 }} value={t.status} onChange={(e) => set(t.id, { status: e.target.value as TestCase['status'] })}><option>Not run</option><option>Pass</option><option>Fail</option></select>
+                      {unconfirmed.some((u) => u.item === t.id && u.gate === 'tests') && <Badge tone="danger" title="No Firebase record confirms this approval">Unconfirmed — claims {t.approvedBy || 'no approver'}</Badge>}
                       <button className="btn danger sm" aria-label={`Delete ${t.id}`} onClick={() => confirm(`Delete ${t.id} "${t.title}"?`) && store.spec(p.id, (x) => ({ ...x, tests: x.tests.filter((y) => y.id !== t.id) }))}>Delete</button></div>
                     <textarea className="textarea mono" style={{ minHeight: 64, fontSize: 12 }} value={t.gherkin} onChange={(e) => set(t.id, { gherkin: e.target.value })} />
                   </div>))}</div> : <Badge tone="danger">Not covered</Badge>}</td>

@@ -1,4 +1,5 @@
 import { missingToken, tokenFor } from '../token';
+import { useUnconfirmed } from '../approvals';
 import { useState } from 'react';
 import { go } from '../App';
 import { syncLabel, syncNow, useSync } from '../autosync';
@@ -37,8 +38,25 @@ export function OverviewPage({ p }: { p: Project }) {
   const feats = p.spec.features.filter((f) => showArchived || !f.archived);
   const waiting = p.runs.filter((r) => r.status === 'awaiting-approval');
 
+  const unconfirmed = useUnconfirmed(p); // REQ-038 AC3: approvals Firebase does not confirm
+  const linkOf = (item: string, gate: string) => {
+    if (item.startsWith('F-')) return `/p/${p.id}/f/${item}/${gate === 'intent' ? 'idea' : 'design'}`;
+    const reqId = gate === 'tests' ? p.spec.tests.find((t) => t.id === item)?.reqIds[0] : item;
+    const fid = p.spec.requirements.find((r) => r.id === reqId)?.featureId;
+    return fid ? `/p/${p.id}/f/${fid}/${gate === 'tests' ? 'tests' : 'requirements'}` : `/p/${p.id}`;
+  };
   return (
     <div className="stack gap-2xl">
+      {unconfirmed.length > 0 && (
+        <div className="card stack gap-xs" role="status" style={{ padding: '12px 16px', background: 'var(--color-bg-danger-subtle)', borderColor: 'var(--color-border-danger)' }}>
+          <strong className="body-sm t-danger">{unconfirmed.length === 1 ? '1 approval is' : `${unconfirmed.length} approvals are`} not confirmed by Firebase</strong>
+          <span className="body-sm t-secondary">No Firebase approval record confirms these. To approve one again, a person with the owning role sets it back to Draft and approves it in the portal.</span>
+          <ul className="body-sm" style={{ margin: 0, paddingLeft: 18 }}>
+            {unconfirmed.map((u) => <li key={`${u.gate}-${u.item}`}><button className="btn ghost sm" style={{ padding: 0 }} onClick={() => go(linkOf(u.item, u.gate))}>{u.item} ({u.gate})</button> — claims {u.approvedBy || 'no approver'}</li>)}
+          </ul>
+        </div>
+      )}
+      {unconfirmed.failed && <p className="body-sm t-secondary" role="status">Could not check approvals against Firebase. Reload the page to try again.</p>}
       <PageHead
         over={p.repo ? `${p.repo.owner}/${p.repo.name}` : p.demo ? 'Demo project · not on GitHub' : 'Local project · not on GitHub'}
         title={p.name}

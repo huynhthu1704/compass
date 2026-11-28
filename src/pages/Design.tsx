@@ -1,21 +1,28 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { go } from '../App';
 import { AgentBox } from '../components/AgentBox';
+import { DesignFilesPanel } from '../components/DesignFilesPanel';
+import { designFiles, designPreviews, isDesignAdmin } from '../designLinks';
+import { projectKey, useSession } from '../firebase';
 import { featureOf } from '../spec';
 import { now, store, useStore } from '../store';
-import type { Design, DesignScreen, DesignTool, DesignToolKind, Project } from '../types';
-import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead } from '../ui';
+import { gateState, recordApproval, useUnconfirmed } from '../approvals';
+import type { Design, DesignScreen, Project } from '../types';
+import { Badge, Button, DESIGN_STATUS_TONE, Field, PageHead, toast } from '../ui';
 
-const TOOLS: Record<DesignToolKind, string> = { figma: 'Figma', penpot: 'Penpot', sketch: 'Sketch', other: 'Other' };
-
-/** figma.com links can be embedded with Figma's official embed URL; other tools are opened in a new tab. */
-const figmaEmbed = (url?: string) => (url && /^https:\/\/([\w-]+\.)?figma\.com\//.test(url) ? `https://www.figma.com/embed?embed_host=compass&url=${encodeURIComponent(url)}` : null);
 
 export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const { settings } = useStore();
   const f = featureOf(p, fid);
-  const [editTool, setEditTool] = useState(!p.spec.designTool);
-  const [tool, setTool] = useState<DesignTool>(p.spec.designTool || { kind: 'figma', url: '' });
+  // REQ-081: the project's design files sit behind one button; only the admin gets the link to Project settings.
+  const session = useSession();
+  const projectRoles = (p.repo && session.access.find((a) => a.id === projectKey(p.repo!))?.roles) || [];
+  const admin = isDesignAdmin({ role: settings.role, signIn: session.status, superAdmin: session.superAdmin, projectRoles, demo: !!session.demo || !!p.demo });
+  const [approving, setApproving] = useState(false);
+  const unconfirmed = useUnconfirmed(p); // REQ-038
+  const [panel, setPanel] = useState(false);
+  const [shown, setShown] = useState<'figma' | 'miro'>('figma');
+  const filesBtns = useRef<(HTMLButtonElement | null)[]>([]);
   if (!f) return <div className="empty">Feature not found.</div>;
   const d = f.design;
   const reqs = p.spec.requirements.filter((r) => r.featureId === fid);
@@ -24,28 +31,52 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
   const uncovered = d ? approvedReqs.filter((r) => !d.screens.some((s) => s.reqIds.includes(r.id))) : [];
   const setD = (patch: Partial<Design>) => store.spec(p.id, (s) => ({ ...s, features: s.features.map((x) => (x.id === fid && x.design ? { ...x, design: { ...x.design, ...patch } } : x)) }));
   const setS = (id: string, patch: Partial<DesignScreen>) => d && setD({ screens: d.screens.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
-  const saveTool = () => { store.spec(p.id, (s) => ({ ...s, designTool: tool.url.trim() ? { kind: tool.kind, url: tool.url.trim() } : undefined })); setEditTool(false); };
-  const approve = () => setD({ status: 'Approved', approvedBy: settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO', approvedAt: now() });
-  const embed = figmaEmbed(d?.url || p.spec.designTool?.url);
+  // F-015 REQ-033/036/037: UX or PO approve a design; the approval is recorded in Firebase first.
+  const gate = gateState(p, 'design'); // not a hook: this page returns early above; App re-renders on session changes
+  const approve = async () => {
+    if (approving) return;
+    setApproving(true);
+    try {
+      const by = await recordApproval(p, 'design', [fid]);
+      setD({ status: 'Approved', approvedBy: by?.text || (settings.githubUser ? `@${settings.githubUser}` : settings.role || 'PO'), approvedAt: now() });
+    } catch (e) { toast((e as Error).message); } finally { setApproving(false); }
+  };
+  const files = designFiles(p.spec.designTool);
+  const count = [files.figma, files.other, files.miro].filter(Boolean).length;
+  const previews = designPreviews(files, d?.url);
+  const preview = previews.find((x) => x.kind === shown) || previews[0];
+  // Focus goes back to the button once the panel is gone (the panel keeps focus inside itself while it is open).
+  // Two placements (desktop corner, phone title row); only one is displayed, and focus goes back to that one.
+  const closePanel = () => { setPanel(false); requestAnimationFrame(() => filesBtns.current.find((b) => b && b.offsetParent !== null)?.focus()); };
+  const settingsPath = `/p/${p.id}/settings`;
+  const filesButton = (where: 'desktop' | 'phone') => (
+    <button ref={(el) => { filesBtns.current[where === 'desktop' ? 0 : 1] = el; }} className={`btn secondary files-btn-${where}`} aria-haspopup="dialog" aria-expanded={panel} onClick={() => setPanel(true)}>
+      🔗 <span className="hide-phone">{count ? 'Design files' : 'Design files · none'}</span><span className="show-phone">{count ? 'Files' : 'Files · none'}</span>
+      {count > 0 && <span className="files-count" aria-label={`${count} linked`}>{count}</span>}
+    </button>
+  );
 
   return (
     <div className="stack gap-xl">
       <PageHead over={`${f.id} ${f.name} · Stage 3 · Design · owner: UX / PO`} title="Design" sub={`Screens traced to the approved requirements. Coding is locked until the design is approved. Saved to compass/spec.json and compass/design/${f.id}.md.`}
-        right={d && d.status === 'Draft' ? <Button variant="accent" disabled={uncovered.length > 0} title={uncovered.length ? 'Every approved requirement needs a screen' : undefined} onClick={approve}>Approve design</Button>
-          : d ? <Button variant="ghost" onClick={() => setD({ status: 'Draft', approvedBy: undefined, approvedAt: undefined })}>Reopen as draft</Button> : undefined} />
+        right={<>{d && d.status === 'Draft' ? <>{!gate.allowed && <span id="design-gate-hint" className="body-sm t-tertiary">{gate.hint}</span>}<Button variant="accent" disabled={uncovered.length > 0 || !gate.allowed || approving} title={uncovered.length ? 'Every approved requirement needs a screen' : undefined} aria-describedby={gate.allowed ? undefined : 'design-gate-hint'} onClick={() => void approve()}>Approve design</Button></>
+          : d ? <Button variant="ghost" onClick={() => setD({ status: 'Draft', approvedBy: undefined, approvedAt: undefined })}>Reopen as draft</Button> : null}{filesButton('desktop')}</>} titleRight={filesButton('phone')} />
+      {panel && <DesignFilesPanel files={files} admin={admin} settingsPath={settingsPath} featurePreview={!count && previews.length > 0} onClose={closePanel} />}
 
-      <section className="card pad-xl stack gap-md">
-        <div className="row gap-sm wrap">
-          <h2 className="h4 grow">Project design tool</h2>
-          {p.spec.designTool && !editTool && <><Badge tone="brand">{TOOLS[p.spec.designTool.kind]}</Badge><a className="btn ghost sm" href={p.spec.designTool.url} target="_blank" rel="noreferrer">Open ↗</a><Button size="sm" variant="ghost" onClick={() => setEditTool(true)}>Change</Button></>}
-        </div>
-        {editTool ? (
-          <div className="row gap-sm wrap end">
-            <Field label="Tool"><select className="select" value={tool.kind} onChange={(e) => setTool({ ...tool, kind: e.target.value as DesignToolKind })}>{Object.entries(TOOLS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
-            <div className="grow" style={{ minWidth: 240 }}><Field label="Project or file link" help="One design tool per project, e.g. https://www.figma.com/design/…"><input className="input" value={tool.url} placeholder="https://www.figma.com/design/…" onChange={(e) => setTool({ ...tool, url: e.target.value })} /></Field></div>
-            <Button variant="secondary" onClick={saveTool}>Save</Button>
+      <section className="stack gap-sm" aria-label="Design preview">
+        {previews.length > 1 && (
+          <div className="segmented" role="tablist" aria-label="Preview">
+            {previews.map((x, i) => <button key={x.kind} id={`preview-tab-${x.kind}`} role="tab" aria-selected={preview?.kind === x.kind} aria-controls="design-preview" tabIndex={preview?.kind === x.kind ? 0 : -1}
+              onClick={() => setShown(x.kind)}
+              onKeyDown={(e) => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); const next = previews[(i + (e.key === 'ArrowRight' ? 1 : previews.length - 1)) % previews.length]; setShown(next.kind); document.getElementById(`preview-tab-${next.kind}`)?.focus(); }}>{x.label}</button>)}
           </div>
-        ) : !p.spec.designTool ? null : <div className="body-sm t-secondary mono-sm" style={{ wordBreak: 'break-all' }}>{p.spec.designTool.url}</div>}
+        )}
+        {preview
+          ? <iframe key={preview.src} id="design-preview" role={previews.length > 1 ? 'tabpanel' : undefined} aria-labelledby={previews.length > 1 ? `preview-tab-${preview.kind}` : undefined} className="design-preview" title={preview.label} src={preview.src} allowFullScreen />
+          : <div className="empty stack gap-sm" style={{ alignItems: 'center' }}>
+              <span>{count ? 'No preview for this design tool. Open it from Design files.' : 'No design files linked yet'}</span>
+              {!count && admin && <button className="btn ghost sm" onClick={() => go(settingsPath)}>Link them in Project settings →</button>}
+            </div>}
       </section>
 
       <AgentBox p={p} agentId="designer" featureId={fid} reqIds={approvedReqs.map((r) => r.id)} cta={d ? 'Redesign' : 'Generate design'} defaultGoal={`Design the screens for ${approvedReqs.map((r) => r.id).join(', ')}`}
@@ -59,15 +90,14 @@ export function DesignPage({ p, fid }: { p: Project; fid: string }) {
               <h2 className="h4 grow">Design</h2>
               <Badge tone={DESIGN_STATUS_TONE[d.status]}>{d.status}</Badge>
               {d.approvedBy && <span className="body-sm t-tertiary">by {d.approvedBy} · {d.approvedAt?.slice(0, 10)}</span>}
+              {unconfirmed.some((u) => u.item === fid && u.gate === 'design') && <Badge tone="danger" title="No Firebase record confirms this approval">Unconfirmed — claims {d.approvedBy || 'no approver'}</Badge>}
             </div>
             {d.status === 'Approved' && <div className="body-sm">Coding is unlocked. <button className="btn ghost sm" onClick={() => go(`/p/${p.id}/f/${fid}/build`)}>Go to Build →</button></div>}
             {uncovered.length > 0 && <div className="body-sm t-accent">Not covered by any screen: {uncovered.map((r) => r.id).join(', ')}. Add them to a screen before approving.</div>}
             <Field label="Approach"><textarea className="textarea" style={{ minHeight: 60 }} value={d.summary} onChange={(e) => setD({ summary: e.target.value })} /></Field>
-            <Field label={`This feature in ${p.spec.designTool ? TOOLS[p.spec.designTool.kind] : 'the design tool'}`} help="Link to the page or frame of this feature"><input className="input" value={d.url || ''} placeholder="https://www.figma.com/design/…?node-id=…" onChange={(e) => setD({ url: e.target.value || undefined })} /></Field>
+            <Field label="This feature in the design tool" help="Link to the page or frame of this feature (a Figma link is previewed above)"><input className="input" value={d.url || ''} placeholder="https://www.figma.com/design/…?node-id=…" onChange={(e) => setD({ url: e.target.value || undefined })} /></Field>
             <Field label="Notes (accessibility, responsive, open questions)"><textarea className="textarea" style={{ minHeight: 60 }} value={d.notes || ''} onChange={(e) => setD({ notes: e.target.value })} /></Field>
           </section>
-
-          {embed && <section className="card" style={{ padding: 0, overflow: 'hidden' }}><iframe title="Design preview" src={embed} style={{ width: '100%', height: 480, border: 0, display: 'block' }} allowFullScreen /></section>}
 
           <section className="stack gap-sm">
             <div className="row gap-sm"><h2 className="h3 grow">Screens</h2><Button size="sm" variant="ghost" onClick={() => setD({ screens: [...d.screens, { id: `SCR-${Math.max(0, ...d.screens.map((s) => +s.id.replace(/\D/g, '') || 0)) + 1}`, name: 'New screen', purpose: '', reqIds: [], elements: [], states: ['Empty', 'Error', 'Success'] }] })}>+ Screen</Button></div>

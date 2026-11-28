@@ -2,7 +2,7 @@
 // src/team.ts is pure (types-only imports), so Node 22 runs it directly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_ADMIN, accessFor, addMember, applyTeamOp, missingTokenMessage, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
+import { LAST_ADMIN, accessFor, addMember, applyTeamOp, approvalBy, approvalSig, canReuseApproval, checksApprovals, gateForAgent, gatesApply, sharedOpenProblem, recordItems, parseApprovedBy, projectVisible, startScreen, unconfirmedApprovals, missingTokenMessage, sharedToOpen, withReqsInBuild, approvedBy, baselineFrom, canPass, gateHint, isSuperAdmin, membersFromDoc, pickToken, removeMember, setRoles, teamDoc } from '../src/team.ts';
 
 test('TC-060 (REQ-030): adding a person normalises the email and keeps several roles', () => {
   const r = addMember([], 'Ba@Example.com ', ['QA', 'BA']);
@@ -141,4 +141,121 @@ test('TC-068 (REQ-034 AC4): In build is prepared on a copy, so a refused GitHub 
   const next = withReqsInBuild(spec, ['REQ-002']);
   assert.deepEqual(next.requirements.map((q) => q.status), ['Approved', 'In build']);
   assert.deepEqual(spec.requirements.map((q) => q.status), ['Approved', 'Approved'], 'the input (the store copy) is not changed');
+});
+
+test('TC-064 (REQ-032 AC2): shared projects not on this device are offered to open', () => {
+  const access = [{ id: 'a', roles: ['BA'], repo: { owner: 'O', name: 'Travel' } }, { id: 'b', roles: ['QA'], repo: { owner: 'o', name: 'shop' } }, { id: 'c', roles: ['UX'] }];
+  assert.deepEqual(sharedToOpen(access, [{ owner: 'o', name: 'travel' }, null]).map((a) => a.id), ['b'], 'Travel is local (case-insensitive); c has no repo');
+  assert.deepEqual(sharedToOpen(access, []).map((a) => a.id), ['a', 'b']);
+});
+
+test('TC-066 (REQ-033): approving an agent run passes the gate of its stage', () => {
+  assert.deepEqual(['ideation', 'requirements', 'designer', 'testdesign', 'coder', 'reviewer', 'release'].map(gateForAgent), ['intent', 'requirements', 'design', 'tests', 'build', 'build', 'release']);
+});
+
+test('TC-071 (REQ-036, REQ-037 AC3): the record role is the role that owns the gate, or "super admin"', () => {
+  assert.deepEqual(approvalBy('Ba@Example.com', ['QA', 'BA'], 'requirements'), { role: 'BA', text: 'ba@example.com (BA)' });
+  assert.deepEqual(approvalBy('ba@example.com', ['QA', 'BA'], 'tests'), { role: 'QA', text: 'ba@example.com (QA)' });
+  assert.deepEqual(approvalBy('po@example.com', ['PO'], 'build', true), { role: 'super admin', text: 'po@example.com (super admin)' });
+  assert.equal(approvalBy('dev@example.com', ['Dev'], 'design'), null);
+});
+
+test('TC-075 (REQ-039, REQ-040): the role picker is shown only without Firebase or inside the demo, never before sign-in', () => {
+  const on = (o) => startScreen({ firebase: true, status: 'signed-in', demo: false, hasRole: false, hasAccess: true, ...o });
+  assert.equal(on({}), 'app', 'signed in with team roles: no role screen');
+  assert.equal(on({ hasRole: true }), 'app', 'a role picked earlier does not matter');
+  assert.equal(on({ hasAccess: false }), 'no-access');
+  assert.equal(on({ hasAccess: false, demo: true }), 'role-picker', 'Try the demo → pick a role');
+  assert.equal(on({ hasAccess: false, demo: true, hasRole: true }), 'app');
+  assert.equal(on({ status: 'signed-out', demo: true }), 'sign-in', 'no demo before sign-in');
+  assert.equal(on({ status: 'loading' }), 'loading');
+  assert.equal(startScreen({ firebase: false, status: 'off', demo: false, hasRole: false, hasAccess: false }), 'role-picker', 'sign-in off: as today');
+  assert.equal(startScreen({ firebase: false, status: 'off', demo: false, hasRole: true, hasAccess: false }), 'app');
+});
+
+test('TC-076 (REQ-040 AC2/AC3): in the demo only sample projects are visible; never a real project', () => {
+  const real = { repo: { owner: 'O', name: 'Travel' } }, sample = { repo: null, demo: true }, local = { repo: null };
+  const demo = { status: 'signed-in', demo: true, superAdmin: true, accessIds: ['o__travel'] };
+  assert.deepEqual([real, sample, local].map((p) => projectVisible(p, demo)), [false, true, false], 'even the super admin sees only samples in the demo');
+  const member = { status: 'signed-in', demo: false, superAdmin: false, accessIds: ['o__travel'] };
+  assert.deepEqual([real, sample, local].map((p) => projectVisible(p, member)), [true, false, false]);
+  assert.equal(projectVisible(real, { status: 'off', superAdmin: false, accessIds: [] }), true, 'sign-in off: as before');
+});
+
+test('TC-073 (REQ-038): approvals in neither the baseline nor a Firebase record are unconfirmed, whatever their date', () => {
+  const spec = {
+    features: [
+      { id: 'F-001', idea: { approvedBy: 'po@example.com (PO)', approvedAt: '2026-11-01' }, design: { status: 'Approved', approvedBy: 'ux@example.com (UX)', approvedAt: '2026-11-20' } },
+    ],
+    requirements: [
+      { id: 'REQ-001', featureId: 'F-001', status: 'Approved', approvedBy: 'ba@example.com (BA)' },   // has a record
+      { id: 'REQ-002', featureId: 'F-001', status: 'In build', approvedBy: 'ba@example.com (PO)' },   // record says BA, claims PO
+      { id: 'REQ-003', featureId: 'F-001', status: 'Draft' },
+    ],
+    tests: [
+      { id: 'TC-001', reqIds: ['REQ-001'], approvedBy: 'qa@example.com (QA)' },   // a tests record names TC-001
+      { id: 'TC-002', reqIds: ['REQ-003'], approvedBy: 'qa@example.com (QA)' },   // no tests record names TC-002
+      { id: 'TC-003', reqIds: ['REQ-001'] },                                      // not approved: nothing to check
+    ],
+  };
+  const ev = {
+    hasBaseline: true,
+    baseline: [{ item: 'F-001', gate: 'intent', approvedBy: 'po@example.com (PO)' }],
+    records: [
+      { items: ['REQ-001', 'REQ-002'], gate: 'requirements', email: 'BA@example.com', role: 'BA' },
+      { items: ['F-001', 'TC-001'], gate: 'tests', email: 'qa@example.com', role: 'QA' },
+    ],
+  };
+  const ids = (list) => list.map((a) => `${a.gate}:${a.item}`);
+  assert.deepEqual(ids(unconfirmedApprovals(spec, ev)), ['design:F-001', 'requirements:REQ-002', 'tests:TC-002'],
+    'the design (dated before the team) has no record; REQ-002 claims the wrong role; TC-002 has no tests record');
+  assert.deepEqual(ids(unconfirmedApprovals(spec, { ...ev, hasBaseline: false, baseline: [] })), ['intent:F-001', 'design:F-001', 'requirements:REQ-002', 'tests:TC-002'],
+    'no baseline: every approval without a record is flagged, the intent included');
+  const forged = { ...spec, features: [{ ...spec.features[0], idea: { approvedBy: 'mallory@example.com (PO)' } }] };
+  assert.ok(ids(unconfirmedApprovals(forged, ev)).includes('intent:F-001'), 'an intent approvedBy changed after the baseline is flagged');
+  const recordByFeature = { ...ev, records: [...ev.records, { items: ['F-001', 'REQ-003'], gate: 'tests', email: 'qa@example.com', role: 'QA' }] };
+  assert.ok(ids(unconfirmedApprovals(spec, recordByFeature)).includes('tests:TC-002'), 'a forged test case is flagged: a record for its feature or requirement does not name it');
+  const recordByTc = { ...ev, records: [...ev.records, { items: ['F-001', 'TC-002'], gate: 'tests', email: 'qa@example.com', role: 'QA' }] };
+  assert.ok(!ids(unconfirmedApprovals(spec, recordByTc)).includes('tests:TC-002'), 'a tests record naming the test case confirms it');
+  assert.deepEqual(recordItems({ id: 'run1', featureId: 'F-001', proposal: { tests: [{ id: 'TC-002' }, { id: 'TC-004' }] } }), ['F-001', 'TC-002', 'TC-004']);
+  assert.deepEqual(recordItems({ id: 'run1', featureId: 'F-001', reqIds: ['REQ-001'] }), ['REQ-001']);
+  // Demo mode, local projects and projects without a team are never checked, so nothing is flagged (REQ-038 AC4).
+  const base = { signedIn: true, demoSession: false, demoProject: false, hasRepo: true, hasTeam: true };
+  assert.equal(checksApprovals(base), true);
+  for (const k of ['demoSession', 'demoProject']) assert.equal(checksApprovals({ ...base, [k]: true }), false, k);
+  for (const k of ['signedIn', 'hasRepo', 'hasTeam']) assert.equal(checksApprovals({ ...base, [k]: false }), false, k);
+  assert.deepEqual(parseApprovedBy('Ba@Example.com (BA)'), { email: 'ba@example.com', role: 'BA' });
+  assert.equal(parseApprovedBy('the Product Owner (in chat)'), null);
+});
+
+test('TC-072 (part, REQ-037 AC4): a retry reuses its record only for the same person and the same version', () => {
+  const run = { proposal: { requirements: [{ id: 'REQ-001', title: 'A' }] }, changes: [] };
+  const sig = approvalSig(run);
+  const saved = { id: 'rec1', by: 'ba@example.com (BA)', email: 'ba@example.com', sig };
+  assert.equal(canReuseApproval(saved, 'BA@example.com', sig), true, 'same person, same version: reuse');
+  assert.equal(canReuseApproval(saved, 'po@example.com', sig), false, 'another person signed in: new record');
+  assert.equal(canReuseApproval(saved, undefined, sig), false, 'signed out: no reuse');
+  const revised = approvalSig({ ...run, proposal: { requirements: [{ id: 'REQ-001', title: 'B' }] } });
+  assert.notEqual(revised, sig);
+  assert.equal(canReuseApproval(saved, 'ba@example.com', revised), false, 'a revised version: new record');
+  assert.equal(canReuseApproval(undefined, 'ba@example.com', sig), false);
+  assert.equal(canReuseApproval({ id: 'old', by: 'x' }, 'ba@example.com', sig), false, 'a record saved before this check has no email/sig');
+});
+
+test('TC-066 (REQ-033): approval gates fail closed while sign-in is on and nobody is signed in', () => {
+  const real = { hasRepo: true, demoProject: false };
+  assert.equal(gatesApply({ firebase: true, status: 'loading', ...real }), true, 'signing in or loading: gated, so no role passes');
+  assert.equal(gatesApply({ firebase: true, status: 'signed-out', ...real }), true);
+  assert.equal(gatesApply({ firebase: true, status: 'signed-in', ...real }), true);
+  assert.equal(gatesApply({ firebase: false, status: 'off', ...real }), false, 'sign-in off: as before');
+  assert.equal(gatesApply({ firebase: true, status: 'signed-in', hasRepo: true, demoProject: true }), false, 'demo project');
+  assert.equal(gatesApply({ firebase: true, status: 'signed-in', hasRepo: false, demoProject: false }), false, 'local project');
+});
+
+test('TC-064 (REQ-032 AC2, REQ-034): a shared project that the token cannot reach, or that was renamed, is not opened', () => {
+  const want = { owner: 'Acme', name: 'Travel' };
+  assert.equal(sharedOpenProblem(want, { owner: 'acme', name: 'travel' }), null, 'same repo, any letter case');
+  assert.match(sharedOpenProblem(want, null, 404), /token cannot reach Acme\/Travel — ask an Admin/);
+  assert.match(sharedOpenProblem(want, { owner: 'acme', name: 'travel-map' }), /is now acme\/travel-map on GitHub \(renamed or moved\) — ask an Admin/);
+  assert.match(sharedOpenProblem(want, { owner: 'other', name: 'Travel' }), /renamed or moved/);
 });

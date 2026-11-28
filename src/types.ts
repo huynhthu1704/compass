@@ -7,9 +7,10 @@ export type Lang = 'en' | 'vi';
 export type Stage = 'idea' | 'requirements' | 'design' | 'tests' | 'build' | 'release';
 export const STAGES: Stage[] = ['idea', 'requirements', 'design', 'tests', 'build', 'release'];
 
-/** The one design tool a project is connected to (e.g. its Figma project or file). */
-export type DesignToolKind = 'figma' | 'penpot' | 'sketch' | 'other';
-export interface DesignTool { kind: DesignToolKind; url: string }
+/** The project's design files (REQ-080 … REQ-082): `kind` + `url` hold the main link (Figma, an older Penpot/Sketch/Other
+ *  link, or Miro when it is the only one); `miroUrl` holds the Miro board next to another link. See src/designLinks.ts. */
+export type DesignToolKind = 'figma' | 'miro' | 'penpot' | 'sketch' | 'other';
+export interface DesignTool { kind: DesignToolKind; url: string; miroUrl?: string }
 
 export interface RepoRef {
   owner: string;
@@ -29,6 +30,8 @@ export interface Idea {
   scopeIn: string[];
   scopeOut: string[];
   risks: string[];
+  approvedBy?: string;     // F-015 REQ-036: who approved the intent, "<email> (<role>)"
+  approvedAt?: string;
   stack?: string;          // (v1) moved to Spec.stack
 }
 
@@ -72,6 +75,8 @@ export interface Requirement {
   status: 'Draft' | 'Approved' | 'In build' | 'Done';
   intent?: string;         // compass/intent/<file>.md — explicit intent (else the feature's compass/intent/F-xxx.md)
   design?: string;         // compass/design/<file>.md — explicit design file, or "none: <reason>" for a change without UI
+  approvedBy?: string;     // F-015 REQ-036: "<email> (<role>)" when approved by a signed-in person
+  approvedAt?: string;
 }
 
 export interface TestCase {
@@ -81,6 +86,8 @@ export interface TestCase {
   gherkin: string;
   type: 'Automated' | 'Manual';
   status: 'Not run' | 'Pass' | 'Fail';
+  approvedBy?: string;     // F-015 REQ-036: who approved the test case
+  approvedAt?: string;
 }
 
 export interface Spec {
@@ -138,6 +145,9 @@ export interface RunVersion { n: number; at: string; proposal?: Run['proposal'];
 
 export interface Run {
   id: string;
+  /** F-015 REQ-037 AC4: the approval record written for this run; a retry after a failed GitHub step reuses it only for
+   *  the same signed-in email and the same version (sig of proposal + changes). */
+  approval?: { id: string; by: string; email: string; sig: string };
   agent: AgentId;
   stage: Stage;
   featureId?: string;
@@ -161,7 +171,7 @@ export interface Run {
   replying?: 'ask' | 'revise'; // F-020: the agent is answering a follow-up
 }
 
-export interface ReleaseRec { tag: string; name: string; url: string; date: string; prs: number[]; featureIds?: string[] }
+export interface ReleaseRec { tag: string; name: string; url: string; date: string; prs: number[]; featureIds?: string[]; approvedBy?: string }
 
 export interface Project {
   id: string;
