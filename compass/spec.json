@@ -2083,6 +2083,7 @@
         "Given I am signed in with Google\nWhen I look at the bottom of the sidebar\nThen I see one account card with my initial, my name (the part of my email before \"@\") and my roles on the open project as chips (\"Super admin\" for the super admin), and no \"Try the demo\", \"Sign out\", \"My roles\" line or separate theme button",
         "Given the account card\nWhen I click it (or press Enter or Space on it)\nThen a menu opens with my full email, \"Connections\" with the GitHub state, a \"Dark theme\" switch and \"Sign out\"; in the demo it also has \"Leave demo\"; it never has \"Try the demo\"",
         "Given the account menu is open\nWhen I choose an item, press Escape or click outside it\nThen the menu closes; \"Dark theme\" switches the theme, \"Connections\" opens Connections and \"Sign out\" signs me out",
+        "Given the account menu is open\nWhen I press ArrowDown or ArrowUp\nThen focus moves to the next or previous item and wraps around at the ends; from the name and email at the top of the menu, ArrowDown goes to the first item and ArrowUp to the last",
         "Given sign-in is off, or I am in the demo\nWhen I look at the footer\nThen the role picker is shown above the account card, and the menu has no \"Sign out\" when sign-in is off",
         "Given a phone (below 900 px)\nWhen I open the Menu\nThen the footer and its account menu work the same, within the menu width"
       ],
