@@ -1177,6 +1177,39 @@
         "approvedBy": "the Product Owner (in chat)",
         "approvedAt": "2026-11-27T00:00:00.000Z"
       }
+    },
+    {
+      "id": "F-022",
+      "name": "Version number and version history",
+      "createdAt": "2026-11-28T00:00:00.000Z",
+      "idea": {
+        "need": "add version tracking number for this portal — then: add version history similar to 'bee there' https://beetheremap.com/#/",
+        "intent": "Everyone using the Compass portal can see which version is live and what changed in each version, the way Bee There shows it (today: no version number anywhere in the portal).",
+        "problem": "Nothing in the portal says which version is live, so nobody can tell whether a fix has been deployed or what changed since their last visit.",
+        "users": [
+          "Product Owner",
+          "Everyone using the portal"
+        ],
+        "outcomeMetric": "Done when the bottom of the sidebar shows the version line (release, build number, commit) and clicking it opens What's new with every release, newest first, the current one marked.",
+        "scopeIn": [
+          "Version line under the sidebar account card",
+          "What's new list of releases grouped by day",
+          "Dot for a release not opened yet (kept in the browser)",
+          "Test that package.json's version has a history entry"
+        ],
+        "scopeOut": [
+          "Git tags and GitHub Releases",
+          "Images in release entries",
+          "Vietnamese text",
+          "Version history for the projects Compass manages",
+          "The \"new version available\" notice (F-021)"
+        ],
+        "risks": [
+          "No change to the deploy workflow (protected path): build number from GitHub Actions variables",
+          "Honey tokens only, light and dark mode; no new libraries",
+          "Phone menu and keyboard keep working"
+        ]
+      }
     }
   ],
   "requirements": [
@@ -2089,6 +2122,37 @@
       ],
       "approvedBy": "the Product Owner (in chat)",
       "approvedAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "REQ-111",
+      "featureId": "F-022",
+      "title": "The sidebar shows the portal's version and build",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-version-history.md",
+      "story": "As anyone using the portal, I want to see which version of Compass I am on, so that I know whether a fix or feature has been deployed.",
+      "ac": [
+        "Given the portal was built by GitHub Actions for a deploy\nWhen I look at the bottom of the sidebar\nThen under the account card I see one small grey line \"Compass v<release> · build <build number> · <7-character commit id>\", where the release comes from package.json and the build number and commit from the GitHub Actions run\nAnd hovering or focusing it shows the build date and time",
+        "Given a local build or npm run dev (no GitHub Actions run)\nWhen I look at the bottom of the sidebar\nThen the line reads \"Compass v<release> · dev\"",
+        "Given sign-in is off, I am in the demo, or I am signed in\nWhen I look at the bottom of the sidebar\nThen the version line is shown the same way",
+        "Given a phone (below 900 px)\nWhen I open the Menu\nThen the version line is shown under the account card, within the menu width"
+      ]
+    },
+    {
+      "id": "REQ-112",
+      "featureId": "F-022",
+      "title": "What's new lists every portal release",
+      "priority": "Should",
+      "status": "Draft",
+      "intent": "compass/intent/2026-11-28-version-history.md",
+      "story": "As anyone using the portal, I want a list of what changed in each version, so that I can see what is new since my last visit.",
+      "ac": [
+        "Given the version line at the bottom of the sidebar\nWhen I click it (or press Enter or Space on it)\nThen \"What's new\" opens with \"Version you're using: v<release>\" at the top and then every release grouped by day, newest first; each release shows its version tag and its entries, each with an icon, a title and one or two sentences; the release I am on is marked \"Current\"",
+        "Given What's new is open\nWhen I press Escape, click Close or click outside it\nThen it closes and focus returns to the version line",
+        "Given the newest release is one I have not opened What's new for in this browser\nWhen I look at the version line\nThen it shows a small honey dot (screen readers hear \"new release\"); once I open What's new the dot is gone in this browser until the next release",
+        "Given the release history in the code\nWhen the unit tests run\nThen they fail if package.json's version has no entry in the history, if the releases are not newest first, or if a version appears twice",
+        "Given the first release\nWhen What's new opens\nThen it lists v1.0.0 dated 28 November 2026, summarising what the portal already does (features F-001 … F-020)"
+      ]
     }
   ],
   "tests": [
@@ -3335,6 +3399,26 @@
       "type": "Automated",
       "status": "Pass",
       "gherkin": "Given a signed-in super admin who is PO on the open project\nWhen the account chips are built\nThen they are \"Super admin\" and \"PO\"\nAnd the account menu lists Connections, Dark theme and Sign out, and Leave demo only in the demo\nAnd with sign-in off the menu has no Sign out\nAnd no state lists \"Try the demo\"\nAnd the sidebar footer renders no \"Try the demo\", no \"My roles\" line and exactly one theme control inside the menu\nAnd choosing an item, Escape, Tab or a click outside closes the menu (a choice and Escape return focus to the card; Escape also works with focus back on the card)\nAnd below 900 px the menu opens in place above the card (TC-510 checks the CSS rule; the look is checked with screenshots)\nAnd the email header sits beside the role=\"menu\" list, not inside it\nAnd the arrow keys move between the items and wrap around at the ends, also after the email header was clicked (ArrowDown to the first item, ArrowUp to the last)"
+    },
+    {
+      "id": "TC-511",
+      "reqIds": [
+        "REQ-111"
+      ],
+      "title": "The version line shows release, build number and commit, or dev",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given release 1.0.0, build number 142, commit 2686b3d1… and a build time\nWhen the version label is built\nThen it is \"Compass v1.0.0 · build 142 · 2686b3d\" and its tooltip names the build date and time\nAnd without a build number and commit it is \"Compass v1.0.0 · dev\"\nAnd the sidebar footer renders the version line under the account card in every sign-in state (sign-in off, demo, signed in)\nAnd below 900 px the line stays within the menu width (TC-511 checks the CSS rule; the look is checked with screenshots)"
+    },
+    {
+      "id": "TC-512",
+      "reqIds": [
+        "REQ-112"
+      ],
+      "title": "What's new lists the releases newest first, marks the current one and clears the new-release dot",
+      "type": "Automated",
+      "status": "Not run",
+      "gherkin": "Given the release history and package.json\nWhen the unit tests run\nThen package.json's version has exactly one entry, the releases are newest first with no version twice, and the first release is v1.0.0 dated 2026-11-28\nAnd the releases group by day, newest day first, and the release equal to package.json's version is marked \"Current\"\nAnd the new-release dot shows when the browser has not seen the current release and is gone once What's new was opened, also when browser storage is unavailable (no dot, no error)\nAnd clicking the version line opens What's new; Escape, Close or a click outside closes it and focus returns to the version line"
     }
   ],
   "decisions": [

@@ -1,6 +1,6 @@
 # Intent: A version number and version history in the portal
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-28, in chat: "approve")
 Requested: 2026-11-28 by the Product Owner, in chat
 
 ## Business need
@@ -41,4 +41,5 @@ Git tags and GitHub Releases for the portal (AGENTS.md step 8, separate change);
 Vietnamese text; a version history for the projects Compass manages.
 
 ## Requirements
-<filled after approval>
+- REQ-111 — The sidebar shows the portal's version and build
+- REQ-112 — What's new lists every portal release
