@@ -1,4 +1,4 @@
-// F-015 Firestore security rules (REQ-030, REQ-031, REQ-033 … REQ-038) — TC-067.
+// F-015 Firestore security rules (REQ-030, REQ-031, REQ-033 … REQ-038, REQ-041 … REQ-046) — TC-067, TC-079, TC-082, TC-084, TC-087.
 // The gate-table check always runs. The emulator cases run with `npm run test:rules` (Firestore emulator);
 // plain `npm test` skips them when no emulator is running.
 import test from 'node:test';
@@ -28,7 +28,7 @@ const sha = (s) => createHash('sha256').update(s).digest('hex');
 
 test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firestore emulator (run npm run test:rules)' }, async (t) => {
   const { initializeTestEnvironment, assertFails, assertSucceeds } = await import('@firebase/rules-unit-testing');
-  const { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where, writeBatch, serverTimestamp } = await import('firebase/firestore');
+  const { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where, writeBatch, serverTimestamp, arrayUnion, arrayRemove } = await import('firebase/firestore');
   const rules = RULES.replace(/superAdminHash\(\) \{ return '[0-9a-f]{64}'/, `superAdminHash() { return '${sha(SA)}'`);
   const [host, port] = process.env.FIRESTORE_EMULATOR_HOST.split(':');
   const env = await initializeTestEnvironment({ projectId: 'demo-compass', firestore: { rules, host, port: +port } });
@@ -45,6 +45,9 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
       await setDoc(doc(db, 'projects/p1/secrets/token'), { token: 'x' });
       await setDoc(doc(db, 'projects/p1/approvals/old'), { items: ['REQ-001'], gate: 'requirements', email: 'ba@example.com', role: 'BA', at: new Date() });
       await setDoc(doc(db, 'projects/p4'), { ...p1, name: 'P4', repo: { owner: 'o', name: 'r4' } }); // a team without a baseline
+      await setDoc(doc(db, 'people/admin@example.com'), { projects: ['p1', 'p4'] });
+      await setDoc(doc(db, 'people/ba@example.com'), { projects: ['p1', 'p4'] });
+      await setDoc(doc(db, 'config/workspace'), { workToken: 'w', anthropicKey: 'k', model: 'm', autoSync: true, newProjectsAccount: 'o' });
     });
   };
   const record = (email, gate, role) => ({ items: ['REQ-001'], gate, email, role, at: serverTimestamp() });
@@ -109,7 +112,7 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     noAdmin.set(doc(sa, 'projects/p5/baseline/initial'), { approvals: [] });
     await assertFails(noAdmin.commit());
 
-    await assertFails(updateDoc(doc(sa, 'config/access'), { superAdmins: [SA, 'x@example.com'] }));        // config/access never changes
+    await assertFails(updateDoc(doc(admin, 'config/access'), { superAdmins: [SA, 'admin@example.com'] }));  // only the owner changes config/access (ADR-018)
     const first = writeBatch(admin);                                                                       // first team by a non-super-admin
     first.set(doc(admin, 'projects/p2'), { ...p1, name: 'P2', members: ['admin@example.com'], admins: ['admin@example.com'], team: { 'admin@example.com': ['Admin'] } });
     first.set(doc(admin, 'projects/p2/baseline/initial'), { approvals: [] });
@@ -127,11 +130,8 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     await assertSucceeds(addDoc(collection(mixed, 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'BA')));
     await assertSucceeds(getDoc(doc(sa, 'config/access')));                                                // the super admin reads it
     await assertSucceeds(updateDoc(doc(sa, 'projects/p1'), { members: [...p1.members, 'ux@example.com'], team: { ...team, 'ux@example.com': ['UX'] } })); // super admin manages any team
-    await assertSucceeds(setDoc(doc(sa, 'projects/p1/secrets/token'), { token: 'z' }));
-    await assertSucceeds(getDoc(doc(ba, 'projects/p1/secrets/token')));                                   // members' browsers read the token (ADR-011)
     await assertSucceeds(getDocs(query(collection(ba, 'projects'), where('members', 'array-contains', 'ba@example.com'))));
     await assertSucceeds(updateDoc(doc(admin, 'projects/p1'), { members: [...p1.members, 'z@example.com'], team: { ...team, 'z@example.com': ['QA'] } }));
-    await assertSucceeds(setDoc(doc(admin, 'projects/p1/secrets/token'), { token: 'y' }));
     await assertSucceeds(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'requirements', 'BA')));
     await assertSucceeds(addDoc(collection(ba, 'projects/p1/approvals'), record('ba@example.com', 'tests', 'QA')));
     await assertSucceeds(addDoc(collection(sa, 'projects/p1/approvals'), record(SA, 'design', 'super admin')));
@@ -142,13 +142,83 @@ test('TC-067: Firestore rules in the emulator', { skip: EMU ? false : 'no Firest
     await assertSucceeds(first.commit());
   });
 
-  await t.test('config/access is created once, only by the super admin with a verified email', async () => {
+  await t.test('config/access is created once, only by the owner with a verified email', async () => {
     await seed(false);
     await assertFails(setDoc(doc(as('x@example.com'), 'config/access'), { superAdmins: ['x@example.com'] }));
     await assertFails(setDoc(doc(as(SA, false), 'config/access'), { superAdmins: [SA] }));
     await assertFails(setDoc(doc(as(SA), 'config/access'), { superAdmins: [SA, 'x@example.com'] }));
     await assertSucceeds(setDoc(doc(as(SA), 'config/access'), { superAdmins: [SA] }));
-    await assertFails(setDoc(doc(as(SA), 'config/access'), { superAdmins: [SA] }));                       // never changed again
+    await assertFails(setDoc(doc(as('x@example.com'), 'config/access'), { superAdmins: [SA, 'x@example.com'] })); // nobody but the owner changes it
+  });
+
+  await t.test('TC-082 (REQ-043): retired project tokens are never read or written; a super admin deletes them', async () => {
+    await seed();
+    const ba = as('ba@example.com'), admin = as('admin@example.com'), sa = as(SA);
+    for (const db of [ba, admin, sa]) await assertFails(getDoc(doc(db, 'projects/p1/secrets/token')));
+    await assertFails(setDoc(doc(admin, 'projects/p1/secrets/token'), { token: 'y' }));
+    await assertFails(setDoc(doc(sa, 'projects/p1/secrets/token'), { token: 'y' }));
+    await assertFails(deleteDoc(doc(admin, 'projects/p1/secrets/token')));
+    await assertSucceeds(deleteDoc(doc(sa, 'projects/p1/secrets/token')));
+  });
+
+  await t.test('TC-087 (REQ-046): only the owner adds or removes super admins, and the owner stays', async () => {
+    await seed();
+    const ba = as('ba@example.com'), owner = as(SA);
+    await assertFails(updateDoc(doc(ba, 'config/access'), { superAdmins: [SA, 'ba@example.com'] }));      // a member makes themselves super admin
+    await assertSucceeds(updateDoc(doc(owner, 'config/access'), { superAdmins: [SA, 'ba@example.com'] })); // the owner makes them super admin
+    await assertFails(updateDoc(doc(ba, 'config/access'), { superAdmins: [SA, 'ba@example.com', 'ux@example.com'] })); // a super admin is not the owner
+    await assertSucceeds(updateDoc(doc(ba, 'config/workspace'), { workToken: 'w2' }));                     // a super admin writes the work token
+    await assertSucceeds(updateDoc(doc(owner, 'config/access'), { superAdmins: [SA] }));                   // the owner switches them off again
+    await assertFails(updateDoc(doc(ba, 'config/workspace'), { workToken: 'w3' }));                        // ...so they can no longer write it
+    await assertFails(updateDoc(doc(owner, 'config/access'), { superAdmins: ['ba@example.com'] }));        // the owner can never be removed
+    await assertFails(updateDoc(doc(owner, 'config/access'), { superAdmins: [SA], extra: 1 }));
+  });
+
+  await t.test('TC-079 (REQ-041 AC3): only super admins write the work token, key and settings; people on a team read them', async () => {
+    await seed();
+    const ba = as('ba@example.com'), admin = as('admin@example.com'), sa = as(SA), out = as('x@example.com'), z = as('z@example.com');
+    for (const db of [ba, admin]) await assertFails(updateDoc(doc(db, 'config/workspace'), { workToken: 'mine' })); // a member and a project Admin
+    await assertFails(updateDoc(doc(sa, 'config/workspace'), { other: 1 }));                               // only the known fields
+    await assertSucceeds(setDoc(doc(sa, 'config/workspace'), { workToken: 'w2', anthropicKey: 'k2', model: 'm2', autoSync: false, newProjectsAccount: 'acme' }));
+    await assertSucceeds(getDoc(doc(ba, 'config/workspace')));                                             // on a team
+    await assertSucceeds(getDoc(doc(sa, 'config/workspace')));
+    await assertFails(getDoc(doc(out, 'config/workspace')));                                               // on no team
+    await assertFails(getDoc(doc(z, 'config/workspace')));
+    // An Admin adds z: the team and people/z are written together, then z can read the work token and key.
+    const add = writeBatch(admin);
+    add.update(doc(admin, 'projects/p1'), { members: [...p1.members, 'z@example.com'], team: { ...team, 'z@example.com': ['QA'] } });
+    add.set(doc(admin, 'people/z@example.com'), { projects: arrayUnion('p1') }, { merge: true });
+    await assertSucceeds(add.commit());
+    await assertSucceeds(getDoc(doc(z, 'config/workspace')));
+    // Refused: a people entry for a project whose team does not list the email; one by the person themselves; two at once.
+    await assertFails(setDoc(doc(admin, 'people/q@example.com'), { projects: ['p1'] }));
+    await assertFails(setDoc(doc(z, 'people/z@example.com'), { projects: ['p1', 'p4'] }));
+    await assertFails(setDoc(doc(admin, 'people/z@example.com'), { projects: ['p1', 'p4'] }));
+    await assertFails(setDoc(doc(ba, 'people/z@example.com'), { projects: [] }));                          // not an Admin, and z is still on p1
+    await assertFails(getDoc(doc(ba, 'people/z@example.com')));                                            // someone else's projects
+    await assertSucceeds(getDoc(doc(z, 'people/z@example.com')));
+    // The Admin removes z: people/z loses p1 in the same write, and z can no longer read them.
+    const rm = writeBatch(admin);
+    rm.update(doc(admin, 'projects/p1'), { members: p1.members, team });
+    rm.set(doc(admin, 'people/z@example.com'), { projects: arrayRemove('p1') }, { merge: true });
+    await assertSucceeds(rm.commit());
+    await assertFails(getDoc(doc(z, 'config/workspace')));
+  });
+
+  await t.test('TC-084 (REQ-044 AC2/AC4): only super admins create a first team and set the account for new projects', async () => {
+    await seed();
+    const admin = as('admin@example.com'), sa = as(SA);
+    const firstBy = (db, id) => {
+      const b = writeBatch(db);
+      b.set(doc(db, `projects/${id}`), { name: id, repo: { owner: 'acme', name: id }, members: ['admin@example.com'], admins: ['admin@example.com'], team: { 'admin@example.com': ['PO'] } });
+      b.set(doc(db, `projects/${id}/baseline/initial`), { approvals: [] });
+      b.set(doc(db, 'people/admin@example.com'), { projects: arrayUnion(id) }, { merge: true });
+      return b.commit();
+    };
+    await assertFails(firstBy(admin, 'n1'));                                                               // a member listing themselves as Admin
+    await assertSucceeds(firstBy(sa, 'n2'));                                                               // a super admin, with baseline and people
+    await assertFails(updateDoc(doc(admin, 'config/workspace'), { newProjectsAccount: 'mine' }));
+    await assertSucceeds(updateDoc(doc(sa, 'config/workspace'), { newProjectsAccount: 'acme' }));
   });
 
   await env.cleanup();
