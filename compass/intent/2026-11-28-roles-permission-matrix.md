@@ -1,6 +1,6 @@
 # Intent: One roles and permission matrix for every part of Compass
 
-Status: Draft
+Status: Approved (by the Product Owner, 2026-11-28, in chat: "approve the intent")
 Requested: 2026-11-28 by the Product Owner, in chat: "the role and permission seem not work now, if I choose a role, I
 don't see it different something with the other roles?", then "suggest a more comprehensive roles & permission matrix
 for compass". The matrix below is the one the Product Owner answered "approve" to in chat on 2026-11-28, after choosing
