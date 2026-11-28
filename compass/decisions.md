@@ -174,7 +174,7 @@ _2026-11-27 · Accepted · REQ-046, REQ-041_
 
 ## ADR-020 · With sign-in on, Connections is only for super admins, also in the account menu
 
-_2026-11-28 · Accepted · REQ-041, REQ-110_
+_2026-11-28 · Changed by ADR-027 · REQ-041, REQ-110_
 
 **Context:** REQ-110 (#119) put "Connections" in every signed-in person's account menu, while REQ-041 hides Connections from everyone but super admins.
 

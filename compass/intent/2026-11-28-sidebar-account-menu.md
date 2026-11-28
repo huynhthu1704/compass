@@ -16,6 +16,7 @@ The footer shows one account card (initial, name, role chips) and nothing else, 
 a role (sign-in off, or in the demo). Clicking the card opens a menu with the full email, Connections, the theme switch,
 Leave demo (in the demo) and Sign out. The role is shown once, the email is never cut off in the menu, and "Try the demo"
 is no longer in the sidebar.
+_Changed by ADR-020 and ADR-027 (2026-11-28): with sign-in on, Connections is only for super admins, and the demo menu has no Connections._
 
 ## Why
 Today the footer stacks the account card, "Try the demo" and "Sign out" buttons, a "My roles" line and a lone theme

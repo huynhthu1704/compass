@@ -214,8 +214,8 @@ export function usesSharedSettings(ctx: { firebase: boolean; demo: boolean }): b
   return ctx.firebase && !ctx.demo;
 }
 
-/** Who may open Connections (REQ-041 AC2, REQ-110 AC2 as amended by ADR-020): with sign-in on, only super admins;
- *  with sign-in off or in the demo, everyone, as before. */
+/** Who may open Connections (REQ-041 AC2, REQ-110 AC2 as amended by ADR-020 and ADR-027): nobody in the demo;
+ *  otherwise, with sign-in on, only super admins, and with sign-in off, everyone. */
 export function canOpenConnections(ctx: { signedIn: boolean; demo: boolean; superAdmin: boolean }): boolean {
   return !ctx.demo && (!ctx.signedIn || ctx.superAdmin); // ADR-027: never in the demo
 }

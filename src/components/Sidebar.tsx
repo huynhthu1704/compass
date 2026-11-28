@@ -54,10 +54,10 @@ export function Sidebar({ parts, p, sync, logo }: Props) {
   const name = signedIn ? accountName(session.email!) : account.name;
   const roles = pickedRoles(settings);
   const chips = accountChips({ signedIn, demo: session.demo, superAdmin: session.superAdmin, roles: myRoles, demoRole: roles.join(', ') || undefined }); // REQ-121: "Demo · PO, BA"
-  // REQ-110 AC2 as amended by ADR-020: with sign-in on, Connections is only in super admins' menu (REQ-041 AC2).
+  // REQ-110 AC2 as amended by ADR-020 and ADR-027: with sign-in on, Connections is only in super admins' menu (REQ-041 AC2), and never in the demo.
   const ws = useWorkspace();
-  // Signed in (outside the demo), Connections is the shared page: its hint is the work token, not this device's token.
-  const connHint = signedIn && !session.demo ? (ws?.workToken ? 'Work token ✓' : 'No work token') : settings.githubUser ? 'GitHub ✓' : 'Not connected';
+  // Signed in, Connections is the shared page: its hint is the work token, not this device's token (the demo has no Connections).
+  const connHint = signedIn ? (ws?.workToken ? 'Work token ✓' : 'No work token') : settings.githubUser ? 'GitHub ✓' : 'Not connected';
   const items = accountMenu({ signedIn, demo: session.demo }).filter((it) => it !== 'connections' || canOpenConnections({ signedIn, demo: !!session.demo, superAdmin: session.superAdmin }));
   // REQ-110 AC3: choosing an item closes the menu and returns focus to the card, then acts.
   const choose = (act: () => void) => () => { setOpen(false); cardRef.current?.focus(); act(); };

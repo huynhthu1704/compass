@@ -4009,7 +4009,7 @@
       "id": "ADR-020",
       "date": "2026-11-28",
       "title": "With sign-in on, Connections is only for super admins, also in the account menu",
-      "status": "Accepted",
+      "status": "Changed by ADR-027",
       "reqIds": [
         "REQ-041",
         "REQ-110"
