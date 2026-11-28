@@ -1022,9 +1022,8 @@
             ],
             "elements": [
               "Compass brand",
-              "Title \"Sign in to Compass\" and the email-matching hint",
+              "Title \"Sign in to Compass\" and the line \"Sign in with your Google account. You'll see the projects your team added you to, or you can try the demo.\" (ADR-024)",
               "Button \"Sign in with Google\" (Google logo, full width)",
-              "Hint \"No account yet? Ask your project Admin…\"",
               "Demo-mode note"
             ],
             "states": [
@@ -3958,6 +3957,19 @@
       "context": "People must sign in to use Compass, including the demo. Signed in outside the demo, a person who is not a super admin sees only projects their team lists (REQ-032); the demo project has no repository, so \"Open demo project\" and \"Explore the demo\" added a hidden project and the page stayed on Projects: the button seemed broken. A super admin saw the demo project next to the real ones.",
       "decision": "The Product Owner chose in chat on 2026-11-28: the button enters the demo session (as \"Try the demo\" does, REQ-040) and then opens the demo project, and people need to sign in to view the demo — super admins go through the demo session too.",
       "consequences": "The person picks a demo role, sees the demo banner and \"Leave demo\", and their real projects are hidden until they leave (REQ-040 AC3). ADR-019 still keeps \"Try the demo\" out of the sidebar. Only a build without Firebase config (no sign-in at all, e.g. local development) opens the demo project directly."
+    },
+    {
+      "id": "ADR-024",
+      "date": "2026-11-28",
+      "title": "The sign-in screen does not say you need an account first",
+      "status": "Accepted",
+      "reqIds": [
+        "REQ-032",
+        "REQ-040"
+      ],
+      "context": "Anyone with a Google account can sign in. SCR-1 said \"Use the Google account your admin added to your project\" and \"No account yet? Ask your project Admin to add your email on the Team page, then sign in here.\", which made signing in sound blocked. Someone on no team already lands on \"You have no access yet\" (SCR-2) with the same advice and \"Try the demo\", and the demo needs sign-in (ADR-022).",
+      "decision": "The Product Owner decided in chat on 2026-11-28: remove the \"No account yet?\" hint and say \"Sign in with your Google account. You'll see the projects your team added you to, or you can try the demo.\" under the title.",
+      "consequences": "SCR-1 lists the new line and no longer lists the hint. SCR-2 keeps \"Ask your admin to add this email to a project\". The Figma frame for SCR-1 (node 102-609) still shows the old hint until it is redrawn."
     },
     {
       "id": "ADR-025",
